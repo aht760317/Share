@@ -3,165 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德補習班 - 家長分潤系統</title>
+    <title>顧德補習班 - 家長分潤查詢後台</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f4f7f6;
             margin: 0;
             padding: 20px;
             color: #333;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 { color: #1a365d; margin-bottom: 5px; font-size: 28px;}
-        .header p { color: #718096; margin-top: 0; }
-        
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
-        }
-        
-        .calculator-section {
-            background: #f8fafc;
-            padding: 25px;
             border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            border-left: 6px solid #3182ce;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+        h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0;}
         
-        .input-group { margin-bottom: 20px; }
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #4a5568;
+        /* 查詢區塊 */
+        .search-box {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            box-sizing: border-box;
+        select {
+            padding: 10px;
             font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            flex-grow: 1;
         }
-        
         button {
-            background-color: #dd6b20;
+            background-color: #3498db;
             color: white;
             border: none;
-            padding: 15px 20px;
-            font-size: 18px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
             cursor: pointer;
-            width: 100%;
             font-weight: bold;
-            transition: 0.2s;
         }
-        button:hover { background-color: #c05621; }
-        
-        #resultBox {
-            margin-top: 20px;
+        button:hover { background-color: #2980b9; }
+
+        /* 總結卡片區塊 */
+        .summary-cards {
+            display: none; /* 一開始先隱藏 */
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
             padding: 20px;
-            background: #ebf8ff;
-            border: 1px dashed #63b3ed;
             border-radius: 8px;
-            text-align: center;
-            font-size: 1.2em;
-            display: none;
-        }
-        .highlight { color: #e53e3e; font-weight: bold; font-size: 1.6em; display: block; margin-top: 10px;}
-        .stage-badge {
-            background: #2b6cb0;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            text-align: center;
         }
-    </style>
-</head>
-<body>
+        .card-blue { background: #34495e; }
+        .card-orange { background: #e67e22; }
+        .card h3 { margin: 0 0 10px 0; font-size: 1.2em; opacity: 0.9; }
+        .card .amount { font-size: 2.5em; font-weight: bold; }
 
-<div class="container">
-    <div class="header">
-        <h1>🏫 顧德補習班</h1>
-        <p>家長專屬推薦分潤系統 - 測試機</p>
-    </div>
-    
-    <div class="calculator-section">
-        <h3 style="margin-top: 0;">🧮 獎金試算工具 (10% ➔ 6% ➔ 4%)</h3>
-        <p style="color: #718096; font-size: 0.95em;">輸入學生報名日與學費，系統將自動判定年資並結算該發放的獎金。</p>
-        
-        <div class="input-group">
-            <label for="enrollDate">📅 該名學生首次報名日期：</label>
-            <input type="date" id="enrollDate" value="2024-01-01">
-        </div>
-        
-        <div class="input-group">
-            <label for="tuitionAmount">💰 本次繳納學費 (NT$)：</label>
-            <input type="number" id="tuitionAmount" value="30000" placeholder="例如：30000">
-        </div>
-
-        <button onclick="runCalculator()">立即計算分潤獎金</button>
-
-        <div id="resultBox"></div>
-    </div>
-</div>
-
-<script>
-    function calculateCommission(enrollDateString, tuitionAmount) {
-        const today = new Date(); 
-        const enrollDate = new Date(enrollDateString); 
-        
-        const diffTime = Math.abs(today - enrollDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const yearsEnrolled = diffDays / 365;
-
-        let rate = 0;
-        let stageName = "";
-
-        if (yearsEnrolled <= 1) {
-            rate = 0.10;
-            stageName = "第一年 (10%)";
-        } else if (yearsEnrolled <= 2) {
-            rate = 0.06;
-            stageName = "第二年 (6%)";
-        } else {
-            rate = 0.04;
-            stageName = "第三年起 (4%)";
+        /* 學生明細清單 */
+        .detail-section { display: none; } /* 一開始先隱藏 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #fff;
         }
-
-        return {
-            stage: stageName,
-            amount: Math.floor(tuitionAmount * rate)
-        };
-    }
-
-    function runCalculator() {
-        const dateInput = document.getElementById('enrollDate').value;
-        const amountInput = document.getElementById('tuitionAmount').value;
-
-        if (!dateInput || !amountInput) {
-            alert("請完整填寫日期與金額！");
-            return;
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
         }
-
-        const result = calculateCommission(dateInput, amountInput);
-        const resultBox = document.getElementById('resultBox');
-        
-        resultBox.style.display = 'block'; 
-        resultBox.innerHTML = `
-            目前的年資適用標準： <span class="stage-badge">${result.stage}</span><br>
-            系統核算應發放獎金：<span class="highlight">NT$ ${result.amount.toLocaleString()}</span>
-        `;
-    }
-</script>
-
-</body>
-</html>
+        th { background-color: #f8f9fa; color: #2c3e50; font-weight: bold; }
+        tr:hover { background-color: #f5f5f5; }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: white;
+        }
+        .badge.
