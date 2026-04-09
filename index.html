@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德補習班 - 分潤管理後台</title>
+    <title>斗六顧德補習班 - 分潤管理後台</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12,23 +12,13 @@
             padding: 20px;
             color: #333;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .header-title {
-            text-align: center;
-            color: #1a365d;
-            margin-bottom: 20px;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header-title { text-align: center; color: #1a365d; margin-bottom: 20px; }
         
         /* 區塊共用樣式 */
         .panel {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
+            background: white; padding: 25px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px;
         }
         .panel h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
@@ -36,29 +26,27 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
         .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e0;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 15px;
+            width: 100%; padding: 10px; border: 1px solid #cbd5e0;
+            border-radius: 5px; box-sizing: border-box; font-size: 15px;
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         button {
-            background-color: #3182ce;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
+            background-color: #3182ce; color: white; border: none; padding: 10px 20px;
+            font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;
         }
         button:hover { background-color: #2b6cb0; }
         .btn-green { background-color: #38a169; width: 100%; margin-top: 10px; padding: 12px;}
         .btn-green:hover { background-color: #2f855a; }
+        
+        /* 刪除按鈕樣式 */
+        .btn-red { background-color: #e53e3e; }
+        .btn-red:hover { background-color: #c53030; }
+        .btn-delete-small {
+            background-color: #fc8181; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: normal;
+        }
+        .btn-delete-small:hover { background-color: #e53e3e; }
 
         /* 查詢結果卡片 */
         .summary-cards { display: none; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -70,7 +58,7 @@
 
         /* 表格樣式 */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
         th { background-color: #f8f9fa; color: #4a5568; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85em; color: white; }
         .rate-10 { background: #38a169; }
@@ -82,7 +70,7 @@
 <body>
 
 <div class="container">
-    <h2 class="header-title">🏫 顧德補習班 - 推薦分潤管理系統</h2>
+    <h2 class="header-title">🏫 顧德補習班 - 分潤管理系統</h2>
 
     <div class="panel" style="border-left: 5px solid #38a169;">
         <h3>➕ 第一步：建立推薦人家長檔案</h3>
@@ -104,7 +92,7 @@
             <label>這名新生是誰推薦的？ (請先選家長)</label>
             <select id="selectParentForStudent">
                 <option value="">請選擇家長...</option>
-                </select>
+            </select>
         </div>
         <div class="grid-2">
             <div class="form-group">
@@ -124,12 +112,15 @@
     </div>
 
     <div class="panel" style="border-left: 5px solid #dd6b20;">
-        <h3>🔍 查詢帳務與發放明細</h3>
-        <div class="form-group">
-            <label>選擇要查詢的家長：</label>
-            <select id="queryParentSelect" onchange="searchParent()">
-                <option value="">請選擇要查詢的家長...</option>
-            </select>
+        <h3>🔍 第三步：查詢、修改與結算</h3>
+        <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
+            <div style="flex-grow: 1;">
+                <label>選擇要查詢的家長：</label>
+                <select id="queryParentSelect" onchange="searchParent()">
+                    <option value="">請選擇要查詢的家長...</option>
+                </select>
+            </div>
+            <button id="deleteParentBtn" class="btn-red" style="display: none; height: 42px;" onclick="deleteParent()">🗑️ 刪除此家長</button>
         </div>
 
         <div class="summary-cards" id="summarySection">
@@ -150,9 +141,9 @@
                         <th>學生姓名</th>
                         <th>入學日期</th>
                         <th>繳交學費</th>
-                        <th>分潤比例 (10%➔6%➔4%)</th>
+                        <th>分潤比例</th>
                         <th>產生獎金</th>
-                    </tr>
+                        <th>操作</th> </tr>
                 </thead>
                 <tbody id="studentListBody">
                     </tbody>
@@ -163,51 +154,39 @@
 </div>
 
 <script>
-    // 【核心大腦】每次打開網頁，先去瀏覽器的保險箱(LocalStorage)把資料拿出來
-    // 如果是第一次用(沒資料)，就建立一個空的 {}
+    // 讀取資料庫
     let database = JSON.parse(localStorage.getItem('gudeDatabase')) || {};
 
-    // 網頁載入時，先更新下拉選單
     window.onload = function() {
         updateParentSelects();
     };
 
-    // 功能 1：新增家長
     function addParent() {
         const nameInput = document.getElementById('newParentName');
         const name = nameInput.value.trim();
-        
         if(!name) { alert('請輸入家長姓名！'); return; }
         if(database[name]) { alert('這位家長已經在系統裡囉！'); return; }
 
-        // 在資料庫中建立這位家長的專屬空間
         database[name] = { referrals: [] };
-        
-        // 【關鍵】把資料存進瀏覽器保險箱
         localStorage.setItem('gudeDatabase', JSON.stringify(database));
-        
         alert('✅ 家長檔案建立成功！');
-        nameInput.value = ''; // 清空輸入框
-        updateParentSelects(); // 更新下拉選單
+        nameInput.value = ''; 
+        updateParentSelects(); 
     }
 
-    // 功能 2：更新下拉選單 (把保險箱裡的所有家長列出來)
     function updateParentSelects() {
         const select1 = document.getElementById('selectParentForStudent');
         const select2 = document.getElementById('queryParentSelect');
         
-        // 保留第一個「請選擇」的選項
         select1.innerHTML = '<option value="">請選擇家長...</option>';
         select2.innerHTML = '<option value="">請選擇要查詢的家長...</option>';
 
-        // 把資料庫裡的名字一個一個加進去
         for(let parentName in database) {
             select1.innerHTML += `<option value="${parentName}">${parentName}</option>`;
             select2.innerHTML += `<option value="${parentName}">${parentName}</option>`;
         }
     }
 
-    // 功能 3：新增學生與繳費紀錄
     function addStudent() {
         const parentName = document.getElementById('selectParentForStudent').value;
         const studentName = document.getElementById('newStudentName').value.trim();
@@ -215,33 +194,26 @@
         const tuition = document.getElementById('newTuition').value;
 
         if(!parentName || !studentName || !enrollDate || !tuition) {
-            alert('請把家長、學生姓名、日期和學費都填寫完整喔！');
-            return;
+            alert('請把家長、學生姓名、日期和學費都填寫完整喔！'); return;
         }
 
-        // 把這筆學生的資料塞進該名家長的帳戶裡
         database[parentName].referrals.push({
             studentName: studentName,
             enrollDate: enrollDate,
             tuitionPaid: parseInt(tuition)
         });
 
-        // 存進保險箱
         localStorage.setItem('gudeDatabase', JSON.stringify(database));
-
         alert('✅ 學生繳費資料登錄成功！');
         
-        // 清空輸入框
         document.getElementById('newStudentName').value = '';
         document.getElementById('newTuition').value = '';
         
-        // 如果下面剛好正在查詢這位家長，就順便更新畫面
         if(document.getElementById('queryParentSelect').value === parentName) {
             searchParent();
         }
     }
 
-    // 功能 4：計算分潤邏輯
     function calculateCommission(enrollDateString, tuitionAmount) {
         const today = new Date(); 
         const enrollDate = new Date(enrollDateString); 
@@ -252,49 +224,89 @@
         let rate = 0; let badgeClass = ""; let rateText = "";
 
         if (yearsEnrolled <= 1) {
-            rate = 0.10; badgeClass = "rate-10"; rateText = "第一年 10%";
+            rate = 0.10; badgeClass = "rate-10"; rateText = "1年內 (10%)";
         } else if (yearsEnrolled <= 2) {
-            rate = 0.06; badgeClass = "rate-6"; rateText = "第二年 6%";
+            rate = 0.06; badgeClass = "rate-6"; rateText = "1~2年 (6%)";
         } else {
-            rate = 0.04; badgeClass = "rate-4"; rateText = "第三年起 4%";
+            rate = 0.04; badgeClass = "rate-4"; rateText = "2年以上 (4%)";
         }
         return { rateText: rateText, badgeClass: badgeClass, amount: Math.floor(tuitionAmount * rate) };
     }
 
-    // 功能 5：查詢明細 (選擇家長時自動觸發)
     function searchParent() {
         const parentName = document.getElementById('queryParentSelect').value;
         const tbody = document.getElementById('studentListBody');
+        const deleteBtn = document.getElementById('deleteParentBtn');
         
         if (!parentName) {
             document.getElementById('summarySection').style.display = "none";
             document.getElementById('detailSection').style.display = "none";
+            deleteBtn.style.display = "none"; // 隱藏刪除家長按鈕
             return;
         }
+
+        deleteBtn.style.display = "block"; // 顯示刪除家長按鈕
 
         const parentData = database[parentName];
         tbody.innerHTML = ""; 
         let totalMoney = 0;
 
-        // 結算所有學生的資料
-        parentData.referrals.forEach(student => {
+        parentData.referrals.forEach((student, index) => {
             const commission = calculateCommission(student.enrollDate, student.tuitionPaid);
             totalMoney += commission.amount; 
 
+            // 這裡新增了一顆「刪除小按鈕」，並且把該名學生的編號 (index) 綁定上去
             tbody.innerHTML += `<tr>
                 <td>${student.studentName}</td>
                 <td>${student.enrollDate}</td>
                 <td>NT$ ${student.tuitionPaid.toLocaleString()}</td>
                 <td><span class="badge ${commission.badgeClass}">${commission.rateText}</span></td>
                 <td class="money">NT$ ${commission.amount.toLocaleString()}</td>
+                <td><button class="btn-delete-small" onclick="deleteStudent('${parentName}', ${index})">刪除</button></td>
             </tr>`;
         });
 
-        // 顯示結果
         document.getElementById('totalStudents').innerText = parentData.referrals.length + " 人";
         document.getElementById('totalCommission').innerText = "NT$ " + totalMoney.toLocaleString();
         document.getElementById('summarySection').style.display = "grid";
         document.getElementById('detailSection').style.display = "block";
+    }
+
+    // 【新增功能】刪除單筆學生紀錄
+    function deleteStudent(parentName, studentIndex) {
+        // 跳出防呆確認視窗
+        const confirmDelete = confirm("確定要刪除這筆繳費紀錄嗎？\n(刪除後獎金會自動重新計算)");
+        
+        if (confirmDelete) {
+            // 從陣列中移除該名學生
+            database[parentName].referrals.splice(studentIndex, 1);
+            // 存回保險箱
+            localStorage.setItem('gudeDatabase', JSON.stringify(database));
+            // 重新整理畫面
+            searchParent();
+        }
+    }
+
+    // 【新增功能】刪除整戶家長
+    function deleteParent() {
+        const parentName = document.getElementById('queryParentSelect').value;
+        
+        // 防呆確認視窗，提醒使用者這會刪除所有下線
+        const confirmDelete = confirm(`⚠️ 警告：確定要刪除【${parentName}】嗎？\n這會把該名家長以及他底下介紹的所有學生紀錄都一併刪除，無法復原喔！`);
+        
+        if (confirmDelete) {
+            // 從資料庫中刪除該名家長
+            delete database[parentName];
+            // 存回保險箱
+            localStorage.setItem('gudeDatabase', JSON.stringify(database));
+            
+            alert(`已成功刪除 ${parentName} 的所有資料。`);
+            
+            // 更新下拉選單並重置畫面
+            updateParentSelects();
+            document.getElementById('queryParentSelect').value = "";
+            searchParent(); // 觸發清空畫面
+        }
     }
 </script>
 
