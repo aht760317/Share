@@ -43,7 +43,6 @@
             border-radius: 5px; box-sizing: border-box; font-size: 15px;
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } 
         
         button {
             background-color: #3182ce; color: white; border: none; padding: 10px 20px;
@@ -54,8 +53,6 @@
         .btn-green:hover { background-color: #2f855a; }
         .btn-red { background-color: #e53e3e; }
         .btn-red:hover { background-color: #c53030; }
-        .btn-purple { background-color: #805ad5; width: 100%; margin-top: 10px; padding: 12px; }
-        .btn-purple:hover { background-color: #6b46c1; }
 
         .btn-small {
             color: white; border: none; padding: 6px 10px;
@@ -79,21 +76,18 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
         th { background-color: #f8f9fa; color: #4a5568; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85em; color: white; }
-        .rate-1 { background: #38a169; }
-        .rate-2 { background: #d69e2e; }
-        .rate-3 { background: #805ad5; }
+        
+        /* 表格內輸入框樣式 */
+        .inline-rate-input {
+            width: 60px; padding: 5px; border-radius: 4px; border: 2px solid #cbd5e0; 
+            text-align: center; font-weight: bold; color: #e67e22; font-size: 14px;
+        }
+        .inline-rate-input:focus { border-color: #e67e22; outline: none; }
+
         .status-paid { color: #38a169; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .status-unpaid { color: #dd6b20; font-weight: bold; }
         .money { font-weight: bold; color: #e53e3e; }
         .money-paid { color: #a0aec0; text-decoration: line-through; } 
-
-        /* ================= 滑桿專屬樣式 ================= */
-        input[type="range"] {
-            width: 100%; cursor: pointer; accent-color: #805ad5; height: 8px;
-            background: #e2e8f0; border-radius: 5px; outline: none; margin-top: 10px;
-        }
-        .slider-value { color: #805ad5; font-size: 1.3em; font-weight: 900; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -108,26 +102,6 @@
 
 <div id="mainApp" style="display: none;">
     <h2 class="header-title">🏫 顧德補習班 - 分潤管理系統</h2>
-
-    <div class="panel" style="border-left: 5px solid #805ad5; background-color: #faf5ff;">
-        <h3>⚙️ 系統設定：自訂分潤比例</h3>
-        <p style="color: #718096; font-size: 14px; margin-top: 0;">拖拉滑桿來調整比例，設定範圍限制為 0% ~ 30% 防止誤填。</p>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>第一年分潤：<span id="valRate1" class="slider-value">10</span>%</label>
-                <input type="range" id="settingRate1" min="0" max="30" value="10" oninput="updateDisplay(1)">
-            </div>
-            <div class="form-group">
-                <label>第二年分潤：<span id="valRate2" class="slider-value">6</span>%</label>
-                <input type="range" id="settingRate2" min="0" max="30" value="6" oninput="updateDisplay(2)">
-            </div>
-            <div class="form-group">
-                <label>第三年起分潤：<span id="valRate3" class="slider-value">4</span>%</label>
-                <input type="range" id="settingRate3" min="0" max="30" value="4" oninput="updateDisplay(3)">
-            </div>
-        </div>
-        <button class="btn-purple" onclick="saveSettings()">儲存比例並重新計算</button>
-    </div>
 
     <div class="panel" style="border-left: 5px solid #38a169;">
         <h3>➕ 第一步：建立推薦人家長檔案</h3>
@@ -161,15 +135,21 @@
                 <input type="date" id="newEnrollDate">
             </div>
         </div>
-        <div class="form-group">
-            <label>本次繳納學費 (NT$)：</label>
-            <input type="number" id="newTuition" placeholder="例如：30000">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>本次繳納學費 (NT$)：</label>
+                <input type="number" id="newTuition" placeholder="例如：30000">
+            </div>
+            <div class="form-group">
+                <label>約定分潤比例 (%)：</label>
+                <input type="number" id="newRate" value="10" placeholder="例如：10" min="0" max="100">
+            </div>
         </div>
         <button class="btn-green" onclick="addStudent()">儲存繳費紀錄並計算分潤</button>
     </div>
 
     <div class="panel" style="border-left: 5px solid #dd6b20;">
-        <h3>🔍 第三步：查詢、帳務狀態與結算</h3>
+        <h3>🔍 第三步：查詢、修改與結算狀態</h3>
         <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
             <div style="flex-grow: 1;">
                 <label>選擇要查詢的家長：</label>
@@ -202,7 +182,7 @@
                         <th>學生姓名</th>
                         <th>入學日期</th>
                         <th>繳交學費</th>
-                        <th>當前適用比例</th>
+                        <th>分潤比例 (%)</th>
                         <th>應發獎金</th>
                         <th>目前狀態</th>
                         <th>操作</th>
@@ -230,7 +210,6 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
                 sessionStorage.setItem('gudeLoggedIn', 'true');
-                loadSettings();
                 updateParentSelects();
             } else {
                 errorMsg.style.display = 'block';
@@ -244,7 +223,6 @@
         if (sessionStorage.getItem('gudeLoggedIn') === 'true') {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            loadSettings();
             updateParentSelects();
         }
     };
@@ -254,42 +232,6 @@
         const savedData = localStorage.getItem('gudeDatabase');
         if (savedData) database = JSON.parse(savedData);
     } catch (e) { console.error("讀取資料庫失敗：", e); }
-
-    let sysRates = { rate1: 10, rate2: 6, rate3: 4 };
-
-    // ================= 滑桿連動文字的專屬功能 =================
-    function updateDisplay(idNumber) {
-        // 當你拖拉滑桿時，立刻把數字同步到上面的紫色大字體
-        const sliderValue = document.getElementById('settingRate' + idNumber).value;
-        document.getElementById('valRate' + idNumber).innerText = sliderValue;
-    }
-
-    function loadSettings() {
-        try {
-            const savedSettings = localStorage.getItem('gudeSettings');
-            if (savedSettings) sysRates = JSON.parse(savedSettings);
-            
-            // 讀取設定時，同時更新「滑桿位置」與「上方文字」
-            document.getElementById('settingRate1').value = sysRates.rate1;
-            document.getElementById('valRate1').innerText = sysRates.rate1;
-            
-            document.getElementById('settingRate2').value = sysRates.rate2;
-            document.getElementById('valRate2').innerText = sysRates.rate2;
-            
-            document.getElementById('settingRate3').value = sysRates.rate3;
-            document.getElementById('valRate3').innerText = sysRates.rate3;
-        } catch (e) { console.error("讀取設定失敗：", e); }
-    }
-
-    function saveSettings() {
-        sysRates.rate1 = parseFloat(document.getElementById('settingRate1').value) || 0;
-        sysRates.rate2 = parseFloat(document.getElementById('settingRate2').value) || 0;
-        sysRates.rate3 = parseFloat(document.getElementById('settingRate3').value) || 0;
-        
-        localStorage.setItem('gudeSettings', JSON.stringify(sysRates));
-        alert('✅ 分潤比例已更新！');
-        searchParent();
-    }
 
     function addParent() {
         const nameInput = document.getElementById('newParentName');
@@ -322,13 +264,18 @@
         const studentName = document.getElementById('newStudentName').value.trim();
         const enrollDate = document.getElementById('newEnrollDate').value;
         const tuition = document.getElementById('newTuition').value;
+        const rate = document.getElementById('newRate').value; // 抓取設定的比例
 
-        if(!parentName || !studentName || !enrollDate || !tuition) {
-            alert('請把家長、學生姓名、日期和學費都填寫完整喔！'); return;
+        if(!parentName || !studentName || !enrollDate || !tuition || !rate) {
+            alert('請把家長、學生姓名、日期、學費和比例都填寫完整喔！'); return;
         }
 
         database[parentName].referrals.push({
-            studentName: studentName, enrollDate: enrollDate, tuitionPaid: parseInt(tuition), isPaid: false 
+            studentName: studentName, 
+            enrollDate: enrollDate, 
+            tuitionPaid: parseInt(tuition), 
+            rate: parseFloat(rate), // 獨立儲存這位學生的專屬比例
+            isPaid: false 
         });
 
         saveDatabase();
@@ -336,26 +283,10 @@
         
         document.getElementById('newStudentName').value = '';
         document.getElementById('newTuition').value = '';
+        // 比例預設回到10%方便下次輸入
+        document.getElementById('newRate').value = '10'; 
+
         if(document.getElementById('queryParentSelect').value === parentName) searchParent();
-    }
-
-    function calculateCommission(enrollDateString, tuitionAmount) {
-        const today = new Date(); 
-        const enrollDate = new Date(enrollDateString); 
-        const diffTime = Math.abs(today - enrollDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const yearsEnrolled = diffDays / 365;
-
-        let finalRate = 0; let badgeClass = ""; let rateText = "";
-
-        if (yearsEnrolled <= 1) {
-            finalRate = sysRates.rate1 / 100; badgeClass = "rate-1"; rateText = `1年內 (${sysRates.rate1}%)`;
-        } else if (yearsEnrolled <= 2) {
-            finalRate = sysRates.rate2 / 100; badgeClass = "rate-2"; rateText = `1~2年 (${sysRates.rate2}%)`;
-        } else {
-            finalRate = sysRates.rate3 / 100; badgeClass = "rate-3"; rateText = `2年以上 (${sysRates.rate3}%)`;
-        }
-        return { rateText: rateText, badgeClass: badgeClass, amount: Math.floor(tuitionAmount * finalRate) };
     }
 
     function searchParent() {
@@ -376,12 +307,16 @@
         let totalMoney = 0; let paidMoney = 0; let unpaidMoney = 0;
 
         parentData.referrals.forEach((student, index) => {
-            const commission = calculateCommission(student.enrollDate, student.tuitionPaid);
-            totalMoney += commission.amount; 
+            // 如果是舊資料沒有記錄到比例，預設給 10%
+            const currentRate = student.rate !== undefined ? student.rate : 10;
+            // 直接用該名學生的專屬比例計算獎金
+            const commissionAmount = Math.floor(student.tuitionPaid * (currentRate / 100));
+            
+            totalMoney += commissionAmount; 
             const isPaid = student.isPaid || false; 
 
-            if (isPaid) paidMoney += commission.amount;
-            else unpaidMoney += commission.amount;
+            if (isPaid) paidMoney += commissionAmount;
+            else unpaidMoney += commissionAmount;
 
             const moneyClass = isPaid ? 'money money-paid' : 'money';
             const statusHtml = isPaid ? '<span class="status-paid">✅ 已發放</span>' : '<span class="status-unpaid">⚠️ 未發放</span>';
@@ -393,8 +328,11 @@
                 <td>${student.studentName}</td>
                 <td>${student.enrollDate}</td>
                 <td>NT$ ${student.tuitionPaid.toLocaleString()}</td>
-                <td><span class="badge ${commission.badgeClass}">${commission.rateText}</span></td>
-                <td class="${moneyClass}">NT$ ${commission.amount.toLocaleString()}</td>
+                <td>
+                    <input type="number" class="inline-rate-input" value="${currentRate}" min="0" max="100" 
+                           onchange="updateStudentRate('${parentName}', ${index}, this.value)"> %
+                </td>
+                <td class="${moneyClass}">NT$ ${commissionAmount.toLocaleString()}</td>
                 <td>${statusHtml}</td>
                 <td>${actionBtnHtml}<button class="btn-small delete" onclick="deleteStudent('${parentName}', ${index})">刪除</button></td>
             </tr>`;
@@ -405,6 +343,20 @@
         document.getElementById('unpaidCommission').innerText = "NT$ " + unpaidMoney.toLocaleString();
         document.getElementById('summarySection').style.display = "grid";
         document.getElementById('detailSection').style.display = "block";
+    }
+
+    // ================= 新增：直接在表格內修改比例的邏輯 =================
+    function updateStudentRate(parentName, index, newRateValue) {
+        let parsedRate = parseFloat(newRateValue);
+        // 防呆：如果輸入奇怪的文字或負數，預設變為 0
+        if (isNaN(parsedRate) || parsedRate < 0) parsedRate = 0; 
+        
+        // 更新資料庫裡該名學生的比例
+        database[parentName].referrals[index].rate = parsedRate;
+        saveDatabase();
+        
+        // 重新整理畫面（獎金就會自動用新比例算好）
+        searchParent();
     }
 
     function togglePayment(parentName, studentIndex) {
