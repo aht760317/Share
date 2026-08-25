@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲林第三選區 - 村里拜訪追蹤系統</title>
+    <title>雲林第三選區 - 村里拜訪與文宣追蹤系統</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -33,7 +33,6 @@
             color: var(--primary);
             border-bottom: 2px solid var(--bg-gray);
             padding-bottom: 10px;
-            position: relative;
         }
         /* 按鈕樣式 */
         .btn {
@@ -49,47 +48,6 @@
         .btn-cancel { background-color: #9ca3af; color: white; }
         .btn-clear { background-color: #ef4444; color: white; width: 100%; margin-top: 15px; }
         .btn-export { background-color: #10b981; color: white; margin-bottom: 15px; }
-        
-        /* 文宣品計算機區塊 */
-        .calc-section {
-            background-color: #e0f2fe;
-            border: 1px solid #bae6fd;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
-        .calc-section h2 {
-            margin: 0 0 10px 0;
-            font-size: 18px;
-            color: #0369a1;
-        }
-        .calc-input-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .calc-input-group input {
-            padding: 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 150px;
-        }
-        .calc-result table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background: white;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .calc-result th, .calc-result td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .calc-result th { background-color: #f8fafc; font-weight: bold; color: #475569; }
         
         /* 頁籤與進度條 */
         .tabs {
@@ -143,7 +101,7 @@
         /* 村里卡片網格 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* 稍微加寬以容納資訊 */
             gap: 15px;
         }
         .card {
@@ -153,16 +111,23 @@
             cursor: pointer;
             border: 1px solid #e5e7eb;
             transition: transform 0.1s;
-            min-height: 100px;
+            min-height: 120px;
         }
         .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card h3 { margin: 0 0 10px 0; font-size: 18px; display: flex; justify-content: space-between; }
-        .visit-count { font-size: 14px; background: rgba(255,255,255,0.5); padding: 2px 8px; border-radius: 12px; }
-        .date-list { list-style: none; padding: 0; margin: 0; font-size: 12px; }
-        .date-list li { margin-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .card h3 { margin: 0 0 5px 0; font-size: 18px; display: flex; justify-content: space-between; align-items: center;}
+        .pop-count { font-size: 13px; color: #4b5563; margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; }
+        .visit-count { font-size: 14px; background: rgba(255,255,255,0.5); padding: 2px 8px; border-radius: 12px; color: #000; }
+        .date-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+        .date-list li { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed rgba(0,0,0,0.1); line-height: 1.4; }
+        .item-text { font-size: 12px; color: #1f2937; font-weight: bold; }
+        
+        /* 動態顏色 */
         .visits-1 { background-color: var(--visit-1); color: #1e3a8a; }
         .visits-2 { background-color: var(--visit-2); color: #ffffff; }
         .visits-3 { background-color: var(--visit-3); color: #ffffff; }
+        .visits-2 .pop-count, .visits-3 .pop-count { color: rgba(255,255,255,0.8); border-bottom-color: rgba(255,255,255,0.3); }
+        .visits-2 .item-text, .visits-3 .item-text { color: #facc15; /* 深色背景配黃色字體 */ }
+        .visits-2 .date-list li, .visits-3 .date-list li { border-bottom-color: rgba(255,255,255,0.2); }
         
         /* 彈出視窗 */
         .modal-overlay {
@@ -172,38 +137,30 @@
             background: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
+            z-index: 100;
         }
         .modal {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
-            width: 300px;
-            text-align: center;
+            width: 320px;
         }
-        .modal input[type="date"] { width: 90%; padding: 8px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .modal h2 { margin-top: 0; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .modal input[type="date"], .modal input[type="text"], .modal input[type="number"] { 
+            width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        .modal-actions { text-align: center; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📍 雲林第三選區 宣傳進度追蹤</h1>
+    <h1>📍 雲林第三選區 宣傳與文宣發放追蹤</h1>
     
-    <!-- 匯出按鈕 -->
     <div style="text-align: right;">
         <button class="btn btn-export" onclick="exportToCSV()">📥 匯出紀錄 (Excel/CSV)</button>
-    </div>
-
-    <!-- 🎯 新增：文宣品分配計算機 -->
-    <div class="calc-section">
-        <h2>🧮 依人口比例分配文宣品計算機</h2>
-        <div class="calc-input-group">
-            <label for="totalMerch">這批印製總數量：</label>
-            <input type="number" id="totalMerch" placeholder="例如：10000" min="1">
-            <button class="btn btn-save" onclick="calculateMerch()">開始計算</button>
-        </div>
-        <div class="calc-result" id="merchResult" style="display: none;">
-            <!-- 計算結果表單將產生於此 -->
-        </div>
     </div>
 
     <div class="tabs" id="regionTabs">
@@ -220,82 +177,75 @@
     </div>
 </div>
 
-<!-- 彈出視窗：新增拜訪日期 -->
+<!-- 彈出視窗：新增拜訪紀錄 -->
 <div class="modal-overlay" id="modal">
     <div class="modal">
         <h2 id="modalTitle">村里名稱</h2>
-        <p>新增拜訪日期：</p>
-        <input type="date" id="visitDate">
-        <br>
-        <button class="btn btn-save" onclick="saveVisit()">儲存紀錄</button>
-        <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+        
+        <div class="input-group">
+            <label>拜訪日期：</label>
+            <input type="date" id="visitDate">
+        </div>
+        
+        <div class="input-group">
+            <label>發放文宣品項 (選填)：</label>
+            <input type="text" id="visitItem" placeholder="例如：濕紙巾、扇子">
+        </div>
+        
+        <div class="input-group">
+            <label>發放數量 (選填)：</label>
+            <input type="number" id="visitQty" placeholder="例如：150" min="0">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-save" onclick="saveVisit()">儲存紀錄</button>
+            <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+        </div>
         <hr style="margin-top:20px; border:0; border-top:1px solid #eee;">
         <button class="btn btn-clear" onclick="clearVillage()">清除此里所有紀錄</button>
     </div>
 </div>
 
 <script>
-    // --- 【1. 人口與文宣分配設定】 ---
-    const populationData = {
-        '虎尾鎮': { pop: 70000, items: '濕紙巾、環保袋、設計摺頁 (空戰/都會型)' },
-        '土庫鎮': { pop: 28000, items: '菜瓜布、口罩、農民曆 (生活實用型)' },
-        '元長鄉': { pop: 24000, items: '痠痛貼布、扇子、大字體文宣 (長輩適用型)' },
-        '褒忠鄉': { pop: 12000, items: '精緻小紀念品、伴手禮 (一對一深度型)' }
-    };
-    const totalPopulation = 70000 + 28000 + 24000 + 12000;
-
-    function calculateMerch() {
-        const totalItems = parseInt(document.getElementById('totalMerch').value);
-        if (!totalItems || totalItems <= 0) return alert('請輸入有效的文宣品總數！');
-
-        let resultHTML = `
-            <table>
-                <tr>
-                    <th>鄉鎮</th>
-                    <th>人口比例</th>
-                    <th>建議發送數量</th>
-                    <th>適合品項參考</th>
-                </tr>
-        `;
-
-        for (let region in populationData) {
-            const ratio = populationData[region].pop / totalPopulation;
-            const allocated = Math.round(totalItems * ratio);
-            const percent = (ratio * 100).toFixed(1);
-            
-            resultHTML += `
-                <tr>
-                    <td><strong>${region}</strong></td>
-                    <td>${percent}%</td>
-                    <td style="color: #c2410c; font-weight: bold; font-size: 16px;">${allocated.toLocaleString()} 份</td>
-                    <td style="font-size: 13px; color: #555;">${populationData[region].items}</td>
-                </tr>
-            `;
+    // --- 【1. 村里名稱與估計人數資料設定】 ---
+    // 雅鴻，你可以直接在這裡修改冒號後面的數字，換成最精準的選舉人數！
+    const regionData = {
+        '虎尾鎮': { 
+            '東仁里': 2500, '公安里': 2100, '平和里': 1800, '中山里': 1500, '西安里': 1900, 
+            '安慶里': 3200, '建國里': 1600, '光復里': 1400, '新興里': 1300, '穎川里': 1200, 
+            '延平里': 2100, '頂溪里': 1800, '中溪里': 1500, '下溪里': 1400, '三合里': 1600, 
+            '芳草里': 1200, '埒內里': 2300, '堀頭里': 1100, '安溪里': 1700, '興南里': 1500, 
+            '北溪里': 1300, '西屯里': 1400, '墾地里': 1200, '過溪里': 1600, '廉使里': 1800, 
+            '惠來里': 1500, '新吉里': 1400, '立仁里': 2800, '建興里': 2200 
+        },
+        '土庫鎮': { 
+            '忠正里': 1800, '順天里': 1600, '宮北里': 1500, '越港里': 2100, '石廟里': 1900, 
+            '大荖里': 1400, '奮起里': 1300, '埤腳里': 1200, '東平里': 1400, '南平里': 1500, 
+            '西平里': 1300, '北平里': 1200, '崙內里': 1600, '後埔里': 1400, '新庄里': 1500, 
+            '溪邊里': 1100, '興新里': 1300 
+        },
+        '元長鄉': { 
+            '長南村': 1500, '長北村': 1400, '子茂村': 1200, '後湖村': 1100, '山內村': 1300, 
+            '合和村': 1200, '五塊村': 1100, '潭西村': 1400, '潭東村': 1300, '客厝村': 1600, 
+            '卓運村': 1200, '頂寮村': 1100, '下寮村': 1300, '龍岩村': 1400, '西莊村': 1200, 
+            '鹿北村': 1100, '鹿南村': 1200, '瓦磘村': 1300, '內寮村': 1100, '新吉村': 1200, '崙仔村': 1400 
+        },
+        '褒忠鄉': { 
+            '中民村': 1600, '中勝村': 1500, '埔姜村': 1800, '馬鳴村': 1400, '新湖村': 1300, 
+            '有才村': 1200, '田洋村': 1100, '潮厝村': 1200, '龍岩村': 1300 
         }
-        resultHTML += '</table>';
-        
-        const resultDiv = document.getElementById('merchResult');
-        resultDiv.innerHTML = resultHTML;
-        resultDiv.style.display = 'block';
-    }
-
-
-    // --- 【2. 區域與村里拜訪追蹤邏輯】 ---
-    const regions = {
-        '虎尾鎮': ['東仁里', '公安里', '平和里', '中山里', '西安里', '安慶里', '建國里', '光復里', '新興里', '穎川里', '延平里', '頂溪里', '中溪里', '下溪里', '三合里', '芳草里', '埒內里', '堀頭里', '安溪里', '興南里', '北溪里', '西屯里', '墾地里', '過溪里', '廉使里', '惠來里', '新吉里', '立仁里', '建興里'],
-        '土庫鎮': ['忠正里', '順天里', '宮北里', '越港里', '石廟里', '大荖里', '奮起里', '埤腳里', '東平里', '南平里', '西平里', '北平里', '崙內里', '後埔里', '新庄里', '溪邊里', '興新里'],
-        '元長鄉': ['長南村', '長北村', '子茂村', '後湖村', '山內村', '合和村', '五塊村', '潭西村', '潭東村', '客厝村', '卓運村', '頂寮村', '下寮村', '龍岩村', '西莊村', '鹿北村', '鹿南村', '瓦磘村', '內寮村', '新吉村', '崙仔村'],
-        '褒忠鄉': ['中民村', '中勝村', '埔姜村', '馬鳴村', '新湖村', '有才村', '田洋村', '潮厝村', '龍岩村']
     };
 
     let currentRegion = '虎尾鎮';
     let currentVillageSelect = '';
     
-    // 讀取 Local Storage
-    let visitsData = JSON.parse(localStorage.getItem('yunlinCampaignVisits')) || {};
-    for (let region in regions) {
+    // 讀取 Local Storage 資料
+    let visitsData = JSON.parse(localStorage.getItem('yunlinCampaignVisitsV2')) || {};
+    
+    // 確保結構存在
+    for (let region in regionData) {
         if (!visitsData[region]) visitsData[region] = {};
-        regions[region].forEach(village => {
+        Object.keys(regionData[region]).forEach(village => {
             if (!visitsData[region][village]) visitsData[region][village] = [];
         });
     }
@@ -309,7 +259,7 @@
     function renderTabs() {
         const tabsContainer = document.getElementById('regionTabs');
         tabsContainer.innerHTML = '';
-        Object.keys(regions).forEach(region => {
+        Object.keys(regionData).forEach(region => {
             const btn = document.createElement('button');
             btn.className = `tab-btn ${region === currentRegion ? 'active' : ''}`;
             btn.innerText = region;
@@ -321,22 +271,36 @@
     function renderGrid() {
         const grid = document.getElementById('villageGrid');
         grid.innerHTML = '';
-        const villages = regions[currentRegion];
+        
+        const villages = Object.keys(regionData[currentRegion]);
         let visitedCount = 0;
 
         villages.forEach(village => {
-            const dates = visitsData[currentRegion][village];
-            const visitNum = dates.length;
+            const records = visitsData[currentRegion][village];
+            const visitNum = records.length;
+            const popCount = regionData[currentRegion][village]; // 取得預估人數
+            
             if (visitNum > 0) visitedCount++;
 
+            // 決定顏色
             let colorClass = '';
             if (visitNum === 1) colorClass = 'visits-1';
             else if (visitNum === 2) colorClass = 'visits-2';
             else if (visitNum >= 3) colorClass = 'visits-3';
 
+            // 產生歷史紀錄列表
             let dateListHTML = '';
-            dates.forEach((date, index) => {
-                dateListHTML += `<li>${index + 1}訪: ${date}</li>`;
+            records.forEach((record, index) => {
+                // 為了相容舊版只有「日期字串」的資料
+                if (typeof record === 'string') {
+                    dateListHTML += `<li>${index + 1}訪: ${record}</li>`;
+                } else {
+                    let itemText = record.item ? `${record.item}` : '';
+                    let qtyText = record.qty ? ` x ${record.qty}` : '';
+                    let details = (itemText || qtyText) ? `<br><span class="item-text">🎁 ${itemText}${qtyText}</span>` : '';
+                    
+                    dateListHTML += `<li>${index + 1}訪: ${record.date} ${details}</li>`;
+                }
             });
 
             const card = document.createElement('div');
@@ -344,6 +308,7 @@
             card.onclick = () => openModal(village);
             card.innerHTML = `
                 <h3>${village} <span class="visit-count">${visitNum}次</span></h3>
+                <div class="pop-count">👥 預估人數: ${popCount.toLocaleString()} 人</div>
                 <ul class="date-list">${dateListHTML}</ul>
             `;
             grid.appendChild(card);
@@ -357,49 +322,85 @@
     function openModal(village) {
         currentVillageSelect = village;
         document.getElementById('modalTitle').innerText = `${currentRegion} - ${village}`;
+        document.getElementById('visitItem').value = ''; // 清空上次輸入的品項
+        document.getElementById('visitQty').value = '';  // 清空上次輸入的數量
         document.getElementById('modal').style.display = 'flex';
     }
+    
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
     function saveVisit() {
         const dateVal = document.getElementById('visitDate').value;
+        const itemVal = document.getElementById('visitItem').value.trim();
+        const qtyVal = document.getElementById('visitQty').value.trim();
+        
         if (!dateVal) return alert('請選擇日期！');
-        visitsData[currentRegion][currentVillageSelect].push(dateVal);
-        visitsData[currentRegion][currentVillageSelect].sort();
+        
+        // 將紀錄存為物件
+        const newRecord = {
+            date: dateVal,
+            item: itemVal,
+            qty: qtyVal
+        };
+
+        visitsData[currentRegion][currentVillageSelect].push(newRecord);
+        
+        // 依日期排序
+        visitsData[currentRegion][currentVillageSelect].sort((a, b) => {
+            let dateA = typeof a === 'string' ? new Date(a) : new Date(a.date);
+            let dateB = typeof b === 'string' ? new Date(b) : new Date(b.date);
+            return dateA - dateB;
+        });
+        
         saveData();
         closeModal();
         renderGrid();
     }
 
     function clearVillage() {
-        if (confirm(`確定要清除 ${currentVillageSelect} 的所有拜訪紀錄嗎？`)) {
+        if (confirm(`確定要清除 ${currentVillageSelect} 的所有紀錄嗎？`)) {
             visitsData[currentRegion][currentVillageSelect] = [];
             saveData();
             closeModal();
             renderGrid();
         }
     }
-    function saveData() { localStorage.setItem('yunlinCampaignVisits', JSON.stringify(visitsData)); }
+    
+    function saveData() { 
+        // 為了避免與舊版純日期資料衝突，我改了一個新的 localStorage key: yunlinCampaignVisitsV2
+        localStorage.setItem('yunlinCampaignVisitsV2', JSON.stringify(visitsData)); 
+    }
 
-    // --- 【3. 匯出 CSV 邏輯】 ---
+    // --- 【3. 匯出 CSV 邏輯更新】 ---
     function exportToCSV() {
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "鄉鎮,村里,拜訪總數,詳細拜訪日期\n";
+        csvContent += "鄉鎮,村里,預估人數,拜訪總數,詳細拜訪與文宣紀錄\n";
 
         for (let region in visitsData) {
             for (let village in visitsData[region]) {
-                let dates = visitsData[region][village];
-                let visitCount = dates.length;
-                let datesString = dates.join(" / ");
+                let records = visitsData[region][village];
+                let visitCount = records.length;
+                let popCount = regionData[region][village];
+                
                 if (visitCount > 0) {
-                    csvContent += `${region},${village},${visitCount},${datesString}\n`;
+                    // 將物件陣列轉為字串
+                    let detailsString = records.map(r => {
+                        if (typeof r === 'string') return r;
+                        let text = r.date;
+                        if (r.item || r.qty) {
+                            text += `(${r.item || '未填'}x${r.qty || 0})`;
+                        }
+                        return text;
+                    }).join(" | ");
+                    
+                    csvContent += `${region},${village},${popCount},${visitCount},${detailsString}\n`;
                 }
             }
         }
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "雲林第三選區_宣傳進度.csv");
+        link.setAttribute("download", "雲林第三選區_宣傳與文宣進度.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
