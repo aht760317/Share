@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲林第三選區 - 戰情與物資管控系統</title>
+    <title>雲林第三選區 - 戰情地圖與多物資管控系統</title>
     <style>
         :root {
             --primary: #2563eb;
             --bg-gray: #f3f4f6;
             --text-main: #1f2937;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --map-0: #e5e7eb;     /* 0次: 灰色 */
+            --map-1: #10b981;     /* 1次: 綠色 */
+            --map-2: #f59e0b;     /* 2次以上: 橘黃色 */
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,174 +21,194 @@
             padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
-        h1 {
-            text-align: center;
-            color: var(--primary);
-            border-bottom: 2px solid var(--bg-gray);
-            padding-bottom: 15px;
-            margin-top: 0;
-        }
+        h1, h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        h1 { border-bottom: 2px solid var(--bg-gray); padding-bottom: 15px; }
         
-        /* 庫存戰情儀表板 */
-        .dashboard {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-        .stat-box {
-            flex: 1;
-            min-width: 200px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
+        /* --- 戰情足跡地圖區塊 --- */
+        .map-section {
+            background: #1e293b;
+            border-radius: 12px;
             padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            margin-bottom: 30px;
+            color: white;
         }
-        .stat-box h3 { margin: 0 0 10px 0; color: #64748b; font-size: 16px; }
-        .stat-box .value { font-size: 32px; font-weight: bold; color: var(--primary); }
-        .stat-box input {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
-            width: 120px;
-            text-align: center;
-            border: 2px dashed #cbd5e1;
-            border-radius: 6px;
-            padding: 5px;
-            background: white;
-        }
-        .stat-box.alert .value { color: var(--danger); }
-        .stat-box.success .value { color: var(--success); }
-
-        /* 按鈕與頁籤 */
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.8; }
-        .btn-save { background-color: var(--primary); color: white; }
-        .btn-export { background-color: #4f46e5; color: white; margin-bottom: 15px; width: 100%;}
+        .map-title { text-align: center; color: white; margin-bottom: 15px; font-size: 20px; }
+        .map-legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 16px; height: 16px; border-radius: 4px; }
         
+        .map-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .town-zone {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .town-zone h3 { margin: 0 0 10px 0; font-size: 16px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .blocks-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+        .village-block {
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+        .village-block:hover { transform: scale(1.1); box-shadow: 0 0 8px rgba(255,255,255,0.5); }
+        .v-0 { background-color: var(--map-0); color: #64748b; }
+        .v-1 { background-color: var(--map-1); color: white; }
+        .v-2 { background-color: var(--map-2); color: white; }
+
+        /* --- 頁籤與詳細卡片區塊 --- */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
         .tab-btn { padding: 10px 20px; border: none; background-color: var(--bg-gray); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
         .tab-btn.active { background-color: var(--primary); color: white; }
         
-        /* 村里卡片網格 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            cursor: pointer;
-            border: 2px solid #e5e7eb;
-            transition: all 0.2s;
-            position: relative;
-        }
-        .card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-bottom: 40px; }
+        .card { background-color: white; border-radius: 10px; padding: 15px; cursor: pointer; border: 2px solid #e5e7eb; }
+        .card:hover { border-color: var(--primary); }
         .card h3 { margin: 0 0 5px 0; font-size: 18px; display: flex; justify-content: space-between; }
-        
         .pop-badge { font-size: 12px; background: #e2e8f0; padding: 3px 8px; border-radius: 12px; color: #475569; }
-        
-        /* 物資分配資訊區塊 */
-        .merch-info {
-            background: #f1f5f9;
-            border-radius: 6px;
-            padding: 10px;
-            margin: 10px 0;
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-        }
-        .merch-info div { text-align: center; }
-        .merch-info .target { color: #0369a1; font-weight: bold; }
-        .merch-info .actual { color: #047857; font-weight: bold; }
-        
-        /* 迷你進度條 */
-        .mini-progress-bg { background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; margin-bottom: 10px; overflow: hidden; }
-        .mini-progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
-        
-        .date-list { list-style: none; padding: 0; margin: 0; font-size: 13px; color: #64748b; max-height: 80px; overflow-y: auto; }
-        .date-list li { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9; }
-        
-        /* 卡片狀態顏色 (完成度) */
-        .card.status-done { border-color: var(--success); background-color: #ecfdf5; }
-        .card.status-over { border-color: var(--warning); background-color: #fffbeb; }
+        .date-list { list-style: none; padding: 0; margin: 10px 0 0 0; font-size: 13px; color: #333; max-height: 100px; overflow-y: auto; }
+        .date-list li { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #e5e7eb; }
+        .item-tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-top: 4px; }
 
-        /* 彈出視窗 */
+        /* --- 底部多物資倉庫管理區 --- */
+        .inventory-section {
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .inv-add-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .inv-add-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        
+        .inv-table-wrap { overflow-x: auto; }
+        .inv-table { width: 100%; border-collapse: collapse; background: white; text-align: left; }
+        .inv-table th, .inv-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .inv-table th { background: #e2e8f0; color: #333; font-weight: bold; }
+        .stock-safe { color: #10b981; font-weight: bold; }
+        .stock-warn { color: #ef4444; font-weight: bold; }
+        
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-add { background: #10b981; }
+        .btn-del { background: #ef4444; padding: 6px 12px; font-size: 12px; }
+        .btn-export { background-color: #4f46e5; width: 100%; margin-bottom: 20px; }
+
+        /* --- 彈出視窗 --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100; }
-        .modal { background: white; padding: 25px; border-radius: 12px; width: 340px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .modal h2 { margin-top: 0; text-align: center; color: var(--primary); }
+        .modal { background: white; padding: 25px; border-radius: 12px; width: 340px; }
         .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #333; }
-        .modal input[type="date"], .modal input[type="number"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .input-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .modal input, .modal select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; }
-        .btn-cancel { background-color: #94a3b8; color: white; }
+        .modal-actions button { flex: 1; padding: 10px; }
+        .btn-cancel { background: #94a3b8; color: white; border: none; border-radius: 6px; cursor: pointer;}
+        .btn-save { background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📊 選戰物資與戰情管理中心</h1>
+    <h1>📍 雲林第三選區 戰情地圖與派發追蹤</h1>
     
-    <!-- 戰情儀表板 -->
-    <div class="dashboard">
-        <div class="stat-box">
-            <h3>📦 總印製/備貨量 (可修改)</h3>
-            <input type="number" id="globalInventory" value="10000" onchange="updateGlobalInventory()">
+    <!-- 戰情足跡地圖 -->
+    <div class="map-section">
+        <div class="map-title">🗺️ 選區拜訪足跡地圖</div>
+        <div class="map-legend">
+            <div class="legend-item"><div class="legend-box v-0"></div> 尚未拜訪</div>
+            <div class="legend-item"><div class="legend-box v-1"></div> 拜訪 1 次</div>
+            <div class="legend-item"><div class="legend-box v-2"></div> 拜訪 2 次以上 (深耕)</div>
         </div>
-        <div class="stat-box success">
-            <h3>📤 總計已發出數量</h3>
-            <div class="value" id="globalDistributed">0</div>
-        </div>
-        <div class="stat-box alert">
-            <h3>⚠️ 剩餘庫存 (需加印提醒)</h3>
-            <div class="value" id="globalRemaining">0</div>
+        <div class="map-grid-container" id="mapContainer">
+            <!-- 地圖方塊由 JS 渲染 -->
         </div>
     </div>
 
-    <button class="btn btn-export" onclick="exportToCSV()">📥 匯出各里配發報表 (Excel)</button>
+    <!-- 匯出按鈕 -->
+    <button class="btn btn-export" onclick="exportToCSV()">📥 匯出完整戰情報表 (Excel)</button>
 
+    <!-- 村里詳細卡片區塊 -->
     <div class="tabs" id="regionTabs"></div>
-
     <div class="grid" id="villageGrid">
         <!-- 卡片動態生成 -->
+    </div>
+
+    <!-- 底部：多物資庫存管理 -->
+    <div class="inventory-section">
+        <h2>📦 文宣品倉庫管理中心</h2>
+        
+        <div class="inv-add-group">
+            <input type="text" id="newItemName" placeholder="輸入文宣品名稱 (如:濕紙巾)">
+            <input type="number" id="newItemTotal" placeholder="輸入進貨總數" min="1">
+            <button class="btn btn-add" onclick="addInventoryItem()">➕ 新增文宣品</button>
+        </div>
+
+        <div class="inv-table-wrap">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>品項名稱</th>
+                        <th>進貨總數</th>
+                        <th>已發放量</th>
+                        <th>剩餘庫存</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <!-- 庫存列表動態生成 -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- 彈出視窗：新增派發紀錄 -->
 <div class="modal-overlay" id="modal">
     <div class="modal">
-        <h2 id="modalTitle">村里名稱</h2>
+        <h2 id="modalTitle" style="color:var(--primary); margin-top:0;">村里名稱</h2>
         
         <div class="input-group">
-            <label>發放日期：</label>
+            <label>拜訪/派發日期：</label>
             <input type="date" id="visitDate">
         </div>
         
         <div class="input-group">
-            <label>本次實際發放數量 (份)：</label>
-            <input type="number" id="visitQty" placeholder="輸入實際發放數量" min="1">
+            <label>選擇發放的文宣品：</label>
+            <select id="visitItemSelect">
+                <!-- 選項由 JS 生成 -->
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label>發放數量：</label>
+            <input type="number" id="visitQty" placeholder="輸入發放數量" min="0">
         </div>
 
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeModal()">取消</button>
-            <button class="btn btn-save" onclick="saveVisit()">儲存紀錄</button>
+            <button class="btn-cancel" onclick="closeModal()">取消</button>
+            <button class="btn-save" onclick="saveVisit()">儲存紀錄</button>
         </div>
-        <button style="width:100%; margin-top:15px; background:none; border:none; color:#ef4444; text-decoration:underline; cursor:pointer;" onclick="clearVillage()">清除此里紀錄</button>
+        <button style="width:100%; margin-top:15px; background:none; border:none; color:#ef4444; text-decoration:underline; cursor:pointer; font-size:14px;" onclick="clearVillage()">清除此里所有紀錄</button>
     </div>
 </div>
 
 <script>
-    // --- 【1. 人口數據資料庫 (總計約 13.2 萬)】 ---
-    // 雅鴻，這裡的人口數已經根據雲林戶政事務所近期的公開資料，按比例分配至各里。
+    // --- 1. 核心資料區 ---
     const regionData = {
         '虎尾鎮': { '東仁里': 3100, '公安里': 2850, '平和里': 2510, '中山里': 1850, '西安里': 2400, '安慶里': 3820, '建國里': 1950, '光復里': 1750, '新興里': 1650, '穎川里': 1520, '延平里': 2640, '頂溪里': 2100, '中溪里': 1850, '下溪里': 1720, '三合里': 1930, '芳草里': 1550, '埒內里': 2880, '堀頭里': 1410, '安溪里': 2150, '興南里': 1880, '北溪里': 1620, '西屯里': 1760, '墾地里': 1520, '過溪里': 1980, '廉使里': 2250, '惠來里': 1850, '新吉里': 1780, '立仁里': 3450, '建興里': 2750 },
         '土庫鎮': { '忠正里': 2200, '順天里': 1950, '宮北里': 1800, '越港里': 2400, '石廟里': 2100, '大荖里': 1650, '奮起里': 1500, '埤腳里': 1350, '東平里': 1600, '南平里': 1750, '西平里': 1500, '北平里': 1350, '崙內里': 1850, '後埔里': 1600, '新庄里': 1700, '溪邊里': 1250, '興新里': 1500 },
@@ -196,73 +216,63 @@
         '褒忠鄉': { '中民村': 1550, '中勝村': 1450, '埔姜村': 1700, '馬鳴村': 1350, '新湖村': 1250, '有才村': 1100, '田洋村': 1000, '潮厝村': 1100, '龍岩村': 1250 }
     };
 
-    // 計算選區總人口
-    let totalElectorate = 0;
+    let currentRegion = '虎尾鎮';
+    let currentVillageSelect = '';
+
+    // 新的系統儲存 Key，避免與舊版衝突
+    let systemData = JSON.parse(localStorage.getItem('campaignSystemV4')) || {
+        inventory: [
+            { id: 'item_' + Date.now(), name: '預設: 綜合文宣包', total: 10000 }
+        ],
+        visits: {}
+    };
+
+    // 確保拜訪紀錄結構完整
     for (let town in regionData) {
+        if (!systemData.visits[town]) systemData.visits[town] = {};
         for (let village in regionData[town]) {
-            totalElectorate += regionData[town][village];
+            if (!systemData.visits[town][village]) systemData.visits[town][village] = [];
         }
     }
 
-    // --- 【2. 狀態與資料管理】 ---
-    let currentRegion = '虎尾鎮';
-    let currentVillageSelect = '';
-    
-    // 從 Local Storage 讀取總庫存設定與發放紀錄
-    let globalStock = parseInt(localStorage.getItem('campaignInventoryStock')) || 10000;
-    let visitsData = JSON.parse(localStorage.getItem('campaignVisitsV3')) || {};
-    
-    // 初始化總庫存輸入框
-    document.getElementById('globalInventory').value = globalStock;
+    function saveData() { localStorage.setItem('campaignSystemV4', JSON.stringify(systemData)); }
 
-    // 確保紀錄結構存在
-    for (let region in regionData) {
-        if (!visitsData[region]) visitsData[region] = {};
-        Object.keys(regionData[region]).forEach(village => {
-            if (!visitsData[region][village]) visitsData[region][village] = [];
-        });
-    }
-
+    // --- 2. 初始化與主要渲染 ---
     function init() {
+        renderMap();
         renderTabs();
         renderGrid();
-        updateDashboard();
+        renderInventory();
         document.getElementById('visitDate').valueAsDate = new Date();
     }
 
-    // --- 【3. 庫存儀表板更新】 ---
-    function updateGlobalInventory() {
-        globalStock = parseInt(document.getElementById('globalInventory').value) || 0;
-        localStorage.setItem('campaignInventoryStock', globalStock);
-        renderGrid(); // 庫存變動會影響各里配額，需重新渲染
-        updateDashboard();
-    }
+    // 🏆 亮點 1: 渲染戰情足跡地圖
+    function renderMap() {
+        const container = document.getElementById('mapContainer');
+        container.innerHTML = '';
 
-    function updateDashboard() {
-        let totalDistributed = 0;
-        // 遍歷所有紀錄，加總發放數量
-        for (let town in visitsData) {
-            for (let village in visitsData[town]) {
-                visitsData[town][village].forEach(record => {
-                    totalDistributed += parseInt(record.qty) || 0;
-                });
+        for (let town in regionData) {
+            let townDiv = document.createElement('div');
+            townDiv.className = 'town-zone';
+            
+            let blocksHTML = `<h3 style="border-left:4px solid var(--primary); padding-left:8px;">${town}</h3><div class="blocks-wrap">`;
+            
+            for (let village in regionData[town]) {
+                const visitCount = systemData.visits[town][village].length;
+                let colorClass = 'v-0'; // 灰色
+                if (visitCount === 1) colorClass = 'v-1'; // 綠色
+                if (visitCount >= 2) colorClass = 'v-2';  // 橘紅色
+                
+                // 點擊地圖格子也能直接開啟輸入視窗！
+                blocksHTML += `<div class="village-block ${colorClass}" onclick="openModal('${town}', '${village}')" title="${village} (拜訪 ${visitCount} 次)">${village}</div>`;
             }
-        }
-        
-        const remaining = globalStock - totalDistributed;
-        document.getElementById('globalDistributed').innerText = totalDistributed.toLocaleString();
-        document.getElementById('globalRemaining').innerText = remaining.toLocaleString();
-        
-        // 如果快發完了，把剩餘數字變紅色提醒
-        const remainingEl = document.getElementById('globalRemaining').parentElement;
-        if (remaining < (globalStock * 0.1)) {
-            remainingEl.classList.add('alert');
-        } else {
-            remainingEl.classList.remove('alert');
+            blocksHTML += `</div>`;
+            townDiv.innerHTML = blocksHTML;
+            container.appendChild(townDiv);
         }
     }
 
-    // --- 【4. 畫面渲染】 ---
+    // --- 3. 村里卡片與頁籤區 ---
     function renderTabs() {
         const tabsContainer = document.getElementById('regionTabs');
         tabsContainer.innerHTML = '';
@@ -278,132 +288,200 @@
     function renderGrid() {
         const grid = document.getElementById('villageGrid');
         grid.innerHTML = '';
-        const villages = Object.keys(regionData[currentRegion]);
+        
+        Object.keys(regionData[currentRegion]).forEach(village => {
+            const records = systemData.visits[currentRegion][village];
+            const popCount = regionData[currentRegion][village];
+            const visitNum = records.length;
+            
+            // 決定卡片外框顏色 (與地圖同步概念)
+            let borderColor = '#e5e7eb';
+            if (visitNum === 1) borderColor = 'var(--map-1)';
+            if (visitNum >= 2) borderColor = 'var(--map-2)';
 
-        villages.forEach(village => {
-            const records = visitsData[currentRegion][village];
-            const popCount = regionData[currentRegion][village]; 
-            
-            // 核心邏輯：計算該里的「應發數量 (Target)」
-            const popRatio = popCount / totalElectorate; // 該里人口佔比
-            const targetQty = Math.round(globalStock * popRatio); // 按總庫存比例分配
-            
-            // 計算「已發數量 (Actual)」
-            let actualQty = 0;
-            let dateListHTML = '';
-            
-            records.forEach(record => {
-                const qty = parseInt(record.qty) || 0;
-                actualQty += qty;
-                dateListHTML += `<li>📅 ${record.date}：發了 <strong>${qty}</strong> 份</li>`;
+            let listHTML = '';
+            records.forEach(r => {
+                // 找出文宣品名稱
+                let itemName = "未指定文宣";
+                let targetItem = systemData.inventory.find(i => i.id === r.itemId);
+                if (targetItem) itemName = targetItem.name;
+                
+                listHTML += `<li>${r.date} <br><span class="item-tag">🎁 ${itemName} x ${r.qty}</span></li>`;
             });
 
-            // 計算達成率，決定進度條長度與卡片顏色
-            let progressPercent = targetQty > 0 ? (actualQty / targetQty) * 100 : 0;
-            if (progressPercent > 100) progressPercent = 100;
-            
-            let statusClass = '';
-            if (actualQty >= targetQty && targetQty > 0) statusClass = 'status-done'; // 達標 (綠色)
-            if (actualQty > targetQty * 1.2) statusClass = 'status-over'; // 超發太多 (黃色警告)
-
             const card = document.createElement('div');
-            card.className = `card ${statusClass}`;
-            card.onclick = () => openModal(village);
+            card.className = `card`;
+            card.style.borderColor = borderColor;
+            card.style.borderWidth = visitNum > 0 ? '2px' : '1px';
+            card.onclick = () => openModal(currentRegion, village);
             card.innerHTML = `
-                <h3>${village} <span class="pop-badge">👥 ${popCount.toLocaleString()} 人</span></h3>
-                
-                <div class="merch-info">
-                    <div><span style="font-size:12px; color:#64748b;">應帶配額</span><br><span class="target">${targetQty}</span></div>
-                    <div><span style="font-size:12px; color:#64748b;">實際發送</span><br><span class="actual">${actualQty}</span></div>
-                </div>
-                
-                <div class="mini-progress-bg">
-                    <div class="mini-progress-fill" style="width: ${progressPercent}%; ${actualQty >= targetQty ? 'background-color:#10b981;' : 'background-color:#3b82f6;'}"></div>
-                </div>
-                
-                <ul class="date-list">${dateListHTML}</ul>
+                <h3>${village} <span style="font-size:14px; color:${visitNum>0?borderColor:'#999'}; font-weight:bold;">拜訪 ${visitNum} 次</span></h3>
+                <span class="pop-badge">👥 預估人數: ${popCount}</span>
+                <ul class="date-list">${listHTML}</ul>
             `;
             grid.appendChild(card);
         });
     }
 
-    // --- 【5. 資料輸入與儲存】 ---
-    function openModal(village) {
+    // --- 4. 底部倉庫管理邏輯 ---
+    function getUsedQty(itemId) {
+        let used = 0;
+        for (let town in systemData.visits) {
+            for (let village in systemData.visits[town]) {
+                systemData.visits[town][village].forEach(r => {
+                    if (r.itemId === itemId) used += parseInt(r.qty) || 0;
+                });
+            }
+        }
+        return used;
+    }
+
+    function renderInventory() {
+        const tbody = document.getElementById('inventoryTableBody');
+        tbody.innerHTML = '';
+
+        systemData.inventory.forEach(item => {
+            const used = getUsedQty(item.id);
+            const remain = item.total - used;
+            const stockClass = remain < (item.total * 0.2) ? 'stock-warn' : 'stock-safe';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:bold;">${item.name}</td>
+                    <td>${item.total.toLocaleString()}</td>
+                    <td>${used.toLocaleString()}</td>
+                    <td class="${stockClass}">${remain.toLocaleString()}</td>
+                    <td><button class="btn btn-del" onclick="delInventoryItem('${item.id}')">刪除</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function addInventoryItem() {
+        const name = document.getElementById('newItemName').value.trim();
+        const total = parseInt(document.getElementById('newItemTotal').value);
+        
+        if (!name || isNaN(total) || total <= 0) return alert('請輸入完整的品項名稱與數量！');
+        
+        systemData.inventory.push({
+            id: 'item_' + Date.now(),
+            name: name,
+            total: total
+        });
+        
+        document.getElementById('newItemName').value = '';
+        document.getElementById('newItemTotal').value = '';
+        saveData();
+        renderInventory();
+    }
+
+    function delInventoryItem(id) {
+        if(confirm('確定要刪除這個文宣品嗎？(已經記錄在各里的派發數量不會消失)')){
+            systemData.inventory = systemData.inventory.filter(i => i.id !== id);
+            saveData();
+            renderInventory();
+        }
+    }
+
+    // --- 5. 輸入視窗 (Modal) 邏輯 ---
+    function openModal(town, village) {
+        currentRegion = town;  // 以防從地圖點擊跨區
         currentVillageSelect = village;
-        document.getElementById('modalTitle').innerText = `${currentRegion} - ${village}`;
-        document.getElementById('visitQty').value = '';  
+        
+        document.getElementById('modalTitle').innerText = `${town} - ${village}`;
+        document.getElementById('visitQty').value = '';
+        
+        // 🏆 亮點：動態生成下拉選單，並直接顯示【剩餘庫存】！
+        const select = document.getElementById('visitItemSelect');
+        select.innerHTML = '<option value="">-- 單純拜訪 (不發放文宣) --</option>';
+        
+        systemData.inventory.forEach(item => {
+            const remain = item.total - getUsedQty(item.id);
+            select.innerHTML += `<option value="${item.id}">${item.name} (剩餘: ${remain.toLocaleString()})</option>`;
+        });
+
         document.getElementById('modal').style.display = 'flex';
+        // 如果是從地圖點過來的，要同步更新下方頁籤的選中狀態
+        renderTabs(); 
+        renderGrid();
     }
     
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
     function saveVisit() {
         const dateVal = document.getElementById('visitDate').value;
-        const qtyVal = parseInt(document.getElementById('visitQty').value);
+        const itemId = document.getElementById('visitItemSelect').value;
+        let qtyVal = parseInt(document.getElementById('visitQty').value) || 0;
         
         if (!dateVal) return alert('請選擇日期！');
-        if (isNaN(qtyVal) || qtyVal <= 0) return alert('請輸入有效的發放數量！');
         
-        const newRecord = { date: dateVal, qty: qtyVal };
-        visitsData[currentRegion][currentVillageSelect].push(newRecord);
+        // 防呆：有選物品但沒填數量
+        if (itemId && qtyVal <= 0) return alert('請輸入發放數量！');
+        
+        // 庫存檢查
+        if (itemId) {
+            const item = systemData.inventory.find(i => i.id === itemId);
+            const remain = item.total - getUsedQty(itemId);
+            if (qtyVal > remain) {
+                if(!confirm(`警告：你輸入的發放量 (${qtyVal}) 超過庫存剩餘量 (${remain})！\n確定要強行記錄嗎？`)){
+                    return;
+                }
+            }
+        }
+
+        systemData.visits[currentRegion][currentVillageSelect].push({
+            date: dateVal,
+            itemId: itemId,
+            qty: qtyVal
+        });
         
         saveData();
         closeModal();
-        renderGrid();
-        updateDashboard();
+        init(); // 重新渲染地圖、卡片、倉庫
     }
 
     function clearVillage() {
-        if (confirm(`確定要清除 ${currentVillageSelect} 的所有發放紀錄嗎？（庫存會自動加回來）`)) {
-            visitsData[currentRegion][currentVillageSelect] = [];
+        if (confirm(`確定要清除【${currentVillageSelect}】的所有紀錄嗎？\n(扣除的文宣品會自動退回倉庫)`)) {
+            systemData.visits[currentRegion][currentVillageSelect] = [];
             saveData();
             closeModal();
-            renderGrid();
-            updateDashboard();
+            init();
         }
     }
-    
-    function saveData() { 
-        localStorage.setItem('campaignVisitsV3', JSON.stringify(visitsData)); 
-    }
 
-    // --- 【6. 匯出 Excel 報表】 ---
+    // --- 6. 報表匯出 ---
     function exportToCSV() {
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "鄉鎮,村里,人口數,佔比(%),應發配額,已發放總數,達成率(%),詳細發放紀錄\n";
+        csvContent += "鄉鎮,村里,總人口數,拜訪總次數,派發文宣品明細\n";
 
         for (let town in regionData) {
             for (let village in regionData[town]) {
                 const pop = regionData[town][village];
-                const popRatio = pop / totalElectorate;
-                const targetQty = Math.round(globalStock * popRatio);
+                const records = systemData.visits[town][village];
+                const visitCount = records.length;
                 
-                const records = visitsData[town][village];
-                let actualQty = 0;
                 let details = [];
-                
                 records.forEach(r => {
-                    actualQty += parseInt(r.qty) || 0;
-                    details.push(`${r.date}(${r.qty}份)`);
+                    let itemName = "未指定文宣";
+                    let targetItem = systemData.inventory.find(i => i.id === r.itemId);
+                    if (targetItem) itemName = targetItem.name;
+                    details.push(`${r.date}發送[${itemName}]${r.qty}份`);
                 });
                 
-                const percentStr = (popRatio * 100).toFixed(2);
-                const progressStr = targetQty > 0 ? ((actualQty / targetQty) * 100).toFixed(1) : 0;
-                const detailsStr = details.join(" | ");
-
-                csvContent += `${town},${village},${pop},${percentStr}%,${targetQty},${actualQty},${progressStr}%,${detailsStr}\n`;
+                csvContent += `${town},${village},${pop},${visitCount},${details.join(" | ")}\n`;
             }
         }
         
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "選戰物資配發報表_雲林三選區.csv");
+        link.setAttribute("download", "選戰足跡與物資報表_雲林三選區.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
+    // 啟動系統
     init();
 </script>
 </body>
