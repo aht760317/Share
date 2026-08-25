@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲林第三選區 - 村里拜訪追蹤系統</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg-gray: #f3f4f6;
+            --text-main: #1f2937;
+            --visit-1: #bfdbfe; /* 淺藍: 1次 */
+            --visit-2: #60a5fa; /* 中藍: 2次 */
+            --visit-3: #1d4ed8; /* 深藍: 3次以上 */
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-gray);
+            padding-bottom: 10px;
+        }
+        /* 頁籤設計 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: var(--bg-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        /* 進度條 */
+        .progress-container {
+            background-color: var(--bg-gray);
+            border-radius: 10px;
+            height: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #10b981; /* 綠色代表進度 */
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 0;
+            left: 0;
+            font-size: 12px;
+            line-height: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        /* 村里卡片網格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .card {
+            background-color: var(--bg-gray);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            transition: transform 0.1s;
+            min-height: 100px;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .visit-count {
+            font-size: 14px;
+            background: rgba(255,255,255,0.5);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .date-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+        }
+        .date-list li {
+            margin-bottom: 4px;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        /* 依據拜訪次數改變卡片顏色 */
+        .visits-1 { background-color: var(--visit-1); color: #1e3a8a; }
+        .visits-2 { background-color: var(--visit-2); color: #ffffff; }
+        .visits-3 { background-color: var(--visit-3); color: #ffffff; }
+        
+        /* 彈出視窗 (Modal) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        .modal input[type="date"] {
+            width: 90%;
+            padding: 8px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .btn-save { background-color: var(--primary); color: white; }
+        .btn-cancel { background-color: #9ca3af; color: white; }
+        .btn-clear { background-color: #ef4444; color: white; width: 100%; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📍 雲林第三選區 宣傳進度追蹤</h1>
+    
+    <div class="tabs" id="regionTabs">
+        <!-- 頁籤會由 JS 動態生成 -->
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="progress-text" id="progressText">0% (0 / 0 覆蓋率)</div>
+    </div>
+
+    <div class="grid" id="villageGrid">
+        <!-- 村里卡片會由 JS 動態生成 -->
+    </div>
+</div>
+
+<!-- 彈出視窗：新增拜訪日期 -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h2 id="modalTitle">村里名稱</h2>
+        <p>新增拜訪日期：</p>
+        <input type="date" id="visitDate">
+        <br>
+        <button class="btn btn-save" onclick="saveVisit()">儲存紀錄</button>
+        <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+        <hr style="margin-top:20px; border:0; border-top:1px solid #eee;">
+        <button class="btn btn-clear" onclick="clearVillage()">清除此里所有紀錄</button>
+    </div>
+</div>
+
+<script>
+    // 區域與村里基本資料
+    const regions = {
+        '虎尾鎮': ['東仁里', '公安里', '平和里', '中山里', '西安里', '安慶里', '建國里', '光復里', '新興里', '穎川里', '延平里', '頂溪里', '中溪里', '下溪里', '三合里', '芳草里', '埒內里', '堀頭里', '安溪里', '興南里', '北溪里', '西屯里', '墾地里', '過溪里', '廉使里', '惠來里', '新吉里', '立仁里', '建興里'],
+        '土庫鎮': ['忠正里', '順天里', '宮北里', '越港里', '石廟里', '大荖里', '奮起里', '埤腳里', '東平里', '南平里', '西平里', '北平里', '崙內里', '後埔里', '新庄里', '溪邊里', '興新里'],
+        '元長鄉': ['長南村', '長北村', '子茂村', '後湖村', '山內村', '合和村', '五塊村', '潭西村', '潭東村', '客厝村', '卓運村', '頂寮村', '下寮村', '龍岩村', '西莊村', '鹿北村', '鹿南村', '瓦磘村', '內寮村', '新吉村', '崙仔村'],
+        '褒忠鄉': ['中民村', '中勝村', '埔姜村', '馬鳴村', '新湖村', '有才村', '田洋村', '潮厝村', '龍岩村']
+    };
+
+    let currentRegion = '虎尾鎮';
+    let currentVillageSelect = '';
+    
+    // 從 Local Storage 讀取儲存的資料，若無則初始化為空物件
+    let visitsData = JSON.parse(localStorage.getItem('yunlinCampaignVisits')) || {};
+
+    // 確保資料結構存在
+    for (let region in regions) {
+        if (!visitsData[region]) visitsData[region] = {};
+        regions[region].forEach(village => {
+            if (!visitsData[region][village]) visitsData[region][village] = [];
+        });
+    }
+
+    // 初始化頁面
+    function init() {
+        renderTabs();
+        renderGrid();
+        
+        // 設定今天日期為預設值
+        document.getElementById('visitDate').valueAsDate = new Date();
+    }
+
+    // 渲染頁籤
+    function renderTabs() {
+        const tabsContainer = document.getElementById('regionTabs');
+        tabsContainer.innerHTML = '';
+        Object.keys(regions).forEach(region => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${region === currentRegion ? 'active' : ''}`;
+            btn.innerText = region;
+            btn.onclick = () => {
+                currentRegion = region;
+                renderTabs();
+                renderGrid();
+            };
+            tabsContainer.appendChild(btn);
+        });
+    }
+
+    // 渲染村里卡片網格與計算進度
+    function renderGrid() {
+        const grid = document.getElementById('villageGrid');
+        grid.innerHTML = '';
+        
+        const villages = regions[currentRegion];
+        let visitedCount = 0;
+
+        villages.forEach(village => {
+            const dates = visitsData[currentRegion][village];
+            const visitNum = dates.length;
+            
+            if (visitNum > 0) visitedCount++;
+
+            // 決定顏色 Class
+            let colorClass = '';
+            if (visitNum === 1) colorClass = 'visits-1';
+            else if (visitNum === 2) colorClass = 'visits-2';
+            else if (visitNum >= 3) colorClass = 'visits-3';
+
+            // 產生歷史紀錄列表
+            let dateListHTML = '';
+            dates.forEach((date, index) => {
+                dateListHTML += `<li>${index + 1}訪: ${date}</li>`;
+            });
+
+            const card = document.createElement('div');
+            card.className = `card ${colorClass}`;
+            card.onclick = () => openModal(village);
+            card.innerHTML = `
+                <h3>${village} <span class="visit-count">${visitNum}次</span></h3>
+                <ul class="date-list">${dateListHTML}</ul>
+            `;
+            grid.appendChild(card);
+        });
+
+        // 更新進度條 (該區至少去過一次的比例)
+        const percent = Math.round((visitedCount / villages.length) * 100) || 0;
+        document.getElementById('progressBar').style.width = `${percent}%`;
+        document.getElementById('progressText').innerText = `本區覆蓋率: ${percent}% (${visitedCount} / ${villages.length})`;
+    }
+
+    // 開啟彈出視窗
+    function openModal(village) {
+        currentVillageSelect = village;
+        document.getElementById('modalTitle').innerText = `${currentRegion} - ${village}`;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    // 關閉彈出視窗
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    // 儲存拜訪紀錄
+    function saveVisit() {
+        const dateVal = document.getElementById('visitDate').value;
+        if (!dateVal) return alert('請選擇日期！');
+
+        visitsData[currentRegion][currentVillageSelect].push(dateVal);
+        
+        // 依照日期排序 (由新到舊或由舊到新，這邊採由舊到新)
+        visitsData[currentRegion][currentVillageSelect].sort();
+        
+        saveData();
+        closeModal();
+        renderGrid();
+    }
+
+    // 清除該里的紀錄
+    function clearVillage() {
+        if (confirm(`確定要清除 ${currentVillageSelect} 的所有拜訪紀錄嗎？`)) {
+            visitsData[currentRegion][currentVillageSelect] = [];
+            saveData();
+            closeModal();
+            renderGrid();
+        }
+    }
+
+    // 寫入 Local Storage
+    function saveData() {
+        localStorage.setItem('yunlinCampaignVisits', JSON.stringify(visitsData));
+    }
+
+    // 執行初始化
+    init();
+</script>
+</body>
+</html>
