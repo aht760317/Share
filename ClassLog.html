@@ -36,7 +36,6 @@
         .btn-warning { background: var(--warning); color: #fff; }
         .btn-small { padding: 4px 8px; font-size: 13px; margin: 2px; }
         
-        /* 獨立顏色區分的日誌大區塊 */
         .log-block-progress { background: #f0f7ff; border: 2px solid #b6d4fe; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
         .log-block-progress label { color: #084298; font-weight: bold; font-size: 16px; }
 
@@ -59,7 +58,7 @@
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; }
+        .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 8px; border-radius: 4px; }
         
         .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
         .btn-elementary { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-weight: bold; }
@@ -135,7 +134,6 @@
                     <textarea id="log-content-junior" rows="3" placeholder="請在此輸入今日詳細教學進度..."></textarea>
                 </div>
 
-                <!-- 💡 新增：回家作業區塊 -->
                 <div class="log-block-homework">
                     <label>📝 今日回家作業</label>
                     <textarea id="log-homework-junior" rows="3" placeholder="請在此輸入指定回家作業內容與範圍..."></textarea>
@@ -205,7 +203,6 @@
                     <textarea id="log-content-elementary" rows="3" placeholder="請在此輸入今日詳細教學進度..."></textarea>
                 </div>
 
-                <!-- 💡 新增：回家作業區塊 -->
                 <div class="log-block-homework">
                     <label>📝 今日回家作業</label>
                     <textarea id="log-homework-elementary" rows="3" placeholder="請在此輸入指定回家作業內容與範圍..."></textarea>
@@ -319,10 +316,11 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 -->
+        <!-- ⚙️ 系統與課程設定 (含星期、時間、授課老師設定) -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
+                
                 <div class="grid-2">
                     <div>
                         <label>所屬部門：</label>
@@ -333,12 +331,36 @@
                     </div>
                     <div>
                         <label>課程名稱：</label>
-                        <input type="text" id="new-course-name" placeholder="例如：小五自然實驗班 或 國三會考數學班">
+                        <input type="text" id="new-course-name" placeholder="例如：國一數學特訓班">
                     </div>
                 </div>
-                <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px;">＋ 確認加入新課程</button>
 
-                <h4 style="margin-top: 30px; color: var(--primary);">目前系統已有課程清單 (可隨時修改名稱)：</h4>
+                <div class="grid-3">
+                    <div>
+                        <label>上課星期：</label>
+                        <select id="new-course-day">
+                            <option value="星期一">星期一</option>
+                            <option value="星期二">星期二</option>
+                            <option value="星期三">星期三</option>
+                            <option value="星期四">星期四</option>
+                            <option value="星期五">星期五</option>
+                            <option value="星期六">星期六</option>
+                            <option value="星期日">星期日</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>上課時間：</label>
+                        <input type="text" id="new-course-time" placeholder="例如：19:00 - 21:00">
+                    </div>
+                    <div>
+                        <label>授課老師：</label>
+                        <input type="text" id="new-course-teacher" placeholder="例如：王老師">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">＋ 確認加入新課程</button>
+
+                <h4 style="margin-top: 30px; color: var(--primary);">目前系統已有課程清單：</h4>
                 <div class="grid-2">
                     <div>
                         <h5 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 5px;">國小部課程</h5>
@@ -353,7 +375,7 @@
         </section>
     </div>
 
-    <!-- 密驗證彈窗 -->
+    <!-- 密碼驗證彈窗 -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 400px;">
             <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
@@ -433,13 +455,14 @@
             <div class="parent-report-card" id="parent-report-printable">
                 <div class="parent-report-header">
                     <h2 style="margin:0; color:var(--primary);">斗六顧德補習班</h2>
-                    <p style="margin:5px 0 0; color:#666; font-size:14px;">學員今日學習日誌報告</p>
+                    <p style="margin:5px 0 0; color:#666; font-size:14px;">學員學習日誌報告</p>
                 </div>
                 <table class="parent-report-table">
                     <tr><th>日期</th><td id="rep-date"></td></tr>
                     <tr><th>課程名稱</th><td id="rep-course"></td></tr>
                     <tr><th>學生姓名</th><td id="rep-name" style="font-weight:bold; color:var(--primary);"></td></tr>
                     <tr><th>出缺勤狀況</th><td id="rep-attendance"></td></tr>
+                    <tr><th>教學進度</th><td id="rep-progress-content" style="color:#084298;"></td></tr>
                     <tr><th>考試與分數</th><td id="rep-score"></td></tr>
                     <tr><th>作業內容</th><td id="rep-homework-content" style="color:#0e6655; font-weight:bold;"></td></tr>
                     <tr><th>作業完成度</th><td id="rep-homework"></td></tr>
@@ -503,10 +526,17 @@
     </div>
 
     <script>
+        // 💡 課程資料結構升級：支援儲存星期、時間與授課老師
         const state = {
             courses: {
-                elementary: ['小三數學課', '小四英文課'],
-                junior: ['國一數學課', '國二理化課']
+                elementary: [
+                    { name: '小三數學課', day: '星期二', time: '18:30 - 20:30', teacher: '陳老師' },
+                    { name: '小四英文課', day: '星期四', time: '18:30 - 20:30', teacher: '林老師' }
+                ],
+                junior: [
+                    { name: '國一數學課', day: '星期一', time: '19:00 - 21:00', teacher: '王老師' },
+                    { name: '國二理化課', day: '星期三', time: '19:00 - 21:00', teacher: '張老師' }
+                ]
             },
             students: [
                 { 
@@ -516,16 +546,17 @@
                         { label: '媽媽', number: '0912-222-222' },
                         { label: '學生', number: '0912-333-333' }
                     ],
-                    attendanceLogs: [{ date: '2026-08-25', status: '請假', score: '', homework: '完成', detail: '2026-08-25 請假需補課：第一章複習' }],
-                    makeupPending: true, makeupType: 'absent', makeupDesc: '2026-08-25 請假需補課', retestScore: null,
+                    attendanceLogs: [
+                        { date: '2026-08-26', status: '出席', score: 85, homework: '完成', progress: '講解第一章綜合練習題', homeworkContent: '習題 P.15', detail: '出席正常' }
+                    ],
+                    makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
                     notes: [
-                        { date: '2026-08-25', author: '老師建議', text: '上課態度認真。' }
+                        { date: '2026-08-26', author: '老師建議', text: '上課態度認真。' }
                     ]
                 }
             ],
             historyLogs: [
-                { dept: 'junior', date: '2026-08-26', course: '國一數學課', content: '講解第一章綜合練習題，檢討測驗卷。', homework: '習題 P.15 - P.18', notes: '下次上課記得帶計算機。', examUnit: '第一章綜合測驗', examFile: 'exam_01.pdf', answerFile: 'ans_01.pdf' },
-                { dept: 'elementary', date: '2026-08-27', course: '小三數學課', content: '練習九九乘法表應用題。', homework: '完成學習單一張', notes: '同學反應良好。', examUnit: '乘法隨堂考', examFile: '', answerFile: '' }
+                { dept: 'junior', date: '2026-08-26', course: '國一數學課', content: '講解第一章綜合練習題，檢討測驗卷。', homework: '習題 P.15 - P.18', notes: '下次上課記得帶計算機。', examUnit: '第一章綜合測驗', examFile: 'exam_01.pdf', answerFile: 'ans_01.pdf' }
             ],
             selectedClassForProfile: null,
             currentSelectedDate: new Date().toISOString().split('T')[0],
@@ -575,10 +606,8 @@
             if(sectionId === 'system-settings') renderSettingsCourseList();
         }
 
-        // ================= 📋 完整修復的複製家長日誌功能 =================
         function copyParentReportText() {
             const textToCopy = document.getElementById('parent-msg-content').value;
-            
             navigator.clipboard.writeText(textToCopy).then(() => {
                 alert('已成功複製完整日誌文字，可直接貼到 LINE 傳給家長！');
             }).catch(err => {
@@ -591,7 +620,6 @@
             });
         }
 
-        // ================= 🔒 全域密碼驗證機制 (0618) =================
         function verifyPasswordAndExecute(actionCallback) {
             pendingDeleteAction = actionCallback;
             document.getElementById('global-verify-pwd').value = '';
@@ -611,7 +639,6 @@
             }
         }
 
-        // ================= 📅 補課完成日期彈窗 =================
         function promptResolveMakeup(studentId) {
             pendingResolveStudentId = studentId;
             document.getElementById('actual-makeup-date').valueAsDate = new Date();
@@ -633,7 +660,6 @@
             alert(`已成功標記於 ${dateVal} 補課完成！`);
         }
 
-        // ================= 🔄 取消補課狀態 =================
         function resetStudentMakeupStatus(studentId) {
             if(!confirm('確定要取消目前的補課/補考完成狀態，重新回到待補狀態嗎？')) return;
             const s = state.students.find(item => item.id === studentId);
@@ -736,36 +762,68 @@
             `).join('');
         }
 
-        // ================= 系統與其他功能 =================
+        // ================= ⚙️ 系統設定：支援星期、時間、老師設定 =================
         function addCourse() {
             const dept = document.getElementById('new-course-dept').value;
             const name = document.getElementById('new-course-name').value.trim();
+            const day = document.getElementById('new-course-day').value;
+            const time = document.getElementById('new-course-time').value.trim();
+            const teacher = document.getElementById('new-course-teacher').value.trim();
+
             if(!name) return alert('請輸入課程名稱！');
-            state.courses[dept].push(name);
+            
+            state.courses[dept].push({
+                name,
+                day,
+                time: time || '時間未定',
+                teacher: teacher || '老師未定'
+            });
+
             document.getElementById('new-course-name').value = '';
-            alert(`已成功新增課程：「${name}」！`);
+            document.getElementById('new-course-time').value = '';
+            document.getElementById('new-course-teacher').value = '';
+            alert(`已成功新增課程：「${name} (${day} ${time} - ${teacher})」！`);
             init();
         }
 
         function renameCourse(dept, index) {
-            const oldName = state.courses[dept][index];
-            const newName = prompt(`修改「${oldName}」新名稱：`, oldName);
+            const oldCourse = state.courses[dept][index];
+            const oldName = typeof oldCourse === 'object' ? oldCourse.name : oldCourse;
+            
+            const newName = prompt(`修改課程新名稱：`, oldName);
             if(!newName || !newName.trim()) return;
             const trimmedName = newName.trim();
+
+            const newDay = prompt(`修改上課星期：`, typeof oldCourse === 'object' ? oldCourse.day : '星期一');
+            const newTime = prompt(`修改上課時間：`, typeof oldCourse === 'object' ? oldCourse.time : '19:00 - 21:00');
+            const newTeacher = prompt(`修改授課老師：`, typeof oldCourse === 'object' ? oldCourse.teacher : '王老師');
             
-            state.courses[dept][index] = trimmedName;
+            state.courses[dept][index] = {
+                name: trimmedName,
+                day: newDay || '星期一',
+                time: newTime || '時間未定',
+                teacher: newTeacher || '老師未定'
+            };
+
             state.students.forEach(s => { if(s.course === oldName) s.course = trimmedName; });
             state.historyLogs.forEach(l => { if(l.course === oldName) l.course = trimmedName; });
             
-            alert(`課程已成功修改為：「${trimmedName}」！`);
+            alert(`課程資訊已成功更新！`);
             init();
         }
 
         function renderSettingsCourseList() {
-            document.getElementById('elementary-courses-list').innerHTML = state.courses.elementary.map((c, idx) => `
-                <div class="course-item"><span>${c}</span><button class="btn btn-warning btn-small" onclick="renameCourse('elementary', ${idx})">修改</button></div>`).join('');
-            document.getElementById('junior-courses-list').innerHTML = state.courses.junior.map((c, idx) => `
-                <div class="course-item"><span>${c}</span><button class="btn btn-warning btn-small" onclick="renameCourse('junior', ${idx})">修改</button></div>`).join('');
+            document.getElementById('elementary-courses-list').innerHTML = state.courses.elementary.map((c, idx) => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
+                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="renameCourse('elementary', ${idx})">修改</button></div>`;
+            }).join('');
+
+            document.getElementById('junior-courses-list').innerHTML = state.courses.junior.map((c, idx) => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
+                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="renameCourse('junior', ${idx})">修改</button></div>`;
+            }).join('');
         }
 
         function checkNotesForMakeupStatus(studentId) {
@@ -848,26 +906,46 @@
             updateGlobalAlertBanner();
         }
 
-        function generateParentMessage(dept, studentId, studentName) {
-            const date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
-            const course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
-            const homeworkContent = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary').value || '無指定作業';
-            
-            const attendance = document.getElementById(`log-att-${dept}-${studentId}`).value;
-            const score = document.getElementById(`log-score-${dept}-${studentId}`).value;
-            const homework = document.getElementById(`log-hw-${dept}-${studentId}`).value;
-            const noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
+        // ================= 📋 產生家長日誌 =================
+        function generateParentMessage(dept, studentId, studentName, logIndex = null) {
+            const s = state.students.find(item => item.id === studentId);
+            if (!s) return;
+
+            let date, course, progress, homework, attendance, score, hwStatus, noteText;
+
+            if (logIndex !== null && s.attendanceLogs[logIndex]) {
+                const log = s.attendanceLogs[logIndex];
+                date = log.date;
+                course = s.course;
+                progress = log.progress || '依當日進度進行授課';
+                homework = log.homeworkContent || '依老師指定為主';
+                attendance = log.status;
+                score = log.score;
+                hwStatus = log.homework;
+                noteText = log.detail || '學習狀況良好！';
+            } else {
+                date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
+                course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
+                progress = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary').value || '今日正常授課';
+                homework = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary').value || '無指定作業';
+                
+                attendance = document.getElementById(`log-att-${dept}-${studentId}`).value;
+                score = document.getElementById(`log-score-${dept}-${studentId}`).value;
+                hwStatus = document.getElementById(`log-hw-${dept}-${studentId}`).value;
+                noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
+            }
 
             let attText = attendance === '請假' ? '⚠️ 今日請假' : '✔️ 出席正常';
-            let scoreText = score !== '' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '今日無測驗';
-            let hwText = homework === '完成' ? '✅ 已完成' : '❌ 未完成';
+            let scoreText = score !== '' && score !== '今日無測驗' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '今日無測驗';
+            let hwText = hwStatus === '完成' ? '✅ 已完成' : '❌ 未完成';
 
             document.getElementById('rep-date').innerText = date;
             document.getElementById('rep-course').innerText = course;
             document.getElementById('rep-name').innerText = studentName;
             document.getElementById('rep-attendance').innerText = attText;
+            document.getElementById('rep-progress-content').innerText = progress;
             document.getElementById('rep-score').innerText = scoreText;
-            document.getElementById('rep-homework-content').innerText = homeworkContent;
+            document.getElementById('rep-homework-content').innerText = homework;
             document.getElementById('rep-homework').innerText = hwText;
             document.getElementById('rep-note').innerText = noteText;
 
@@ -877,8 +955,9 @@
 學員：${studentName}
 ------------------------
 🔹 出缺勤：${attText}
+📘 教學進度：${progress}
 🔹 考試表現：${scoreText}
-🔹 回家作業：${homeworkContent}
+📝 回家作業：${homework}
 🔹 作業狀態：${hwText}
 🔹 老師評語：${noteText}
 ------------------------
@@ -904,16 +983,20 @@
         }
 
         function updateCourseDropdowns() {
-            document.getElementById('log-course-select-junior').innerHTML = state.courses.junior.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('log-course-select-elementary').innerHTML = state.courses.elementary.map(c => `<option value="${c}">${c}</option>`).join('');
-            const allCourses = [...state.courses.elementary, ...state.courses.junior];
+            const junNames = state.courses.junior.map(c => typeof c === 'object' ? c.name : c);
+            const elemNames = state.courses.elementary.map(c => typeof c === 'object' ? c.name : c);
+
+            document.getElementById('log-course-select-junior').innerHTML = junNames.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('log-course-select-elementary').innerHTML = elemNames.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            const allCourses = [...elemNames, ...junNames];
             document.getElementById('modal-course').innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function renderClassButtons() {
             const container = document.getElementById('class-buttons-container');
-            const elemCourses = state.courses.elementary;
-            const junCourses = state.courses.junior;
+            const elemCourses = state.courses.elementary.map(c => typeof c === 'object' ? c.name : c);
+            const junCourses = state.courses.junior.map(c => typeof c === 'object' ? c.name : c);
             const allCourses = [...junCourses, ...elemCourses];
 
             if(allCourses.length === 0) {
@@ -961,10 +1044,11 @@
                 if(filterMode === 'month') {
                     filteredLogs = filteredLogs.filter(log => new Date(log.date) >= oneMonthAgo);
                 }
-                const logsHtml = filteredLogs.length > 0 ? filteredLogs.map(l => `
-                    <div style="font-size:13px; border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
+                const logsHtml = filteredLogs.length > 0 ? filteredLogs.map((l, lIdx) => `
+                    <div style="font-size:13px; border-bottom:1px dashed #eee; padding-bottom:6px; margin-bottom:6px;">
                         <b>[${l.date}]</b> ${l.status === '請假' ? '<span class="badge-danger">請假</span>' : '<span class="badge-success">出席</span>'}<br>
-                        分數: ${l.score !== '' ? l.score : '今日無測驗'} | 作業: ${l.homework}
+                        分數: ${l.score !== '' ? l.score : '今日無測驗'} | 作業: ${l.homework}<br>
+                        <button class="btn btn-small btn-success" onclick="generateParentMessage('junior', ${s.id}, '${s.name}', ${lIdx})" style="margin-top:3px; padding:2px 6px; font-size:11px;">📋 複製這天家長日誌</button>
                     </div>
                 `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
 
@@ -1157,7 +1241,7 @@
             const dateInputId = dept === 'junior' ? 'log-date-junior' : 'log-date-elementary';
             const courseSelectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
             const contentId = dept === 'junior' ? 'log-content-junior' : 'log-content-elementary';
-            const homeworkId = dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary'; // 💡 抓取回家作業欄位
+            const homeworkId = dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary';
             const notesId = dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary';
             const examUnitId = dept === 'junior' ? 'log-exam-unit-junior' : 'log-exam-unit-elementary';
             const examFileId = dept === 'junior' ? 'log-exam-file-junior' : 'log-exam-file-elementary';
@@ -1167,7 +1251,7 @@
             const date = document.getElementById(dateInputId).value;
             const course = document.getElementById(courseSelectId).value;
             const content = document.getElementById(contentId).value;
-            const homework = document.getElementById(homeworkId).value; // 💡 取得作業內容
+            const homework = document.getElementById(homeworkId).value;
             const notes = document.getElementById(notesId).value;
             const examUnit = document.getElementById(examUnitId).value;
             const examFile = document.getElementById(examFileId).files[0]?.name || '';
@@ -1201,7 +1285,15 @@
                     pendingType = 'lowScore';
                 }
 
-                s.attendanceLogs.unshift({ date, status: att, score, homework: hw, detail: detailText });
+                s.attendanceLogs.unshift({ 
+                    date, 
+                    status: att, 
+                    score, 
+                    homework: hw, 
+                    progress: content, 
+                    homeworkContent: homework, 
+                    detail: detailText 
+                });
                 
                 if(isPending) {
                     s.makeupPending = true;
@@ -1233,10 +1325,10 @@
             container.insertBefore(newLog, container.firstChild);
 
             document.getElementById(contentId).value = '';
-            document.getElementById(homeworkId).value = ''; // 💡 清空作業輸入框
+            document.getElementById(homeworkId).value = '';
             document.getElementById(notesId).value = '';
             document.getElementById(examUnitId).value = '';
-            alert('日誌與試卷儲存成功！主任全校總覽已同步更新。');
+            alert('日誌與試卷儲存成功！主任全校總覽與學生歷史紀錄已同步更新。');
             init();
         }
 
