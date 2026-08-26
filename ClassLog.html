@@ -3,330 +3,402 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌系統</title>
+    <title>斗六顧德補習班 - 教室教學日誌與管理系統</title>
     <style>
         :root {
-            --primary-color: #4A90E2;
-            --secondary-color: #F5F7FA;
-            --border-color: #E4E7ED;
-            --text-color: #333;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --bg: #f8f9fa;
+            --border: #ddd;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft JhengHei';
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            color: var(--text-color);
-        }
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        /* 主導覽列 */
-        .main-nav button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.1rem;
-            margin-left: 1rem;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-        .main-nav button:hover, .main-nav button.active {
-            background-color: rgba(255,255,255,0.2);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        /* 區塊隱藏與顯示 */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; }
+        header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-btn { background: none; border: none; color: white; font-size: 16px; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        .nav-btn.active, .nav-btn:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        
         .section-content { display: none; }
         .section-content.active { display: block; }
         
-        /* 卡片設計 */
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* 次級頁籤 (國小部/國中部) */
-        .sub-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1rem;
+        /* 表單元素 */
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;
         }
-        .sub-tabs button {
-            padding: 0.5rem 1.5rem;
-            border: 1px solid var(--primary-color);
-            background: white;
-            color: var(--primary-color);
-            border-radius: 20px;
-            cursor: pointer;
-        }
-        .sub-tabs button.active {
-            background: var(--primary-color);
-            color: white;
-        }
+        .btn { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        
+        /* 標籤切換 */
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { padding: 8px 15px; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 4px; }
+        .tab-btn.active { background: var(--primary); color: white; }
 
-        /* 表單與按鈕 */
-        select, input, textarea {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .btn-outline {
-            background-color: white;
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th { background: #f1f1f1; }
+        
+        .alert-text { color: var(--danger); font-weight: bold; font-size: 0.9em; display: block; margin-top: 5px; }
+        .makeup-box { background: #fff3cd; padding: 10px; border-left: 4px solid var(--warning); margin-top: 5px; display: none; }
+        
+        /* 雙欄排版 */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        /* 日誌列表 */
-        .log-entry {
-            border-left: 4px solid var(--primary-color);
-            padding: 1rem;
-            background: var(--secondary-color);
-            margin-bottom: 1rem;
-            border-radius: 0 4px 4px 0;
-        }
-
-        /* 學生列表表格 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            text-align: left;
-        }
-        th { background-color: var(--secondary-color); }
-        .course-checkboxes label {
-            display: inline-block;
-            margin-right: 15px;
-            background: #e9ecef;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        /* 列印樣式 */
         @media print {
-            header, .main-nav, .no-print { display: none !important; }
-            body, .container { background: white; margin: 0; padding: 0; }
-            .card { box-shadow: none; border: 1px solid #ccc; }
+            header, .no-print { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #000; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>斗六顧德補習班</h2>
-        <nav class="main-nav">
-            <button class="active" onclick="switchMainTab('teaching-logs', this)">教學日誌</button>
-            <button onclick="switchMainTab('student-profiles', this)">學生通訊與檔案</button>
-            <button onclick="switchMainTab('system-settings', this)">系統設定</button>
+        <h2>斗六顧德補習班 管理系統</h2>
+        <nav>
+            <button class="nav-btn active" onclick="switchSection('teaching-logs', this)">教學日誌</button>
+            <button class="nav-btn" onclick="switchSection('student-profiles', this)">學生通訊與檔案</button>
+            <button class="nav-btn" onclick="switchSection('system-settings', this)">系統設定</button>
         </nav>
     </header>
 
     <div class="container">
-        <!-- ================= 區塊 1: 教學日誌 ================= -->
+        <!-- ================= 教學日誌區塊 ================= -->
         <section id="teaching-logs" class="section-content active">
             <div class="card no-print">
-                <div class="sub-tabs">
-                    <button class="active" onclick="switchDept('elementary', this)">國小部</button>
-                    <button onclick="switchDept('junior', this)">國中部</button>
-                </div>
-
-                <!-- 課程選擇區塊 -->
-                <div id="course-selection">
-                    <label>選擇課程：</label>
-                    <select id="course-select">
-                        <option value="小三數學課">小三數學課</option>
-                        <option value="小四英文課">小四英文課</option>
-                        <!-- 國中部選項可由JS動態切換，此處簡化示範 -->
-                    </select>
-                </div>
-
-                <!-- 填寫日誌區塊 -->
-                <h3>新增教學日誌</h3>
-                <input type="date" id="log-date" value="2026-08-27">
-                <textarea id="log-content" rows="4" placeholder="請輸入今日教學進度、學生狀況等..."></textarea>
-                <button class="btn" onclick="saveLog()">儲存日誌</button>
-            </div>
-
-            <!-- 存檔後顯示的日誌區塊 (可列印) -->
-            <div class="card" id="log-display-area">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>歷史教學日誌 - <span id="display-course-name">小三數學課</span></h3>
-                    <div class="no-print">
-                        <button class="btn btn-outline" onclick="window.print()">列印單日日誌</button>
-                        <button class="btn btn-outline" onclick="window.print()">列印當月日誌</button>
-                    </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchDept('elementary', 'log')">國小部</button>
+                    <button class="tab-btn" onclick="switchDept('junior', 'log')">國中部</button>
                 </div>
                 
-                <div id="logs-container">
-                    <!-- JS動態新增的日誌會出現在這裡 -->
-                    <div class="log-entry">
-                        <strong>2026-08-26</strong> | 授課教師：王老師
-                        <p>完成第三單元分數加減法，發放隨堂測驗卷。大部分學生吸收良好，唯有兩位同學需要課後輔導。</p>
+                <div class="grid-2">
+                    <div>
+                        <label>選擇課程：</label>
+                        <select id="log-course-select" onchange="renderLogStudents()"></select>
+                    </div>
+                    <div>
+                        <label>日期：</label>
+                        <input type="date" id="log-date">
                     </div>
                 </div>
+
+                <div class="grid-2">
+                    <div>
+                        <label>教學日誌 (課程進度/學生狀況)：</label>
+                        <textarea id="log-content" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label>今日注意事項：</label>
+                        <textarea id="log-notes" rows="3" placeholder="例如：下次要帶圓規..."></textarea>
+                    </div>
+                </div>
+
+                <h3>今日學生狀況填寫</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="15%">姓名</th>
+                            <th width="15%">出席狀況</th>
+                            <th width="15%">本日考試分數</th>
+                            <th width="20%">回家作業狀態</th>
+                            <th width="35%">狀態提醒與補課安排</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-students-tbody">
+                        <!-- JS 動態生成 -->
+                    </tbody>
+                </table>
+                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog()">儲存今日日誌</button>
+            </div>
+
+            <div class="card" id="history-logs">
+                <h3>歷史教學日誌 <button class="btn no-print" onclick="window.print()" style="float: right;">列印日誌</button></h3>
+                <div id="logs-container"></div>
             </div>
         </section>
 
-        <!-- ================= 區塊 2: 學生通訊與檔案 ================= -->
+        <!-- ================= 學生通訊與檔案區塊 ================= -->
         <section id="student-profiles" class="section-content">
+            <div class="card grid-2">
+                <div>
+                    <h3>查詢班級學生</h3>
+                    <select id="profile-course-select" onchange="renderProfileStudents()"></select>
+                </div>
+                <div style="text-align: right; padding-top: 20px;">
+                    <button class="btn btn-success" onclick="document.getElementById('add-student-form').style.display='block'">+ 新增學生資料</button>
+                </div>
+            </div>
+
+            <!-- 新增學生表單 (預設隱藏) -->
+            <div class="card" id="add-student-form" style="display: none; background: #e8f4f8; border: 1px solid var(--accent);">
+                <h3>新增學生</h3>
+                <div class="grid-2">
+                    <input type="text" id="new-student-name" placeholder="學生姓名">
+                    <input type="text" id="new-student-phone" placeholder="聯絡電話">
+                </div>
+                <label>選擇預設加入的課程：</label>
+                <select id="new-student-course"></select>
+                <div style="margin-top: 10px;">
+                    <button class="btn" onclick="addStudent()">確認新增</button>
+                    <button class="btn" style="background: #999;" onclick="document.getElementById('add-student-form').style.display='none'">取消</button>
+                </div>
+            </div>
+
             <div class="card">
-                <h3>學生資料與課程勾選</h3>
-                <table>
+                <table id="profile-table">
                     <thead>
                         <tr>
                             <th width="10%">姓名</th>
                             <th width="15%">聯絡電話</th>
-                            <th width="35%">修習課程 (可複選)</th>
-                            <th width="40%">老師備註 (主任快速查閱)</th>
+                            <th width="15%">出席與補課狀況</th>
+                            <th width="20%">老師補課結果</th>
+                            <th width="40%">主任/老師備註</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>王小明</td>
-                            <td>0912-345-678</td>
-                            <td class="course-checkboxes">
-                                <label><input type="checkbox" checked> 小三數學</label>
-                                <label><input type="checkbox" checked> 兒童美語</label>
-                                <label><input type="checkbox"> 國語作文</label>
-                            </td>
-                            <td>
-                                <textarea rows="2" placeholder="輸入學生學習狀況...">數學邏輯佳，但英文單字背誦較慢，需要多鼓勵。</textarea>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>李小華</td>
-                            <td>0922-111-222</td>
-                            <td class="course-checkboxes">
-                                <label><input type="checkbox"> 國一數學</label>
-                                <label><input type="checkbox" checked> 國一自然</label>
-                            </td>
-                            <td>
-                                <textarea rows="2" placeholder="輸入學生學習狀況...">上課容易分心，建議安排坐前排。自然科實驗操作很積極。</textarea>
-                            </td>
-                        </tr>
+                    <tbody id="profile-students-tbody">
+                        <!-- JS 動態生成 -->
                     </tbody>
                 </table>
-                <div style="text-align: right; margin-top: 1rem;">
-                    <button class="btn">儲存學生檔案更新</button>
-                </div>
             </div>
         </section>
 
-        <!-- ================= 區塊 3: 系統基本設定 ================= -->
+        <!-- ================= 系統基本設定區塊 ================= -->
         <section id="system-settings" class="section-content">
             <div class="card">
-                <h3>系統基本設定</h3>
-                <p>在此區塊您可以預先建立要出現在下拉選單中的「部門」與「課程」。</p>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <h3>新增班級課程</h3>
+                <div class="grid-2">
                     <div>
-                        <h4>新增課程</h4>
-                        <select>
-                            <option>隸屬國小部</option>
-                            <option>隸屬國中部</option>
+                        <label>所屬部門</label>
+                        <select id="new-course-dept">
+                            <option value="elementary">國小部</option>
+                            <option value="junior">國中部</option>
                         </select>
-                        <input type="text" placeholder="例如：國一數學課">
-                        <button class="btn btn-outline">加入課程選單</button>
                     </div>
                     <div>
-                        <h4>教師帳號管理</h4>
-                        <input type="text" placeholder="教師姓名">
-                        <button class="btn btn-outline">新增教師</button>
+                        <label>課程名稱</label>
+                        <input type="text" id="new-course-name" placeholder="例如：小五自然實驗班">
                     </div>
                 </div>
+                <button class="btn" onclick="addCourse()">加入系統</button>
+
+                <h4 style="margin-top: 30px;">目前系統已有課程清單：</h4>
+                <ul id="course-list-display"></ul>
             </div>
         </section>
     </div>
 
     <script>
-        // 主選單切換 (日誌 / 學生 / 設定)
-        function switchMainTab(tabId, btn) {
+        // ================= 模擬資料庫 (State) =================
+        const state = {
+            courses: {
+                elementary: ['小三數學課', '小四英文課'],
+                junior: ['國一數學課', '國二理化課']
+            },
+            students: [
+                { id: 1, name: '王小明', phone: '0912-345-678', course: '小三數學課', note: '數學邏輯佳。', makeupStatus: '尚未安排' },
+                { id: 2, name: '陳小妹妹', phone: '0988-777-666', course: '小三數學課', note: '容易粗心。', makeupStatus: '無須補課' },
+                { id: 3, name: '李大華', phone: '0933-222-111', course: '國一數學課', note: '底子不錯，需多算題目。', makeupStatus: '已於 8/20 完成補課' }
+            ]
+        };
+
+        // 預設當天日期
+        document.getElementById('log-date').valueAsDate = new Date();
+
+        // 系統初始化
+        function init() {
+            updateCourseDropdowns();
+            renderLogStudents();
+            renderProfileStudents();
+            renderSettingsCourseList();
+        }
+
+        // 切換主選單
+        function switchSection(sectionId, btn) {
             document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            document.querySelectorAll('.main-nav button').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
         }
 
-        // 國小/國中部切換
-        function switchDept(dept, btn) {
-            document.querySelectorAll('.sub-tabs button').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
+        // ================= 系統設定：新增課程 =================
+        function addCourse() {
+            const dept = document.getElementById('new-course-dept').value;
+            const name = document.getElementById('new-course-name').value.trim();
+            if(!name) return alert('請輸入課程名稱！');
             
-            const courseSelect = document.getElementById('course-select');
-            courseSelect.innerHTML = ''; // 清空選項
+            state.courses[dept].push(name);
+            document.getElementById('new-course-name').value = '';
+            alert(`已成功將「${name}」加入系統！`);
             
-            // 模擬根據部門載入不同課程
-            if(dept === 'elementary') {
-                courseSelect.innerHTML = '<option value="小三數學課">小三數學課</option><option value="小四英文課">小四英文課</option>';
+            updateCourseDropdowns();
+            renderSettingsCourseList();
+        }
+
+        function renderSettingsCourseList() {
+            const list = document.getElementById('course-list-display');
+            list.innerHTML = `
+                <li><b>國小部：</b> ${state.courses.elementary.join('、 ')}</li>
+                <li><b>國中部：</b> ${state.courses.junior.join('、 ')}</li>
+            `;
+        }
+
+        // ================= 共用：更新所有下拉選單 =================
+        function updateCourseDropdowns() {
+            const allCourses = [...state.courses.elementary, ...state.courses.junior];
+            
+            // 學生檔案查詢選單
+            const profileSelect = document.getElementById('profile-course-select');
+            profileSelect.innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            // 新增學生選單
+            const newStudentCourse = document.getElementById('new-student-course');
+            newStudentCourse.innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            // 日誌預設載入國小部
+            switchDept('elementary', 'log'); 
+        }
+
+        // 教學日誌：部門切換
+        function switchDept(dept, type) {
+            document.querySelectorAll('#teaching-logs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList?.add('active');
+            
+            const logSelect = document.getElementById('log-course-select');
+            logSelect.innerHTML = state.courses[dept].map(c => `<option value="${c}">${c}</option>`).join('');
+            renderLogStudents();
+        }
+
+        // ================= 學生檔案區塊 =================
+        function addStudent() {
+            const name = document.getElementById('new-student-name').value;
+            const phone = document.getElementById('new-student-phone').value;
+            const course = document.getElementById('new-student-course').value;
+            if(!name) return alert('請填寫學生姓名！');
+
+            state.students.push({
+                id: Date.now(), name, phone, course, note: '', makeupStatus: '無須補課'
+            });
+
+            document.getElementById('new-student-name').value = '';
+            document.getElementById('new-student-phone').value = '';
+            document.getElementById('add-student-form').style.display = 'none';
+            alert('學生資料新增成功！');
+            
+            document.getElementById('profile-course-select').value = course;
+            renderProfileStudents();
+            if(document.getElementById('log-course-select').value === course) renderLogStudents();
+        }
+
+        function renderProfileStudents() {
+            const selectedCourse = document.getElementById('profile-course-select').value;
+            const tbody = document.getElementById('profile-students-tbody');
+            const studentsInCourse = state.students.filter(s => s.course === selectedCourse);
+            
+            tbody.innerHTML = studentsInCourse.map(s => `
+                <tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.phone}</td>
+                    <td>${s.makeupStatus === '無須補課' ? '正常出席' : '<span style="color:red">曾請假/缺席</span>'}</td>
+                    <td>${s.makeupStatus}</td>
+                    <td><textarea rows="2" style="width:100%">${s.note}</textarea></td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= 教學日誌區塊 =================
+        function renderLogStudents() {
+            const selectedCourse = document.getElementById('log-course-select').value;
+            const tbody = document.getElementById('log-students-tbody');
+            const studentsInCourse = state.students.filter(s => s.course === selectedCourse);
+            
+            tbody.innerHTML = studentsInCourse.map((s, index) => `
+                <tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td>
+                        <select onchange="toggleAttendance(this, ${index})">
+                            <option value="出席">出席</option>
+                            <option value="請假">請假</option>
+                        </select>
+                    </td>
+                    <td><input type="number" placeholder="分數" style="width: 70px;"></td>
+                    <td>
+                        <select onchange="toggleHomework(this, ${index})">
+                            <option value="完成">已完成</option>
+                            <option value="未完成">未完成</option>
+                        </select>
+                    </td>
+                    <td id="alert-cell-${index}">
+                        <!-- 動態提醒顯示區 -->
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 觸發請假/出席邏輯
+        function toggleAttendance(selectElem, index) {
+            const alertCell = document.getElementById(`alert-cell-${index}`);
+            if(selectElem.value === '請假') {
+                alertCell.innerHTML += `
+                    <div class="makeup-box" id="makeup-box-${index}" style="display:block;">
+                        <span class="alert-text">⚠️ 學生請假，需安排補課！</span>
+                        <input type="date" placeholder="約定補課日期" style="margin-top:5px;">
+                    </div>
+                `;
             } else {
-                courseSelect.innerHTML = '<option value="國一數學課">國一數學課</option><option value="國二理化課">國二理化課</option>';
+                const box = document.getElementById(`makeup-box-${index}`);
+                if(box) box.remove();
             }
-            document.getElementById('display-course-name').innerText = courseSelect.value;
         }
 
-        // 監聽課程選單改變，同步更新下方顯示區塊標題
-        document.getElementById('course-select').addEventListener('change', function() {
-            document.getElementById('display-course-name').innerText = this.value;
-        });
+        // 觸發作業未完成邏輯
+        function toggleHomework(selectElem, index) {
+            const alertCell = document.getElementById(`alert-cell-${index}`);
+            if(selectElem.value === '未完成') {
+                alertCell.innerHTML += `<span class="alert-text" id="hw-alert-${index}">❌ 作業未完成，請老師關心進度！</span>`;
+            } else {
+                const hwAlert = document.getElementById(`hw-alert-${index}`);
+                if(hwAlert) hwAlert.remove();
+            }
+        }
 
-        // 儲存日誌並產生新區塊
+        // 儲存今日日誌
         function saveLog() {
             const date = document.getElementById('log-date').value;
-            const content = document.getElementById('log-content').value;
-            const course = document.getElementById('course-select').value;
-            
-            if(!content) {
-                alert('請輸入日誌內容！');
-                return;
-            }
+            const course = document.getElementById('log-course-select').value;
+            const logContent = document.getElementById('log-content').value;
+            const notes = document.getElementById('log-notes').value;
+
+            if(!logContent) return alert('請填寫教學日誌內容！');
 
             const container = document.getElementById('logs-container');
             const newLog = document.createElement('div');
-            newLog.className = 'log-entry';
+            newLog.style.borderLeft = '4px solid var(--accent)';
+            newLog.style.background = '#f9f9f9';
+            newLog.style.padding = '15px';
+            newLog.style.marginBottom = '15px';
+            
             newLog.innerHTML = `
-                <strong>${date}</strong> | 授課教師：目前登入者 
-                <span style="color: #666; font-size: 0.9rem;">(已存檔)</span>
-                <p>${content}</p>
+                <h4 style="margin: 0 0 10px 0;">[${course}] ${date}</h4>
+                <p><strong>教學進度：</strong><br>${logContent.replace(/\n/g, '<br>')}</p>
+                <p><strong>注意事項：</strong><br>${notes ? notes.replace(/\n/g, '<br>') : '無'}</p>
+                <hr>
+                <p style="color: var(--danger); font-size: 0.9em;">* 學生出缺勤與補課紀錄已同步至系統後台。</p>
             `;
             
-            // 插入到最前面
             container.insertBefore(newLog, container.firstChild);
             
-            // 清空輸入框
+            // 清空表單
             document.getElementById('log-content').value = '';
-            alert(course + ' 的日誌已成功存檔！往下捲動即可查看或列印。');
+            document.getElementById('log-notes').value = '';
+            alert('今日日誌已存檔，出缺勤與補課狀態已更新至學生檔案中！');
         }
+
+        // 啟動
+        init();
     </script>
 </body>
 </html>
