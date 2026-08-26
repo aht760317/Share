@@ -3,366 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室日誌</title>
+    <title>斗六顧德補習班 - 教室教學日誌系統</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #34495e;
-            --accent: #3498db;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --warning: #f1c40f;
-            --bg: #f8f9fa;
+            --primary-color: #4A90E2;
+            --secondary-color: #F5F7FA;
+            --border-color: #E4E7ED;
+            --text-color: #333;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft JhengHei';
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: var(--text-color);
+        }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* 主導覽列 */
+        .main-nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            margin-left: 1rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .main-nav button:hover, .main-nav button.active {
+            background-color: rgba(255,255,255,0.2);
         }
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        /* 區塊隱藏與顯示 */
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        
+        /* 卡片設計 */
+        .card {
             background: white;
-            padding: 20px 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
         }
-        h1 {
-            text-align: center;
-            color: var(--primary);
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 10px;
-        }
-        .tabs {
+        
+        /* 次級頁籤 (國小部/國中部) */
+        .sub-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 1rem;
         }
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: #eee;
-            font-size: 16px;
+        .sub-tabs button {
+            padding: 0.5rem 1.5rem;
+            border: 1px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            border-radius: 20px;
             cursor: pointer;
-            border-radius: 4px;
-            transition: 0.3s;
         }
-        .tab-btn.active {
-            background: var(--accent);
+        .sub-tabs button.active {
+            background: var(--primary-color);
             color: white;
-            font-weight: bold;
         }
-        .settings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .form-group label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: var(--secondary);
-        }
-        .form-group input, .form-group select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .log-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .log-section textarea {
+
+        /* 表單與按鈕 */
+        select, input, textarea {
             width: 100%;
-            height: 80px;
-            padding: 10px;
-            border: 1px solid #ccc;
+            padding: 0.8rem;
+            margin: 0.5rem 0 1rem;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            resize: vertical;
             box-sizing: border-box;
         }
-        .attendance-section {
-            margin-top: 30px;
-        }
-        .student-list {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .student-list th, .student-list td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        .student-list th {
-            background-color: var(--primary);
-            color: white;
-        }
-        .status-absent {
-            background-color: #ffeaea;
-        }
-        .makeup-warning {
-            color: var(--danger);
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .makeup-success {
-            color: var(--success);
-            font-weight: bold;
-        }
-        .save-btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background-color: var(--primary);
+        .btn {
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            font-size: 18px;
+            padding: 0.6rem 1.2rem;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 20px;
-            transition: 0.3s;
+            font-size: 1rem;
         }
-        .save-btn:hover {
-            background-color: var(--secondary);
+        .btn-outline {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
         }
-        .btn-small {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
+
+        /* 日誌列表 */
+        .log-entry {
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            background: var(--secondary-color);
+            margin-bottom: 1rem;
+            border-radius: 0 4px 4px 0;
         }
-        .btn-absent { background: var(--danger); color: white; }
-        .btn-makeup { background: var(--warning); color: black; }
-        .btn-done { background: var(--success); color: white; }
+
+        /* 學生列表表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            text-align: left;
+        }
+        th { background-color: var(--secondary-color); }
+        .course-checkboxes label {
+            display: inline-block;
+            margin-right: 15px;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* 列印樣式 */
+        @media print {
+            header, .main-nav, .no-print { display: none !important; }
+            body, .container { background: white; margin: 0; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>斗六顧德補習班 - 教室教學日誌</h1>
-    
-    <!-- 國中/國小 部門切換 -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchDept('junior')">國中部</button>
-        <button class="tab-btn" onclick="switchDept('elementary')">國小部</button>
+    <header>
+        <h2>斗六顧德補習班</h2>
+        <nav class="main-nav">
+            <button class="active" onclick="switchMainTab('teaching-logs', this)">教學日誌</button>
+            <button onclick="switchMainTab('student-profiles', this)">學生通訊與檔案</button>
+            <button onclick="switchMainTab('system-settings', this)">系統設定</button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- ================= 區塊 1: 教學日誌 ================= -->
+        <section id="teaching-logs" class="section-content active">
+            <div class="card no-print">
+                <div class="sub-tabs">
+                    <button class="active" onclick="switchDept('elementary', this)">國小部</button>
+                    <button onclick="switchDept('junior', this)">國中部</button>
+                </div>
+
+                <!-- 課程選擇區塊 -->
+                <div id="course-selection">
+                    <label>選擇課程：</label>
+                    <select id="course-select">
+                        <option value="小三數學課">小三數學課</option>
+                        <option value="小四英文課">小四英文課</option>
+                        <!-- 國中部選項可由JS動態切換，此處簡化示範 -->
+                    </select>
+                </div>
+
+                <!-- 填寫日誌區塊 -->
+                <h3>新增教學日誌</h3>
+                <input type="date" id="log-date" value="2026-08-27">
+                <textarea id="log-content" rows="4" placeholder="請輸入今日教學進度、學生狀況等..."></textarea>
+                <button class="btn" onclick="saveLog()">儲存日誌</button>
+            </div>
+
+            <!-- 存檔後顯示的日誌區塊 (可列印) -->
+            <div class="card" id="log-display-area">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>歷史教學日誌 - <span id="display-course-name">小三數學課</span></h3>
+                    <div class="no-print">
+                        <button class="btn btn-outline" onclick="window.print()">列印單日日誌</button>
+                        <button class="btn btn-outline" onclick="window.print()">列印當月日誌</button>
+                    </div>
+                </div>
+                
+                <div id="logs-container">
+                    <!-- JS動態新增的日誌會出現在這裡 -->
+                    <div class="log-entry">
+                        <strong>2026-08-26</strong> | 授課教師：王老師
+                        <p>完成第三單元分數加減法，發放隨堂測驗卷。大部分學生吸收良好，唯有兩位同學需要課後輔導。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 區塊 2: 學生通訊與檔案 ================= -->
+        <section id="student-profiles" class="section-content">
+            <div class="card">
+                <h3>學生資料與課程勾選</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="10%">姓名</th>
+                            <th width="15%">聯絡電話</th>
+                            <th width="35%">修習課程 (可複選)</th>
+                            <th width="40%">老師備註 (主任快速查閱)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>王小明</td>
+                            <td>0912-345-678</td>
+                            <td class="course-checkboxes">
+                                <label><input type="checkbox" checked> 小三數學</label>
+                                <label><input type="checkbox" checked> 兒童美語</label>
+                                <label><input type="checkbox"> 國語作文</label>
+                            </td>
+                            <td>
+                                <textarea rows="2" placeholder="輸入學生學習狀況...">數學邏輯佳，但英文單字背誦較慢，需要多鼓勵。</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>李小華</td>
+                            <td>0922-111-222</td>
+                            <td class="course-checkboxes">
+                                <label><input type="checkbox"> 國一數學</label>
+                                <label><input type="checkbox" checked> 國一自然</label>
+                            </td>
+                            <td>
+                                <textarea rows="2" placeholder="輸入學生學習狀況...">上課容易分心，建議安排坐前排。自然科實驗操作很積極。</textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button class="btn">儲存學生檔案更新</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 區塊 3: 系統基本設定 ================= -->
+        <section id="system-settings" class="section-content">
+            <div class="card">
+                <h3>系統基本設定</h3>
+                <p>在此區塊您可以預先建立要出現在下拉選單中的「部門」與「課程」。</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4>新增課程</h4>
+                        <select>
+                            <option>隸屬國小部</option>
+                            <option>隸屬國中部</option>
+                        </select>
+                        <input type="text" placeholder="例如：國一數學課">
+                        <button class="btn btn-outline">加入課程選單</button>
+                    </div>
+                    <div>
+                        <h4>教師帳號管理</h4>
+                        <input type="text" placeholder="教師姓名">
+                        <button class="btn btn-outline">新增教師</button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <!-- 基礎設定區塊 -->
-    <div class="settings-grid">
-        <div class="form-group">
-            <label>日期</label>
-            <input type="date" id="classDate">
-        </div>
-        <div class="form-group">
-            <label>授課教師</label>
-            <input type="text" id="teacherName" placeholder="請輸入教師姓名">
-        </div>
-        <div class="form-group">
-            <label>課程名稱</label>
-            <input type="text" id="courseName" placeholder="例如：國一數學特訓班">
-        </div>
-    </div>
-
-    <!-- 教學內容區塊 -->
-    <div class="log-section">
-        <div class="form-group">
-            <label>課程進度區塊</label>
-            <textarea id="progressLog" placeholder="請輸入今日課程進度..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>教學日誌區塊 (學生狀況/突發事件)</label>
-            <textarea id="teachingLog" placeholder="請輸入教學日誌..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>家庭作業區塊</label>
-            <textarea id="homeworkLog" placeholder="請輸入今日指派作業..."></textarea>
-        </div>
-    </div>
-
-    <!-- 學生出缺勤與補課區塊 -->
-    <div class="attendance-section">
-        <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">
-            學生出缺勤與補課狀態 
-            <button class="btn-small btn-makeup" onclick="fetchStudentsFromSystem()" style="float: right;">重新同步繳費系統名單</button>
-        </h3>
-        <table class="student-list">
-            <thead>
-                <tr>
-                    <th>座號</th>
-                    <th>姓名</th>
-                    <th>出缺勤狀態</th>
-                    <th>補課時間安排</th>
-                    <th>主任查核狀態</th>
-                </tr>
-            </thead>
-            <tbody id="studentTableBody">
-                <!-- JS 動態生成 -->
-            </tbody>
-        </table>
-    </div>
-
-    <button class="save-btn" onclick="saveLog()">儲存日誌並發送通知</button>
-</div>
-
-<script>
-    // 預設當天日期
-    document.getElementById('classDate').valueAsDate = new Date();
-    
-    let currentDept = 'junior';
-    
-    // 本機暫存的學生名單資料庫 (模擬從繳費系統拉回來的資料)
-    let studentsData = [];
-
-    // 初始化頁面
-    window.onload = () => {
-        fetchStudentsFromSystem();
-    };
-
-    // 切換部門
-    function switchDept(dept) {
-        currentDept = dept;
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        fetchStudentsFromSystem(); // 切換時重新拉取名單
-    }
-
-    // ★ 核心功能：與繳費系統 API 串接的預留位置 ★
-    async function fetchStudentsFromSystem() {
-        /* 
-        // 實際開發時，你可以在這裡使用 fetch 呼叫你的 API：
-        try {
-            let response = await fetch(`https://your-domain.com/api/students?dept=${currentDept}`);
-            let data = await response.json();
-            studentsData = data;
-        } catch(e) { console.log("API 錯誤", e); }
-        */
-
-        // 這裡先使用假資料模擬繳費系統回傳的名單
-        if (currentDept === 'junior') {
-            studentsData = [
-                { id: 1, name: '王小明', status: 'present', makeupDate: '', makeupStatus: 'none' },
-                { id: 2, name: '李大華', status: 'present', makeupDate: '', makeupStatus: 'none' },
-                { id: 3, name: '林美美', status: 'absent', makeupDate: '', makeupStatus: 'pending' } // 模擬預設請假
-            ];
-        } else {
-            studentsData = [
-                { id: 1, name: '陳小妹妹', status: 'present', makeupDate: '', makeupStatus: 'none' },
-                { id: 2, name: '張小弟', status: 'present', makeupDate: '', makeupStatus: 'none' }
-            ];
+    <script>
+        // 主選單切換 (日誌 / 學生 / 設定)
+        function switchMainTab(tabId, btn) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.main-nav button').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
         }
-        renderTable();
-    }
 
-    // 渲染學生表格
-    function renderTable() {
-        const tbody = document.getElementById('studentTableBody');
-        tbody.innerHTML = '';
+        // 國小/國中部切換
+        function switchDept(dept, btn) {
+            document.querySelectorAll('.sub-tabs button').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const courseSelect = document.getElementById('course-select');
+            courseSelect.innerHTML = ''; // 清空選項
+            
+            // 模擬根據部門載入不同課程
+            if(dept === 'elementary') {
+                courseSelect.innerHTML = '<option value="小三數學課">小三數學課</option><option value="小四英文課">小四英文課</option>';
+            } else {
+                courseSelect.innerHTML = '<option value="國一數學課">國一數學課</option><option value="國二理化課">國二理化課</option>';
+            }
+            document.getElementById('display-course-name').innerText = courseSelect.value;
+        }
 
-        studentsData.forEach((student, index) => {
-            const tr = document.createElement('tr');
-            if(student.status === 'absent') tr.className = 'status-absent';
+        // 監聽課程選單改變，同步更新下方顯示區塊標題
+        document.getElementById('course-select').addEventListener('change', function() {
+            document.getElementById('display-course-name').innerText = this.value;
+        });
 
-            // 出缺勤按鈕邏輯
-            let attendanceHtml = student.status === 'present' 
-                ? `<button class="btn-small" style="background:#eee" onclick="toggleAttendance(${index})">✔️ 出席</button>`
-                : `<button class="btn-small btn-absent" onclick="toggleAttendance(${index})">❌ 請假</button>`;
-
-            // 補課安排邏輯 (如果請假，才顯示補課輸入框)
-            let makeupHtml = '-';
-            let directorStatusHtml = '<span style="color:#aaa;">無須補課</span>';
-
-            if (student.status === 'absent') {
-                if (student.makeupStatus === 'done') {
-                    makeupHtml = `<span class="makeup-success">已於 ${student.makeupDate} 補課完成</span>`;
-                    directorStatusHtml = `<span class="makeup-success">✅ 主任已確認</span> 
-                                          <br><button class="btn-small" style="margin-top:5px" onclick="changeMakeupStatus(${index}, 'pending')">退回</button>`;
-                } else {
-                    // 還沒補課
-                    let dateWarn = student.makeupDate === '' ? '<br><span class="makeup-warning">⚠️ 老師請記得約補課！</span>' : '';
-                    makeupHtml = `
-                        <input type="datetime-local" value="${student.makeupDate}" onchange="updateMakeupDate(${index}, this.value)">
-                        ${dateWarn}
-                    `;
-                    directorStatusHtml = `
-                        <button class="btn-small btn-done" onclick="changeMakeupStatus(${index}, 'done')">標記補課完成</button>
-                    `;
-                }
+        // 儲存日誌並產生新區塊
+        function saveLog() {
+            const date = document.getElementById('log-date').value;
+            const content = document.getElementById('log-content').value;
+            const course = document.getElementById('course-select').value;
+            
+            if(!content) {
+                alert('請輸入日誌內容！');
+                return;
             }
 
-            tr.innerHTML = `
-                <td>${student.id}</td>
-                <td><strong>${student.name}</strong></td>
-                <td>${attendanceHtml}</td>
-                <td>${makeupHtml}</td>
-                <td>${directorStatusHtml}</td>
+            const container = document.getElementById('logs-container');
+            const newLog = document.createElement('div');
+            newLog.className = 'log-entry';
+            newLog.innerHTML = `
+                <strong>${date}</strong> | 授課教師：目前登入者 
+                <span style="color: #666; font-size: 0.9rem;">(已存檔)</span>
+                <p>${content}</p>
             `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // 切換出席/請假狀態
-    function toggleAttendance(index) {
-        if (studentsData[index].status === 'present') {
-            studentsData[index].status = 'absent';
-            studentsData[index].makeupStatus = 'pending';
-            studentsData[index].makeupDate = '';
-        } else {
-            studentsData[index].status = 'present';
-            studentsData[index].makeupStatus = 'none';
+            
+            // 插入到最前面
+            container.insertBefore(newLog, container.firstChild);
+            
+            // 清空輸入框
+            document.getElementById('log-content').value = '';
+            alert(course + ' 的日誌已成功存檔！往下捲動即可查看或列印。');
         }
-        renderTable();
-    }
-
-    // 更新約定補課時間
-    function updateMakeupDate(index, val) {
-        studentsData[index].makeupDate = val;
-        renderTable();
-    }
-
-    // 更改補課完成狀態 (完成/待補)
-    function changeMakeupStatus(index, status) {
-        if (status === 'done' && studentsData[index].makeupDate === '') {
-            alert('請先輸入約定的補課時間，才能標記為完成！');
-            return;
-        }
-        studentsData[index].makeupStatus = status;
-        renderTable();
-    }
-
-    // 儲存日誌的動作
-    function saveLog() {
-        const payload = {
-            department: currentDept,
-            date: document.getElementById('classDate').value,
-            teacher: document.getElementById('teacherName').value,
-            course: document.getElementById('courseName').value,
-            progress: document.getElementById('progressLog').value,
-            teaching: document.getElementById('teachingLog').value,
-            homework: document.getElementById('homeworkLog').value,
-            students: studentsData
-        };
-
-        console.log("準備送往後端的資料：", payload);
-        
-        // 檢查是否有未安排補課時間的學生
-        let unarranged = payload.students.filter(s => s.status === 'absent' && s.makeupDate === '' && s.makeupStatus === 'pending');
-        if(unarranged.length > 0) {
-            alert(`注意！還有 ${unarranged.length} 位請假學生尚未安排補課時間。`);
-        } else {
-            alert('教室日誌已儲存！（實際開發可將 payload 透過 POST API 送至資料庫）');
-        }
-    }
-</script>
-
+    </script>
 </body>
 </html>
