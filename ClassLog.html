@@ -306,7 +306,7 @@
                             <th width="18%">學生姓名與電話 (點擊修改)</th>
                             <th width="18%">出席與請假狀況</th>
                             <th width="22%">補課/補考結果與分數</th>
-                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (僅顯示最近5條，點擊看全部)</th>
+                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (點擊看全部)</th>
                         </tr>
                     </thead>
                     <tbody id="profile-students-tbody">
@@ -316,7 +316,7 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 (含星期、時間、授課老師設定) -->
+        <!-- ⚙️ 系統與課程設定 -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
@@ -449,7 +449,7 @@
         </div>
     </div>
 
-    <!-- 傳給家長的精美圖表日誌預覽彈窗 -->
+    <!-- 傳給家長的精美圖表日誌預覽彈窗 (含授課老師姓名) -->
     <div class="modal-overlay" id="parent-msg-modal">
         <div class="modal-box" style="width: 550px;">
             <div class="parent-report-card" id="parent-report-printable">
@@ -460,6 +460,7 @@
                 <table class="parent-report-table">
                     <tr><th>日期</th><td id="rep-date"></td></tr>
                     <tr><th>課程名稱</th><td id="rep-course"></td></tr>
+                    <tr><th>授課老師</th><td id="rep-teacher" style="font-weight:bold; color:#0e6655;"></td></tr>
                     <tr><th>學生姓名</th><td id="rep-name" style="font-weight:bold; color:var(--primary);"></td></tr>
                     <tr><th>出缺勤狀況</th><td id="rep-attendance"></td></tr>
                     <tr><th>教學進度</th><td id="rep-progress-content" style="color:#084298;"></td></tr>
@@ -526,7 +527,6 @@
     </div>
 
     <script>
-        // 💡 課程資料結構升級：支援儲存星期、時間與授課老師
         const state = {
             courses: {
                 elementary: [
@@ -762,7 +762,7 @@
             `).join('');
         }
 
-        // ================= ⚙️ 系統設定：支援星期、時間、老師設定 =================
+        // ================= ⚙️ 系統與課程設定 =================
         function addCourse() {
             const dept = document.getElementById('new-course-dept').value;
             const name = document.getElementById('new-course-name').value.trim();
@@ -906,7 +906,7 @@
             updateGlobalAlertBanner();
         }
 
-        // ================= 📋 產生家長日誌 =================
+        // ================= 📋 產生家長日誌 (自動抓取授課老師姓名) =================
         function generateParentMessage(dept, studentId, studentName, logIndex = null) {
             const s = state.students.find(item => item.id === studentId);
             if (!s) return;
@@ -935,12 +935,21 @@
                 noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
             }
 
+            // 💡 自動尋找該課程對應的授課老師名字
+            let teacherName = '本班老師';
+            const allCoursesList = [...state.courses.elementary, ...state.courses.junior];
+            const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === course);
+            if (foundCourse && typeof foundCourse === 'object' && foundCourse.teacher) {
+                teacherName = foundCourse.teacher;
+            }
+
             let attText = attendance === '請假' ? '⚠️ 今日請假' : '✔️ 出席正常';
             let scoreText = score !== '' && score !== '今日無測驗' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '今日無測驗';
             let hwText = hwStatus === '完成' ? '✅ 已完成' : '❌ 未完成';
 
             document.getElementById('rep-date').innerText = date;
             document.getElementById('rep-course').innerText = course;
+            document.getElementById('rep-teacher').innerText = teacherName;
             document.getElementById('rep-name').innerText = studentName;
             document.getElementById('rep-attendance').innerText = attText;
             document.getElementById('rep-progress-content').innerText = progress;
@@ -952,6 +961,7 @@
             const plainText = `【斗六顧德補習班 - 學習日誌報告】
 📅 日期：${date}
 📚 課程：${course}
+👨‍🏫 授課老師：${teacherName}
 學員：${studentName}
 ------------------------
 🔹 出缺勤：${attText}
@@ -961,7 +971,7 @@
 🔹 作業狀態：${hwText}
 🔹 老師評語：${noteText}
 ------------------------
-感謝您的配合與支持，顧德補習班關心您的孩子成長！`;
+感謝您的配合與支持，斗六顧德補習班 ${teacherName} 關心您的孩子成長！`;
 
             document.getElementById('parent-msg-content').value = plainText;
             document.getElementById('parent-msg-modal').style.display = 'flex';
