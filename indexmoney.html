@@ -29,7 +29,6 @@
         
         input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
-        
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
 
         /* 快捷按鈕區 */
@@ -41,12 +40,13 @@
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .item-row strong { font-size: 16px; color: #1E293B; }
-        .btn-delete-item { background: #FEE2E2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .btn-delete-item { background: #FEE2E2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .btn-delete-item:hover { background: #FECACA; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
         /* 設定區的條列清單 */
-        .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; height: 300px; overflow-y: auto; }
+        .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; overflow-y: auto; }
 
         /* 紀錄管理與未繳費提醒 */
         .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
@@ -178,38 +178,75 @@
     <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
         <div style="display: flex; gap: 30px;">
-            <!-- 左側：班級設定 -->
-            <div style="flex: 1;">
-                <label>班級與學生名單 (請自行命名，如「2026 六年級」)：</label>
-                <textarea id="setClasses" rows="18" style="width:100%; margin-bottom: 15px;" placeholder="2026 六年級：王小明, 林小華&#10;2026 國一班：陳大頭, 張美麗"></textarea>
-                
-                <label>預設收款經手人 (印在收據上)：</label>
-                <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
-                
-                <button class="btn-submit" style="margin-top:20px;" onclick="saveBasicSettings()">💾 儲存名單與經手人</button>
-            </div>
-            
-            <!-- 右側：快捷項目條列式設定 -->
+            <!-- 左側：班級與學生設定 -->
             <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
+                <h3 style="margin-top: 0; color: var(--primary);">🏫 班級與學生名單設定</h3>
                 
-                <div class="form-row">
-                    <div style="flex: 2;">
-                        <label>項目名稱</label>
-                        <input type="text" id="newConfigName" placeholder="例如：交通車" style="width:100%;">
-                    </div>
+                <!-- 新增班級 -->
+                <label>1. 新增班級 (如「2026 六年級」)：</label>
+                <div class="form-row" style="margin-bottom: 15px;">
                     <div style="flex: 1;">
-                        <label>預設金額(可空白)</label>
-                        <input type="number" id="newConfigPrice" placeholder="如: 1500" style="width:100%;">
+                        <input type="text" id="newConfigClassName" placeholder="輸入班級名稱" style="width:100%;">
                     </div>
                     <div>
-                        <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
+                        <button class="btn-add" style="padding: 10px 15px;" onclick="addClassConfig()">➕ 新增班級</button>
                     </div>
                 </div>
+                
+                <!-- 班級列表 -->
+                <div class="config-list-box" id="classConfigList" style="height: 160px; margin-bottom: 20px;"></div>
 
-                <label style="margin-top: 15px;">已設定的快捷項目：</label>
-                <div class="config-list-box" id="quickItemConfigList">
-                    <!-- 動態載入條列式設定 -->
+                <!-- 新增學生 (點擊班級後顯示) -->
+                <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1;">
+                    <label style="color: var(--accent);">2. 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</label>
+                    <div class="form-row" style="margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <input type="text" id="newConfigStudentName" placeholder="輸入學生姓名" style="width:100%;">
+                        </div>
+                        <div>
+                            <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 學生列表 -->
+                    <div class="config-list-box" id="studentConfigList" style="height: 250px;"></div>
+                </div>
+            </div>
+            
+            <!-- 右側：快捷項目與經手人設定 -->
+            <div style="flex: 1;">
+                <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
+                    
+                    <div class="form-row">
+                        <div style="flex: 2;">
+                            <label>項目名稱</label>
+                            <input type="text" id="newConfigName" placeholder="例如：交通車" style="width:100%;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>預設金額(可空白)</label>
+                            <input type="number" id="newConfigPrice" placeholder="如: 1500" style="width:100%;">
+                        </div>
+                        <div>
+                            <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
+                        </div>
+                    </div>
+
+                    <label style="margin-top: 15px;">已設定的快捷項目：</label>
+                    <div class="config-list-box" id="quickItemConfigList" style="height: 335px;"></div>
+                </div>
+
+                <!-- 收款經手人 -->
+                <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    <label>預設收款經手人 (印在收據上)：</label>
+                    <div class="form-row" style="margin-bottom: 0;">
+                        <div style="flex: 1;">
+                            <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
+                        </div>
+                        <div>
+                            <button class="btn-submit" style="margin-top:0; padding: 10px 15px;" onclick="saveHandler()">💾 儲存</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -222,13 +259,15 @@
 <script>
     // 系統變數
     let config = { classes: {}, handler: "雅鴻" };
-    let quickItems = []; // 存放快捷按鈕的陣列
+    let quickItems = [];
     let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || [];
     let currentClass = "";
     let currentStudent = "";
     let currentBillItems = [];
+    
+    // 設定區變數
+    let editingClass = "";
 
-    // 初始化與日期處理
     function getCurrentMonthStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -242,28 +281,41 @@
     }
 
     function init() {
-        const defaultClassText = "2026 六年級：王小明, 林小華\n2026 國一班：陳大頭, 張美麗\n2026 國二班：黃小琥";
-        const defaultQuickItems = [
-            { name: "國文", price: 2000 },
-            { name: "數學", price: 2000 },
-            { name: "英文", price: 2000 },
-            { name: "交通車", price: null },
-            { name: "餐費", price: 1500 },
-            { name: "教材費", price: null }
-        ];
-        
-        document.getElementById('setClasses').value = localStorage.getItem('gude_cfg_classes') || defaultClassText;
+        // 讀取經手人
         document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
+        config.handler = document.getElementById('setHandler').value;
         
-        // 讀取快捷項目 (如果沒有，載入預設)
+        // 讀取班級名單 (自動從舊版文字框移轉到新版儲存格式)
+        const savedClassesV3 = localStorage.getItem('gude_cfg_classes_v3');
+        if (savedClassesV3) {
+            config.classes = JSON.parse(savedClassesV3);
+        } else {
+            // 舊版移轉邏輯
+            const oldText = localStorage.getItem('gude_cfg_classes') || "2026 六年級：王小明, 林小華\n2026 國一班：陳大頭, 張美麗\n2026 國二班：黃小琥";
+            const classLines = oldText.split('\n');
+            classLines.forEach(line => {
+                if(!line.trim()) return;
+                const parts = line.split(/[:：]/);
+                if(parts.length > 0 && parts[0].trim()) {
+                    config.classes[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
+                }
+            });
+            saveClassesToStorage();
+        }
+
+        // 讀取快捷項目
+        const defaultQuickItems = [
+            { name: "國文", price: 2000 }, { name: "數學", price: 2000 }, { name: "英文", price: 2000 },
+            { name: "交通車", price: null }, { name: "餐費", price: 1500 }, { name: "教材費", price: null }
+        ];
         const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
         quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
         
         document.getElementById('billMonth').value = getCurrentMonthStr();
         document.getElementById('filterMonth').value = getCurrentMonthStr();
         
-        loadBasicSettings();
-        renderQuickItemConfigList(); // 渲染設定區列表
+        renderClassConfigList();
+        renderQuickItemConfigList();
         renderRecords();
     }
 
@@ -277,28 +329,115 @@
         if(tabId === 'create') renderClassGrid();
     }
 
-    // === 系統設定區 (名單與經手人) ===
-    function loadBasicSettings() {
-        config.handler = document.getElementById('setHandler').value.trim();
-        config.classes = {};
-        const classLines = document.getElementById('setClasses').value.split('\n');
-        classLines.forEach(line => {
-            if(!line.trim()) return;
-            const parts = line.split(/[:：]/);
-            if(parts.length > 0 && parts[0].trim()) {
-                config.classes[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
+    // === 系統設定區：班級與學生管理 ===
+    function saveClassesToStorage() {
+        localStorage.setItem('gude_cfg_classes_v3', JSON.stringify(config.classes));
+    }
+
+    function renderClassConfigList() {
+        const list = document.getElementById('classConfigList');
+        const classNames = Object.keys(config.classes);
+        if (classNames.length === 0) {
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚無班級，請於上方新增</div>';
+            return;
+        }
+
+        list.innerHTML = classNames.map(cls => {
+            const studentCount = config.classes[cls].length;
+            const isActive = cls === editingClass;
+            return `
+                <div class="item-row" style="background:${isActive ? '#DBEAFE' : '#F1F5F9'}; border-color:${isActive ? '#3B82F6' : '#E2E8F0'}; cursor: pointer;" onclick="editClassStudents('${cls}')">
+                    <div>
+                        <strong>${cls}</strong>
+                        <span style="font-size:13px; color:#64748B; margin-left:10px;">(${studentCount} 位學生)</span>
+                    </div>
+                    <div>
+                        <button class="btn-delete-item" onclick="event.stopPropagation(); deleteClassConfig('${cls}')">刪除</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function addClassConfig() {
+        const name = document.getElementById('newConfigClassName').value.trim();
+        if (!name) { alert('請輸入班級名稱！'); return; }
+        if (config.classes[name]) { alert('此班級名稱已存在！'); return; }
+        
+        config.classes[name] = [];
+        saveClassesToStorage();
+        document.getElementById('newConfigClassName').value = '';
+        renderClassConfigList();
+        editClassStudents(name); // 自動展開編輯學生
+    }
+
+    function deleteClassConfig(cls) {
+        if (confirm(`確定要刪除「${cls}」嗎？\n注意：這會同時刪除該班級內的所有學生名單！`)) {
+            delete config.classes[cls];
+            if (editingClass === cls) {
+                editingClass = "";
+                document.getElementById('studentConfigSection').style.display = 'none';
             }
-        });
+            saveClassesToStorage();
+            renderClassConfigList();
+        }
     }
 
-    function saveBasicSettings() {
-        localStorage.setItem('gude_cfg_classes', document.getElementById('setClasses').value);
-        localStorage.setItem('gude_cfg_handler', document.getElementById('setHandler').value);
-        loadBasicSettings();
-        alert('名單與經手人設定已儲存！');
+    function editClassStudents(cls) {
+        editingClass = cls;
+        renderClassConfigList(); // 更新高亮狀態
+        document.getElementById('editingClassName').innerText = cls;
+        document.getElementById('studentConfigSection').style.display = 'block';
+        renderStudentConfigList();
     }
 
-    // === 系統設定區 (快捷項目 條列式管理) ===
+    function renderStudentConfigList() {
+        const list = document.getElementById('studentConfigList');
+        const students = config.classes[editingClass];
+        if (!students || students.length === 0) {
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前班上尚無學生，請於上方新增</div>';
+            return;
+        }
+
+        list.innerHTML = students.map((stu, index) => {
+            return `
+                <div class="item-row" style="background:#FFFFFF;">
+                    <div><strong>${index + 1}. ${stu}</strong></div>
+                    <button class="btn-delete-item" onclick="deleteStudentConfig(${index})">移除</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function addStudentConfig() {
+        if (!editingClass) return;
+        const name = document.getElementById('newConfigStudentName').value.trim();
+        if (!name) { alert('請輸入學生姓名！'); return; }
+        if (config.classes[editingClass].includes(name)) { alert('此學生已存在該班級！'); return; }
+        
+        config.classes[editingClass].push(name);
+        saveClassesToStorage();
+        document.getElementById('newConfigStudentName').value = '';
+        renderStudentConfigList();
+        renderClassConfigList(); // 更新外層的人數
+    }
+
+    function deleteStudentConfig(index) {
+        if (!editingClass) return;
+        config.classes[editingClass].splice(index, 1);
+        saveClassesToStorage();
+        renderStudentConfigList();
+        renderClassConfigList(); // 更新外層的人數
+    }
+
+    function saveHandler() {
+        const handler = document.getElementById('setHandler').value.trim();
+        config.handler = handler;
+        localStorage.setItem('gude_cfg_handler', handler);
+        alert('經手人名稱已儲存！');
+    }
+
+    // === 系統設定區：快捷項目管理 ===
     function renderQuickItemConfigList() {
         const list = document.getElementById('quickItemConfigList');
         if (quickItems.length === 0) {
@@ -387,12 +526,10 @@
         renderCurrentItems();
     }
 
-    // 產生開單區的快捷按鈕
     function renderQuickButtonsForBilling() {
         const grid = document.getElementById('quickItemGrid');
         grid.innerHTML = quickItems.map(item => {
             const priceText = item.price ? `$${item.price.toLocaleString()}` : '輸入金額';
-            // 將 defaultPrice 轉成字串傳遞，避免 null 在 JS 傳遞時變 0
             const priceArg = item.price ? item.price : "''"; 
             return `<button class="quick-btn" onclick="clickQuickItem('${item.name}', ${priceArg})">
                         <span>${item.name}</span>
@@ -401,7 +538,6 @@
         }).join('');
     }
 
-    // 點擊快捷按鈕：代入名稱，並跳至金額欄位等待輸入
     function clickQuickItem(name, defaultPrice) {
         document.getElementById('itemName').value = name;
         document.getElementById('itemAmt').value = defaultPrice;
@@ -448,7 +584,6 @@
 
     function saveNewBill() {
         if(currentBillItems.length === 0) { alert('請至少加入一個收費項目！'); return; }
-        
         const yearMonth = document.getElementById('billMonth').value;
         if(!yearMonth) { alert('請選擇收費年月'); return; }
 
