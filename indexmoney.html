@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德補習班-斗六校 - 專業繳費管理系統</title>
+    <title>顧德補習班 - 專業繳費管理系統</title>
     <style>
         :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
@@ -88,6 +88,10 @@
         
         .btn-undo { background: #F59E0B; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; display: none; margin-left: 10px; animation: popIn 0.3s ease; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* 學生名字點擊連結樣式 */
+        .student-link { color: var(--accent); font-weight: bold; cursor: pointer; text-decoration: underline; transition: 0.2s; }
+        .student-link:hover { color: #1D4ED8; }
 
         /* 備註點擊展開樣式 */
         .note-toggle { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #2563EB; font-size: 14px; background: #EEF2FF; padding: 6px 8px; border-radius: 4px; border: 1px solid #BFDBFE; transition: 0.2s; display: inline-block; }
@@ -229,7 +233,6 @@
         <div id="classGrid" class="btn-grid"></div>
         <div id="studentGrid" class="btn-grid" style="display: none; padding: 15px; background: #F1F5F9; border-radius: 8px;"></div>
 
-        <!-- 開單區 -->
         <div id="billingSection" style="display: none;">
             <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
@@ -362,10 +365,10 @@
             <div id="directoryClassGrid" class="btn-grid" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- 學生內部基本資料編輯區 (預設隱藏，點擊表格內的編輯按鈕出現) -->
+        <!-- 學生內部基本資料編輯區 (點擊學生名字出現) -->
         <div id="studentProfileSection" class="no-print" style="display: none; background: #FFFBEB; padding: 20px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             <h4 style="margin-top: 0; color: #B45309; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #FCD34D; padding-bottom: 10px;">
-                <span>🧑‍🎓 正在編輯：<span id="profileStudentName" style="font-size: 20px; font-weight: bold; color: #92400E;"></span></span>
+                <span>🧑‍🎓 正在編輯學生：<span id="profileStudentName" style="font-size: 20px; font-weight: bold; color: #92400E;"></span></span>
                 <div>
                     <button class="btn-select" style="padding: 6px 15px; font-size: 14px; background: #E5E7EB; color: #4B5563; font-weight: bold; margin-right: 10px;" onclick="closeStudentProfile()">❌ 取消</button>
                     <button class="btn-select" style="padding: 6px 15px; font-size: 14px; background: #FDE68A; color: #92400E; border-color: #F59E0B; font-weight: bold;" onclick="saveStudentProfile()">💾 儲存資料</button>
@@ -533,7 +536,7 @@
         }
     }
 
-    // === 第4頁：學生內部聯絡資料編輯與存取 ===
+    // === 第4頁：學生內部聯絡資料編輯與存取 (點擊名字觸發) ===
     function loadStudentProfile(cls, stu) {
         editingProfileClass = cls;
         editingProfileStudent = stu;
@@ -580,7 +583,7 @@
         alert('💾 學生資料與備註已成功儲存！');
         
         closeStudentProfile();
-        showDirectoryClass(currentDirectoryClass); // 重新渲染通訊錄表格
+        showDirectoryClass(currentDirectoryClass); 
     }
 
     function renderDirectoryInit() {
@@ -634,12 +637,12 @@
             html += `<table class="data-table">
                         <thead>
                             <tr>
-                                <th style="width:12%">學生姓名</th>
-                                <th style="width:14%">學校/班級</th>
+                                <th style="width:14%">學生姓名</th>
+                                <th style="width:16%">學校/班級</th>
                                 <th style="width:18%">聯絡人 1</th>
                                 <th style="width:18%">聯絡人 2</th>
                                 <th style="width:18%">聯絡人 3</th>
-                                <th style="width:20%">學生備註</th>
+                                <th style="width:16%">學生備註</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -660,8 +663,8 @@
 
                 html += `<tr>
                     <td style="vertical-align: top;">
-                        <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">${stu}</div>
-                        <button class="btn-edit-item no-print" style="font-size:12px; padding:4px 8px; background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;" onclick="loadStudentProfile('${className}', '${stu}')">✏️ 編輯</button>
+                        <!-- 直接點擊學生名字就能修改資料 -->
+                        <span class="student-link" title="點擊修改資料" onclick="loadStudentProfile('${className}', '${stu}')">${stu}</span>
                     </td>
                     <td style="color:#64748B; font-size:14px; vertical-align: top;">${schoolInfo}</td>
                     <td style="vertical-align: top;">${c1n ? `<span style="color:#92400E; font-size:13px;">${c1n}:</span><br>` : ''}${c1p}</td>
@@ -937,7 +940,7 @@
         
         config.classes[cls].forEach(stu => {
             const btn = document.createElement('button');
-            btn.className = 'btn-select';
+            btn.className = `btn-select`;
             btn.innerText = stu;
             btn.onclick = (e) => selectStudent(stu, e.target);
             sGrid.appendChild(btn);
@@ -950,7 +953,7 @@
         currentStudent = stu;
         document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
-        
+
         const isJH = isJuniorHigh(currentClass);
         if(isJH) {
             document.getElementById('primaryPeriodInput').style.display = 'none';
@@ -1108,7 +1111,6 @@
         
         let filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : [...bills];
         
-        // 智慧排序：未繳費(false)優先顯示在上面，已繳費(true)往下沉
         filteredBills.sort((a, b) => Number(a.isPaid) - Number(b.isPaid));
         
         let primaryCount = 0;
