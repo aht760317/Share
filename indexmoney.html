@@ -35,7 +35,6 @@
         .quick-btn { padding: 10px 15px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; }
         .quick-btn:hover { background: #C7D2FE; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .quick-btn small { font-size: 13px; color: #4F46E5; font-weight: normal; display: block; margin-top: 4px; }
-        /* 優惠按鈕特殊樣式 */
         .quick-btn.discount { background: #FEF3C7; border-color: #FBBF24; color: #B45309; }
         .quick-btn.discount:hover { background: #FDE68A; }
         .quick-btn.discount small { color: #D97706; }
@@ -46,6 +45,8 @@
         .item-row strong { font-size: 16px; color: #1E293B; }
         .btn-delete-item { background: #FEE2E2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; transition: 0.2s; }
         .btn-delete-item:hover { background: #FECACA; }
+        .btn-edit-item { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; transition: 0.2s; margin-right: 5px; }
+        .btn-edit-item:hover { background: #1D4ED8; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
@@ -71,7 +72,7 @@
         .btn-blue { background: var(--accent); }
         .btn-green { background: var(--success); }
         .btn-red { background: var(--danger); }
-        .btn-gray { background: #64748B; } /* 取消繳費按鈕專用顏色 */
+        .btn-gray { background: #64748B; }
         .btn-gray:hover { background: #475569; }
         
         .btn-undo { background: #F59E0B; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; display: none; margin-left: 10px; animation: popIn 0.3s ease; }
@@ -79,14 +80,13 @@
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
-        /* 列印樣式 - 優化為一頁印兩張 */
+        /* 列印樣式 */
         @media screen { .print-only { display: none; } }
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
             
-            /* 單據外框設定 */
             .receipt-box { 
                 border: 2px solid #000; 
                 padding: 20px 30px; 
@@ -95,7 +95,7 @@
                 margin: 0 auto; 
                 box-sizing: border-box; 
                 position: relative; 
-                page-break-inside: avoid; /* 防止單一張收據被跨頁切斷 */
+                page-break-inside: avoid; 
             }
             
             .receipt-title { text-align: center; font-size: 26px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px; }
@@ -107,7 +107,6 @@
             .stamp-area { display: flex; justify-content: space-between; margin-top: 30px; font-size: 16px; align-items: flex-end; }
             .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 100px; color: rgba(0, 0, 0, 0.05); border: 8px solid rgba(0, 0, 0, 0.05); padding: 20px; font-weight: bold; z-index: -1; pointer-events: none; }
             
-            /* 裁切線與強制換頁 */
             .cut-line { text-align: center; font-size: 14px; color: #666; margin: 15px auto; border-top: 1px dashed #666; padding-top: 15px; width: 18cm; font-weight: bold; page-break-inside: avoid; }
             .page-break { page-break-after: always; display: block; height: 0; border: none; margin: 0; padding: 0; }
         }
@@ -386,6 +385,7 @@
                         <span style="font-size:13px; color:#64748B; margin-left:10px;">(${studentCount} 位學生)</span>
                     </div>
                     <div>
+                        <button class="btn-edit-item" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️ 改名</button>
                         <button class="btn-delete-item" onclick="event.stopPropagation(); deleteClassConfig('${cls}')">刪除</button>
                     </div>
                 </div>
@@ -403,6 +403,34 @@
         document.getElementById('newConfigClassName').value = '';
         renderClassConfigList();
         editClassStudents(name);
+    }
+    
+    // 新增：修改班級名稱功能
+    function renameClassConfig(oldName) {
+        const newName = prompt('請輸入新的班級名稱（例如升級後的名稱）：', oldName);
+        if (newName === null) return; // 使用者按取消
+        
+        const trimmedName = newName.trim();
+        if (!trimmedName) { alert('班級名稱不能為空！'); return; }
+        if (trimmedName === oldName) return; // 名稱沒有變更
+        if (config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
+
+        // 無痛轉移名單
+        config.classes[trimmedName] = config.classes[oldName];
+        delete config.classes[oldName];
+
+        // 處理正在編輯的狀態同步
+        if (editingClass === oldName) {
+            editingClass = trimmedName;
+            document.getElementById('editingClassName').innerText = trimmedName;
+        }
+
+        saveClassesToStorage();
+        renderClassConfigList();
+        
+        if (editingClass === trimmedName) {
+            renderStudentConfigList();
+        }
     }
 
     function deleteClassConfig(cls) {
@@ -701,7 +729,6 @@
                     actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認繳款</button>`;
                 } else {
                     actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆收據</button>`;
-                    // 新增：取消繳費按鈕
                     actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
                 }
                 actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
@@ -754,7 +781,6 @@
         }
     }
 
-    // 新增：取消繳費功能
     function cancelPayment(id) {
         if(confirm('【警告】確定要取消這筆繳費紀錄，將狀態恢復為「未繳費」嗎？\n(這通常用於您不小心按錯結帳的情況)')) {
             const bill = bills.find(b => b.id === id);
@@ -774,7 +800,6 @@
         }
     }
 
-    // 單筆列印
     function printDocument(id, type) {
         const bill = bills.find(b => b.id === id);
         if(!bill) return;
@@ -820,7 +845,6 @@
         window.print();
     }
 
-    // 批次列印 (一頁兩張排版)
     function batchPrintNotices() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
