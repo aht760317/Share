@@ -35,6 +35,10 @@
         .quick-btn { padding: 10px 15px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; }
         .quick-btn:hover { background: #C7D2FE; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .quick-btn small { font-size: 13px; color: #4F46E5; font-weight: normal; display: block; margin-top: 4px; }
+        /* 優惠按鈕特殊樣式 */
+        .quick-btn.discount { background: #FEF3C7; border-color: #FBBF24; color: #B45309; }
+        .quick-btn.discount:hover { background: #FDE68A; }
+        .quick-btn.discount small { color: #D97706; }
 
         /* 項目管理與新增區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
@@ -63,35 +67,49 @@
         .unpaid-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB; }
         .unpaid-item:last-child { border-bottom: none; }
 
-        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 5px; color: white; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 5px; color: white; cursor: pointer; }
         .btn-blue { background: var(--accent); }
         .btn-green { background: var(--success); }
         .btn-red { background: var(--danger); }
+        .btn-gray { background: #64748B; } /* 取消繳費按鈕專用顏色 */
+        .btn-gray:hover { background: #475569; }
         
-        /* 復原按鈕特殊樣式 */
         .btn-undo { background: #F59E0B; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; display: none; margin-left: 10px; animation: popIn 0.3s ease; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
-        /* 列印樣式 */
+        /* 列印樣式 - 優化為一頁印兩張 */
         @media screen { .print-only { display: none; } }
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
-            /* 加入分頁設定，批次列印時每一張單子會自動換頁 */
-            .receipt-box { border: 2px solid #000; padding: 30px; width: 100%; max-width: 18cm; margin: 0 auto 20px auto; box-sizing: border-box; position: relative; page-break-after: always; }
-            .receipt-box:last-child { page-break-after: auto; margin-bottom: 0; }
             
-            .receipt-title { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; }
-            .receipt-header { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #000; }
-            .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 12px; font-size: 16px; }
+            /* 單據外框設定 */
+            .receipt-box { 
+                border: 2px solid #000; 
+                padding: 20px 30px; 
+                width: 100%; 
+                max-width: 18cm; 
+                margin: 0 auto; 
+                box-sizing: border-box; 
+                position: relative; 
+                page-break-inside: avoid; /* 防止單一張收據被跨頁切斷 */
+            }
+            
+            .receipt-title { text-align: center; font-size: 26px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px; }
+            .receipt-header { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #000; }
+            .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 8px 12px; font-size: 15px; }
             .receipt-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
-            .receipt-total { text-align: right; font-size: 22px; font-weight: bold; padding-top: 10px; }
-            .stamp-area { display: flex; justify-content: space-between; margin-top: 40px; font-size: 18px; align-items: flex-end; }
+            .receipt-total { text-align: right; font-size: 20px; font-weight: bold; padding-top: 10px; }
+            .stamp-area { display: flex; justify-content: space-between; margin-top: 30px; font-size: 16px; align-items: flex-end; }
             .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 100px; color: rgba(0, 0, 0, 0.05); border: 8px solid rgba(0, 0, 0, 0.05); padding: 20px; font-weight: bold; z-index: -1; pointer-events: none; }
+            
+            /* 裁切線與強制換頁 */
+            .cut-line { text-align: center; font-size: 14px; color: #666; margin: 15px auto; border-top: 1px dashed #666; padding-top: 15px; width: 18cm; font-weight: bold; page-break-inside: avoid; }
+            .page-break { page-break-after: always; display: block; height: 0; border: none; margin: 0; padding: 0; }
         }
     </style>
 </head>
@@ -121,7 +139,7 @@
             
             <!-- 批次列印區塊 -->
             <div>
-                <label style="margin:0; color: #1E40AF; font-weight: bold;">🏫 整班批次列印通知單：</label>
+                <label style="margin:0; color: #1E40AF; font-weight: bold;">🏫 批次列印(環保模式-一頁兩張)：</label>
                 <select id="batchPrintClassSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #CBD5E1; margin-left: 5px;">
                     <!-- 動態載入班級選項 -->
                 </select>
@@ -166,7 +184,7 @@
             </div>
 
             <div class="item-builder">
-                <label style="color:#1E40AF;">👇 1. 點擊下方按鈕選擇項目：</label>
+                <label style="color:#1E40AF;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
                 <div id="quickItemGrid" class="btn-grid" style="margin-bottom: 10px;">
                     <!-- 動態載入快捷按鈕 -->
                 </div>
@@ -177,7 +195,7 @@
                         <input type="text" id="itemName" placeholder="項目名稱 (點擊上方按鈕帶入或手動輸入)" style="width:100%;">
                     </div>
                     <div style="flex: 1;">
-                        <input type="number" id="itemAmt" placeholder="金額 (元)" style="width:100%;">
+                        <input type="number" id="itemAmt" placeholder="金額 (支援負數優惠，如 -300)" style="width:100%;">
                     </div>
                     <div>
                         <button class="btn-add" onclick="addFeeItem()" style="padding: 10px 20px;">➕ 加入清單</button>
@@ -191,7 +209,6 @@
                 </div>
             </div>
 
-            <!-- 修改為存檔不跳轉 -->
             <button class="btn-submit" onclick="saveNewBill()">💾 儲存繳費單 (存檔後可繼續點下一位學生)</button>
         </div>
     </div>
@@ -203,7 +220,6 @@
             <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
                 <h3 style="margin-top: 0; color: var(--primary);">🏫 班級與學生名單設定</h3>
                 
-                <!-- 新增班級 -->
                 <label>1. 新增班級 (如「2026 六年級」)：</label>
                 <div class="form-row" style="margin-bottom: 15px;">
                     <div style="flex: 1;">
@@ -215,10 +231,8 @@
                     </div>
                 </div>
                 
-                <!-- 班級列表 -->
                 <div class="config-list-box" id="classConfigList" style="height: 160px; margin-bottom: 20px;"></div>
 
-                <!-- 新增學生 (點擊班級後顯示) -->
                 <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1;">
                     <label style="color: var(--accent);">2. 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</label>
                     <div class="form-row" style="margin-bottom: 15px;">
@@ -229,8 +243,6 @@
                             <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
                         </div>
                     </div>
-                    
-                    <!-- 學生列表 -->
                     <div class="config-list-box" id="studentConfigList" style="height: 250px;"></div>
                 </div>
             </div>
@@ -239,15 +251,16 @@
             <div style="flex: 1;">
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
+                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300）來設定為優惠折扣按鈕。</p>
                     
                     <div class="form-row">
                         <div style="flex: 2;">
                             <label>項目名稱</label>
-                            <input type="text" id="newConfigName" placeholder="例如：交通車" style="width:100%;">
+                            <input type="text" id="newConfigName" placeholder="例如：全科優惠" style="width:100%;">
                         </div>
                         <div style="flex: 1;">
-                            <label>預設金額(可空白)</label>
-                            <input type="number" id="newConfigPrice" placeholder="如: 1500" style="width:100%;">
+                            <label>預設金額</label>
+                            <input type="number" id="newConfigPrice" placeholder="如: -300" style="width:100%;">
                         </div>
                         <div>
                             <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
@@ -255,7 +268,7 @@
                     </div>
 
                     <label style="margin-top: 15px;">已設定的快捷項目：</label>
-                    <div class="config-list-box" id="quickItemConfigList" style="height: 335px;"></div>
+                    <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
                 <!-- 收款經手人 -->
@@ -287,7 +300,7 @@
     let currentStudent = "";
     let currentBillItems = [];
     
-    // 設定區變數 (含復原備份)
+    // 設定區變數
     let editingClass = "";
     let deletedClassBackup = null;
 
@@ -324,8 +337,9 @@
         }
 
         const defaultQuickItems = [
-            { name: "國文", price: 2000 }, { name: "數學", price: 2000 }, { name: "英文", price: 2000 },
-            { name: "交通車", price: null }, { name: "餐費", price: 1500 }, { name: "教材費", price: null }
+            { name: "國文", price: 2000 }, { name: "數學", price: 2000 }, 
+            { name: "餐費", price: 1500 }, { name: "交通車", price: null }, 
+            { name: "優惠折扣", price: -300 }
         ];
         const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
         quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
@@ -349,7 +363,7 @@
         if(tabId === 'create') renderClassGrid();
     }
 
-    // === 系統設定區：班級與學生管理 (含復原功能) ===
+    // === 系統設定區 ===
     function saveClassesToStorage() {
         localStorage.setItem('gude_cfg_classes_v3', JSON.stringify(config.classes));
         updateBatchPrintDropdown();
@@ -362,7 +376,6 @@
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚無班級，請於上方新增</div>';
             return;
         }
-
         list.innerHTML = classNames.map(cls => {
             const studentCount = config.classes[cls].length;
             const isActive = cls === editingClass;
@@ -394,12 +407,7 @@
 
     function deleteClassConfig(cls) {
         if (confirm(`確定要刪除「${cls}」嗎？\n注意：這會同時刪除該班級內的所有學生名單！`)) {
-            // 備份資料以供復原
-            deletedClassBackup = {
-                name: cls,
-                students: [...config.classes[cls]]
-            };
-            
+            deletedClassBackup = { name: cls, students: [...config.classes[cls]] };
             delete config.classes[cls];
             if (editingClass === cls) {
                 editingClass = "";
@@ -407,8 +415,6 @@
             }
             saveClassesToStorage();
             renderClassConfigList();
-            
-            // 顯示復原按鈕
             document.getElementById('undoClassBtn').style.display = 'inline-block';
         }
     }
@@ -418,8 +424,6 @@
             config.classes[deletedClassBackup.name] = deletedClassBackup.students;
             saveClassesToStorage();
             renderClassConfigList();
-            
-            // 隱藏復原按鈕並清除備份
             document.getElementById('undoClassBtn').style.display = 'none';
             deletedClassBackup = null;
             alert('已成功復原剛才刪除的班級！');
@@ -441,7 +445,6 @@
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前班上尚無學生，請於上方新增</div>';
             return;
         }
-
         list.innerHTML = students.map((stu, index) => {
             return `
                 <div class="item-row" style="background:#FFFFFF;">
@@ -487,14 +490,15 @@
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚未設定任何項目</div>';
             return;
         }
-
         list.innerHTML = quickItems.map((item, index) => {
-            const priceText = item.price ? `$ ${item.price.toLocaleString()}` : '無預設金額';
+            const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
+            const rowStyle = (item.price !== null && item.price < 0) ? 'background:#FEF3C7; border-color:#FDE68A;' : 'background:#F1F5F9;';
+            const priceStyle = (item.price !== null && item.price < 0) ? 'color:#B45309;' : 'color:#64748B;';
             return `
-                <div class="item-row" style="background:#F1F5F9;">
+                <div class="item-row" style="${rowStyle}">
                     <div>
                         <strong>${item.name}</strong>
-                        <span style="font-size:14px; color:#64748B; margin-left:10px;">(${priceText})</span>
+                        <span style="font-size:14px; ${priceStyle} margin-left:10px;">(${priceText})</span>
                     </div>
                     <button class="btn-delete-item" onclick="removeQuickItemConfig(${index})">刪除</button>
                 </div>
@@ -523,7 +527,7 @@
         renderQuickItemConfigList();
     }
 
-    // === 開單作業區 (連續開單不跳轉) ===
+    // === 開單作業區 ===
     function renderClassGrid() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -572,9 +576,11 @@
     function renderQuickButtonsForBilling() {
         const grid = document.getElementById('quickItemGrid');
         grid.innerHTML = quickItems.map(item => {
-            const priceText = item.price ? `$${item.price.toLocaleString()}` : '輸入金額';
-            const priceArg = item.price ? item.price : "''"; 
-            return `<button class="quick-btn" onclick="clickQuickItem('${item.name}', ${priceArg})">
+            const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '輸入金額';
+            const priceArg = item.price !== null ? item.price : "''"; 
+            const isDiscount = item.price !== null && item.price < 0;
+            const btnClass = isDiscount ? 'quick-btn discount' : 'quick-btn';
+            return `<button class="${btnClass}" onclick="clickQuickItem('${item.name}', ${priceArg})">
                         <span>${item.name}</span>
                         <small>${priceText}</small>
                     </button>`;
@@ -590,7 +596,11 @@
     function addFeeItem() {
         const name = document.getElementById('itemName').value.trim();
         const amt = parseInt(document.getElementById('itemAmt').value);
-        if(!name || isNaN(amt) || amt <= 0) { alert('請確認「項目名稱」與「金額」都有正確輸入！'); return; }
+        
+        if(!name || isNaN(amt) || amt === 0) { 
+            alert('請確認「項目名稱」與「金額」都有正確輸入！\n(金額不可為0，若為優惠折抵請輸入負數，例如：-300)'); 
+            return; 
+        }
         
         currentBillItems.push({ name: name, amount: amt });
         document.getElementById('itemName').value = '';
@@ -612,11 +622,12 @@
         } else {
             list.innerHTML = currentBillItems.map((item, index) => {
                 total += item.amount;
+                const amtStyle = item.amount < 0 ? 'color: var(--danger);' : 'color: var(--accent);';
                 return `
                     <div class="item-row">
                         <strong>${index + 1}. ${item.name}</strong>
                         <div>
-                            <span style="margin-right: 15px; color: var(--accent); font-weight: bold;">$ ${item.amount.toLocaleString()}</span>
+                            <span style="margin-right: 15px; font-weight: bold; ${amtStyle}">$ ${item.amount.toLocaleString()}</span>
                             <button class="btn-delete-item" onclick="removeFeeItem(${index})">刪除</button>
                         </div>
                     </div>`;
@@ -639,17 +650,15 @@
             className: currentClass,
             studentName: currentStudent,
             items: [...currentBillItems],
-            total: total,
+            total: total, 
             isPaid: false
         };
         
         bills.unshift(newBill);
         localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
         
-        // 成功提示，不跳轉、不列印
         alert(`✅ 已成功儲存【${currentStudent}】的繳費單！\n您可以直接點選下一位學生繼續開單。`);
         
-        // 清空表單狀態，準備迎接下一位學生
         currentBillItems = [];
         renderCurrentItems();
         document.getElementById('itemName').value = '';
@@ -692,6 +701,8 @@
                     actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認繳款</button>`;
                 } else {
                     actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆收據</button>`;
+                    // 新增：取消繳費按鈕
+                    actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
                 }
                 actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
 
@@ -732,15 +743,25 @@
     }
 
     function markAsPaid(id) {
-        if(confirm('確認家長已經繳納這筆費用了嗎？\n(確認後系統將轉為【繳費完成】，並從欠費名單中移除)')) {
+        const bill = bills.find(b => b.id === id);
+        if(bill) {
+            bill.isPaid = true;
+            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
+            renderRecords();
+            if(confirm('已結帳成功！\n需要立刻列印「正式收據」給家長嗎？')) {
+                printDocument(id, 'receipt');
+            }
+        }
+    }
+
+    // 新增：取消繳費功能
+    function cancelPayment(id) {
+        if(confirm('【警告】確定要取消這筆繳費紀錄，將狀態恢復為「未繳費」嗎？\n(這通常用於您不小心按錯結帳的情況)')) {
             const bill = bills.find(b => b.id === id);
             if(bill) {
-                bill.isPaid = true;
+                bill.isPaid = false;
                 localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
                 renderRecords();
-                if(confirm('已結帳成功！需要立刻列印「正式收據」給家長嗎？')) {
-                    printDocument(id, 'receipt');
-                }
             }
         }
     }
@@ -799,7 +820,7 @@
         window.print();
     }
 
-    // 批次列印 (整班列印)
+    // 批次列印 (一頁兩張排版)
     function batchPrintNotices() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
@@ -815,7 +836,7 @@
         }
 
         let allHtml = '';
-        targetBills.forEach((bill) => {
+        targetBills.forEach((bill, index) => {
             const printDate = new Date().toLocaleDateString();
             const displayMonth = formatDisplayMonth(bill.yearMonth);
 
@@ -827,7 +848,7 @@
                 </tr>
             `).join('');
 
-            allHtml += `
+            const receiptHtml = `
                 <div class="receipt-box">
                     <div class="receipt-title">顧德補習班 ${displayMonth} 繳費通知單</div>
                     <div class="receipt-header">
@@ -842,9 +863,17 @@
                         <tbody>${tableRows}</tbody>
                     </table>
                     <div class="receipt-total">總計： $ ${bill.total.toLocaleString()} 元</div>
-                    <div style="margin-top: 30px; font-size: 16px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>
+                    <div style="margin-top: 25px; font-size: 15px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>
                 </div>
             `;
+
+            allHtml += receiptHtml;
+
+            if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
+                allHtml += '<div class="page-break"></div>';
+            } else if (index !== targetBills.length - 1) {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
         });
 
         document.getElementById('printArea').innerHTML = allHtml;
