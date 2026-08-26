@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧德補習班 - 繳費系統</title>
+    <style>
+        :root { --primary: #4F46E5; --bg: #F3F4F6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: var(--primary); text-align: center; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab-btn { padding: 10px 20px; border: none; background: #eee; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { opacity: 0.9; }
+        .danger-btn { background: #DC2626; margin-left: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f9f9f9; }
+        
+        /* 列印專用樣式 */
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            .container { box-shadow: none; max-width: 100%; }
+            .receipt { border: 2px dashed #999; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
+            .receipt h2 { text-align: center; margin-top: 0; }
+            .receipt-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 18px; }
+            .receipt-total { font-weight: bold; font-size: 22px; text-align: right; margin-top: 15px; border-top: 2px solid #333; padding-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container no-print">
+    <h1>顧德補習班 繳費管理系統</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('record')">1. 新增繳費紀錄</button>
+        <button class="tab-btn" onclick="switchTab('print')">2. 產生繳費單</button>
+        <button class="tab-btn" onclick="switchTab('settings')">3. 系統設定 (名單/科目)</button>
+    </div>
+
+    <!-- 頁籤 1: 新增繳費紀錄 -->
+    <div id="record" class="tab-content active">
+        <h2>輸入學生繳費資料</h2>
+        <div class="form-group">
+            <label>選擇學生：</label>
+            <select id="studentSelect"></select>
+        </div>
+        <div class="form-group">
+            <label>選擇班別 / 科目：</label>
+            <select id="subjectSelect"></select>
+        </div>
+        <div class="form-group">
+            <label>輸入金額：</label>
+            <input type="number" id="amountInput" placeholder="請輸入自訂金額 (如: 3000)">
+        </div>
+        <button onclick="addRecord()">新增此筆繳費</button>
+
+        <h3 style="margin-top: 30px;">本期待繳清單 (暫存)</h3>
+        <table>
+            <thead>
+                <tr><th>學生姓名</th><th>班別/科目</th><th>金額</th><th>操作</th></tr>
+            </thead>
+            <tbody id="recordTable"></tbody>
+        </table>
+    </div>
+
+    <!-- 頁籤 2: 產生繳費單 -->
+    <div id="print" class="tab-content">
+        <h2>列印繳費單</h2>
+        <div class="form-group">
+            <label>選擇要列印的對象：</label>
+            <select id="printTargetSelect">
+                <option value="all">列印「所有人」的繳費單</option>
+                <!-- 個人選項會由 JS 動態載入 -->
+            </select>
+        </div>
+        <button onclick="generateReceipts()">產生並列印繳費單</button>
+    </div>
+
+    <!-- 頁籤 3: 系統設定 -->
+    <div id="settings" class="tab-content">
+        <h2>設定班別與科目</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="newSubject" placeholder="例如：國小英文">
+            <button onclick="addSubject()">新增科目</button>
+        </div>
+        <ul id="subjectList" style="margin-bottom: 30px;"></ul>
+
+        <h2>設定學生名單</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="newStudent" placeholder="輸入學生姓名">
+            <button onclick="addStudent()">新增學生</button>
+        </div>
+        <ul id="studentList"></ul>
+    </div>
+</div>
+
+<!-- 這裡用來放置準備列印的繳費單 -->
+<div id="printArea"></div>
+
+<script>
+    // 預設資料 (若無存檔則載入此預設值)
+    const defaultSubjects = ['國小安親', '國小數學', '國小作文', '國中國文', '國中數學', '國中自然', '國中英文', '國中社會'];
+    let subjects = JSON.parse(localStorage.getItem('gude_subjects')) || defaultSubjects;
+    let students = JSON.parse(localStorage.getItem('gude_students')) || ['王小明', '李小華'];
+    let records = JSON.parse(localStorage.getItem('gude_records')) || [];
+
+    // 初始化
+    function init() {
+        renderSettings();
+        updateDropdowns();
+        renderRecords();
+    }
+
+    // 切換頁籤
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // 更新下拉選單
+    function updateDropdowns() {
+        const studentSelect = document.getElementById('studentSelect');
+        const subjectSelect = document.getElementById('subjectSelect');
+        const printTarget = document.getElementById('printTargetSelect');
+        
+        studentSelect.innerHTML = students.map(s => `<option value="${s}">${s}</option>`).join('');
+        subjectSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+        
+        let printOptions = `<option value="all">列印「所有人」的繳費單</option>`;
+        // 只列出目前有繳費紀錄的學生
+        const studentsWithRecords = [...new Set(records.map(r => r.student))];
+        studentsWithRecords.forEach(s => {
+            printOptions += `<option value="${s}">僅列印：${s}</option>`;
+        });
+        printTarget.innerHTML = printOptions;
+    }
+
+    // 設定區：繪製列表
+    function renderSettings() {
+        const subjList = document.getElementById('subjectList');
+        const studList = document.getElementById('studentList');
+        
+        subjList.innerHTML = subjects.map((s, i) => `<li>${s} <button class="danger-btn" style="padding:2px 5px; font-size:12px; margin:5px;" onclick="deleteSubject(${i})">刪除</button></li>`).join('');
+        studList.innerHTML = students.map((s, i) => `<li>${s} <button class="danger-btn" style="padding:2px 5px; font-size:12px; margin:5px;" onclick="deleteStudent(${i})">刪除</button></li>`).join('');
+        
+        saveData();
+    }
+
+    // 設定區：增刪
+    function addSubject() {
+        const val = document.getElementById('newSubject').value.trim();
+        if(val && !subjects.includes(val)) { subjects.push(val); document.getElementById('newSubject').value = ''; renderSettings(); updateDropdowns(); }
+    }
+    function deleteSubject(index) { subjects.splice(index, 1); renderSettings(); updateDropdowns(); }
+    
+    function addStudent() {
+        const val = document.getElementById('newStudent').value.trim();
+        if(val && !students.includes(val)) { students.push(val); document.getElementById('newStudent').value = ''; renderSettings(); updateDropdowns(); }
+    }
+    function deleteStudent(index) { students.splice(index, 1); renderSettings(); updateDropdowns(); }
+
+    // 紀錄區：新增與繪製
+    function addRecord() {
+        const student = document.getElementById('studentSelect').value;
+        const subject = document.getElementById('subjectSelect').value;
+        const amount = document.getElementById('amountInput').value;
+        
+        if(!student || !subject || !amount) { alert('請填寫完整資訊'); return; }
+        
+        records.push({ id: Date.now(), student, subject, amount: parseInt(amount) });
+        document.getElementById('amountInput').value = '';
+        renderRecords();
+        updateDropdowns();
+    }
+    
+    function deleteRecord(id) {
+        records = records.filter(r => r.id !== id);
+        renderRecords();
+        updateDropdowns();
+    }
+
+    function renderRecords() {
+        const tbody = document.getElementById('recordTable');
+        tbody.innerHTML = records.map(r => `
+            <tr>
+                <td>${r.student}</td>
+                <td>${r.subject}</td>
+                <td>$${r.amount}</td>
+                <td><button class="danger-btn" style="padding:5px 10px;" onclick="deleteRecord(${r.id})">刪除</button></td>
+            </tr>
+        `).join('');
+        saveData();
+    }
+
+    // 存檔到瀏覽器
+    function saveData() {
+        localStorage.setItem('gude_subjects', JSON.stringify(subjects));
+        localStorage.setItem('gude_students', JSON.stringify(students));
+        localStorage.setItem('gude_records', JSON.stringify(records));
+    }
+
+    // 產生繳費單並呼叫列印
+    function generateReceipts() {
+        if(records.length === 0) { alert('目前沒有任何繳費紀錄可以列印！'); return; }
+        
+        const target = document.getElementById('printTargetSelect').value;
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = '';
+        
+        // 將紀錄按學生分組
+        const grouped = {};
+        records.forEach(r => {
+            if(!grouped[r.student]) grouped[r.student] = [];
+            grouped[r.student].push(r);
+        });
+
+        // 決定要印誰
+        const studentsToPrint = target === 'all' ? Object.keys(grouped) : [target];
+
+        studentsToPrint.forEach(student => {
+            let total = 0;
+            let rowsHtml = grouped[student].map(item => {
+                total += item.amount;
+                return `<div class="receipt-row"><span>${item.subject}</span><span>$${item.amount}</span></div>`;
+            }).join('');
+
+            // 產生繳費單 HTML (加上顧德補習班標題)
+            const d = new Date();
+            const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月`;
+            
+            const receiptHtml = `
+                <div class="receipt">
+                    <h2>顧德補習班 ${dateStr} 繳費單</h2>
+                    <div class="receipt-row" style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+                        <strong>學生姓名：${student}</strong>
+                        <span>日期：${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}</span>
+                    </div>
+                    ${rowsHtml}
+                    <div class="receipt-total">總計：$${total}</div>
+                </div>
+            `;
+            printArea.innerHTML += receiptHtml;
+        });
+
+        // 呼叫瀏覽器列印
+        window.print();
+    }
+
+    // 啟動
+    init();
+</script>
+</body>
+</html>
