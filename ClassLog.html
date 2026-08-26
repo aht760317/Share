@@ -1,1 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斗六顧德補習班 - 教室日誌</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #eee;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--secondary);
+        }
+        .form-group input, .form-group select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .log-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .log-section textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .attendance-section {
+            margin-top: 30px;
+        }
+        .student-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .student-list th, .student-list td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .student-list th {
+            background-color: var(--primary);
+            color: white;
+        }
+        .status-absent {
+            background-color: #ffeaea;
+        }
+        .makeup-warning {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .makeup-success {
+            color: var(--success);
+            font-weight: bold;
+        }
+        .save-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .save-btn:hover {
+            background-color: var(--secondary);
+        }
+        .btn-small {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-absent { background: var(--danger); color: white; }
+        .btn-makeup { background: var(--warning); color: black; }
+        .btn-done { background: var(--success); color: white; }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h1>斗六顧德補習班 - 教室教學日誌</h1>
+    
+    <!-- 國中/國小 部門切換 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchDept('junior')">國中部</button>
+        <button class="tab-btn" onclick="switchDept('elementary')">國小部</button>
+    </div>
+
+    <!-- 基礎設定區塊 -->
+    <div class="settings-grid">
+        <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="classDate">
+        </div>
+        <div class="form-group">
+            <label>授課教師</label>
+            <input type="text" id="teacherName" placeholder="請輸入教師姓名">
+        </div>
+        <div class="form-group">
+            <label>課程名稱</label>
+            <input type="text" id="courseName" placeholder="例如：國一數學特訓班">
+        </div>
+    </div>
+
+    <!-- 教學內容區塊 -->
+    <div class="log-section">
+        <div class="form-group">
+            <label>課程進度區塊</label>
+            <textarea id="progressLog" placeholder="請輸入今日課程進度..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>教學日誌區塊 (學生狀況/突發事件)</label>
+            <textarea id="teachingLog" placeholder="請輸入教學日誌..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>家庭作業區塊</label>
+            <textarea id="homeworkLog" placeholder="請輸入今日指派作業..."></textarea>
+        </div>
+    </div>
+
+    <!-- 學生出缺勤與補課區塊 -->
+    <div class="attendance-section">
+        <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">
+            學生出缺勤與補課狀態 
+            <button class="btn-small btn-makeup" onclick="fetchStudentsFromSystem()" style="float: right;">重新同步繳費系統名單</button>
+        </h3>
+        <table class="student-list">
+            <thead>
+                <tr>
+                    <th>座號</th>
+                    <th>姓名</th>
+                    <th>出缺勤狀態</th>
+                    <th>補課時間安排</th>
+                    <th>主任查核狀態</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+                <!-- JS 動態生成 -->
+            </tbody>
+        </table>
+    </div>
+
+    <button class="save-btn" onclick="saveLog()">儲存日誌並發送通知</button>
+</div>
+
+<script>
+    // 預設當天日期
+    document.getElementById('classDate').valueAsDate = new Date();
+    
+    let currentDept = 'junior';
+    
+    // 本機暫存的學生名單資料庫 (模擬從繳費系統拉回來的資料)
+    let studentsData = [];
+
+    // 初始化頁面
+    window.onload = () => {
+        fetchStudentsFromSystem();
+    };
+
+    // 切換部門
+    function switchDept(dept) {
+        currentDept = dept;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        fetchStudentsFromSystem(); // 切換時重新拉取名單
+    }
+
+    // ★ 核心功能：與繳費系統 API 串接的預留位置 ★
+    async function fetchStudentsFromSystem() {
+        /* 
+        // 實際開發時，你可以在這裡使用 fetch 呼叫你的 API：
+        try {
+            let response = await fetch(`https://your-domain.com/api/students?dept=${currentDept}`);
+            let data = await response.json();
+            studentsData = data;
+        } catch(e) { console.log("API 錯誤", e); }
+        */
+
+        // 這裡先使用假資料模擬繳費系統回傳的名單
+        if (currentDept === 'junior') {
+            studentsData = [
+                { id: 1, name: '王小明', status: 'present', makeupDate: '', makeupStatus: 'none' },
+                { id: 2, name: '李大華', status: 'present', makeupDate: '', makeupStatus: 'none' },
+                { id: 3, name: '林美美', status: 'absent', makeupDate: '', makeupStatus: 'pending' } // 模擬預設請假
+            ];
+        } else {
+            studentsData = [
+                { id: 1, name: '陳小妹妹', status: 'present', makeupDate: '', makeupStatus: 'none' },
+                { id: 2, name: '張小弟', status: 'present', makeupDate: '', makeupStatus: 'none' }
+            ];
+        }
+        renderTable();
+    }
+
+    // 渲染學生表格
+    function renderTable() {
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = '';
+
+        studentsData.forEach((student, index) => {
+            const tr = document.createElement('tr');
+            if(student.status === 'absent') tr.className = 'status-absent';
+
+            // 出缺勤按鈕邏輯
+            let attendanceHtml = student.status === 'present' 
+                ? `<button class="btn-small" style="background:#eee" onclick="toggleAttendance(${index})">✔️ 出席</button>`
+                : `<button class="btn-small btn-absent" onclick="toggleAttendance(${index})">❌ 請假</button>`;
+
+            // 補課安排邏輯 (如果請假，才顯示補課輸入框)
+            let makeupHtml = '-';
+            let directorStatusHtml = '<span style="color:#aaa;">無須補課</span>';
+
+            if (student.status === 'absent') {
+                if (student.makeupStatus === 'done') {
+                    makeupHtml = `<span class="makeup-success">已於 ${student.makeupDate} 補課完成</span>`;
+                    directorStatusHtml = `<span class="makeup-success">✅ 主任已確認</span> 
+                                          <br><button class="btn-small" style="margin-top:5px" onclick="changeMakeupStatus(${index}, 'pending')">退回</button>`;
+                } else {
+                    // 還沒補課
+                    let dateWarn = student.makeupDate === '' ? '<br><span class="makeup-warning">⚠️ 老師請記得約補課！</span>' : '';
+                    makeupHtml = `
+                        <input type="datetime-local" value="${student.makeupDate}" onchange="updateMakeupDate(${index}, this.value)">
+                        ${dateWarn}
+                    `;
+                    directorStatusHtml = `
+                        <button class="btn-small btn-done" onclick="changeMakeupStatus(${index}, 'done')">標記補課完成</button>
+                    `;
+                }
+            }
+
+            tr.innerHTML = `
+                <td>${student.id}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${attendanceHtml}</td>
+                <td>${makeupHtml}</td>
+                <td>${directorStatusHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 切換出席/請假狀態
+    function toggleAttendance(index) {
+        if (studentsData[index].status === 'present') {
+            studentsData[index].status = 'absent';
+            studentsData[index].makeupStatus = 'pending';
+            studentsData[index].makeupDate = '';
+        } else {
+            studentsData[index].status = 'present';
+            studentsData[index].makeupStatus = 'none';
+        }
+        renderTable();
+    }
+
+    // 更新約定補課時間
+    function updateMakeupDate(index, val) {
+        studentsData[index].makeupDate = val;
+        renderTable();
+    }
+
+    // 更改補課完成狀態 (完成/待補)
+    function changeMakeupStatus(index, status) {
+        if (status === 'done' && studentsData[index].makeupDate === '') {
+            alert('請先輸入約定的補課時間，才能標記為完成！');
+            return;
+        }
+        studentsData[index].makeupStatus = status;
+        renderTable();
+    }
+
+    // 儲存日誌的動作
+    function saveLog() {
+        const payload = {
+            department: currentDept,
+            date: document.getElementById('classDate').value,
+            teacher: document.getElementById('teacherName').value,
+            course: document.getElementById('courseName').value,
+            progress: document.getElementById('progressLog').value,
+            teaching: document.getElementById('teachingLog').value,
+            homework: document.getElementById('homeworkLog').value,
+            students: studentsData
+        };
+
+        console.log("準備送往後端的資料：", payload);
+        
+        // 檢查是否有未安排補課時間的學生
+        let unarranged = payload.students.filter(s => s.status === 'absent' && s.makeupDate === '' && s.makeupStatus === 'pending');
+        if(unarranged.length > 0) {
+            alert(`注意！還有 ${unarranged.length} 位請假學生尚未安排補課時間。`);
+        } else {
+            alert('教室日誌已儲存！（實際開發可將 payload 透過 POST API 送至資料庫）');
+        }
+    }
+</script>
+
+</body>
+</html>
