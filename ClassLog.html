@@ -106,7 +106,7 @@
     <div class="container">
 
         <!-- 紅色即時警示專區 -->
-        <div class="alert-banner no-print" id="global-alert-banner">
+        <div class="alert-banner no-print log-only-view" id="global-alert-banner">
             <h3>⚠️ 需要補課與補考關注名單 (系統自動追蹤)</h3>
             <div id="alert-list-container"></div>
         </div>
@@ -253,7 +253,7 @@
                         <div style="text-align: right; padding-top: 15px;">
                             <button class="btn btn-warning" onclick="setOverviewToday()">查看今天日誌</button>
                             <button class="btn btn-success" onclick="setOverviewThisWeek()">本周日誌</button>
-                            <button class="btn" onclick="renderDirectorOverview()">重新整理全覽</button>
+                            <button class="btn btn-primary" onclick="setOverviewThisMonth()">📅 當月日誌</button>
                         </div>
                     </div>
                     <div>
@@ -337,6 +337,32 @@
         </section>
     </div>
 
+    <!-- 密碼驗證彈窗 -->
+    <div class="modal-overlay" id="password-verify-modal">
+        <div class="modal-box" style="width: 400px;">
+            <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
+            <p style="font-size: 14px; color: #555;">您正在執行刪除動作，請輸入管理密碼以繼續：</p>
+            <input type="password" id="global-verify-pwd" placeholder="請輸入密碼 0618">
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-danger" onclick="confirmPasswordAction()">確認刪除</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 標記補課完成輸入日期彈窗 -->
+    <div class="modal-overlay" id="makeup-date-modal">
+        <div class="modal-box" style="width: 400px;">
+            <h3 style="margin-top:0; color:var(--success);">✅ 標記補課完成</h3>
+            <p style="font-size: 14px; color: #555;">請選擇該學生實際補課完成的日期：</p>
+            <input type="date" id="actual-makeup-date">
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-success" onclick="confirmResolveMakeup()">確認標記完成</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-date-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 評語與電聯紀錄大畫面彈窗 -->
     <div class="modal-overlay" id="notes-manager-modal">
         <div class="modal-box">
@@ -352,7 +378,7 @@
                         <label>記錄類型：</label>
                         <select id="new-note-type">
                             <option value="老師建議">💬 老師建議</option>
-                            <option value="主任批示">👑 主任批示 (已確認)</option>
+                            <option value="主任批示">👑 主主任批示 (已確認)</option>
                             <option value="電聯紀錄">📞 電聯紀錄</option>
                         </select>
                     </div>
@@ -363,7 +389,7 @@
                 </div>
                 <label>詳細內容：</label>
                 <textarea id="new-note-text" rows="3" placeholder="請在此輸入詳細評語或電聯內容..."></textarea>
-                <button class="btn btn-success" onclick="addNewNoteFromModal()">確認新增紀錄</button>
+                <button class="btn btn-success" onclick="addNewNoteFromModal()">確認新增記錄</button>
             </div>
 
             <div style="margin-top: 20px; text-align: right;">
@@ -413,7 +439,7 @@
         </div>
     </div>
 
-    <!-- 學生新增/修改彈窗 (含三支電話與密碼保護) -->
+    <!-- 學生新增/修改彈窗 -->
     <div class="card" id="student-modal" style="display:none; position:fixed; top:10%; left:28%; width:44%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto;">
         <h3 id="modal-title">新增/修改學生資料</h3>
         <input type="hidden" id="edit-student-id">
@@ -447,15 +473,10 @@
                 <input type="text" id="modal-phone3" placeholder="電話號碼">
             </div>
         </div>
-        
-        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 5px;">
-            <label style="color: #856404; font-weight: bold; font-size: 13px;">🔒 請輸入管理密碼 (修改或刪除必填)：</label>
-            <input type="password" id="modal-password" placeholder="請輸入密碼 0618" style="margin-bottom:0;">
-        </div>
 
         <div style="margin-top: 15px; display: flex; justify-content: space-between;">
             <div>
-                <button class="btn btn-danger" id="delete-student-btn" onclick="deleteStudentData()" style="display:none;">刪除此學生</button>
+                <button class="btn btn-danger" id="delete-student-btn" onclick="requestDeleteStudent()" style="display:none;">刪除此學生</button>
             </div>
             <div>
                 <button class="btn" onclick="saveStudentModal()">儲存資料</button>
@@ -496,6 +517,8 @@
 
         let currentEditingNote = { dept: '', studentId: '', studentName: '' };
         let currentManagingStudentId = null;
+        let pendingDeleteAction = null;
+        let pendingResolveStudentId = null;
 
         document.getElementById('log-date-junior').valueAsDate = new Date();
         document.getElementById('log-date-elementary').valueAsDate = new Date();
@@ -520,11 +543,79 @@
             document.getElementById(sectionId).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             if(btn) btn.classList.add('active');
+
+            const banner = document.getElementById('global-alert-banner');
+            if (sectionId === 'student-profiles' || sectionId === 'system-settings') {
+                banner.style.display = 'none';
+            } else {
+                banner.style.display = 'block';
+            }
+
             if(sectionId === 'director-overview') {
                 generateMonthDaysGrid();
                 renderDirectorOverview();
             }
             if(sectionId === 'system-settings') renderSettingsCourseList();
+        }
+
+        // ================= 📋 完整修復的複製家長日誌功能 =================
+        function copyParentReportText() {
+            const textToCopy = document.getElementById('parent-msg-content').value;
+            
+            // 使用現代標準剪貼簿 API，確保完整複製所有文字
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('已成功複製完整日誌文字，可直接貼到 LINE 傳給家長！');
+            }).catch(err => {
+                // 備用複製方案
+                const textarea = document.getElementById('parent-msg-content');
+                textarea.style.display = 'block';
+                textarea.select();
+                document.execCommand('copy');
+                textarea.style.display = 'none';
+                alert('已成功複製完整日誌文字！');
+            });
+        }
+
+        // ================= 🔒 全域密碼驗證機制 (0618) =================
+        function verifyPasswordAndExecute(actionCallback) {
+            pendingDeleteAction = actionCallback;
+            document.getElementById('global-verify-pwd').value = '';
+            document.getElementById('password-verify-modal').style.display = 'flex';
+        }
+
+        function confirmPasswordAction() {
+            const pwd = document.getElementById('global-verify-pwd').value;
+            if (pwd !== '0618') {
+                alert('密碼錯誤！刪除操作需要輸入正確密碼 0618');
+                return;
+            }
+            document.getElementById('password-verify-modal').style.display = 'none';
+            if (pendingDeleteAction) {
+                pendingDeleteAction();
+                pendingDeleteAction = null;
+            }
+        }
+
+        // ================= 📅 補課完成日期彈窗 =================
+        function promptResolveMakeup(studentId) {
+            pendingResolveStudentId = studentId;
+            document.getElementById('actual-makeup-date').valueAsDate = new Date();
+            document.getElementById('makeup-date-modal').style.display = 'flex';
+        }
+
+        function confirmResolveMakeup() {
+            const dateVal = document.getElementById('actual-makeup-date').value;
+            if(!dateVal) return alert('請選擇補課日期！');
+
+            const s = state.students.find(item => item.id === pendingResolveStudentId);
+            if(s) {
+                s.makeupPending = false;
+                s.makeupDesc = '';
+                s.notes.push({ date: dateVal, author: '系統自動', text: `已於 ${dateVal} 確認補課完成，自動解除警示。` });
+            }
+            document.getElementById('makeup-date-modal').style.display = 'none';
+            init();
+            alert(`已成功標記於 ${dateVal} 補課完成！`);
         }
 
         // ================= 🔄 取消補課狀態 =================
@@ -583,16 +674,26 @@
             renderDirectorOverview();
         }
 
+        function setOverviewThisMonth() {
+            state.currentViewMode = 'month';
+            renderDirectorOverview();
+        }
+
         function renderDirectorOverview() {
             const container = document.getElementById('director-overview-container');
             const titleEl = document.getElementById('overview-current-title');
             
             let targetLogs = [];
+            const monthInput = document.getElementById('overview-target-month').value;
+
             if(state.currentViewMode === 'week') {
                 titleEl.innerText = `檢視結果：最近一個禮拜 (7天內) 的所有教學日誌`;
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                 targetLogs = state.historyLogs.filter(l => new Date(l.date) >= oneWeekAgo);
+            } else if(state.currentViewMode === 'month') {
+                titleEl.innerText = `檢視結果：當月 (${monthInput}) 的所有教學日誌`;
+                targetLogs = state.historyLogs.filter(l => l.date.startsWith(monthInput));
             } else {
                 titleEl.innerText = `檢視結果：指定日期 ${state.currentSelectedDate} 的教學日誌`;
                 targetLogs = state.historyLogs.filter(l => l.date === state.currentSelectedDate);
@@ -693,9 +794,21 @@
                         <span style="font-size:12px; color:#666; margin-left:8px;">📅 ${n.date || '未記錄日期'}</span>
                         <div style="margin-top:5px; font-size:14px; white-space: pre-wrap; color:#111;">${n.text}</div>
                     </div>
-                    <button class="btn btn-small btn-danger" onclick="deleteNoteFromModal(${idx})" style="padding:2px 6px;">刪除</button>
+                    <button class="btn btn-small btn-danger" onclick="requestDeleteNote(${idx})" style="padding:2px 6px;">刪除</button>
                 </div>
             `).join('');
+        }
+
+        function requestDeleteNote(noteIdx) {
+            verifyPasswordAndExecute(() => {
+                const s = state.students.find(item => item.id === currentManagingStudentId);
+                s.notes.splice(noteIdx, 1);
+                checkNotesForMakeupStatus(currentManagingStudentId);
+                renderNotesHistoryList();
+                renderProfileStudents();
+                updateGlobalAlertBanner();
+                alert('備註已成功刪除！');
+            });
         }
 
         function addNewNoteFromModal() {
@@ -719,18 +832,6 @@
             updateGlobalAlertBanner();
         }
 
-        function deleteNoteFromModal(noteIdx) {
-            if(!confirm('確定要刪除這筆紀錄嗎？')) return;
-            const s = state.students.find(item => item.id === currentManagingStudentId);
-            s.notes.splice(noteIdx, 1);
-
-            checkNotesForMakeupStatus(currentManagingStudentId);
-
-            renderNotesHistoryList();
-            renderProfileStudents();
-            updateGlobalAlertBanner();
-        }
-
         function generateParentMessage(dept, studentId, studentName) {
             const date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
             const course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
@@ -741,7 +842,7 @@
             const noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
 
             let attText = attendance === '請假' ? '⚠️ 今日請假' : '✔️ 出席正常';
-            let scoreText = score !== '' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '未測驗';
+            let scoreText = score !== '' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '今日無測驗';
             let hwText = homework === '完成' ? '✅ 已完成' : '❌ 未完成';
 
             document.getElementById('rep-date').innerText = date;
@@ -766,13 +867,6 @@
 
             document.getElementById('parent-msg-content').value = plainText;
             document.getElementById('parent-msg-modal').style.display = 'flex';
-        }
-
-        function copyParentReportText() {
-            const textarea = document.getElementById('parent-msg-content');
-            textarea.select();
-            document.execCommand('copy');
-            alert('已成功複製日誌文字，可直接貼到 LINE 傳給家長！');
         }
 
         function openStudentNoteModal(dept, studentId, studentName) {
@@ -828,7 +922,6 @@
             renderClassButtons();
         }
 
-        // ================= 渲染學生檔案 (含三支電話) =================
         function renderProfileStudents() {
             const className = state.selectedClassForProfile;
             document.getElementById('current-viewing-class-title').innerText = `目前檢視班級：${className}`;
@@ -852,11 +945,10 @@
                 const logsHtml = filteredLogs.length > 0 ? filteredLogs.map(l => `
                     <div style="font-size:13px; border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                         <b>[${l.date}]</b> ${l.status === '請假' ? '<span class="badge-danger">請假</span>' : '<span class="badge-success">出席</span>'}<br>
-                        分數: ${l.score !== '' ? l.score : '未測'} | 作業: ${l.homework}
+                        分數: ${l.score !== '' ? l.score : '今日無測驗'} | 作業: ${l.homework}
                     </div>
                 `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
 
-                // 產生三支電話顯示 HTML
                 let phonesHtml = '';
                 if(s.phones && s.phones.length > 0) {
                     phonesHtml = s.phones.map(p => p.number ? `<div style="font-size:12px; color:#555;">📞 ${p.label || '電話'}: ${p.number}</div>` : '').join('');
@@ -895,7 +987,7 @@
                                 </div>
                             ` : ''}
                             ${s.makeupPending && s.makeupType === 'absent' ? `
-                                <button class="btn btn-small btn-success" onclick="resolveMakeup(${s.id})">標記補課完成</button>
+                                <button class="btn btn-small btn-success" onclick="promptResolveMakeup(${s.id})">標記補課完成</button>
                             ` : ''}
                             ${!s.makeupPending ? `
                                 <div style="margin-top: 8px;">
@@ -914,7 +1006,6 @@
             }).join('');
         }
 
-        // ================= 新增/修改學生彈窗 (支援三支電話輸入) =================
         function openAddStudentModal() {
             document.getElementById('modal-title').innerText = '新增學生資料';
             document.getElementById('edit-student-id').value = '';
@@ -922,7 +1013,6 @@
             document.getElementById('modal-label1').value = '爸爸'; document.getElementById('modal-phone1').value = '';
             document.getElementById('modal-label2').value = '媽媽'; document.getElementById('modal-phone2').value = '';
             document.getElementById('modal-label3').value = '學生本人'; document.getElementById('modal-phone3').value = '';
-            document.getElementById('modal-password').value = '';
             document.getElementById('delete-student-btn').style.display = 'none';
             document.getElementById('student-modal').style.display = 'block';
         }
@@ -942,15 +1032,11 @@
             document.getElementById('modal-label3').value = s.phones?.[2]?.label || '學生本人';
             document.getElementById('modal-phone3').value = s.phones?.[2]?.number || '';
 
-            document.getElementById('modal-password').value = '';
             document.getElementById('delete-student-btn').style.display = 'inline-block';
             document.getElementById('student-modal').style.display = 'block';
         }
 
         function saveStudentModal() {
-            const pwd = document.getElementById('modal-password').value;
-            if(pwd !== '0618') return alert('密碼錯誤！修改資料需要輸入密碼 0618');
-
             const id = document.getElementById('edit-student-id').value;
             const name = document.getElementById('modal-name').value.trim();
             const course = document.getElementById('modal-course').value;
@@ -977,19 +1063,16 @@
             alert('學生資料儲存成功！');
         }
 
-        function deleteStudentData() {
-            const pwd = document.getElementById('modal-password').value;
-            if(pwd !== '0618') return alert('密碼錯誤！刪除資料必須輸入密碼 0618');
-            if(!confirm('確定要永久刪除這位學生資料嗎？')) return;
-
-            const id = document.getElementById('edit-student-id').value;
-            state.students = state.students.filter(item => item.id != id);
-            document.getElementById('student-modal').style.display = 'none';
-            init();
-            alert('學生資料已成功刪除！');
+        function requestDeleteStudent() {
+            verifyPasswordAndExecute(() => {
+                const id = document.getElementById('edit-student-id').value;
+                state.students = state.students.filter(item => item.id != id);
+                document.getElementById('student-modal').style.display = 'none';
+                init();
+                alert('學生資料已成功刪除！');
+            });
         }
 
-        // ================= 教學日誌填寫與其他共用函數 =================
         function renderLogStudents(dept) {
             const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
             const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
@@ -1131,14 +1214,6 @@
             document.getElementById(notesId).value = '';
             document.getElementById(examUnitId).value = '';
             alert('日誌與試卷儲存成功！主任全校總覽已同步更新。');
-            init();
-        }
-
-        function resolveMakeup(studentId) {
-            const s = state.students.find(item => item.id === studentId);
-            s.makeupPending = false;
-            s.makeupDesc = '';
-            s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: '主任/老師已確認補課完成，自動解除警示。' });
             init();
         }
 
