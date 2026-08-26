@@ -3,60 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德補習班 - 繳費與收據系統</title>
+    <title>顧德補習班 - 系統化繳費作業</title>
     <style>
-        :root { --primary: #2563EB; --receipt: #D97706; --bg: #F3F4F6; }
+        :root { --primary: #0F172A; --accent: #3B82F6; --bg: #F8FAFC; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1, h2 { color: var(--primary); text-align: center; margin-top: 0; }
+        .app-container { max-width: 1000px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
         
-        /* 設定區塊樣式 */
-        .settings-box { background: #E0E7FF; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 14px; }
-        .settings-box label { font-weight: bold; display: block; margin-top: 10px; margin-bottom: 5px; color: #3730A3; }
-        .settings-box input[type="text"], .settings-box textarea { width: 100%; padding: 8px; border: 1px solid #A5B4FC; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        /* 頂部導覽 */
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
         
-        /* 步驟區塊樣式 */
-        .step-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
-        .step-title { color: #1E40AF; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .step-title span.badge { background: #1E40AF; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; }
+        .tabs { display: flex; background: #1E293B; }
+        .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { color: white; border-bottom: 4px solid var(--accent); background: #0F172A; }
+        .tab-btn:hover { color: white; }
         
-        /* 按鈕網格 (班級與學生選擇) */
-        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .btn-select { padding: 12px 20px; background: #F3F4F6; border: 2px solid #D1D5DB; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; color: #374151; }
-        .btn-select:hover { background: #E5E7EB; }
-        .btn-select.active { background: #DBEAFE; border-color: #2563EB; color: #1D4ED8; font-weight: bold; box-shadow: 0 2px 5px rgba(37,99,235,0.2); }
-        .btn-custom { background: #FEF3C7; border-color: #F59E0B; color: #B45309; }
+        .content-area { padding: 30px; display: none; }
+        .content-area.active { display: block; }
+
+        /* 系統設定區 */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         
-        /* 表單區塊樣式 */
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
-        .form-row label { font-weight: bold; margin-bottom: 0; white-space: nowrap; }
-        input.input-field { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        /* 開單作業區 - 步驟佈局 */
+        .step-container { display: flex; gap: 30px; }
+        .selector-panel { flex: 1; border-right: 2px dashed #E2E8F0; padding-right: 20px; }
+        .fee-panel { flex: 2; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .fee-panel.active { opacity: 1; pointer-events: auto; }
         
-        /* 科目列表樣式 */
-        .subject-row { display: flex; gap: 15px; margin-bottom: 10px; align-items: center; }
-        .subject-row span { font-weight: bold; width: 60px; color: #555; }
-        .subject-row input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; }
+        h3.section-title { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; }
         
-        /* 列印按鈕樣式 */
-        .btn-group { display: flex; gap: 15px; margin-top: 20px; }
-        .btn-print { flex: 1; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; transition: background 0.2s; }
-        .btn-notice { background: #059669; }
-        .btn-notice:hover { background: #047857; }
-        .btn-receipt { background: #EA580C; }
-        .btn-receipt:hover { background: #C2410C; }
+        /* 按鈕網格 */
+        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+        .btn-item { padding: 10px 16px; background: #F1F5F9; border: 2px solid transparent; border-radius: 8px; cursor: pointer; font-size: 15px; color: #334155; font-weight: 500; transition: 0.2s; }
+        .btn-item:hover { background: #E2E8F0; }
+        .btn-item.active { background: #EFF6FF; border-color: var(--accent); color: var(--accent); font-weight: bold; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1); }
         
-        /* 隱藏控制 */
-        .hidden { display: none !important; }
+        /* 費用輸入列表 */
+        .fee-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .fee-row { display: flex; align-items: center; gap: 15px; background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
+        .fee-label { width: 120px; font-weight: bold; color: #334155; font-size: 15px; }
+        .fee-input { flex: 1; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 15px; }
         
-        /* 列印與螢幕顯示控制 */
-        @media screen {
-            .print-only { display: none; }
-        }
+        /* 特殊費用 (餐費/交通車) */
+        .special-fee { background: #FFFBEB; border-color: #FDE68A; }
+        .special-fee .month-input { width: 100px; }
+        
+        /* 動作按鈕 */
+        .action-btns { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-print { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-notice { background: #10B981; }
+        .btn-notice:hover { background: #059669; }
+        .btn-receipt { background: #F59E0B; }
+        .btn-receipt:hover { background: #D97706; }
+
+        /* 列印樣式 */
+        @media screen { .print-only { display: none; } }
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
-            .receipt-box { border: 2px solid #000; padding: 30px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; page-break-inside: avoid; position: relative; }
+            .receipt-box { border: 2px solid #000; padding: 30px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; position: relative; }
             .receipt-title { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; }
             .receipt-header { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #000; }
             .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -64,61 +73,99 @@
             .receipt-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
             .receipt-total { text-align: right; font-size: 22px; font-weight: bold; padding-top: 10px; }
             .stamp-area { display: flex; justify-content: space-between; margin-top: 40px; font-size: 18px; align-items: flex-end; }
-            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 100px; color: rgba(234, 88, 12, 0.1); border: 8px solid rgba(234, 88, 12, 0.1); padding: 20px; font-weight: bold; z-index: -1; pointer-events: none; }
+            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 100px; color: rgba(0, 0, 0, 0.05); border: 8px solid rgba(0, 0, 0, 0.05); padding: 20px; font-weight: bold; z-index: -1; pointer-events: none; }
         }
     </style>
 </head>
 <body>
 
-<datalist id="subjectData"></datalist>
-
-<div class="container no-print">
-    <h1>顧德補習班 - 繳費與收據系統</h1>
-
-    <div class="settings-box">
-        <h3 style="margin-top: 0; color: #3730A3;">⚙️ 預設資料設定</h3>
-        
-        <label>收款經手人：</label>
-        <input type="text" id="setHandler" onchange="updateSettings()" placeholder="例如：雅鴻">
-
-        <label>班級與學生名單 (格式「班級：學生1, 學生2」 一行一個班)：</label>
-        <textarea id="setClassStudents" rows="6" onchange="updateSettings()" placeholder="國小安親班：王小明, 林小華&#10;國一班：陳大頭, 張美麗"></textarea>
-        
-        <label>常用科目 (半形逗號分隔)：</label>
-        <input type="text" id="setSubjects" onchange="updateSettings()">
+<div class="app-container no-print">
+    <div class="header">
+        <h1>顧德補習班 繳費系統</h1>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('billing')">開單作業</button>
+        <button class="tab-btn" onclick="switchTab('settings')">⚙️ 系統設定</button>
     </div>
 
-    <!-- 步驟一：基本資訊與選擇班級 -->
-    <div class="step-section" id="step1">
-        <h3 class="step-title"><span class="badge">1</span> 確認月份與選擇班級</h3>
-        <div class="form-row" style="margin-bottom: 15px; width: 50%;">
-            <label>繳費月份：</label>
-            <input type="text" id="monthInput" class="input-field" placeholder="例如：8月">
-        </div>
-        <div id="classGrid" class="btn-grid">
-            <!-- 班級按鈕會由 JS 動態產生 -->
+    <!-- 開單作業區 -->
+    <div id="billing" class="content-area active">
+        <div class="step-container">
+            <!-- 左側：選擇對象 -->
+            <div class="selector-panel">
+                <h3 class="section-title">1. 本期繳費月份</h3>
+                <div class="form-group">
+                    <input type="text" id="globalMonth" placeholder="例如：9月" style="font-size: 18px; font-weight: bold; color: var(--accent);">
+                </div>
+
+                <h3 class="section-title">2. 選擇年級</h3>
+                <div id="gradeGrid" class="btn-grid"></div>
+
+                <div id="studentSection" style="display: none;">
+                    <h3 class="section-title">3. 選擇學生</h3>
+                    <div id="studentGrid" class="btn-grid"></div>
+                </div>
+            </div>
+
+            <!-- 右側：輸入費用 -->
+            <div class="fee-panel" id="feePanel">
+                <h3 class="section-title" id="feeTitle">4. 輸入費用 (有上的課直接打金額)</h3>
+                
+                <div class="fee-list">
+                    <!-- 特殊費用：交通車與餐費 -->
+                    <div class="fee-row special-fee">
+                        <div class="fee-label">🚌 交通車費用</div>
+                        <input type="text" class="fee-input month-input" id="transMonth" placeholder="填寫月份(例:9月)">
+                        <input type="number" class="fee-input amount-input" id="transAmt" placeholder="輸入金額">
+                    </div>
+                    <div class="fee-row special-fee">
+                        <div class="fee-label">🍱 餐費</div>
+                        <input type="text" class="fee-input month-input" id="mealMonth" placeholder="填寫月份(例:9月)">
+                        <input type="number" class="fee-input amount-input" id="mealAmt" placeholder="輸入金額">
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px dashed #CBD5E1; margin: 10px 0; width: 100%;">
+                    
+                    <!-- 常規科目會動態產生在這裡 -->
+                    <div id="regularSubjects"></div>
+                    
+                    <!-- 備用欄位 -->
+                    <div class="fee-row" style="margin-top: 10px;">
+                        <input type="text" class="fee-input" id="otherSubName" placeholder="其他自訂項目 (如教材費)">
+                        <input type="number" class="fee-input amount-input" id="otherSubAmt" placeholder="輸入金額">
+                    </div>
+                </div>
+
+                <div class="action-btns">
+                    <button class="btn-print btn-notice" onclick="printDocument('notice')">🖨️ 印繳費通知單</button>
+                    <button class="btn-print btn-receipt" onclick="printDocument('receipt')">💰 印已繳費收據</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 步驟二：選擇學生 (預設隱藏) -->
-    <div class="step-section hidden" id="step2">
-        <h3 class="step-title"><span class="badge">2</span> 選擇學生 <span id="currentClassDisplay" style="color:#666; font-size:16px; margin-left:10px;"></span></h3>
-        <div id="studentGrid" class="btn-grid">
-            <!-- 學生按鈕會由 JS 動態產生 -->
-        </div>
-    </div>
-
-    <!-- 步驟三：輸入繳費資料 (預設隱藏) -->
-    <div class="step-section hidden" id="step3">
-        <h3 class="step-title"><span class="badge">3</span> 輸入 <span id="currentStudentDisplay" style="color:#EA580C; margin: 0 5px;"></span> 的繳費科目與金額</h3>
-        
-        <div id="subjectsContainer">
-            <!-- JS 動態產生 10 個輸入列 -->
-        </div>
-
-        <div class="btn-group">
-            <button class="btn-print btn-notice" onclick="generateAndPrint('notice')">🖨️ 產生【繳費通知單】<br><span style="font-size:14px;font-weight:normal;">(發給學生帶回家請款)</span></button>
-            <button class="btn-print btn-receipt" onclick="generateAndPrint('receipt')">💰 產生【已繳費收據】<br><span style="font-size:14px;font-weight:normal;">(家長繳錢後給的憑證)</span></button>
+    <!-- 系統設定區 -->
+    <div id="settings" class="content-area">
+        <div class="settings-grid">
+            <div>
+                <div class="form-group">
+                    <label>收款經手人 (印製在收據上)：</label>
+                    <input type="text" id="setHandler" onchange="saveSettings()" placeholder="例如：雅鴻">
+                </div>
+                <div class="form-group">
+                    <label>常規收費項目 (半形逗號分隔)：</label>
+                    <textarea id="setSubjects" rows="4" onchange="saveSettings()" placeholder="國小數學, 國小作文, 國中國文, 國中數學..."></textarea>
+                    <small style="color:#64748B;">* 交通車與餐費已獨立固定，不需寫在此處。</small>
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label>年級與學生名單設定：</label>
+                    <textarea id="setClassStudents" rows="10" onchange="saveSettings()" placeholder="國一：王小明, 林小華&#10;國二：陳大頭, 張美麗&#10;國三：吳大強"></textarea>
+                    <small style="color:#64748B;">* 格式「年級：學生1, 學生2」 一行一個年級</small>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -127,179 +174,181 @@
 <div id="printArea" class="print-only"></div>
 
 <script>
-    // 全域變數儲存目前選擇
-    let currentSelectedClass = '';
-    let currentSelectedStudent = '';
-    let classStudentData = {};
+    let classData = {};
+    let subjectList = [];
+    let currentGrade = '';
+    let currentStudent = '';
 
-    function initSettings() {
-        // 預設資料
-        const defaultClassStudents = "國小安親班：王小明, 林小華\n國一班：陳大頭, 張美麗\n國二班：黃小琥\n國三班：吳大強";
-        const defaultSubjects = "國小安親, 國小數學, 國小作文, 國中國文, 國中數學, 國中自然, 國中英文, 國中社會";
-        const defaultHandler = "雅鴻";
+    function switchTab(tabId) {
+        document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if(tabId === 'billing') renderGradeButtons();
+    }
+
+    function init() {
+        const defaultClasses = "國一：\n國二：\n國三：\n國小安親：";
+        const defaultSubjects = "國小數學, 國小作文, 國中國文, 國中數學, 國中自然, 國中英文, 國中社會";
         
-        const currentMonth = (new Date().getMonth() + 1) + "月";
-        document.getElementById('monthInput').value = currentMonth;
-
-        document.getElementById('setClassStudents').value = localStorage.getItem('gude_class_students') || defaultClassStudents;
+        document.getElementById('setHandler').value = localStorage.getItem('gude_handler') || "雅鴻";
+        document.getElementById('setClassStudents').value = localStorage.getItem('gude_class_students') || defaultClasses;
         document.getElementById('setSubjects').value = localStorage.getItem('gude_subjects') || defaultSubjects;
-        document.getElementById('setHandler').value = localStorage.getItem('gude_handler') || defaultHandler;
         
-        updateSettings();
+        const m = new Date().getMonth() + 1;
+        document.getElementById('globalMonth').value = m + "月";
+        document.getElementById('transMonth').value = m + "月";
+        document.getElementById('mealMonth').value = m + "月";
+
+        loadSettings();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('gude_handler', document.getElementById('setHandler').value);
+        localStorage.setItem('gude_class_students', document.getElementById('setClassStudents').value);
+        localStorage.setItem('gude_subjects', document.getElementById('setSubjects').value);
+        loadSettings();
+        alert('設定已自動儲存！');
+    }
+
+    function loadSettings() {
+        const rawClasses = document.getElementById('setClassStudents').value;
+        classData = {};
+        rawClasses.split('\n').forEach(line => {
+            if(!line.trim()) return;
+            const parts = line.split(/[:：]/);
+            if(parts.length > 0 && parts[0].trim()) {
+                classData[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
+            }
+        });
+
+        subjectList = document.getElementById('setSubjects').value.split(',').map(s => s.trim()).filter(s => s);
+        renderGradeButtons();
         buildSubjectInputs();
     }
 
-    function updateSettings() {
-        const classStudentsRaw = document.getElementById('setClassStudents').value;
-        const subjects = document.getElementById('setSubjects').value;
-        const handler = document.getElementById('setHandler').value;
-
-        localStorage.setItem('gude_class_students', classStudentsRaw);
-        localStorage.setItem('gude_subjects', subjects);
-        localStorage.setItem('gude_handler', handler);
-
-        // 解析班級與學生名單
-        classStudentData = {};
-        classStudentsRaw.split('\n').forEach(line => {
-            if(!line.trim()) return;
-            // 支援全形或半形冒號
-            const parts = line.split(/[:：]/);
-            if(parts.length > 0) {
-                const className = parts[0].trim();
-                const students = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
-                if(className) classStudentData[className] = students;
-            }
-        });
-
-        // 建立科目自動完成選單
-        const makeOptions = (str) => str.split(',').map(item => item.trim()).filter(item => item !== '').map(item => `<option value="${item}">`).join('');
-        document.getElementById('subjectData').innerHTML = makeOptions(subjects);
-
-        renderClassButtons();
-    }
-
-    // 繪製班級按鈕
-    function renderClassButtons() {
-        const grid = document.getElementById('classGrid');
+    function renderGradeButtons() {
+        const grid = document.getElementById('gradeGrid');
         grid.innerHTML = '';
-        Object.keys(classStudentData).forEach(className => {
+        Object.keys(classData).forEach(grade => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${className === currentSelectedClass ? 'active' : ''}`;
-            btn.innerText = className;
-            btn.onclick = () => selectClass(className);
+            btn.className = `btn-item ${grade === currentGrade ? 'active' : ''}`;
+            btn.innerText = grade;
+            btn.onclick = () => selectGrade(grade);
             grid.appendChild(btn);
         });
     }
 
-    // 選擇班級
-    function selectClass(className) {
-        currentSelectedClass = className;
-        currentSelectedStudent = ''; // 重置學生選擇
+    function selectGrade(grade) {
+        currentGrade = grade;
+        currentStudent = '';
+        renderGradeButtons();
         
-        renderClassButtons(); // 更新 active 狀態
+        document.getElementById('studentSection').style.display = 'block';
+        document.getElementById('feePanel').classList.remove('active');
         
-        document.getElementById('currentClassDisplay').innerText = `(已選：${className})`;
-        document.getElementById('step2').classList.remove('hidden');
-        document.getElementById('step3').classList.add('hidden'); // 隱藏步驟三
-        
-        renderStudentButtons(className);
-    }
-
-    // 繪製學生按鈕
-    function renderStudentButtons(className) {
         const grid = document.getElementById('studentGrid');
         grid.innerHTML = '';
-        const students = classStudentData[className] || [];
-        
-        students.forEach(student => {
+        classData[grade].forEach(student => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${student === currentSelectedStudent ? 'active' : ''}`;
+            btn.className = `btn-item`;
             btn.innerText = student;
-            btn.onclick = () => selectStudent(student);
+            btn.onclick = (e) => selectStudent(student, e.target);
             grid.appendChild(btn);
         });
-
-        // 加入手動輸入按鈕
+        
+        // 自訂學生按鈕
         const customBtn = document.createElement('button');
-        customBtn.className = 'btn-select btn-custom';
-        customBtn.innerText = '＋手動輸入其他學生';
+        customBtn.className = 'btn-item';
+        customBtn.style.background = '#FEF3C7';
+        customBtn.innerText = '＋手動輸入學生';
         customBtn.onclick = () => {
             const name = prompt('請輸入學生姓名：');
-            if(name && name.trim()) {
-                selectStudent(name.trim());
-            }
+            if(name) selectStudent(name.trim(), customBtn);
         };
         grid.appendChild(customBtn);
     }
 
-    // 選擇學生
-    function selectStudent(studentName) {
-        currentSelectedStudent = studentName;
-        renderStudentButtons(currentSelectedClass); // 更新 active 狀態 (包含自訂輸入的狀況)
+    function selectStudent(student, btnElement) {
+        currentStudent = student;
         
-        document.getElementById('currentStudentDisplay').innerText = studentName;
-        document.getElementById('step3').classList.remove('hidden');
+        // 更新按鈕樣式
+        document.querySelectorAll('#studentGrid .btn-item').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
         
-        clearSubjectInputs(); // 切換學生時清空上一個人的輸入金額
+        document.getElementById('feeTitle').innerHTML = `4. 輸入 <span style="color:#E11D48;">${student}</span> 的費用明細`;
+        document.getElementById('feePanel').classList.add('active');
+        
+        // 帶入同月份，並清空金額
+        clearFeeInputs();
     }
 
-    // 產生 10 個科目的輸入框
     function buildSubjectInputs() {
-        const container = document.getElementById('subjectsContainer');
-        let html = '';
-        for(let i = 1; i <= 10; i++) {
-            html += `
-                <div class="subject-row">
-                    <span>第 ${i} 科</span>
-                    <input type="text" id="sub${i}" list="subjectData" placeholder="請選擇或輸入科目">
-                    <input type="number" id="amt${i}" placeholder="請輸入金額 (數字)">
-                </div>
-            `;
-        }
-        container.innerHTML = html;
+        const container = document.getElementById('regularSubjects');
+        container.innerHTML = subjectList.map((sub, i) => `
+            <div class="fee-row">
+                <div class="fee-label">${sub}</div>
+                <input type="hidden" id="subName${i}" value="${sub}">
+                <input type="number" class="fee-input amount-input" id="subAmt${i}" placeholder="輸入金額">
+            </div>
+        `).join('');
     }
 
-    // 清空科目輸入框
-    function clearSubjectInputs() {
-        for(let i = 1; i <= 10; i++) {
-            document.getElementById('sub'+i).value = '';
-            document.getElementById('amt'+i).value = '';
-        }
+    function clearFeeInputs() {
+        document.querySelectorAll('.amount-input').forEach(input => input.value = '');
+        document.getElementById('otherSubName').value = '';
+        const m = document.getElementById('globalMonth').value;
+        document.getElementById('transMonth').value = m;
+        document.getElementById('mealMonth').value = m;
     }
 
-    // 產生並列印
-    function generateAndPrint(type) {
-        const month = document.getElementById('monthInput').value.trim();
+    function printDocument(type) {
+        const mainMonth = document.getElementById('globalMonth').value.trim();
         const handler = document.getElementById('setHandler').value.trim();
         
-        if(!currentSelectedClass || !currentSelectedStudent || !month) {
-            alert('系統錯誤：遺失班級或學生資料，請重新整理頁面。');
-            return;
-        }
+        if(!currentGrade || !currentStudent) { alert('請先選擇年級與學生！'); return; }
 
         let items = [];
         let total = 0;
 
-        for(let i = 1; i <= 10; i++) {
-            const sub = document.getElementById('sub'+i).value.trim();
-            const amtVal = document.getElementById('amt'+i).value.trim();
-            const amt = parseInt(amtVal) || 0;
-            
-            if(sub !== '' || amt > 0) {
-                items.push({ sub: sub || '未命名科目', amt: amt });
-                total += amt;
-            }
+        // 檢查交通車
+        const transAmt = parseInt(document.getElementById('transAmt').value) || 0;
+        if(transAmt > 0) {
+            const m = document.getElementById('transMonth').value.trim();
+            items.push({ sub: `交通車費用 ${m ? '('+m+')' : ''}`, amt: transAmt });
+            total += transAmt;
         }
 
-        if(items.length === 0) {
-            alert('請至少輸入一個科目與金額！');
-            return;
+        // 檢查餐費
+        const mealAmt = parseInt(document.getElementById('mealAmt').value) || 0;
+        if(mealAmt > 0) {
+            const m = document.getElementById('mealMonth').value.trim();
+            items.push({ sub: `餐費 ${m ? '('+m+')' : ''}`, amt: mealAmt });
+            total += mealAmt;
         }
+
+        // 檢查常規科目
+        subjectList.forEach((sub, i) => {
+            const amt = parseInt(document.getElementById('subAmt'+i).value) || 0;
+            if(amt > 0) {
+                items.push({ sub: sub, amt: amt });
+                total += amt;
+            }
+        });
+
+        // 檢查自訂項目
+        const otherAmt = parseInt(document.getElementById('otherSubAmt').value) || 0;
+        if(otherAmt > 0) {
+            const name = document.getElementById('otherSubName').value.trim() || '其他費用';
+            items.push({ sub: name, amt: otherAmt });
+            total += otherAmt;
+        }
+
+        if(items.length === 0) { alert('請至少輸入一項金額！'); return; }
 
         const d = new Date();
         const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         const isReceipt = type === 'receipt';
-        const docTitle = isReceipt ? '已繳費收據' : '繳費通知單';
         
         let tableRows = items.map((item, idx) => `
             <tr>
@@ -309,54 +358,35 @@
             </tr>
         `).join('');
 
-        let printHtml = `
+        let html = `
             <div class="receipt-box">
                 ${isReceipt ? '<div class="watermark">已結清</div>' : ''}
-                <div class="receipt-title">顧德補習班 ${month} ${docTitle}</div>
+                <div class="receipt-title">顧德補習班 ${mainMonth} ${isReceipt ? '已繳費收據' : '繳費通知單'}</div>
                 <div class="receipt-header">
-                    <div>班級：<strong>${currentSelectedClass}</strong></div>
-                    <div>姓名：<strong>${currentSelectedStudent}</strong></div>
-                    <div>列印日期：${dateStr}</div>
+                    <div>年級：<strong>${currentGrade}</strong></div>
+                    <div>姓名：<strong>${currentStudent}</strong></div>
+                    <div>日期：${dateStr}</div>
                 </div>
                 <table class="receipt-table">
                     <thead>
-                        <tr>
-                            <th style="width:10%;">項次</th>
-                            <th style="width:60%;">科目名稱</th>
-                            <th style="width:30%;">金額 (新台幣)</th>
-                        </tr>
+                        <tr><th style="width:10%;">項次</th><th style="width:60%;">項目名稱</th><th style="width:30%;">金額 (新台幣)</th></tr>
                     </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
+                    <tbody>${tableRows}</tbody>
                 </table>
-                <div class="receipt-total">
-                    本期總計： $ ${total.toLocaleString()} 元
-                </div>
+                <div class="receipt-total">總計： $ ${total.toLocaleString()} 元</div>
         `;
 
         if(isReceipt) {
-            printHtml += `
-                <div class="stamp-area">
-                    <div>家長簽名：___________________</div>
-                    <div>收款經手人：<strong>${handler}</strong></div>
-                </div>
-            `;
+            html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>經手人：<strong>${handler}</strong></div></div>`;
         } else {
-            printHtml += `
-                <div style="margin-top: 30px; font-size: 16px; color: #333;">
-                    備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。
-                </div>
-            `;
+            html += `<div style="margin-top: 30px; font-size: 16px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
         }
 
-        printHtml += `</div>`;
-
-        document.getElementById('printArea').innerHTML = printHtml;
+        document.getElementById('printArea').innerHTML = html + `</div>`;
         window.print();
     }
 
-    initSettings();
+    init();
 </script>
 </body>
 </html>
