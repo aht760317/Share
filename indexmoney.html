@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德補習班 - 系統化繳費作業</title>
+    <title>顧德補習班 - 專業繳費管理系統</title>
     <style>
-        :root { --primary: #0F172A; --accent: #3B82F6; --bg: #F8FAFC; }
+        :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
-        .app-container { max-width: 1000px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+        .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
-        /* 頂部導覽 */
+        /* 導覽列 */
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
-        
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
         .tabs { display: flex; background: #1E293B; }
         .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { color: white; border-bottom: 4px solid var(--accent); background: #0F172A; }
@@ -21,43 +20,44 @@
         .content-area { padding: 30px; display: none; }
         .content-area.active { display: block; }
 
-        /* 系統設定區 */
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
-        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        /* 通用按鈕與表單 */
+        button { cursor: pointer; font-family: inherit; }
+        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .btn-select { padding: 10px 18px; background: #F1F5F9; border: 2px solid transparent; border-radius: 8px; font-size: 16px; color: #334155; font-weight: 500; transition: 0.2s; }
+        .btn-select:hover { background: #E2E8F0; }
+        .btn-select.active { background: #EFF6FF; border-color: var(--accent); color: var(--accent); font-weight: bold; }
         
-        /* 開單作業區 - 步驟佈局 */
-        .step-container { display: flex; gap: 30px; }
-        .selector-panel { flex: 1; border-right: 2px dashed #E2E8F0; padding-right: 20px; }
-        .fee-panel { flex: 2; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .fee-panel.active { opacity: 1; pointer-events: auto; }
+        input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 16px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
+        .form-row > div { flex: 1; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
+
+        /* 新增項目區塊 (核心功能) */
+        .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .item-list { margin-top: 15px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .item-row strong { font-size: 16px; color: #1E293B; }
+        .item-row span { font-size: 16px; font-weight: bold; color: var(--accent); }
+        .btn-delete-item { background: #FEE2E2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
         
-        h3.section-title { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
+        .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
+
+        /* 紀錄管理表格 */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 12px; text-align: left; }
+        .data-table th { background: #F1F5F9; color: #475569; font-weight: bold; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .status-unpaid { background: #FEF3C7; color: #B45309; }
+        .status-paid { background: #D1FAE5; color: #047857; }
         
-        /* 按鈕網格 */
-        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
-        .btn-item { padding: 10px 16px; background: #F1F5F9; border: 2px solid transparent; border-radius: 8px; cursor: pointer; font-size: 15px; color: #334155; font-weight: 500; transition: 0.2s; }
-        .btn-item:hover { background: #E2E8F0; }
-        .btn-item.active { background: #EFF6FF; border-color: var(--accent); color: var(--accent); font-weight: bold; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1); }
-        
-        /* 費用輸入列表 */
-        .fee-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .fee-row { display: flex; align-items: center; gap: 15px; background: #F8FAFC; padding: 10px 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
-        .fee-label { width: 120px; font-weight: bold; color: #334155; font-size: 15px; }
-        .fee-input { flex: 1; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 15px; }
-        
-        /* 特殊費用 (餐費/交通車) */
-        .special-fee { background: #FFFBEB; border-color: #FDE68A; }
-        .special-fee .month-input { width: 100px; }
-        
-        /* 動作按鈕 */
-        .action-btns { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-print { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
-        .btn-notice { background: #10B981; }
-        .btn-notice:hover { background: #059669; }
-        .btn-receipt { background: #F59E0B; }
-        .btn-receipt:hover { background: #D97706; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 5px; color: white; }
+        .btn-blue { background: var(--accent); }
+        .btn-green { background: var(--success); }
+        .btn-red { background: var(--danger); }
+
+        /* 區塊標題 */
+        h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
         /* 列印樣式 */
         @media screen { .print-only { display: none; } }
@@ -79,293 +79,398 @@
 </head>
 <body>
 
+<datalist id="defaultItems"></datalist>
+
 <div class="app-container no-print">
     <div class="header">
-        <h1>顧德補習班 繳費系統</h1>
+        <h1>顧德補習班 繳費管理系統</h1>
     </div>
     
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('billing')">開單作業</button>
-        <button class="tab-btn" onclick="switchTab('settings')">⚙️ 系統設定</button>
+        <button class="tab-btn active" onclick="switchTab('manage')">1. 學生繳費紀錄管理 (印收據)</button>
+        <button class="tab-btn" onclick="switchTab('create')">2. 產生新繳費單</button>
+        <button class="tab-btn" onclick="switchTab('settings')">3. 系統基本設定</button>
     </div>
 
-    <!-- 開單作業區 -->
-    <div id="billing" class="content-area active">
-        <div class="step-container">
-            <!-- 左側：選擇對象 -->
-            <div class="selector-panel">
-                <h3 class="section-title">1. 本期繳費月份</h3>
-                <div class="form-group">
-                    <input type="text" id="globalMonth" placeholder="例如：9月" style="font-size: 18px; font-weight: bold; color: var(--accent);">
-                </div>
+    <!-- 頁籤 1：繳費紀錄管理 -->
+    <div id="manage" class="content-area active">
+        <h3 style="margin-top:0; color:#333;">目前所有繳費紀錄</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>建立日期</th>
+                    <th>月份</th>
+                    <th>班級 / 姓名</th>
+                    <th>總金額</th>
+                    <th>狀態</th>
+                    <th>操作與列印 (家長繳費後請點結帳)</th>
+                </tr>
+            </thead>
+            <tbody id="recordTableBody">
+                <!-- 動態載入紀錄 -->
+            </tbody>
+        </table>
+    </div>
 
-                <h3 class="section-title">2. 選擇年級</h3>
-                <div id="gradeGrid" class="btn-grid"></div>
+    <!-- 頁籤 2：產生新繳費單 -->
+    <div id="create" class="content-area">
+        <h3 class="section-title" style="margin-top:0;">第一步：選擇班級與學生</h3>
+        <div id="classGrid" class="btn-grid"></div>
+        <div id="studentGrid" class="btn-grid" style="display: none; padding: 15px; background: #F1F5F9; border-radius: 8px;"></div>
 
-                <div id="studentSection" style="display: none;">
-                    <h3 class="section-title">3. 選擇學生</h3>
-                    <div id="studentGrid" class="btn-grid"></div>
+        <div id="billingSection" style="display: none;">
+            <h3 class="section-title">第二步：設定收費明細</h3>
+            
+            <div class="form-row" style="width: 50%;">
+                <div>
+                    <label>本張單據收費月份：</label>
+                    <input type="text" id="billMonth" placeholder="例如：9月" style="font-weight:bold; color:var(--accent); width:100%;">
                 </div>
             </div>
 
-            <!-- 右側：輸入費用 -->
-            <div class="fee-panel" id="feePanel">
-                <h3 class="section-title" id="feeTitle">4. 輸入費用 (有上的課直接打金額)</h3>
+            <div class="item-builder">
+                <label>選擇或輸入收費項目 (點擊加入)：</label>
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div style="flex: 2;">
+                        <input type="text" id="itemName" list="defaultItems" placeholder="例如：國一數學、交通車(9月)、教材費..." style="width:100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="number" id="itemAmt" placeholder="金額 (元)" style="width:100%;">
+                    </div>
+                    <div>
+                        <button class="btn-add" onclick="addFeeItem()">➕ 加入此項目</button>
+                    </div>
+                </div>
+
+                <div class="item-list" id="currentItemsList">
+                    <!-- 這裡顯示已加入的項目 -->
+                </div>
                 
-                <div class="fee-list">
-                    <!-- 特殊費用：交通車與餐費 -->
-                    <div class="fee-row special-fee">
-                        <div class="fee-label">🚌 交通車費用</div>
-                        <input type="text" class="fee-input month-input" id="transMonth" placeholder="填寫月份(例:9月)">
-                        <input type="number" class="fee-input amount-input" id="transAmt" placeholder="輸入金額">
-                    </div>
-                    <div class="fee-row special-fee">
-                        <div class="fee-label">🍱 餐費</div>
-                        <input type="text" class="fee-input month-input" id="mealMonth" placeholder="填寫月份(例:9月)">
-                        <input type="number" class="fee-input amount-input" id="mealAmt" placeholder="輸入金額">
-                    </div>
-                    
-                    <hr style="border: 0; border-top: 1px dashed #CBD5E1; margin: 10px 0; width: 100%;">
-                    
-                    <!-- 常規科目會動態產生在這裡 -->
-                    <div id="regularSubjects"></div>
-                    
-                    <!-- 備用欄位 -->
-                    <div class="fee-row" style="margin-top: 10px;">
-                        <input type="text" class="fee-input" id="otherSubName" placeholder="其他自訂項目 (如教材費)">
-                        <input type="number" class="fee-input amount-input" id="otherSubAmt" placeholder="輸入金額">
-                    </div>
-                </div>
-
-                <div class="action-btns">
-                    <button class="btn-print btn-notice" onclick="printDocument('notice')">🖨️ 印繳費通知單</button>
-                    <button class="btn-print btn-receipt" onclick="printDocument('receipt')">💰 印已繳費收據</button>
+                <div style="text-align: right; font-size: 20px; font-weight: bold; margin-top: 15px; color: var(--primary);">
+                    目前總金額： $<span id="currentTotal">0</span>
                 </div>
             </div>
+
+            <button class="btn-submit" onclick="saveNewBill()">💾 儲存並產生「繳費通知單」</button>
         </div>
     </div>
 
-    <!-- 系統設定區 -->
+    <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
-        <div class="settings-grid">
-            <div>
-                <div class="form-group">
-                    <label>收款經手人 (印製在收據上)：</label>
-                    <input type="text" id="setHandler" onchange="saveSettings()" placeholder="例如：雅鴻">
-                </div>
-                <div class="form-group">
-                    <label>常規收費項目 (半形逗號分隔)：</label>
-                    <textarea id="setSubjects" rows="4" onchange="saveSettings()" placeholder="國小數學, 國小作文, 國中國文, 國中數學..."></textarea>
-                    <small style="color:#64748B;">* 交通車與餐費已獨立固定，不需寫在此處。</small>
-                </div>
+        <div style="display: flex; gap: 30px;">
+            <div style="flex: 1;">
+                <label>班級與學生名單設定 (一行一班)：</label>
+                <textarea id="setClasses" rows="12" style="width:100%;" placeholder="國一：王小明, 林小華&#10;國二：陳大頭, 張美麗"></textarea>
             </div>
-            <div>
-                <div class="form-group">
-                    <label>年級與學生名單設定：</label>
-                    <textarea id="setClassStudents" rows="10" onchange="saveSettings()" placeholder="國一：王小明, 林小華&#10;國二：陳大頭, 張美麗&#10;國三：吳大強"></textarea>
-                    <small style="color:#64748B;">* 格式「年級：學生1, 學生2」 一行一個年級</small>
-                </div>
+            <div style="flex: 1;">
+                <label>常用收費項目 (半形逗號分隔)：</label>
+                <textarea id="setItems" rows="4" style="width:100%; margin-bottom: 15px;" placeholder="國小數學, 國中國文, 交通車費, 餐費, 教材費"></textarea>
+                
+                <label>預設收款經手人：</label>
+                <input type="text" id="setHandler" style="width:100%; margin-bottom: 15px;" placeholder="例如：雅鴻">
+                
+                <button class="btn-add" style="width:100%; margin-top:10px;" onclick="saveConfig()">💾 儲存所有設定</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 列印畫面區 -->
+<!-- 列印專用區塊 -->
 <div id="printArea" class="print-only"></div>
 
 <script>
-    let classData = {};
-    let subjectList = [];
-    let currentGrade = '';
-    let currentStudent = '';
+    // 系統核心資料庫
+    let config = {
+        classes: {},
+        defaultItems: [],
+        handler: "雅鴻"
+    };
+    
+    // 繳費單資料庫
+    let bills = JSON.parse(localStorage.getItem('gude_bills')) || [];
+    
+    // 當前正在開立的單據狀態
+    let currentClass = "";
+    let currentStudent = "";
+    let currentBillItems = [];
 
+    // 初始化
+    function init() {
+        const defaultClassText = "國小部：王小明, 林小華\n國一班：陳大頭, 張美麗\n國二班：黃小琥\n國三班：吳大強";
+        const defaultItemsText = "國文, 數學, 自然, 英文, 社會, 交通車費, 餐費, 講義教材費";
+        
+        document.getElementById('setClasses').value = localStorage.getItem('gude_cfg_classes') || defaultClassText;
+        document.getElementById('setItems').value = localStorage.getItem('gude_cfg_items') || defaultItemsText;
+        document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
+        
+        document.getElementById('billMonth').value = (new Date().getMonth() + 1) + "月";
+        
+        loadConfig();
+        renderRecords();
+    }
+
+    // 切換頁籤
     function switchTab(tabId) {
         document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         event.target.classList.add('active');
-        if(tabId === 'billing') renderGradeButtons();
-    }
-
-    function init() {
-        const defaultClasses = "國一：\n國二：\n國三：\n國小安親：";
-        const defaultSubjects = "國小數學, 國小作文, 國中國文, 國中數學, 國中自然, 國中英文, 國中社會";
         
-        document.getElementById('setHandler').value = localStorage.getItem('gude_handler') || "雅鴻";
-        document.getElementById('setClassStudents').value = localStorage.getItem('gude_class_students') || defaultClasses;
-        document.getElementById('setSubjects').value = localStorage.getItem('gude_subjects') || defaultSubjects;
+        if(tabId === 'manage') renderRecords();
+        if(tabId === 'create') renderClassGrid();
+    }
+
+    // 讀取設定
+    function loadConfig() {
+        config.handler = document.getElementById('setHandler').value.trim();
         
-        const m = new Date().getMonth() + 1;
-        document.getElementById('globalMonth').value = m + "月";
-        document.getElementById('transMonth').value = m + "月";
-        document.getElementById('mealMonth').value = m + "月";
-
-        loadSettings();
-    }
-
-    function saveSettings() {
-        localStorage.setItem('gude_handler', document.getElementById('setHandler').value);
-        localStorage.setItem('gude_class_students', document.getElementById('setClassStudents').value);
-        localStorage.setItem('gude_subjects', document.getElementById('setSubjects').value);
-        loadSettings();
-        alert('設定已自動儲存！');
-    }
-
-    function loadSettings() {
-        const rawClasses = document.getElementById('setClassStudents').value;
-        classData = {};
-        rawClasses.split('\n').forEach(line => {
+        // 解析常用項目
+        const itemsText = document.getElementById('setItems').value;
+        config.defaultItems = itemsText.split(',').map(s => s.trim()).filter(s => s);
+        
+        // 建立下拉選單
+        document.getElementById('defaultItems').innerHTML = config.defaultItems.map(item => `<option value="${item}">`).join('');
+        
+        // 解析班級與學生
+        config.classes = {};
+        const classLines = document.getElementById('setClasses').value.split('\n');
+        classLines.forEach(line => {
             if(!line.trim()) return;
             const parts = line.split(/[:：]/);
             if(parts.length > 0 && parts[0].trim()) {
-                classData[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
+                config.classes[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
             }
         });
-
-        subjectList = document.getElementById('setSubjects').value.split(',').map(s => s.trim()).filter(s => s);
-        renderGradeButtons();
-        buildSubjectInputs();
     }
 
-    function renderGradeButtons() {
-        const grid = document.getElementById('gradeGrid');
+    // 儲存設定
+    function saveConfig() {
+        localStorage.setItem('gude_cfg_classes', document.getElementById('setClasses').value);
+        localStorage.setItem('gude_cfg_items', document.getElementById('setItems').value);
+        localStorage.setItem('gude_cfg_handler', document.getElementById('setHandler').value);
+        loadConfig();
+        alert('設定已成功儲存！');
+    }
+
+    // === 開單作業區 ===
+    
+    function renderClassGrid() {
+        const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
-        Object.keys(classData).forEach(grade => {
+        Object.keys(config.classes).forEach(cls => {
             const btn = document.createElement('button');
-            btn.className = `btn-item ${grade === currentGrade ? 'active' : ''}`;
-            btn.innerText = grade;
-            btn.onclick = () => selectGrade(grade);
+            btn.className = `btn-select ${cls === currentClass ? 'active' : ''}`;
+            btn.innerText = cls;
+            btn.onclick = () => selectClass(cls);
             grid.appendChild(btn);
         });
     }
 
-    function selectGrade(grade) {
-        currentGrade = grade;
-        currentStudent = '';
-        renderGradeButtons();
+    function selectClass(cls) {
+        currentClass = cls;
+        currentStudent = "";
+        renderClassGrid();
         
-        document.getElementById('studentSection').style.display = 'block';
-        document.getElementById('feePanel').classList.remove('active');
+        const sGrid = document.getElementById('studentGrid');
+        sGrid.style.display = 'flex';
+        sGrid.innerHTML = '<span style="padding:10px; font-weight:bold; color:#475569;">選擇學生：</span>';
         
-        const grid = document.getElementById('studentGrid');
-        grid.innerHTML = '';
-        classData[grade].forEach(student => {
+        config.classes[cls].forEach(stu => {
             const btn = document.createElement('button');
-            btn.className = `btn-item`;
-            btn.innerText = student;
-            btn.onclick = (e) => selectStudent(student, e.target);
-            grid.appendChild(btn);
+            btn.className = 'btn-select';
+            btn.innerText = stu;
+            btn.onclick = (e) => selectStudent(stu, e.target);
+            sGrid.appendChild(btn);
         });
         
-        // 自訂學生按鈕
-        const customBtn = document.createElement('button');
-        customBtn.className = 'btn-item';
-        customBtn.style.background = '#FEF3C7';
-        customBtn.innerText = '＋手動輸入學生';
-        customBtn.onclick = () => {
-            const name = prompt('請輸入學生姓名：');
-            if(name) selectStudent(name.trim(), customBtn);
-        };
-        grid.appendChild(customBtn);
+        document.getElementById('billingSection').style.display = 'none';
     }
 
-    function selectStudent(student, btnElement) {
-        currentStudent = student;
+    function selectStudent(stu, btnEl) {
+        currentStudent = stu;
+        document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
         
-        // 更新按鈕樣式
-        document.querySelectorAll('#studentGrid .btn-item').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-        
-        document.getElementById('feeTitle').innerHTML = `4. 輸入 <span style="color:#E11D48;">${student}</span> 的費用明細`;
-        document.getElementById('feePanel').classList.add('active');
-        
-        // 帶入同月份，並清空金額
-        clearFeeInputs();
+        // 顯示開單區，清空前一個人的資料
+        document.getElementById('billingSection').style.display = 'block';
+        currentBillItems = [];
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemAmt').value = '';
+        renderCurrentItems();
     }
 
-    function buildSubjectInputs() {
-        const container = document.getElementById('regularSubjects');
-        container.innerHTML = subjectList.map((sub, i) => `
-            <div class="fee-row">
-                <div class="fee-label">${sub}</div>
-                <input type="hidden" id="subName${i}" value="${sub}">
-                <input type="number" class="fee-input amount-input" id="subAmt${i}" placeholder="輸入金額">
-            </div>
-        `).join('');
-    }
-
-    function clearFeeInputs() {
-        document.querySelectorAll('.amount-input').forEach(input => input.value = '');
-        document.getElementById('otherSubName').value = '';
-        const m = document.getElementById('globalMonth').value;
-        document.getElementById('transMonth').value = m;
-        document.getElementById('mealMonth').value = m;
-    }
-
-    function printDocument(type) {
-        const mainMonth = document.getElementById('globalMonth').value.trim();
-        const handler = document.getElementById('setHandler').value.trim();
+    // 加入收費項目
+    function addFeeItem() {
+        const name = document.getElementById('itemName').value.trim();
+        const amt = parseInt(document.getElementById('itemAmt').value);
         
-        if(!currentGrade || !currentStudent) { alert('請先選擇年級與學生！'); return; }
+        if(!name || isNaN(amt) || amt <= 0) {
+            alert('請輸入正確的項目名稱與金額！');
+            return;
+        }
+        
+        currentBillItems.push({ name: name, amount: amt });
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemAmt').value = '';
+        document.getElementById('itemName').focus();
+        renderCurrentItems();
+    }
 
-        let items = [];
+    // 刪除已加入的收費項目
+    function removeFeeItem(index) {
+        currentBillItems.splice(index, 1);
+        renderCurrentItems();
+    }
+
+    // 渲染當前開單明細
+    function renderCurrentItems() {
+        const list = document.getElementById('currentItemsList');
         let total = 0;
-
-        // 檢查交通車
-        const transAmt = parseInt(document.getElementById('transAmt').value) || 0;
-        if(transAmt > 0) {
-            const m = document.getElementById('transMonth').value.trim();
-            items.push({ sub: `交通車費用 ${m ? '('+m+')' : ''}`, amt: transAmt });
-            total += transAmt;
-        }
-
-        // 檢查餐費
-        const mealAmt = parseInt(document.getElementById('mealAmt').value) || 0;
-        if(mealAmt > 0) {
-            const m = document.getElementById('mealMonth').value.trim();
-            items.push({ sub: `餐費 ${m ? '('+m+')' : ''}`, amt: mealAmt });
-            total += mealAmt;
-        }
-
-        // 檢查常規科目
-        subjectList.forEach((sub, i) => {
-            const amt = parseInt(document.getElementById('subAmt'+i).value) || 0;
-            if(amt > 0) {
-                items.push({ sub: sub, amt: amt });
-                total += amt;
-            }
-        });
-
-        // 檢查自訂項目
-        const otherAmt = parseInt(document.getElementById('otherSubAmt').value) || 0;
-        if(otherAmt > 0) {
-            const name = document.getElementById('otherSubName').value.trim() || '其他費用';
-            items.push({ sub: name, amt: otherAmt });
-            total += otherAmt;
-        }
-
-        if(items.length === 0) { alert('請至少輸入一項金額！'); return; }
-
-        const d = new Date();
-        const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-        const isReceipt = type === 'receipt';
         
-        let tableRows = items.map((item, idx) => `
+        if(currentBillItems.length === 0) {
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px;">目前尚未加入任何項目</div>';
+        } else {
+            list.innerHTML = currentBillItems.map((item, index) => {
+                total += item.amount;
+                return `
+                    <div class="item-row">
+                        <div>
+                            <strong>${index + 1}. ${item.name}</strong>
+                        </div>
+                        <div>
+                            <span style="margin-right: 15px;">$ ${item.amount.toLocaleString()}</span>
+                            <button class="btn-delete-item" onclick="removeFeeItem(${index})">刪除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        document.getElementById('currentTotal').innerText = total.toLocaleString();
+    }
+
+    // 儲存新單據
+    function saveNewBill() {
+        if(currentBillItems.length === 0) {
+            alert('請至少加入一個收費項目！');
+            return;
+        }
+        
+        const month = document.getElementById('billMonth').value.trim();
+        if(!month) { alert('請填寫收費月份'); return; }
+
+        let total = currentBillItems.reduce((sum, item) => sum + item.amount, 0);
+        
+        const newBill = {
+            id: Date.now(),
+            date: new Date().toLocaleDateString(),
+            month: month,
+            className: currentClass,
+            studentName: currentStudent,
+            items: [...currentBillItems],
+            total: total,
+            isPaid: false // 預設未繳費
+        };
+        
+        bills.unshift(newBill); // 加到最前面
+        localStorage.setItem('gude_bills', JSON.stringify(bills));
+        
+        alert(`已成功建立 ${currentStudent} 的繳費資料！`);
+        
+        // 直接觸發列印繳費通知單
+        printDocument(newBill.id, 'notice');
+        
+        // 切換回管理頁面
+        switchTab('manage');
+    }
+
+    // === 管理區與列印 ===
+
+    function renderRecords() {
+        const tbody = document.getElementById('recordTableBody');
+        tbody.innerHTML = '';
+        
+        if(bills.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">目前沒有任何繳費紀錄。</td></tr>';
+            return;
+        }
+        
+        bills.forEach(bill => {
+            const statusHtml = bill.isPaid 
+                ? `<span class="status-badge status-paid">✅ 已結清</span>` 
+                : `<span class="status-badge status-unpaid">⏳ 未繳費</span>`;
+                
+            let actionHtml = '';
+            if(!bill.isPaid) {
+                actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 印通知單</button>`;
+                actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認家長已繳費</button>`;
+            } else {
+                actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 印正式收據</button>`;
+            }
+            actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${bill.date}</td>
+                    <td style="font-weight:bold;">${bill.month}</td>
+                    <td>${bill.className} - <strong>${bill.studentName}</strong></td>
+                    <td style="font-weight:bold; color:var(--primary);">$ ${bill.total.toLocaleString()}</td>
+                    <td>${statusHtml}</td>
+                    <td>${actionHtml}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // 確認繳費
+    function markAsPaid(id) {
+        if(confirm('確認家長已經繳納這筆費用了嗎？\n(確認後系統將轉為已結清狀態)')) {
+            const bill = bills.find(b => b.id === id);
+            if(bill) {
+                bill.isPaid = true;
+                localStorage.setItem('gude_bills', JSON.stringify(bills));
+                renderRecords();
+                // 繳費完成直接問要不要印收據
+                if(confirm('已結帳成功！需要立刻列印「正式收據」給家長嗎？')) {
+                    printDocument(id, 'receipt');
+                }
+            }
+        }
+    }
+
+    function deleteBill(id) {
+        if(confirm('確定要刪除這筆紀錄嗎？刪除後無法復原喔！')) {
+            bills = bills.filter(b => b.id !== id);
+            localStorage.setItem('gude_bills', JSON.stringify(bills));
+            renderRecords();
+        }
+    }
+
+    // 執行列印
+    function printDocument(id, type) {
+        const bill = bills.find(b => b.id === id);
+        if(!bill) return;
+
+        const isReceipt = type === 'receipt';
+        const docTitle = isReceipt ? '已繳費收據' : '繳費通知單';
+        const printDate = new Date().toLocaleDateString();
+        
+        let tableRows = bill.items.map((item, idx) => `
             <tr>
                 <td style="text-align:center;">${idx + 1}</td>
-                <td>${item.sub}</td>
-                <td style="text-align:right;">${item.amt.toLocaleString()}</td>
+                <td>${item.name}</td>
+                <td style="text-align:right;">${item.amount.toLocaleString()}</td>
             </tr>
         `).join('');
 
         let html = `
             <div class="receipt-box">
                 ${isReceipt ? '<div class="watermark">已結清</div>' : ''}
-                <div class="receipt-title">顧德補習班 ${mainMonth} ${isReceipt ? '已繳費收據' : '繳費通知單'}</div>
+                <div class="receipt-title">顧德補習班 ${bill.month} ${docTitle}</div>
                 <div class="receipt-header">
-                    <div>年級：<strong>${currentGrade}</strong></div>
-                    <div>姓名：<strong>${currentStudent}</strong></div>
-                    <div>日期：${dateStr}</div>
+                    <div>班級：<strong>${bill.className}</strong></div>
+                    <div>姓名：<strong>${bill.studentName}</strong></div>
+                    <div>列印日期：${printDate}</div>
                 </div>
                 <table class="receipt-table">
                     <thead>
@@ -373,11 +478,11 @@
                     </thead>
                     <tbody>${tableRows}</tbody>
                 </table>
-                <div class="receipt-total">總計： $ ${total.toLocaleString()} 元</div>
+                <div class="receipt-total">總計： $ ${bill.total.toLocaleString()} 元</div>
         `;
 
         if(isReceipt) {
-            html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>經手人：<strong>${handler}</strong></div></div>`;
+            html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>收款經手人：<strong>${config.handler}</strong></div></div>`;
         } else {
             html += `<div style="margin-top: 30px; font-size: 16px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
         }
@@ -386,6 +491,7 @@
         window.print();
     }
 
+    // 啟動系統
     init();
 </script>
 </body>
