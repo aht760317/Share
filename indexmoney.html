@@ -67,7 +67,7 @@
         .finance-bar { background: #FFFBEB; padding: 15px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
         .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 12px; text-align: left; }
+        .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 12px; text-align: left; vertical-align: middle; }
         .data-table th { background: #F1F5F9; color: #475569; font-weight: bold; }
         .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
         .status-unpaid { background: #FEF3C7; color: #B45309; }
@@ -88,6 +88,11 @@
         
         .btn-undo { background: #F59E0B; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; display: none; margin-left: 10px; animation: popIn 0.3s ease; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* 備註點擊展開樣式 */
+        .note-toggle { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #2563EB; font-size: 14px; background: #EEF2FF; padding: 6px 8px; border-radius: 4px; border: 1px solid #BFDBFE; transition: 0.2s; display: inline-block; }
+        .note-toggle:hover { background: #DBEAFE; }
+        .note-toggle.expanded { white-space: pre-wrap; overflow: visible; max-width: 350px; background: #FEF3C7; color: #92400E; border-color: #FCD34D; position: relative; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
@@ -118,6 +123,9 @@
             .report-table th, .report-table td { border: 1px solid #000; padding: 8px; font-size: 15px; }
             .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
             .report-total { text-align: right; font-size: 22px; font-weight: bold; padding-top: 10px; border-top: 2px solid #000; }
+            
+            /* 列印時將備註展開，以免看不到內容 */
+            .note-toggle { white-space: pre-wrap !important; overflow: visible !important; max-width: none !important; border: none; background: transparent; padding: 0; color: #000; }
         }
     </style>
 </head>
@@ -191,7 +199,6 @@
                 <tbody id="primaryRecordTableBody"></tbody>
             </table>
             
-            <!-- 國小欠費提醒 -->
             <div class="unpaid-reminder">
                 <div class="unpaid-header" style="background:#FEF2F2; color:#991B1B;">🔴 國小部 - 未繳費提醒總整理</div>
                 <div class="unpaid-list" id="primaryUnpaidListBody"></div>
@@ -213,7 +220,6 @@
                 <tbody id="juniorRecordTableBody"></tbody>
             </table>
 
-            <!-- 國中欠費提醒 -->
             <div class="unpaid-reminder">
                 <div class="unpaid-header" style="background:#F3E8FF; color:#7E22CE; border-color:#D8B4FE;">🟣 國中部 - 未繳費提醒總整理</div>
                 <div class="unpaid-list" id="juniorUnpaidListBody"></div>
@@ -254,6 +260,11 @@
                     <input type="text" id="profContact3Name" placeholder="聯絡人3 (如: 家中)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact3Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
+                <!-- 新增：學生備註欄位 -->
+                <div style="flex: 1 1 100%; min-width: 100%; margin-top: 5px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">學生備註 (在通訊錄點擊可展開查看)</label>
+                    <textarea id="profNote" placeholder="例如：對芒果過敏、每週三要提早離開..." style="width: 100%; padding: 8px; border-color: #FCD34D; border-radius: 4px; font-family: inherit; box-sizing: border-box;" rows="2"></textarea>
+                </div>
             </div>
         </div>
 
@@ -277,6 +288,7 @@
                         <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;">
                     </div>
                 </div>
+
             </div>
 
             <div class="item-builder">
@@ -310,7 +322,6 @@
     <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
         <div style="display: flex; gap: 30px;">
-            <!-- 左側：班級與學生設定 -->
             <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
                 <h3 style="margin-top: 0; color: var(--primary);">🏫 班級與學生名單設定</h3>
                 
@@ -341,7 +352,6 @@
                 </div>
             </div>
             
-            <!-- 右側：快捷項目與經手人設定 -->
             <div style="flex: 1;">
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
@@ -398,10 +408,11 @@
 <div id="printArea" class="print-only"></div>
 
 <script>
+    // 系統變數
     let config = { classes: {}, handler: "雅鴻" };
     let quickItems = [];
     let studentDetails = JSON.parse(localStorage.getItem('gude_cfg_student_details_v4')) || {};
-    let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || []; 
+    let bills = JSON.parse(localStorage.getItem('gude_bills_v3')) || []; 
     let currentClass = "";
     let currentStudent = "";
     let currentBillItems = [];
@@ -441,15 +452,6 @@
     }
 
     function init() {
-        const oldBills = JSON.parse(localStorage.getItem('gude_bills_v2'));
-        if(oldBills && bills.length === 0) {
-            bills = oldBills.map(b => {
-                b.periodStr = b.periodStr || b.yearMonth;
-                return b;
-            });
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-        }
-
         document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
         config.handler = document.getElementById('setHandler').value;
         
@@ -534,6 +536,7 @@
         document.getElementById('profContact2Phone').value = data.contact2Phone || data.mom || '';
         document.getElementById('profContact3Name').value = data.contact3Name || (data.home ? '家中電話' : '聯絡人3');
         document.getElementById('profContact3Phone').value = data.contact3Phone || data.home || '';
+        document.getElementById('profNote').value = data.note || ''; // 讀取備註
     }
 
     function saveStudentProfile() {
@@ -547,10 +550,11 @@
             contact2Name: document.getElementById('profContact2Name').value.trim(),
             contact2Phone: document.getElementById('profContact2Phone').value.trim(),
             contact3Name: document.getElementById('profContact3Name').value.trim(),
-            contact3Phone: document.getElementById('profContact3Phone').value.trim()
+            contact3Phone: document.getElementById('profContact3Phone').value.trim(),
+            note: document.getElementById('profNote').value.trim() // 儲存備註
         };
         localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
-        alert('💾 學生內部資料已成功儲存！');
+        alert('💾 學生內部資料與備註已成功儲存！');
     }
 
     function renderDirectoryInit() {
@@ -605,10 +609,11 @@
                         <thead>
                             <tr>
                                 <th style="width:12%">學生姓名</th>
-                                <th style="width:16%">學校/班級</th>
-                                <th style="width:24%">聯絡人 1</th>
-                                <th style="width:24%">聯絡人 2</th>
-                                <th style="width:24%">聯絡人 3</th>
+                                <th style="width:14%">學校/班級</th>
+                                <th style="width:18%">聯絡人 1</th>
+                                <th style="width:18%">聯絡人 2</th>
+                                <th style="width:18%">聯絡人 3</th>
+                                <th style="width:20%">學生備註</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -623,13 +628,18 @@
                 const c3n = d.contact3Name || (d.home ? '家中' : '');
                 const c3p = d.contact3Phone || d.home || '';
                 const schoolInfo = (d.school || '') + (d.gradeClass ? ' ' + d.gradeClass : '');
+                const noteText = d.note || '';
                 
+                // 若有備註，呈現可點擊展開的樣式
+                const noteHtml = noteText ? `<div class="note-toggle" title="點擊展開/收合備註" onclick="this.classList.toggle('expanded')">📄 ${noteText}</div>` : '<span style="color:#CBD5E1; font-size:13px;">無</span>';
+
                 html += `<tr>
                     <td><strong>${stu}</strong></td>
-                    <td style="color:#64748B;">${schoolInfo}</td>
+                    <td style="color:#64748B; font-size:14px;">${schoolInfo}</td>
                     <td>${c1n ? `<span style="color:#92400E; font-size:13px;">${c1n}:</span><br>` : ''}${c1p}</td>
                     <td>${c2n ? `<span style="color:#92400E; font-size:13px;">${c2n}:</span><br>` : ''}${c2p}</td>
                     <td>${c3n ? `<span style="color:#92400E; font-size:13px;">${c3n}:</span><br>` : ''}${c3p}</td>
+                    <td>${noteHtml}</td>
                 </tr>`;
             });
             html += `</tbody></table>`;
@@ -1036,7 +1046,7 @@
         };
         
         bills.unshift(newBill);
-        localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
+        localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
         
         alert(`✅ 已成功儲存【${currentStudent}】的繳費單！\n您可以直接點選下一位學生繼續開單。`);
         
@@ -1071,7 +1081,11 @@
         primaryTbody.innerHTML = '';
         juniorTbody.innerHTML = '';
         
-        const filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : bills;
+        // 取得篩選後的名單，複製一份來做排序
+        let filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : [...bills];
+        
+        // 排序：未繳費(false)優先顯示在上面，已繳費(true)往下沉
+        filteredBills.sort((a, b) => Number(a.isPaid) - Number(b.isPaid));
         
         let primaryCount = 0;
         let juniorCount = 0;
@@ -1152,7 +1166,7 @@
         if(bill) {
             bill.isPaid = true;
             bill.paidDate = getCurrentDateStr();
-            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
+            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
             renderRecords();
             if(confirm('已結帳成功！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
                 printDocument(id, 'receipt');
@@ -1166,7 +1180,7 @@
             if(bill) {
                 bill.isPaid = false;
                 bill.paidDate = null;
-                localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
+                localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
                 renderRecords();
             }
         }
@@ -1175,7 +1189,7 @@
     function deleteBill(id) {
         if(confirm('確定要刪除這筆紀錄嗎？刪除後無法復原喔！')) {
             bills = bills.filter(b => b.id !== id);
-            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
+            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
             renderRecords();
         }
     }
