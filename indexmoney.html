@@ -365,7 +365,6 @@
             <div id="directoryClassGrid" class="btn-grid" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- 學生內部基本資料編輯區 (點擊學生名字出現) -->
         <div id="studentProfileSection" class="no-print" style="display: none; background: #FFFBEB; padding: 20px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             <h4 style="margin-top: 0; color: #B45309; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #FCD34D; padding-bottom: 10px;">
                 <span>🧑‍🎓 正在編輯學生：<span id="profileStudentName" style="font-size: 20px; font-weight: bold; color: #92400E;"></span></span>
@@ -395,7 +394,6 @@
                     <input type="text" id="profContact3Name" placeholder="聯絡人3 (如: 家中)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact3Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
-                <!-- 學生備註 -->
                 <div style="flex: 1 1 100%; min-width: 100%; margin-top: 5px;">
                     <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">學生備註</label>
                     <textarea id="profNote" placeholder="例如：對芒果過敏、每週三要提早離開..." style="width: 100%; padding: 8px; border-color: #FCD34D; border-radius: 4px; font-family: inherit; box-sizing: border-box;" rows="2"></textarea>
@@ -425,6 +423,17 @@
     let currentDirectoryClass = 'all';
     let editingProfileClass = "";
     let editingProfileStudent = "";
+
+    // 刪除密碼驗證核心函式
+    function verifyAndDelete(actionDescription, callback) {
+        const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入刪除密碼以繼續：`);
+        if (pwd === null) return; // 使用者按取消
+        if (pwd === '0618') {
+            callback(); // 密碼正確，執行刪除動作
+        } else {
+            alert('❌ 密碼錯誤！刪除動作已取消。');
+        }
+    }
 
     function getCurrentMonthStr() {
         const d = new Date();
@@ -536,7 +545,6 @@
         }
     }
 
-    // === 第4頁：學生內部聯絡資料編輯與存取 (點擊名字觸發) ===
     function loadStudentProfile(cls, stu) {
         editingProfileClass = cls;
         editingProfileStudent = stu;
@@ -663,7 +671,6 @@
 
                 html += `<tr>
                     <td style="vertical-align: top;">
-                        <!-- 直接點擊學生名字就能修改資料 -->
                         <span class="student-link" title="點擊修改資料" onclick="loadStudentProfile('${className}', '${stu}')">${stu}</span>
                     </td>
                     <td style="color:#64748B; font-size:14px; vertical-align: top;">${schoolInfo}</td>
@@ -718,7 +725,7 @@
                     </div>
                     <div>
                         <button class="btn-edit-item" style="padding: 6px 10px;" title="修改班級名稱" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️</button>
-                        <button class="btn-delete-item" onclick="event.stopPropagation(); deleteClassConfig('${cls}')">刪除</button>
+                        <button class="btn-delete-item" onclick="event.stopPropagation(); promptDeleteClass('${cls}')">刪除</button>
                     </div>
                 </div>
             `;
@@ -771,8 +778,9 @@
         }
     }
 
-    function deleteClassConfig(cls) {
-        if (confirm(`確定要刪除「${cls}」嗎？\n注意：這會同時刪除該班級內的所有學生名單！`)) {
+    // 加上密碼保護的刪除班級
+    function promptDeleteClass(cls) {
+        verifyAndDelete(`刪除班級「${cls}」及其所有學生`, () => {
             deletedClassBackup = { name: cls, students: [...config.classes[cls]] };
             delete config.classes[cls];
             if (editingClass === cls) {
@@ -782,7 +790,8 @@
             saveClassesToStorage();
             renderClassConfigList();
             document.getElementById('undoClassBtn').style.display = 'inline-block';
-        }
+            alert('🗑️ 班級已刪除！');
+        });
     }
 
     function undoDeleteClass() {
@@ -815,7 +824,7 @@
             return `
                 <div class="item-row" style="background:#FFFFFF;">
                     <div><strong>${index + 1}. ${stu}</strong></div>
-                    <button class="btn-delete-item" onclick="deleteStudentConfig(${index})">移除</button>
+                    <button class="btn-delete-item" onclick="promptDeleteStudent(${index}, '${stu}')">移除</button>
                 </div>
             `;
         }).join('');
@@ -833,12 +842,14 @@
         renderClassConfigList();
     }
 
-    function deleteStudentConfig(index) {
-        if (!editingClass) return;
-        config.classes[editingClass].splice(index, 1);
-        saveClassesToStorage();
-        renderStudentConfigList();
-        renderClassConfigList();
+    // 加上密碼保護的移除學生
+    function promptDeleteStudent(index, stuName) {
+        verifyAndDelete(`從班級移除學生「${stuName}」`, () => {
+            config.classes[editingClass].splice(index, 1);
+            saveClassesToStorage();
+            renderStudentConfigList();
+            renderClassConfigList();
+        });
     }
 
     function saveHandler() {
@@ -879,7 +890,7 @@
                     <div style="display: flex; gap: 5px;">
                         <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, -1)" ${disableUp}>▲</button>
                         <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, 1)" ${disableDown}>▼</button>
-                        <button class="btn-delete-item" onclick="removeQuickItemConfig(${index})" style="margin-left:5px;">刪除</button>
+                        <button class="btn-delete-item" onclick="promptDeleteQuickItem(${index}, '${item.name}')" style="margin-left:5px;">刪除</button>
                     </div>
                 </div>
             `;
@@ -898,10 +909,13 @@
         renderQuickItemConfigList();
     }
 
-    function removeQuickItemConfig(index) {
-        quickItems.splice(index, 1);
-        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
-        renderQuickItemConfigList();
+    // 加上密碼保護的刪除快捷項目
+    function promptDeleteQuickItem(index, itemName) {
+        verifyAndDelete(`刪除快捷項目「${itemName}」`, () => {
+            quickItems.splice(index, 1);
+            localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+            renderQuickItemConfigList();
+        });
     }
 
     function moveQuickItemConfig(index, direction) {
@@ -1128,7 +1142,8 @@
                 actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆雙聯收據</button>`;
                 actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
             }
-            actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
+            // 加上密碼保護的刪除帳單按鈕
+            actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill(${bill.id}, '${bill.studentName}')">刪除</button>`;
 
             const trHtml = `
                 <tr>
@@ -1212,12 +1227,13 @@
         }
     }
 
-    function deleteBill(id) {
-        if(confirm('確定要刪除這筆紀錄嗎？刪除後無法復原喔！')) {
+    // 加上密碼保護的刪除繳費單
+    function promptDeleteBill(id, studentName) {
+        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, () => {
             bills = bills.filter(b => b.id !== id);
             localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
             renderRecords();
-        }
+        });
     }
 
     function printDailyReport() {
