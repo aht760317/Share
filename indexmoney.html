@@ -209,7 +209,7 @@
         <div id="classGrid" class="btn-grid"></div>
         <div id="studentGrid" class="btn-grid" style="display: none; padding: 15px; background: #F1F5F9; border-radius: 8px;"></div>
 
-        <!-- 學生內部基本資料 -->
+        <!-- 學生內部基本資料 (可自訂聯絡人) -->
         <div id="studentProfileSection" style="display: none; background: #FFFBEB; padding: 20px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h4 style="margin-top: 0; color: #B45309; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #FCD34D; padding-bottom: 10px;">
                 <span>🧑‍🎓 <span id="profileStudentName" style="font-size: 20px; font-weight: bold; color: #92400E;"></span> 的內部聯絡資料 (不會列印)</span>
@@ -224,14 +224,17 @@
                     <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">學校班級</label>
                     <input type="text" id="profClass" placeholder="如：三年二班" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
+                <!-- 自訂聯絡人 1 -->
                 <div style="flex: 1; min-width: 140px;">
                     <input type="text" id="profContact1Name" placeholder="聯絡人1 (如: 爸爸)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact1Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
+                <!-- 自訂聯絡人 2 -->
                 <div style="flex: 1; min-width: 140px;">
                     <input type="text" id="profContact2Name" placeholder="聯絡人2 (如: 媽媽)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact2Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
+                <!-- 自訂聯絡人 3 -->
                 <div style="flex: 1; min-width: 140px;">
                     <input type="text" id="profContact3Name" placeholder="聯絡人3 (如: 家中)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact3Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
@@ -282,6 +285,7 @@
     <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
         <div style="display: flex; gap: 30px;">
+            <!-- 左側：班級與學生設定 -->
             <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
                 <h3 style="margin-top: 0; color: var(--primary);">🏫 班級與學生名單設定</h3>
                 
@@ -312,6 +316,7 @@
                 </div>
             </div>
             
+            <!-- 右側：快捷項目與經手人設定 -->
             <div style="flex: 1;">
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
@@ -335,6 +340,7 @@
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
+                <!-- 收款經手人 -->
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
                     <label>預設收款經手人 (印在收據上)：</label>
                     <div class="form-row" style="margin-bottom: 0;">
@@ -353,8 +359,12 @@
     <!-- 頁籤 4：學生聯絡簿 -->
     <div id="directory" class="content-area">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #065F46; font-size: 24px;">📖 全校學生通訊錄總覽</h3>
-            <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印全校通訊錄</button>
+            <h3 style="margin: 0; color: #065F46; font-size: 24px;">📖 學生通訊錄查詢與列印</h3>
+            <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印畫面上通訊錄</button>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight:bold; color:#065F46; font-size: 16px;">👇 請先選擇要查看的班級：</label>
+            <div id="directoryClassGrid" class="btn-grid" style="margin-top: 10px;"></div>
         </div>
         <div id="directoryContent">
             <!-- 動態載入通訊錄 -->
@@ -377,6 +387,7 @@
     
     let editingClass = "";
     let deletedClassBackup = null;
+    let currentDirectoryClass = 'all';
 
     // 工具函式
     function getCurrentMonthStr() {
@@ -457,10 +468,10 @@
         
         if(tabId === 'manage') renderRecords();
         if(tabId === 'create') renderClassGrid();
-        if(tabId === 'directory') renderDirectory();
+        if(tabId === 'directory') renderDirectoryInit();
     }
 
-    // === 學生內部聯絡資料存取 ===
+    // === 學生內部聯絡資料存取 (支援自訂欄位) ===
     function loadStudentProfile(cls, stu) {
         document.getElementById('profileStudentName').innerText = stu;
         const key = cls + '_' + stu;
@@ -496,18 +507,55 @@
         alert('💾 學生內部資料已成功儲存！\n(自訂的聯絡人名稱已同步更新)');
     }
 
-    // === 全校通訊錄列印 ===
-    function renderDirectory() {
+    // === 第4頁：全校通訊錄列印 (含班級過濾) ===
+    function renderDirectoryInit() {
+        const grid = document.getElementById('directoryClassGrid');
+        grid.innerHTML = '';
+
+        const btnAll = document.createElement('button');
+        btnAll.className = `btn-select ${currentDirectoryClass === 'all' ? 'active' : ''}`;
+        btnAll.innerText = '全校總覽';
+        btnAll.onclick = () => showDirectoryClass('all');
+        grid.appendChild(btnAll);
+
+        Object.keys(config.classes).forEach(cls => {
+            const btn = document.createElement('button');
+            btn.className = `btn-select ${cls === currentDirectoryClass ? 'active' : ''}`;
+            btn.innerText = cls;
+            btn.onclick = () => showDirectoryClass(cls);
+            grid.appendChild(btn);
+        });
+
+        showDirectoryClass(currentDirectoryClass);
+    }
+
+    function showDirectoryClass(cls) {
+        currentDirectoryClass = cls;
+        
+        document.querySelectorAll('#directoryClassGrid .btn-select').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText === cls || (cls === 'all' && btn.innerText === '全校總覽')) {
+                btn.classList.add('active');
+            }
+        });
+
         const container = document.getElementById('directoryContent');
         let html = '';
         
-        for (let cls in config.classes) {
-            const students = config.classes[cls];
-            if(students.length === 0) continue;
+        let classesToRender = [];
+        if (cls === 'all') {
+            classesToRender = Object.keys(config.classes);
+        } else {
+            classesToRender = [cls];
+        }
+
+        classesToRender.forEach(className => {
+            const students = config.classes[className];
+            if(!students || students.length === 0) return;
             
-            const titleColor = isJuniorHigh(cls) ? '#7E22CE' : '#EA580C';
+            const titleColor = isJuniorHigh(className) ? '#7E22CE' : '#EA580C';
             
-            html += `<h4 style="margin-top:25px; margin-bottom:10px; color:${titleColor}; font-size:20px; border-bottom:2px solid #E2E8F0; padding-bottom:5px;">🏫 ${cls}</h4>`;
+            html += `<h4 style="margin-top:25px; margin-bottom:10px; color:${titleColor}; font-size:20px; border-bottom:2px solid #E2E8F0; padding-bottom:5px;">🏫 ${className}</h4>`;
             html += `<table class="data-table">
                         <thead>
                             <tr>
@@ -521,7 +569,7 @@
                         <tbody>`;
             
             students.forEach(stu => {
-                const key = cls + '_' + stu;
+                const key = className + '_' + stu;
                 const d = studentDetails[key] || {};
                 const c1n = d.contact1Name || (d.dad ? '爸爸' : '');
                 const c1p = d.contact1Phone || d.dad || '';
@@ -540,7 +588,7 @@
                 </tr>`;
             });
             html += `</tbody></table>`;
-        }
+        });
         
         container.innerHTML = html || '<div style="padding:20px; text-align:center; color:#94A3B8;">目前沒有任何學生資料可以顯示。</div>';
     }
@@ -548,9 +596,11 @@
     function printDirectory() {
         const printContent = document.getElementById('directoryContent').innerHTML;
         const printDate = new Date().toLocaleDateString();
+        const printTitle = currentDirectoryClass === 'all' ? '全校學生通訊錄' : `${currentDirectoryClass} - 學生通訊錄`;
+
         const html = `
             <div class="report-box">
-                <div class="report-title">顧德補習班 - 全校學生通訊錄</div>
+                <div class="report-title">顧德補習班 - ${printTitle}</div>
                 <div style="font-size:16px; margin-bottom: 10px; text-align:right;">列印日期：${printDate}</div>
                 ${printContent}
             </div>
@@ -1086,7 +1136,6 @@
         let totalRevenue = 0;
         let tableRows = targetBills.map((bill, idx) => {
             totalRevenue += bill.total;
-            // 組裝繳費明細文字
             let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
             return `
                 <tr>
@@ -1150,7 +1199,6 @@
         let tableRows = targetBills.map((bill, idx) => {
             totalRevenue += bill.total;
             const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
-            // 組裝繳費明細文字
             let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
             return `
                 <tr>
