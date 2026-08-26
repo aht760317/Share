@@ -142,7 +142,7 @@
                 <select id="batchPrintClassSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #CBD5E1; margin-left: 5px;">
                     <!-- 動態載入班級選項 -->
                 </select>
-                <button class="btn-blue action-btn" style="padding: 8px 15px; font-size: 15px; margin-left: 5px;" onclick="batchPrintNotices()">🖨️ 印出該班【未繳費】單據</button>
+                <button class="btn-blue action-btn" style="padding: 8px 15px; font-size: 15px; margin-left: 5px;" onclick="batchPrintNotices()">🖨️ 印出該班【未繳費】通知單</button>
             </div>
         </div>
 
@@ -250,7 +250,7 @@
             <div style="flex: 1;">
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
-                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300）來設定為優惠折扣按鈕。</p>
+                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 可使用右側的 ▲ ▼ 按鈕來調整開單時的顯示順序。</p>
                     
                     <div class="form-row">
                         <div style="flex: 2;">
@@ -266,7 +266,7 @@
                         </div>
                     </div>
 
-                    <label style="margin-top: 15px;">已設定的快捷項目：</label>
+                    <label style="margin-top: 15px;">已設定的快捷項目 (可拖拉排序)：</label>
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
@@ -362,7 +362,7 @@
         if(tabId === 'create') renderClassGrid();
     }
 
-    // === 系統設定區 ===
+    // === 系統設定區：班級與學生 ===
     function saveClassesToStorage() {
         localStorage.setItem('gude_cfg_classes_v3', JSON.stringify(config.classes));
         updateBatchPrintDropdown();
@@ -405,21 +405,18 @@
         editClassStudents(name);
     }
     
-    // 新增：修改班級名稱功能
     function renameClassConfig(oldName) {
         const newName = prompt('請輸入新的班級名稱（例如升級後的名稱）：', oldName);
-        if (newName === null) return; // 使用者按取消
+        if (newName === null) return; 
         
         const trimmedName = newName.trim();
         if (!trimmedName) { alert('班級名稱不能為空！'); return; }
-        if (trimmedName === oldName) return; // 名稱沒有變更
+        if (trimmedName === oldName) return; 
         if (config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
-        // 無痛轉移名單
         config.classes[trimmedName] = config.classes[oldName];
         delete config.classes[oldName];
 
-        // 處理正在編輯的狀態同步
         if (editingClass === oldName) {
             editingClass = trimmedName;
             document.getElementById('editingClassName').innerText = trimmedName;
@@ -511,7 +508,7 @@
         alert('經手人名稱已儲存！');
     }
 
-    // === 系統設定區：快捷項目管理 ===
+    // === 系統設定區：快捷項目管理 (含排序) ===
     function renderQuickItemConfigList() {
         const list = document.getElementById('quickItemConfigList');
         if (quickItems.length === 0) {
@@ -522,13 +519,22 @@
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
             const rowStyle = (item.price !== null && item.price < 0) ? 'background:#FEF3C7; border-color:#FDE68A;' : 'background:#F1F5F9;';
             const priceStyle = (item.price !== null && item.price < 0) ? 'color:#B45309;' : 'color:#64748B;';
+            
+            // 判斷是否為第一筆或最後一筆來改變按鈕狀態
+            const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+            const disableDown = index === quickItems.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+
             return `
                 <div class="item-row" style="${rowStyle}">
                     <div>
                         <strong>${item.name}</strong>
                         <span style="font-size:14px; ${priceStyle} margin-left:10px;">(${priceText})</span>
                     </div>
-                    <button class="btn-delete-item" onclick="removeQuickItemConfig(${index})">刪除</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, -1)" ${disableUp}>▲</button>
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, 1)" ${disableDown}>▼</button>
+                        <button class="btn-delete-item" onclick="removeQuickItemConfig(${index})" style="margin-left:5px;">刪除</button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -553,6 +559,22 @@
         quickItems.splice(index, 1);
         localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
         renderQuickItemConfigList();
+    }
+
+    // 新增：上下移動快捷按鈕順序
+    function moveQuickItemConfig(index, direction) {
+        if (index + direction < 0 || index + direction >= quickItems.length) return;
+        const temp = quickItems[index];
+        quickItems[index] = quickItems[index + direction];
+        quickItems[index + direction] = temp;
+        
+        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+        renderQuickItemConfigList();
+        
+        // 如果此時正在開單頁面，同步更新開單區的快捷按鈕
+        if (document.getElementById('billingSection').style.display === 'block') {
+            renderQuickButtonsForBilling();
+        }
     }
 
     // === 開單作業區 ===
@@ -728,7 +750,8 @@
                     actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 單筆通知單</button>`;
                     actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認繳款</button>`;
                 } else {
-                    actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆收據</button>`;
+                    // 繳費完成的收據按鈕
+                    actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆雙聯收據</button>`;
                     actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
                 }
                 actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
@@ -775,7 +798,7 @@
             bill.isPaid = true;
             localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
             renderRecords();
-            if(confirm('已結帳成功！\n需要立刻列印「正式收據」給家長嗎？')) {
+            if(confirm('已結帳成功！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
                 printDocument(id, 'receipt');
             }
         }
@@ -800,11 +823,8 @@
         }
     }
 
-    function printDocument(id, type) {
-        const bill = bills.find(b => b.id === id);
-        if(!bill) return;
-        
-        const isReceipt = type === 'receipt';
+    // 產生單一版面的 HTML (供列印使用)
+    function getSingleReceiptHtml(bill, isReceipt, copyLabel) {
         const docTitle = isReceipt ? '繳費收據' : '繳費通知單';
         const printDate = new Date().toLocaleDateString();
         const displayMonth = formatDisplayMonth(bill.yearMonth);
@@ -820,6 +840,7 @@
         let html = `
             <div class="receipt-box">
                 ${isReceipt ? '<div class="watermark">繳費完成</div>' : ''}
+                ${copyLabel ? `<div style="position:absolute; top: 15px; right: 20px; font-size: 16px; border: 2px solid #333; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${copyLabel}</div>` : ''}
                 <div class="receipt-title">顧德補習班 ${displayMonth} ${docTitle}</div>
                 <div class="receipt-header">
                     <div>班級：<strong>${bill.className}</strong></div>
@@ -838,13 +859,36 @@
         if(isReceipt) {
             html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>收款經手人：<strong>${config.handler}</strong></div></div>`;
         } else {
-            html += `<div style="margin-top: 30px; font-size: 16px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
+            html += `<div style="margin-top: 20px; font-size: 15px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
         }
 
-        document.getElementById('printArea').innerHTML = html + `</div>`;
+        html += `</div>`;
+        return html;
+    }
+
+    // 單筆列印 (加入雙聯功能)
+    function printDocument(id, type) {
+        const bill = bills.find(b => b.id === id);
+        if(!bill) return;
+        
+        const isReceipt = type === 'receipt';
+        let allHtml = '';
+
+        if (isReceipt) {
+            // 正式收據：印兩張 (家長聯 + 存根聯)
+            allHtml += getSingleReceiptHtml(bill, true, '家長收執聯');
+            allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            allHtml += getSingleReceiptHtml(bill, true, '補習班存根聯');
+        } else {
+            // 繳費通知單：印一張
+            allHtml += getSingleReceiptHtml(bill, false, '');
+        }
+
+        document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     }
 
+    // 批次列印 (一頁兩張排版)
     function batchPrintNotices() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
@@ -861,37 +905,8 @@
 
         let allHtml = '';
         targetBills.forEach((bill, index) => {
-            const printDate = new Date().toLocaleDateString();
-            const displayMonth = formatDisplayMonth(bill.yearMonth);
-
-            let tableRows = bill.items.map((item, idx) => `
-                <tr>
-                    <td style="text-align:center;">${idx + 1}</td>
-                    <td>${item.name}</td>
-                    <td style="text-align:right;">${item.amount.toLocaleString()}</td>
-                </tr>
-            `).join('');
-
-            const receiptHtml = `
-                <div class="receipt-box">
-                    <div class="receipt-title">顧德補習班 ${displayMonth} 繳費通知單</div>
-                    <div class="receipt-header">
-                        <div>班級：<strong>${bill.className}</strong></div>
-                        <div>姓名：<strong>${bill.studentName}</strong></div>
-                        <div>列印日期：${printDate}</div>
-                    </div>
-                    <table class="receipt-table">
-                        <thead>
-                            <tr><th style="width:10%;">項次</th><th style="width:60%;">項目名稱</th><th style="width:30%;">金額 (新台幣)</th></tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                    <div class="receipt-total">總計： $ ${bill.total.toLocaleString()} 元</div>
-                    <div style="margin-top: 25px; font-size: 15px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>
-                </div>
-            `;
-
-            allHtml += receiptHtml;
+            // 呼叫產生 HTML 的功能 (通知單不加聯單標籤)
+            allHtml += getSingleReceiptHtml(bill, false, '');
 
             if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
                 allHtml += '<div class="page-break"></div>';
