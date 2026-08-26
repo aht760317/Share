@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與管理系統</title>
+    <title>斗六顧德補習班 - 教室教學日誌與智慧管理系統</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -16,10 +16,13 @@
         }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; }
         header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .nav-btn { background: none; border: none; color: white; font-size: 16px; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
-        .nav-btn.active, .nav-btn:hover { background: rgba(255,255,255,0.2); }
-        .container { max-width: 1250px; margin: 20px auto; padding: 0 15px; }
         
+        /* 頂部導覽列按鈕區 */
+        .main-nav { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 15px; padding: 8px 14px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .nav-btn.active, .nav-btn:hover { background: var(--accent); }
+        
+        .container { max-width: 1300px; margin: 20px auto; padding: 0 15px; }
         .section-content { display: none; }
         .section-content.active { display: block; }
         
@@ -28,26 +31,33 @@
         input[type="text"], input[type="date"], input[type="number"], select, textarea {
             width: 100%; padding: 8px; margin: 5px 0 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;
         }
-        .btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: #fff; }
         .btn-small { padding: 4px 8px; font-size: 13px; margin: 2px; }
         
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { padding: 8px 15px; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 4px; }
-        .tab-btn.active { background: var(--primary); color: white; }
+        /* 紅色警示專區樣式 */
+        .alert-banner { background: #ffebee; border: 2px solid var(--danger); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-banner h3 { color: var(--danger); margin-top: 0; display: flex; align-items: center; gap: 8px; }
+        .alert-item { background: white; padding: 10px; border-left: 5px solid var(--danger); margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; }
         th { background: #f1f1f1; }
         
-        .alert-text { color: var(--danger); font-weight: bold; font-size: 0.9em; display: block; margin: 3px 0; }
-        .success-text { color: var(--success); font-weight: bold; font-size: 0.9em; }
+        .badge-danger { color: var(--danger); font-weight: bold; }
+        .badge-success { color: var(--success); font-weight: bold; }
         .box-section { background: #fff8e1; padding: 8px; border-left: 4px solid var(--warning); margin-top: 5px; border-radius: 4px; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; }
+        
+        /* 班級選擇按鈕群組 */
+        .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .class-filter-btn { padding: 8px 16px; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 20px; font-weight: bold; }
+        .class-filter-btn.active { background: var(--primary); color: white; }
 
         @media print {
             header, .no-print { display: none !important; }
@@ -58,45 +68,49 @@
 <body>
 
     <header>
-        <h2>斗六顧德補習班 管理系統</h2>
-        <nav>
-            <button class="nav-btn active" onclick="switchSection('teaching-logs', this)">教學日誌</button>
-            <button class="nav-btn" onclick="switchSection('student-profiles', this)">學生通訊與檔案</button>
+        <h2>斗六顧德補習班 智慧管理系統</h2>
+        <nav class="main-nav">
+            <button class="nav-btn active" onclick="switchSection('teaching-logs-junior', this)">教學日誌 (國中部)</button>
+            <button class="nav-btn" onclick="switchSection('teaching-logs-elementary', this)">教學日誌 (國小部)</button>
+            <button class="nav-btn" onclick="switchSection('student-profiles', this)">學生檔案與通訊</button>
             <button class="nav-btn" onclick="switchSection('system-settings', this)">系統設定</button>
         </nav>
     </header>
 
     <div class="container">
-        <!-- ================= 教學日誌區塊 ================= -->
-        <section id="teaching-logs" class="section-content active">
+
+        <!-- ================= 紅色即時警示專區 (全域顯示) ================= -->
+        <div class="alert-banner no-print" id="global-alert-banner">
+            <h3>⚠️ 需要補課與補考關注名單 (系統自動追蹤)</h3>
+            <div id="alert-list-container">
+                <!-- JS 動態帶入未完成補課/補考的學生 -->
+            </div>
+        </div>
+
+        <!-- ================= 教學日誌 (國中部) ================= -->
+        <section id="teaching-logs-junior" class="section-content active">
             <div class="card no-print">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchDept('elementary', 'log')">國小部</button>
-                    <button class="tab-btn" onclick="switchDept('junior', 'log')">國中部</button>
-                </div>
-                
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國中部 - 教室教學日誌</h3>
                 <div class="grid-2">
                     <div>
                         <label>選擇課程：</label>
-                        <select id="log-course-select" onchange="renderLogStudents()"></select>
+                        <select id="log-course-select-junior" onchange="renderLogStudents('junior')"></select>
                     </div>
                     <div>
                         <label>日期：</label>
-                        <input type="date" id="log-date">
+                        <input type="date" id="log-date-junior">
                     </div>
                 </div>
-
                 <div class="grid-2">
                     <div>
-                        <label>教學日誌 (課程進度)：</label>
-                        <textarea id="log-content" rows="3"></textarea>
+                        <label>教學進度日誌：</label>
+                        <textarea id="log-content-junior" rows="3"></textarea>
                     </div>
                     <div>
                         <label>今日注意事項：</label>
-                        <textarea id="log-notes" rows="3" placeholder="例如：下次要帶圓規..."></textarea>
+                        <textarea id="log-notes-junior" rows="3"></textarea>
                     </div>
                 </div>
-
                 <h3>今日學生狀況填寫</h3>
                 <table>
                     <thead>
@@ -108,49 +122,109 @@
                             <th width="49%">狀態提醒與補課安排 / 當日建議</th>
                         </tr>
                     </thead>
-                    <tbody id="log-students-tbody"></tbody>
+                    <tbody id="log-students-tbody-junior"></tbody>
                 </table>
-                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog()">儲存今日日誌並同步至學生檔案</button>
+                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('junior')">儲存國中部今日日誌並更新狀態</button>
             </div>
-
-            <div class="card" id="history-logs">
-                <h3>歷史教學日誌 <button class="btn no-print" onclick="window.print()" style="float: right;">列印日誌</button></h3>
-                <div id="logs-container"></div>
+            <div class="card">
+                <h3>歷史教學日誌 (國中部)</h3>
+                <div id="logs-container-junior"></div>
             </div>
         </section>
 
-        <!-- ================= 學生通訊與檔案區塊 ================= -->
-        <section id="student-profiles" class="section-content">
-            <div class="card grid-2">
-                <div>
-                    <h3>查詢班級學生</h3>
-                    <select id="profile-course-select" onchange="renderProfileStudents()"></select>
+        <!-- ================= 教學日誌 (國小部) ================= -->
+        <section id="teaching-logs-elementary" class="section-content">
+            <div class="card no-print">
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國小部 - 教室教學日誌</h3>
+                <div class="grid-2">
+                    <div>
+                        <label>選擇課程：</label>
+                        <select id="log-course-select-elementary" onchange="renderLogStudents('elementary')"></select>
+                    </div>
+                    <div>
+                        <label>日期：</label>
+                        <input type="date" id="log-date-elementary">
+                    </div>
                 </div>
-                <div style="text-align: right; padding-top: 20px;">
-                    <button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生資料</button>
+                <div class="grid-2">
+                    <div>
+                        <label>教學進度日誌：</label>
+                        <textarea id="log-content-elementary" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label>今日注意事項：</label>
+                        <textarea id="log-notes-elementary" rows="3"></textarea>
+                    </div>
+                </div>
+                <h3>今日學生狀況填寫</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="12%">姓名</th>
+                            <th width="12%">出席狀況</th>
+                            <th width="12%">考試分數</th>
+                            <th width="15%">作業狀態</th>
+                            <th width="49%">狀態提醒與補課安排 / 當日建議</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-students-tbody-elementary"></tbody>
+                </table>
+                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('elementary')">儲存國小部今日日誌並更新狀態</button>
+            </div>
+            <div class="card">
+                <h3>歷史教學日誌 (國小部)</h3>
+                <div id="logs-container-elementary"></div>
+            </div>
+        </section>
+
+        <!-- ================= 學生檔案與通訊 ================= -->
+        <section id="student-profiles" class="section-content">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h3 style="margin:0;">點擊按鈕查詢班級學生</h3>
+                    </div>
+                    <div>
+                        <button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生資料</button>
+                    </div>
+                </div>
+                <hr style="margin: 15px 0;">
+                <!-- 班級按鈕選擇區 -->
+                <div class="class-btn-group" id="class-buttons-container"></div>
+                
+                <!-- 時間篩選列 -->
+                <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:10px;">
+                    <label style="font-size:14px; font-weight:bold;">出缺勤紀錄顯示範圍：</label>
+                    <select id="attendance-filter-mode" onchange="renderProfileStudents()" style="width:160px; margin:0;">
+                        <option value="all">顯示全部紀錄</option>
+                        <option value="month">最近一個月</option>
+                    </select>
                 </div>
             </div>
 
             <div class="card">
+                <h4 id="current-viewing-class-title" style="color:var(--primary); margin-top:0;">請點選上方班級按鈕檢視學生</h4>
                 <table id="profile-table">
                     <thead>
                         <tr>
-                            <th width="10%">操作</th>
-                            <th width="12%">姓名 / 電話</th>
-                            <th width="15%">出席與請假狀況</th>
-                            <th width="23%">補課與補考紀錄 (含內容與時間)</th>
-                            <th width="40%">備註 / 老師建議 / 主任批示</th>
+                            <th width="8%">操作</th>
+                            <th width="15%">姓名 / 三支電話</th>
+                            <th width="20%">出席與請假狀況 (含日期)</th>
+                            <th width="22%">補課/補考結果與分數</th>
+                            <th width="35%">備註 / 老師建議 / 主任批示</th>
                         </tr>
                     </thead>
-                    <tbody id="profile-students-tbody"></tbody>
+                    <tbody id="profile-students-tbody">
+                        <tr><td colspan="5" style="text-align:center; color:#777;">請先選擇上方班級按鈕</td></tr>
+                    </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- ================= 系統基本設定區塊 ================= -->
+        <!-- ================= 系統設定 ================= -->
         <section id="system-settings" class="section-content">
             <div class="card">
-                <h3>新增班級課程</h3>
+                <h3>新增班級課程 (自動對標)</h3>
                 <div class="grid-2">
                     <div>
                         <label>所屬部門</label>
@@ -181,18 +255,35 @@
         </section>
     </div>
 
-    <!-- 學生資料編輯/新增彈窗 (簡化以內嵌卡片呈現) -->
-    <div class="card" id="student-modal" style="display:none; position:fixed; top:20%; left:30%; width:40%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        <h3 id="modal-title">新增/修改學生資料</h3>
+    <!-- 學生新增/修改彈窗 -->
+    <div class="card" id="student-modal" style="display:none; position:fixed; top:15%; left:30%; width:40%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <h3 id="modal-title">新增學生資料</h3>
         <input type="hidden" id="edit-student-id">
-        <label>姓名：</label>
+        <label>學生姓名：</label>
         <input type="text" id="modal-name">
-        <label>聯絡電話：</label>
-        <input type="text" id="modal-phone">
-        <label>修習課程：</label>
+        
+        <div class="grid-3">
+            <div>
+                <label>電話 1 稱謂：</label>
+                <input type="text" id="modal-label1" value="爸爸">
+                <input type="text" id="modal-phone1" placeholder="電話號碼">
+            </div>
+            <div>
+                <label>電話 2 稱謂：</label>
+                <input type="text" id="modal-label2" value="媽媽">
+                <input type="text" id="modal-phone2" placeholder="電話號碼">
+            </div>
+            <div>
+                <label>電話 3 稱謂：</label>
+                <input type="text" id="modal-label3" value="學生本人">
+                <input type="text" id="modal-phone3" placeholder="電話號碼">
+            </div>
+        </div>
+
+        <label>選擇修習課程：</label>
         <select id="modal-course"></select>
         <div style="margin-top: 15px; text-align: right;">
-            <button class="btn" onclick="saveStudentModal()">儲存</button>
+            <button class="btn" onclick="saveStudentModal()">儲存學生資料</button>
             <button class="btn" style="background:#999;" onclick="document.getElementById('student-modal').style.display='none'">取消</button>
         </div>
     </div>
@@ -201,37 +292,63 @@
         // ================= 模擬資料庫 =================
         const state = {
             courses: {
-                elementary: ['小三數學課', '小四英文課', '小四數學課'],
+                elementary: ['小三數學課', '小四英文課'],
                 junior: ['國一數學課', '國二理化課']
             },
             students: [
                 { 
-                    id: 1, name: '王小明', phone: '0912-345-678', course: '小三數學課', 
-                    attendance: '出席', score: 75, homework: '完成', 
-                    makeupInfo: '考試低於80分 (75分)，需補考。已約定 8/30 14:00 補考', makeupPassed: false,
+                    id: 1, name: '王小明', 
+                    phones: [
+                        { label: '爸爸', number: '0912-111-111' },
+                        { label: '媽媽', number: '0912-222-222' },
+                        { label: '學生', number: '0912-333-333' }
+                    ], 
+                    course: '國一數學課', 
+                    attendanceLogs: [
+                        { date: '2026-08-25', status: '請假', score: '', homework: '完成', detail: '請假需補課：第一章複習' }
+                    ],
+                    makeupPending: true, // 需補課/補考標記
+                    makeupType: 'absent', // absent 或 lowScore
+                    makeupDesc: '請假需補課：第一章複習',
+                    retestScore: null,
                     notes: [
-                        { author: '老師', text: '數學邏輯佳，但計算粗心。' },
-                        { author: '主任', text: '已關心過狀況，請繼續保持。 (主任已確認)' }
+                        { author: '老師', text: '上課態度認真。' }
                     ]
                 },
                 { 
-                    id: 2, name: '李大華', phone: '0933-222-111', course: '國一數學課', 
-                    attendance: '請假', score: '', homework: '未完成', 
-                    makeupInfo: '請假未到，需補課。補課內容：第一章代數運算', makeupPassed: true,
+                    id: 2, name: '陳小花', 
+                    phones: [
+                        { label: '媽媽', number: '0988-555-666' },
+                        { label: '爸爸', number: '0988-777-888' },
+                        { label: '', number: '' }
+                    ], 
+                    course: '小三數學課', 
+                    attendanceLogs: [
+                        { date: '2026-08-26', status: '出席', score: 65, homework: '未完成', detail: '考試低於80分 (65分)' }
+                    ],
+                    makeupPending: true,
+                    makeupType: 'lowScore',
+                    makeupDesc: '考試低於80分 (65分) 需補考',
+                    retestScore: 65,
                     notes: [
-                        { author: '老師', text: '基礎較弱，需多鼓勵。' }
+                        { author: '主任批示 (已確認)', text: '已通知家長複習。' }
                     ]
                 }
-            ]
+            ],
+            selectedClassForProfile: null
         };
 
-        document.getElementById('log-date').valueAsDate = new Date();
+        // 預設日期
+        document.getElementById('log-date-junior').valueAsDate = new Date();
+        document.getElementById('log-date-elementary').valueAsDate = new Date();
 
         function init() {
             updateCourseDropdowns();
-            renderLogStudents();
-            renderProfileStudents();
+            renderLogStudents('junior');
+            renderLogStudents('elementary');
             renderSettingsCourseList();
+            renderClassButtons();
+            updateGlobalAlertBanner();
         }
 
         function switchSection(sectionId, btn) {
@@ -241,7 +358,7 @@
             btn.classList.add('active');
         }
 
-        // ================= 系統設定 =================
+        // ================= 系統設定：自動對標與修改 =================
         function addCourse() {
             const dept = document.getElementById('new-course-dept').value;
             const name = document.getElementById('new-course-name').value.trim();
@@ -268,30 +385,117 @@
         }
 
         function updateCourseDropdowns() {
+            const juniorSelect = document.getElementById('log-course-select-junior');
+            juniorSelect.innerHTML = state.courses.junior.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            const elemSelect = document.getElementById('log-course-select-elementary');
+            elemSelect.innerHTML = state.courses.elementary.map(c => `<option value="${c}">${c}</option>`).join('');
+
             const allCourses = [...state.courses.elementary, ...state.courses.junior];
-            document.getElementById('profile-course-select').innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('modal-course').innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
-            const currentDept = document.querySelector('#teaching-logs .tab-btn.active')?.textContent.includes('國小') ? 'elementary' : 'junior';
-            loadLogCourses(currentDept);
         }
 
-        function loadLogCourses(dept) {
-            document.getElementById('log-course-select').innerHTML = state.courses[dept].map(c => `<option value="${c}">${c}</option>`).join('');
-            renderLogStudents();
+        // ================= 學生檔案與按鈕查詢 =================
+        function renderClassButtons() {
+            const container = document.getElementById('class-buttons-container');
+            const allCourses = [...state.courses.junior, ...state.courses.elementary];
+            
+            if(allCourses.length === 0) {
+                container.innerHTML = '<span style="color:#777">尚無建立任何課程，請至「系統設定」新增。</span>';
+                return;
+            }
+
+            // 預設選取第一個
+            if(!state.selectedClassForProfile || !allCourses.includes(state.selectedClassForProfile)) {
+                state.selectedClassForProfile = allCourses[0];
+            }
+
+            container.innerHTML = allCourses.map(c => `
+                <button class="class-filter-btn ${state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">${c}</button>
+            `).join('');
+
+            renderProfileStudents();
         }
 
-        function switchDept(dept) {
-            document.querySelectorAll('#teaching-logs .tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            loadLogCourses(dept);
+        function selectClassForProfile(className) {
+            state.selectedClassForProfile = className;
+            renderClassButtons();
         }
 
-        // ================= 學生檔案與管理 =================
+        function renderProfileStudents() {
+            const className = state.selectedClassForProfile;
+            document.getElementById('current-viewing-class-title').innerText = `目前檢視班級：${className}`;
+            const tbody = document.getElementById('profile-students-tbody');
+            const list = state.students.filter(s => s.course === className);
+            const filterMode = document.getElementById('attendance-filter-mode').value;
+
+            if(list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此班級目前尚無學生資料</td></tr>`;
+                return;
+            }
+
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+            tbody.innerHTML = list.map(s => {
+                // 篩選出缺勤紀錄
+                let filteredLogs = s.attendanceLogs || [];
+                if(filterMode === 'month') {
+                    filteredLogs = filteredLogs.filter(log => new Date(log.date) >= oneMonthAgo);
+                }
+
+                const logsHtml = filteredLogs.length > 0 ? filteredLogs.map(l => `
+                    <div style="font-size:13px; border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
+                        <b>[${l.date}]</b> ${l.status === '請假' ? '<span class="badge-danger">請假</span>' : '<span class="badge-success">出席</span>'}<br>
+                        分數: ${l.score !== '' ? l.score : '未測'} | 作業: ${l.homework}
+                    </div>
+                `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
+
+                const phonesHtml = s.phones.map(p => p.number ? `<div>${p.label ? p.label+':' : ''} ${p.number}</div>` : '').join('');
+
+                return `
+                    <tr>
+                        <td><button class="btn btn-warning btn-small" onclick="openEditStudentModal(${s.id})">修改</button></td>
+                        <td>
+                            <strong>${s.name}</strong>
+                            <div style="font-size:12px; color:#555; margin-top:4px;">${phonesHtml}</div>
+                        </td>
+                        <td>${logsHtml}</td>
+                        <td>
+                            <div style="font-size:13px; margin-bottom:5px; color:${s.makeupPending ? 'red' : 'green'};">
+                                ${s.makeupPending ? '⚠️ ' + s.makeupDesc : '✅ 狀態正常 (無待補)'}
+                            </div>
+                            ${s.makeupPending && s.makeupType === 'lowScore' ? `
+                                <div style="font-size:12px;">
+                                    補考分數：<input type="number" id="retest-input-${s.id}" value="${s.retestScore !== null ? s.retestScore : ''}" style="width:60px; display:inline-block;" placeholder="分數">
+                                    <button class="btn btn-small btn-success" onclick="submitRetestScore(${s.id})">送出補考</button>
+                                </div>
+                            ` : ''}
+                            ${s.makeupPending && s.makeupType === 'absent' ? `
+                                <button class="btn btn-small btn-success" onclick="resolveMakeup(${s.id})">標記補課完成</button>
+                            ` : ''}
+                        </td>
+                        <td>
+                            <div style="max-height: 90px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:5px; font-size:13px;">
+                                ${s.notes.map((n, idx) => `<div><b>[${n.author}]</b> ${n.text} <button onclick="deleteNote(${s.id}, ${idx})" style="border:none; background:none; color:red; cursor:pointer;">刪除</button></div>`).join('')}
+                            </div>
+                            <input type="text" id="new-note-${s.id}" placeholder="新增老師建議或主任批示..." style="font-size:12px; margin-bottom:3px;">
+                            <button class="btn btn-small" onclick="addNote(${s.id}, '老師建議')">+ 老師建議</button>
+                            <button class="btn btn-small btn-warning" onclick="addNote(${s.id}, '主任批示 (已確認)')">+ 主任確認</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ================= 彈窗與學生編輯 =================
         function openAddStudentModal() {
             document.getElementById('modal-title').innerText = '新增學生資料';
             document.getElementById('edit-student-id').value = '';
             document.getElementById('modal-name').value = '';
-            document.getElementById('modal-phone').value = '';
+            document.getElementById('modal-label1').value = '爸爸'; document.getElementById('modal-phone1').value = '';
+            document.getElementById('modal-label2').value = '媽媽'; document.getElementById('modal-phone2').value = '';
+            document.getElementById('modal-label3').value = '學生本人'; document.getElementById('modal-phone3').value = '';
             document.getElementById('student-modal').style.display = 'block';
         }
 
@@ -301,76 +505,43 @@
             document.getElementById('modal-title').innerText = '修改學生資料';
             document.getElementById('edit-student-id').value = s.id;
             document.getElementById('modal-name').value = s.name;
-            document.getElementById('modal-phone').value = s.phone;
+            
+            document.getElementById('modal-label1').value = s.phones[0]?.label || '爸爸';
+            document.getElementById('modal-phone1').value = s.phones[0]?.number || '';
+            document.getElementById('modal-label2').value = s.phones[1]?.label || '媽媽';
+            document.getElementById('modal-phone2').value = s.phones[1]?.number || '';
+            document.getElementById('modal-label3').value = s.phones[2]?.label || '學生';
+            document.getElementById('modal-phone3').value = s.phones[2]?.number || '';
             document.getElementById('modal-course').value = s.course;
+
             document.getElementById('student-modal').style.display = 'block';
         }
 
         function saveStudentModal() {
             const id = document.getElementById('edit-student-id').value;
             const name = document.getElementById('modal-name').value.trim();
-            const phone = document.getElementById('modal-phone').value.trim();
             const course = document.getElementById('modal-course').value;
-            if(!name) return alert('請填寫姓名！');
+            if(!name) return alert('請填寫學生姓名！');
+
+            const phones = [
+                { label: document.getElementById('modal-label1').value, number: document.getElementById('modal-phone1').value },
+                { label: document.getElementById('modal-label2').value, number: document.getElementById('modal-phone2').value },
+                { label: document.getElementById('modal-label3').value, number: document.getElementById('modal-phone3').value }
+            ];
 
             if(id) {
                 const s = state.students.find(item => item.id == id);
-                s.name = name; s.phone = phone; s.course = course;
+                s.name = name; s.phones = phones; s.course = course;
             } else {
                 state.students.push({
-                    id: Date.now(), name, phone, course, attendance: '出席', score: '', homework: '完成',
-                    makeupInfo: '無須補課', makeupPassed: true, notes: [{ author: '老師', text: '新建立學生檔案。' }]
+                    id: Date.now(), name, phones, course, attendanceLogs: [],
+                    makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
+                    notes: [{ author: '老師', text: '建立學生檔案。' }]
                 });
             }
+
             document.getElementById('student-modal').style.display = 'none';
-            renderProfileStudents();
-            renderLogStudents();
-        }
-
-        function renderProfileStudents() {
-            const selectedCourse = document.getElementById('profile-course-select').value;
-            const tbody = document.getElementById('profile-students-tbody');
-            const list = state.students.filter(s => s.course === selectedCourse);
-
-            if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">目前此班級尚無學生</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = list.map(s => `
-                <tr>
-                    <td><button class="btn btn-warning btn-small" onclick="openEditStudentModal(${s.id})">修改資料</button></td>
-                    <td><strong>${s.name}</strong><br><span style="font-size:12px; color:#666">${s.phone}</span></td>
-                    <td>
-                        狀態：<b>${s.attendance}</b><br>
-                        分數：${s.score !== '' ? s.score : '未登錄'}<br>
-                        作業：${s.homework}
-                    </td>
-                    <td>
-                        <div style="font-size:13px; color: ${s.makeupPassed ? 'green' : 'red'};">
-                            ${s.makeupInfo}
-                        </div>
-                        <div style="margin-top:5px;">
-                            補課結果：<b>${s.makeupPassed ? '✅ 已通過' : '⏳ 尚未通過/未補' }</b>
-                            <button class="btn btn-small btn-success" onclick="toggleMakeupPass(${s.id})">切換通過狀態</button>
-                        </div>
-                    </td>
-                    <td>
-                        <div style="max-height: 100px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:5px; font-size:13px;">
-                            ${s.notes.map((n, idx) => `<div><b>[${n.author}]</b> ${n.text} <button onclick="deleteNote(${s.id}, ${idx})" style="border:none; background:none; color:red; cursor:pointer;">刪除</button></div>`).join('')}
-                        </div>
-                        <input type="text" id="new-note-${s.id}" placeholder="輸入老師建議或主任批示..." style="font-size:12px; margin-bottom:3px;">
-                        <button class="btn btn-small" onclick="addNote(${s.id}, '老師建議')">+ 新增老師建議</button>
-                        <button class="btn btn-small btn-warning" onclick="addNote(${s.id}, '主任批示 (已確認)')">+ 主任確認批示</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function toggleMakeupPass(id) {
-            const s = state.students.find(item => item.id === id);
-            s.makeupPassed = !s.makeupPassed;
-            renderProfileStudents();
+            init();
         }
 
         function addNote(id, type) {
@@ -389,136 +560,198 @@
             renderProfileStudents();
         }
 
-        // ================= 教學日誌填寫 =================
-        function renderLogStudents() {
-            const selectedCourse = document.getElementById('log-course-select').value;
-            const tbody = document.getElementById('log-students-tbody');
+        // ================= 教學日誌填寫與自動對標 =================
+        function renderLogStudents(dept) {
+            const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
+            const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
+            
+            const selectedCourse = document.getElementById(selectId).value;
+            const tbody = document.getElementById(tbodyId);
             const list = state.students.filter(s => s.course === selectedCourse);
 
             if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程尚無學生，請至「學生通訊與檔案」新增。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程尚無學生，請至「學生檔案與通訊」新增。</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = list.map((s, index) => `
+            tbody.innerHTML = list.map((s) => `
                 <tr>
                     <td><strong>${s.name}</strong></td>
                     <td>
-                        <select id="log-att-${s.id}" onchange="checkTriggers(${s.id})">
-                            <option value="出席" ${s.attendance==='出席'?'selected':''}>出席</option>
+                        <select id="log-att-${dept}-${s.id}" onchange="checkLogTriggers('${dept}', ${s.id})">
+                            <option value="出席">出席</option>
                             <option value="請假">請假</option>
                         </select>
                     </td>
                     <td>
-                        <input type="number" id="log-score-${s.id}" value="${s.score}" placeholder="分數" oninput="checkTriggers(${s.id})" style="width:70px;">
+                        <input type="number" id="log-score-${dept}-${s.id}" placeholder="分數" oninput="checkLogTriggers('${dept}', ${s.id})" style="width:70px;">
                     </td>
                     <td>
-                        <select id="log-hw-${s.id}" onchange="checkTriggers(${s.id})">
-                            <option value="完成" ${s.homework==='完成'?'selected':''}>完成</option>
+                        <select id="log-hw-${dept}-${s.id}" onchange="checkLogTriggers('${dept}', ${s.id})">
+                            <option value="完成">已完成</option>
                             <option value="未完成">未完成</option>
                         </select>
                     </td>
                     <td>
-                        <div id="dynamic-alerts-${s.id}"></div>
+                        <div id="dynamic-alerts-${dept}-${s.id}"></div>
                         <div class="box-section">
                             <label style="font-size:12px; font-weight:bold;">手動新增當日建議：</label>
-                            <input type="text" id="log-suggest-${s.id}" placeholder="例如：上課精神不濟，回家需多休息" style="font-size:12px; margin-bottom:0;">
+                            <input type="text" id="log-suggest-${dept}-${s.id}" placeholder="例如：精神狀況很好，多加鼓勵" style="font-size:12px; margin-bottom:0;">
                         </div>
                     </td>
                 </tr>
             `).join('');
-            
-            // 初始化計算一次提醒
-            list.forEach(s => checkTriggers(s.id));
+
+            list.forEach(s => checkLogTriggers(dept, s.id));
         }
 
-        // 偵測分數低於 80、請假、未完成作業
-        function checkTriggers(id) {
-            const att = document.getElementById(`log-att-${id}`).value;
-            const scoreVal = document.getElementById(`log-score-${id}`).value;
-            const hw = document.getElementById(`log-hw-${id}`).value;
-            const alertBox = document.getElementById(`dynamic-alerts-${id}`);
+        function checkLogTriggers(dept, id) {
+            const att = document.getElementById(`log-att-${dept}-${id}`).value;
+            const scoreVal = document.getElementById(`log-score-${dept}-${id}`).value;
+            const hw = document.getElementById(`log-hw-${dept}-${id}`).value;
+            const alertBox = document.getElementById(`dynamic-alerts-${dept}-${id}`);
 
             let html = '';
-            
-            if(att === '请假' || att === '請假') {
-                html += `<span class="alert-text">⚠️ 學生請假，需安排補課！</span>
-                         <input type="text" id="makeup-desc-${id}" placeholder="請輸入補課內容與約定時間" style="font-size:12px; margin-bottom:5px;">`;
+            if(att === '請假') {
+                html += `<span class="badge-danger">⚠️ 學生請假，需約定時間補課！</span>
+                         <input type="text" id="makeup-desc-${dept}-${id}" placeholder="輸入補課內容與時間" style="font-size:12px; margin-bottom:5px;">`;
             }
-
             if(scoreVal !== '' && Number(scoreVal) < 80) {
-                html += `<span class="alert-text">⚠️ 考試分數低於 80 分 (${scoreVal}分)，需安排補考與複習！</span>
-                         <input type="text" id="retest-desc-${id}" placeholder="請輸入補考約定時間" style="font-size:12px; margin-bottom:5px;">`;
+                html += `<span class="badge-danger">⚠️ 考試分數低於 80 分 (${scoreVal}分)，需安排補考！</span>`;
             }
-
             if(hw === '未完成') {
-                html += `<span class="alert-text">❌ 作業未完成，請老師關注！</span>`;
+                html += `<span class="badge-danger">❌ 作業未完成，請老師關注！</span>`;
             }
-
             alertBox.innerHTML = html;
         }
 
-        function saveLog() {
-            const date = document.getElementById('log-date').value;
-            const course = document.getElementById('log-course-select').value;
-            const content = document.getElementById('log-content').value;
-            const notes = document.getElementById('log-notes').value;
+        function saveLog(dept) {
+            const dateInputId = dept === 'junior' ? 'log-date-junior' : 'log-date-elementary';
+            const courseSelectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
+            const contentId = dept === 'junior' ? 'log-content-junior' : 'log-content-elementary';
+            const notesId = dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary';
+            const containerId = dept === 'junior' ? 'logs-container-junior' : 'logs-container-elementary';
+
+            const date = document.getElementById(dateInputId).value;
+            const course = document.getElementById(courseSelectId).value;
+            const content = document.getElementById(contentId).value;
+            const notes = document.getElementById(notesId).value;
 
             if(!content) return alert('請填寫教學進度日誌！');
 
-            // 同步資料至學生檔案中
             const list = state.students.filter(s => s.course === course);
             list.forEach(s => {
-                s.attendance = document.getElementById(`log-att-${s.id}`).value;
-                s.score = document.getElementById(`log-score-${s.id}`).value;
-                s.homework = document.getElementById(`log-hw-${s.id}`).value;
+                const att = document.getElementById(`log-att-${dept}-${s.id}`).value;
+                const score = document.getElementById(`log-score-${dept}-${s.id}`).value;
+                const hw = document.getElementById(`log-hw-${dept}-${s.id}`).value;
 
-                let makeupText = '無須補課';
-                let needsPassReset = false;
+                // 記錄進出勤歷史
+                let detailText = `出席正常`;
+                let isPending = false;
+                let pendingType = '';
+                let pendingDesc = '';
 
-                if(s.attendance === '請假') {
-                    const descInput = document.getElementById(`makeup-desc-${s.id}`);
-                    makeupText = `請假需補課：${descInput ? descInput.value : '未填寫內容'}`;
-                    needsPassReset = true;
-                } else if(s.score !== '' && Number(s.score) < 80) {
-                    const retestInput = document.getElementById(`retest-desc-${s.id}`);
-                    makeupText = `考試低於80分(${s.score}分)需補考：${retestInput ? retestInput.value : '未填寫時間'}`;
-                    needsPassReset = true;
+                if(att === '請假') {
+                    const descInput = document.getElementById(`makeup-desc-${dept}-${s.id}`);
+                    pendingDesc = `請假需補課：${descInput ? descInput.value : '未填寫內容'}`;
+                    detailText = pendingDesc;
+                    isPending = true;
+                    pendingType = 'absent';
+                } else if(score !== '' && Number(score) < 80) {
+                    pendingDesc = `考試低於80分 (${score}分) 需補考`;
+                    detailText = pendingDesc;
+                    isPending = true;
+                    pendingType = 'lowScore';
                 }
 
-                if(needsPassReset) {
-                    s.makeupInfo = makeupText;
-                    s.makeupPassed = false; // 重新轉為未通過，等待主任確認
-                } else {
-                    s.makeupInfo = '正常出席，無補課需求';
-                    s.makeupPassed = true;
+                s.attendanceLogs.unshift({ date, status: att, score, homework: hw, detail: detailText });
+                
+                if(isPending) {
+                    s.makeupPending = true;
+                    s.makeupType = pendingType;
+                    s.makeupDesc = pendingDesc;
+                    if(pendingType === 'lowScore') s.retestScore = score !== '' ? Number(score) : null;
                 }
 
-                // 收集當日建議並寫入學生備註
-                const suggestInput = document.getElementById(`log-suggest-${s.id}`);
+                const suggestInput = document.getElementById(`log-suggest-${dept}-${s.id}`);
                 if(suggestInput && suggestInput.value.trim()) {
-                    s.notes.push({ author: '當日建議(' + date + ')', text: suggestInput.value.trim() });
+                    s.notes.push({ author: `當日建議 (${date})`, text: suggestInput.value.trim() });
                 }
             });
 
-            // 產生歷史日誌區塊
-            const container = document.getElementById('logs-container');
+            // 產生歷史日誌
+            const container = document.getElementById(containerId);
             const newLog = document.createElement('div');
             newLog.style.cssText = 'border-left: 4px solid var(--accent); background: #f9f9f9; padding: 15px; margin-bottom: 15px;';
             newLog.innerHTML = `
                 <h4 style="margin:0 0 10px 0;">[${course}] 日期：${date}</h4>
                 <p><strong>教學進度：</strong><br>${content.replace(/\n/g, '<br>')}</p>
                 <p><strong>注意事項：</strong><br>${notes ? notes.replace(/\n/g, '<br>') : '無'}</p>
-                <p style="color:var(--success); font-size:13px;">✅ 今日日誌與出缺勤、補課提醒已同步更新至學生檔案！</p>
+                <p style="color:var(--success); font-size:13px;">✅ 日誌已儲存，學生補課與紅區警示已同步更新！</p>
             `;
             container.insertBefore(newLog, container.firstChild);
 
-            document.getElementById('log-content').value = '';
-            document.getElementById('log-notes').value = '';
-            alert('日誌儲存成功！學生檔案與補課狀態已連動更新。');
-            renderProfileStudents();
+            document.getElementById(contentId).value = '';
+            document.getElementById(notesId).value = '';
+            alert('日誌儲存成功！');
+            init();
         }
 
+        // ================= 補課/補考自動解除機制 =================
+        function resolveMakeup(studentId) {
+            const s = state.students.find(item => item.id === studentId);
+            s.makeupPending = false;
+            s.makeupDesc = '';
+            s.notes.push({ author: '系統自動', text: '主任/老師已確認補課完成，自動解除警示。' });
+            init();
+        }
+
+        function submitRetestScore(studentId) {
+            const input = document.getElementById(`retest-input-${studentId}`);
+            const score = Number(input.value);
+            if(isNaN(score)) return alert('請輸入有效的補考分數！');
+
+            const s = state.students.find(item => item.id === studentId);
+            s.retestScore = score;
+
+            if(score >= 80) {
+                s.makeupPending = false; // 達標自動隱藏！
+                s.notes.push({ author: '系統自動', text: `補考成績 ${score} 分已達 80 分標準，自動解除紅區警示。` });
+                alert(`恭喜！補考分數 ${score} 分已達標，系統已自動將該生自警示區移除。`);
+            } else {
+                alert(`補考分數為 ${score} 分，仍低於 80 分，需繼續安排補考！`);
+            }
+            init();
+        }
+
+        // ================= 更新頂部紅色警示區 =================
+        function updateGlobalAlertBanner() {
+            const container = document.getElementById('alert-list-container');
+            const pendingStudents = state.students.filter(s => s.makeupPending);
+
+            if(pendingStudents.length === 0) {
+                container.innerHTML = `<div style="color: green; font-weight: bold; text-align: center; padding: 5px;">🎉 目前全校無待補課或待補考學生，狀況良好！</div>`;
+                return;
+            }
+
+            container.innerHTML = pendingStudents.map(s => `
+                <div class="alert-item">
+                    <div>
+                        <b>[${s.course}] ${s.name}</b>：<span style="color:var(--danger);">${s.makeupDesc}</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-small btn-success" onclick="jumpToStudentProfile(${s.id}, '${s.course}')">前往處理並解除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function jumpToStudentProfile(studentId, courseName) {
+            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[2]);
+            selectClassForProfile(courseName);
+        }
+
+        // 初始化執行
         init();
     </script>
 </body>
