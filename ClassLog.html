@@ -27,7 +27,7 @@
         
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+        input[type="text"], input[type="date"], input[type="number"], input[type="password"], select, textarea {
             width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 15px;
         }
         .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
@@ -36,7 +36,6 @@
         .btn-warning { background: var(--warning); color: #fff; }
         .btn-small { padding: 4px 8px; font-size: 13px; margin: 2px; }
         
-        /* 上下分隔的日誌大區塊 (顏色區分) */
         .log-block-progress { background: #f0f7ff; border: 2px solid #b6d4fe; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
         .log-block-progress label { color: #084298; font-weight: bold; font-size: 16px; }
 
@@ -55,7 +54,6 @@
         .badge-success { color: var(--success); font-weight: bold; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; }
         
         .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
@@ -63,7 +61,13 @@
         .class-filter-btn.active { background: var(--primary); color: white; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; width: 500px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .modal-box { background: white; width: 600px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
+
+        .student-name-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .student-name-link:hover { color: var(--primary); }
+        
+        .note-preview-box { background: #f9f9f9; border: 1px solid #ccc; padding: 8px; border-radius: 4px; font-size: 13px; cursor: pointer; min-height: 50px; max-height: 80px; overflow-y: auto; }
+        .note-preview-box:hover { background: #f0f0f0; border-color: var(--accent); }
 
         @media print {
             header, .no-print { display: none !important; }
@@ -106,13 +110,11 @@
                     </div>
                 </div>
 
-                <!-- 上下分開的大區塊 (藍色進度區) -->
                 <div class="log-block-progress">
                     <label>📘 教學進度日誌</label>
                     <textarea id="log-content-junior" rows="4" placeholder="請在此輸入今日詳細教學進度..."></textarea>
                 </div>
 
-                <!-- 上下分開的大區塊 (黃色注意事項區) -->
                 <div class="log-block-notes">
                     <label>📙 今日注意事項</label>
                     <textarea id="log-notes-junior" rows="3" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
@@ -154,13 +156,11 @@
                     </div>
                 </div>
 
-                <!-- 上下分開的大區塊 (藍色進度區) -->
                 <div class="log-block-progress">
                     <label>📘 教學進度日誌</label>
                     <textarea id="log-content-elementary" rows="4" placeholder="請在此輸入今日詳細教學進度..."></textarea>
                 </div>
 
-                <!-- 上下分開的大區塊 (黃色注意事項區) -->
                 <div class="log-block-notes">
                     <label>📙 今日注意事項</label>
                     <textarea id="log-notes-elementary" rows="3" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
@@ -191,7 +191,7 @@
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div><h3 style="margin:0;">點擊按鈕查詢班級學生</h3></div>
+                    <div><h3 style="margin:0;">點擊按鈕查詢班級學生 (點擊學生姓名可修改資料)</h3></div>
                     <div><button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生資料</button></div>
                 </div>
                 <hr style="margin: 15px 0;">
@@ -210,15 +210,14 @@
                 <table id="profile-table">
                     <thead>
                         <tr>
-                            <th width="8%">操作</th>
-                            <th width="15%">姓名 / 三支電話</th>
-                            <th width="20%">出席與請假狀況 (含日期)</th>
+                            <th width="18%">學生姓名 (點擊修改)</th>
+                            <th width="18%">出席與請假狀況</th>
                             <th width="22%">補課/補考結果與分數</th>
-                            <th width="35%">備註 / 老師建議 / 主任批示</th>
+                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (點擊開啟大畫面)</th>
                         </tr>
                     </thead>
                     <tbody id="profile-students-tbody">
-                        <tr><td colspan="5" style="text-align:center; color:#777;">請先選擇上方班級按鈕</td></tr>
+                        <tr><td colspan="4" style="text-align:center; color:#777;">請先選擇上方班級按鈕</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -258,6 +257,43 @@
         </section>
     </div>
 
+    <!-- 評語與電聯紀錄大畫面彈窗 -->
+    <div class="modal-overlay" id="notes-manager-modal">
+        <div class="modal-box">
+            <h3 id="notes-modal-title" style="margin-top:0; color:var(--primary);">📝 學生評語與電聯紀錄管理</h3>
+            <p id="notes-modal-subtitle" style="font-size:13px; color:#666; margin-bottom:15px;"></p>
+            
+            <div style="background: #fdfdfd; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;" id="notes-history-container">
+                <!-- 歷史紀錄列表 -->
+            </div>
+
+            <div style="background: #f0f4f8; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <h4 style="margin-top:0; color:var(--primary);">➕ 新增一筆記錄</h4>
+                <div class="grid-2" style="margin-bottom:0;">
+                    <div>
+                        <label>記錄類型：</label>
+                        <select id="new-note-type">
+                            <option value="老師建議">💬 老師建議</option>
+                            <option value="主任批示">👑 主任批示 (已確認)</option>
+                            <option value="電聯紀錄">📞 電聯紀錄</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>記錄日期：</label>
+                        <input type="date" id="new-note-date">
+                    </div>
+                </div>
+                <label>詳細內容：</label>
+                <textarea id="new-note-text" rows="3" placeholder="請在此輸入詳細評語或電聯內容..."></textarea>
+                <button class="btn btn-success" onclick="addNewNoteFromModal()">確認新增紀錄</button>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn" style="background:#999;" onclick="document.getElementById('notes-manager-modal').style.display='none'">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 編輯個別學生注意事項彈窗 -->
     <div class="modal-overlay" id="student-note-modal">
         <div class="modal-box">
@@ -283,34 +319,28 @@
         </div>
     </div>
 
-    <!-- 學生新增/修改彈窗 -->
+    <!-- 學生新增/修改彈窗 (需密碼保護) -->
     <div class="card" id="student-modal" style="display:none; position:fixed; top:15%; left:30%; width:40%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-        <h3 id="modal-title">新增學生資料</h3>
+        <h3 id="modal-title">新增/修改學生資料</h3>
         <input type="hidden" id="edit-student-id">
         <label>學生姓名：</label>
         <input type="text" id="modal-name">
-        <div class="grid-3">
-            <div>
-                <label>電話 1 稱謂：</label>
-                <input type="text" id="modal-label1" value="爸爸">
-                <input type="text" id="modal-phone1" placeholder="電話號碼">
-            </div>
-            <div>
-                <label>電話 2 稱謂：</label>
-                <input type="text" id="modal-label2" value="媽媽">
-                <input type="text" id="modal-phone2" placeholder="電話號碼">
-            </div>
-            <div>
-                <label>電話 3 稱謂：</label>
-                <input type="text" id="modal-label3" value="學生本人">
-                <input type="text" id="modal-phone3" placeholder="電話號碼">
-            </div>
-        </div>
         <label>選擇修習課程：</label>
         <select id="modal-course"></select>
-        <div style="margin-top: 15px; text-align: right;">
-            <button class="btn" onclick="saveStudentModal()">儲存學生資料</button>
-            <button class="btn" style="background:#999;" onclick="document.getElementById('student-modal').style.display='none'">取消</button>
+        
+        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;">
+            <label style="color: #856404; font-weight: bold; font-size: 13px;">🔒 請輸入管理密碼 (修改或刪除必填)：</label>
+            <input type="password" id="modal-password" placeholder="請輸入密碼 0618" style="margin-bottom:0;">
+        </div>
+
+        <div style="margin-top: 15px; display: flex; justify-content: space-between;">
+            <div>
+                <button class="btn btn-danger" id="delete-student-btn" onclick="deleteStudentData()" style="display:none;">刪除此學生</button>
+            </div>
+            <div>
+                <button class="btn" onclick="saveStudentModal()">儲存資料</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('student-modal').style.display='none'">取消</button>
+            </div>
         </div>
     </div>
 
@@ -322,19 +352,20 @@
             },
             students: [
                 { 
-                    id: 1, name: '王小明', 
-                    phones: [{ label: '爸爸', number: '0912-111-111' }, { label: '媽媽', number: '0912-222-222' }, { label: '學生', number: '0912-333-333' }], 
-                    course: '國一數學課', 
+                    id: 1, name: '王小明', course: '國一數學課', 
                     attendanceLogs: [{ date: '2026-08-25', status: '請假', score: '', homework: '完成', detail: '請假需補課：第一章複習' }],
                     makeupPending: true, makeupType: 'absent', makeupDesc: '請假需補課：第一章複習', retestScore: null,
-                    notes: [{ author: '老師', text: '上課態度認真。' }]
+                    notes: [
+                        { date: '2026-08-25', author: '老師建議', text: '上課態度認真，作業書寫工整。' },
+                        { date: '2026-08-26', author: '電聯紀錄', text: '已電聯家長說明本次小考狀況。' }
+                    ]
                 }
             ],
             selectedClassForProfile: null
         };
 
-        // 暫存當前正在編輯注意事項的學生資訊
         let currentEditingNote = { dept: '', studentId: '', studentName: '' };
+        let currentManagingStudentId = null; // 記錄目前在大畫面編輯評語的學生ID
 
         document.getElementById('log-date-junior').valueAsDate = new Date();
         document.getElementById('log-date-elementary').valueAsDate = new Date();
@@ -355,25 +386,78 @@
             btn.classList.add('active');
         }
 
+        // ================= 開啟評語與電聯紀錄大畫面管理彈窗 =================
+        function openNotesManagerModal(studentId) {
+            currentManagingStudentId = studentId;
+            const s = state.students.find(item => item.id === studentId);
+            if(!s) return;
+
+            document.getElementById('notes-modal-subtitle').innerText = `學生姓名：${s.name} （所屬課程：${s.course}）`;
+            document.getElementById('new-note-date').valueAsDate = new Date(); // 預設今天日期
+            document.getElementById('new-note-text').value = '';
+
+            renderNotesHistoryList();
+            document.getElementById('notes-manager-modal').style.display = 'flex';
+        }
+
+        function renderNotesHistoryList() {
+            const s = state.students.find(item => item.id === currentManagingStudentId);
+            const container = document.getElementById('notes-history-container');
+
+            if(!s.notes || s.notes.length === 0) {
+                container.innerHTML = `<div style="color:#777; text-align:center; padding:10px;">目前尚無任何評語或電聯紀錄</div>`;
+                return;
+            }
+
+            container.innerHTML = s.notes.map((n, idx) => `
+                <div style="border-bottom: 1px solid #eee; padding: 8px 0; display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <span style="font-size:12px; background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:bold; color:#333;">${n.author}</span>
+                        <span style="font-size:12px; color:#666; margin-left:8px;">📅 ${n.date || '未記錄日期'}</span>
+                        <div style="margin-top:5px; font-size:14px; white-space: pre-wrap; color:#111;">${n.text}</div>
+                    </div>
+                    <button class="btn btn-small btn-danger" onclick="deleteNoteFromModal(${idx})" style="padding:2px 6px;">刪除</button>
+                </div>
+            `).join('');
+        }
+
+        function addNewNoteFromModal() {
+            const type = document.getElementById('new-note-type').value;
+            const date = document.getElementById('new-note-date').value;
+            const text = document.getElementById('new-note-text').value.trim();
+
+            if(!text) return alert('請輸入記錄內容！');
+            if(!date) return alert('請選擇日期！');
+
+            const s = state.students.find(item => item.id === currentManagingStudentId);
+            s.notes.push({ date: date, author: type, text: text });
+
+            document.getElementById('new-note-text').value = '';
+            renderNotesHistoryList();
+            renderProfileStudents();
+        }
+
+        function deleteNoteFromModal(noteIdx) {
+            if(!confirm('確定要刪除這筆紀錄嗎？')) return;
+            const s = state.students.find(item => item.id === currentManagingStudentId);
+            s.notes.splice(noteIdx, 1);
+            renderNotesHistoryList();
+            renderProfileStudents();
+        }
+
         // ================= 開啟個別學生注意事項編輯彈窗 =================
         function openStudentNoteModal(dept, studentId, studentName) {
             currentEditingNote = { dept, studentId, studentName };
-            document.getElementById('note-modal-subtitle').innerText = `正在編輯學生：${studentName}`;
-            
             const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
             document.getElementById('student-daily-note-input').value = textarea ? textarea.value : '';
-            
             document.getElementById('student-note-modal').style.display = 'flex';
         }
 
         function saveStudentDailyNote() {
             const { dept, studentId } = currentEditingNote;
             const text = document.getElementById('student-daily-note-input').value;
-            
-            // 寫回隱藏的 textarea 欄位中保存
             const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
             if(textarea) textarea.value = text;
-            
             document.getElementById('student-note-modal').style.display = 'none';
         }
 
@@ -486,7 +570,7 @@
             const filterMode = document.getElementById('attendance-filter-mode').value;
 
             if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此班級目前尚無學生資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">此班級目前尚無學生資料</td></tr>`;
                 return;
             }
 
@@ -505,12 +589,15 @@
                     </div>
                 `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
 
-                const phonesHtml = s.phones.map(p => p.number ? `<div>${p.label ? p.label+':' : ''} ${p.number}</div>` : '').join('');
+                // 產生預覽框內的評語摘要
+                const notesPreview = s.notes && s.notes.length > 0 ? s.notes.map(n => `<div><b>[${n.author}]</b> (${n.date || '無日期'}) ${n.text}</div>`).join('') : '<span style="color:#999;">點擊此處新增老師建議、主任批示或電聯紀錄...</span>';
 
                 return `
                     <tr>
-                        <td><button class="btn btn-warning btn-small" onclick="openEditStudentModal(${s.id})">修改</button></td>
-                        <td><strong>${s.name}</strong><div style="font-size:12px; color:#555; margin-top:4px;">${phonesHtml}</div></td>
+                        <td>
+                            <span class="student-name-link" onclick="openEditStudentModal(${s.id})" title="點擊修改學生資料">${s.name}</span>
+                            <div style="font-size:11px; color:#999; margin-top:3px;">(點擊名字可修改)</div>
+                        </td>
                         <td>${logsHtml}</td>
                         <td>
                             <div style="font-size:13px; margin-bottom:5px; color:${s.makeupPending ? 'red' : 'green'};">
@@ -527,26 +614,23 @@
                             ` : ''}
                         </td>
                         <td>
-                            <div style="max-height: 90px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:5px; font-size:13px;">
-                                ${s.notes.map((n, idx) => `<div><b>[${n.author}]</b> ${n.text} <button onclick="deleteNote(${s.id}, ${idx})" style="border:none; background:none; color:red; cursor:pointer;">刪除</button></div>`).join('')}
+                            <div class="note-preview-box" onclick="openNotesManagerModal(${s.id})" title="點擊開啟大畫面管理評語">
+                                ${notesPreview}
                             </div>
-                            <input type="text" id="new-note-${s.id}" placeholder="新增老師建議或主任批示..." style="font-size:12px; margin-bottom:3px;">
-                            <button class="btn btn-small" onclick="addNote(${s.id}, '老師建議')">+ 老師建議</button>
-                            <button class="btn btn-small btn-warning" onclick="addNote(${s.id}, '主任批示 (已確認)')">+ 主任確認</button>
+                            <div style="font-size:11px; color:#666; margin-top:3px; text-align:right;">👉 點擊上方區塊開啟大畫面編輯</div>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
-        // ================= 彈窗與學生編輯 =================
+        // ================= 彈窗與學生編輯 (密碼保護) =================
         function openAddStudentModal() {
             document.getElementById('modal-title').innerText = '新增學生資料';
             document.getElementById('edit-student-id').value = '';
             document.getElementById('modal-name').value = '';
-            document.getElementById('modal-label1').value = '爸爸'; document.getElementById('modal-phone1').value = '';
-            document.getElementById('modal-label2').value = '媽媽'; document.getElementById('modal-phone2').value = '';
-            document.getElementById('modal-label3').value = '學生本人'; document.getElementById('modal-phone3').value = '';
+            document.getElementById('modal-password').value = '';
+            document.getElementById('delete-student-btn').style.display = 'none';
             document.getElementById('student-modal').style.display = 'block';
         }
 
@@ -556,56 +640,54 @@
             document.getElementById('modal-title').innerText = '修改學生資料';
             document.getElementById('edit-student-id').value = s.id;
             document.getElementById('modal-name').value = s.name;
-            document.getElementById('modal-label1').value = s.phones[0]?.label || '爸爸';
-            document.getElementById('modal-phone1').value = s.phones[0]?.number || '';
-            document.getElementById('modal-label2').value = s.phones[1]?.label || '媽媽';
-            document.getElementById('modal-phone2').value = s.phones[1]?.number || '';
-            document.getElementById('modal-label3').value = s.phones[2]?.label || '學生';
-            document.getElementById('modal-phone3').value = s.phones[2]?.number || '';
             document.getElementById('modal-course').value = s.course;
+            document.getElementById('modal-password').value = '';
+            document.getElementById('delete-student-btn').style.display = 'inline-block';
             document.getElementById('student-modal').style.display = 'block';
         }
 
         function saveStudentModal() {
+            const pwd = document.getElementById('modal-password').value;
+            if(pwd !== '0618') {
+                alert('密碼錯誤！修改資料需要輸入密碼 0618');
+                return;
+            }
+
             const id = document.getElementById('edit-student-id').value;
             const name = document.getElementById('modal-name').value.trim();
             const course = document.getElementById('modal-course').value;
             if(!name) return alert('請填寫學生姓名！');
 
-            const phones = [
-                { label: document.getElementById('modal-label1').value, number: document.getElementById('modal-phone1').value },
-                { label: document.getElementById('modal-label2').value, number: document.getElementById('modal-phone2').value },
-                { label: document.getElementById('modal-label3').value, number: document.getElementById('modal-phone3').value }
-            ];
-
             if(id) {
                 const s = state.students.find(item => item.id == id);
-                s.name = name; s.phones = phones; s.course = course;
+                s.name = name; s.course = course;
             } else {
                 state.students.push({
-                    id: Date.now(), name, phones, course, attendanceLogs: [],
+                    id: Date.now(), name, course, attendanceLogs: [],
                     makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
-                    notes: [{ author: '老師', text: '建立學生檔案。' }]
+                    notes: [{ date: new Date().toISOString().split('T')[0], author: '老師建議', text: '建立學生檔案。' }]
                 });
             }
             document.getElementById('student-modal').style.display = 'none';
             init();
+            alert('學生資料儲存成功！');
         }
 
-        function addNote(id, type) {
-            const input = document.getElementById(`new-note-${id}`);
-            const text = input.value.trim();
-            if(!text) return alert('請輸入內容！');
-            const s = state.students.find(item => item.id === id);
-            s.notes.push({ author: type, text: text });
-            input.value = '';
-            renderProfileStudents();
-        }
+        function deleteStudentData() {
+            const pwd = document.getElementById('modal-password').value;
+            if(pwd !== '0618') {
+                alert('密碼錯誤！刪除資料必須輸入密碼 0618');
+                return;
+            }
 
-        function deleteNote(studentId, noteIdx) {
-            const s = state.students.find(item => item.id === studentId);
-            s.notes.splice(noteIdx, 1);
-            renderProfileStudents();
+            if(!confirm('確定要永久刪除這位學生資料嗎？')) return;
+
+            const id = document.getElementById('edit-student-id').value;
+            state.students = state.students.filter(item => item.id != id);
+
+            document.getElementById('student-modal').style.display = 'none';
+            init();
+            alert('學生資料已成功刪除！');
         }
 
         // ================= 教學日誌填寫 =================
@@ -617,7 +699,7 @@
             const list = state.students.filter(s => s.course === selectedCourse);
 
             if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程尚無學生，請至「學生檔案與通訊」新增。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程尚無學生，請至查詢頁面新增。</td></tr>`;
                 return;
             }
 
@@ -642,7 +724,6 @@
                     </td>
                     <td>
                         <div id="dynamic-alerts-${dept}-${s.id}"></div>
-                        <!-- 隱藏的 textarea 用來暫存該學生的當日注意事項 -->
                         <textarea id="temp-note-${dept}-${s.id}" style="display:none;"></textarea>
                         <button class="btn btn-small btn-warning" onclick="openStudentNoteModal('${dept}', ${s.id}, '${s.name}')" style="margin-top: 5px;">✏️ 編輯當日注意事項</button>
                     </td>
@@ -718,10 +799,9 @@
                     if(pendingType === 'lowScore') s.retestScore = score !== '' ? Number(score) : null;
                 }
 
-                // 收集彈窗填寫的學生當日注意事項並寫入永久記錄
                 const studentNoteText = document.getElementById(`temp-note-${dept}-${s.id}`)?.value;
                 if(studentNoteText && studentNoteText.trim()) {
-                    s.notes.push({ author: `當日注意事項 (${date})`, text: studentNoteText.trim() });
+                    s.notes.push({ date: date, author: '當日注意事項', text: studentNoteText.trim() });
                 }
             });
 
@@ -747,7 +827,7 @@
             const s = state.students.find(item => item.id === studentId);
             s.makeupPending = false;
             s.makeupDesc = '';
-            s.notes.push({ author: '系統自動', text: '主任/老師已確認補課完成，自動解除警示。' });
+            s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: '主任/老師已確認補課完成，自動解除警示。' });
             init();
         }
 
@@ -761,7 +841,7 @@
 
             if(score >= 80) {
                 s.makeupPending = false;
-                s.notes.push({ author: '系統自動', text: `補考成績 ${score} 分已達 80 分標準，自動解除紅區警示。` });
+                s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: `補考成績 ${score} 分已達 80 分標準，自動解除紅區警示。` });
                 alert(`恭喜！補考分數 ${score} 分已達標，系統已自動將該生自警示區移除。`);
             } else {
                 alert(`補考分數為 ${score} 分，仍低於 80 分，需繼續安排補考！`);
