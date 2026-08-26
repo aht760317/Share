@@ -17,17 +17,17 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; }
         header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         
-        .main-nav { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 15px; padding: 8px 14px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .main-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 14px; padding: 8px 12px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .nav-btn.active, .nav-btn:hover { background: var(--accent); }
         
-        .container { max-width: 1300px; margin: 20px auto; padding: 0 15px; }
+        .container { max-width: 1350px; margin: 20px auto; padding: 0 15px; }
         .section-content { display: none; }
         .section-content.active { display: block; }
         
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        input[type="text"], input[type="date"], input[type="number"], input[type="password"], select, textarea {
+        input[type="text"], input[type="date"], input[type="number"], input[type="password"], input[type="file"], select, textarea {
             width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 15px;
         }
         .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
@@ -54,20 +54,32 @@
         .badge-success { color: var(--success); font-weight: bold; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; }
         
-        .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-        .class-filter-btn { padding: 8px 16px; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 20px; font-weight: bold; }
-        .class-filter-btn.active { background: var(--primary); color: white; }
+        /* 國小與國中按鈕色彩區分 */
+        .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+        .btn-elementary { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-weight: bold; }
+        .btn-elementary.active { background: #0284c7; color: white; }
+        
+        .btn-junior { background: #fef3c7; border: 2px solid #d97706; color: #b45309; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-weight: bold; }
+        .btn-junior.active { background: #d97706; color: white; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; width: 600px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
+        .modal-box { background: white; width: 650px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
 
         .student-name-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
         .student-name-link:hover { color: var(--primary); }
         
         .note-preview-box { background: #f9f9f9; border: 1px solid #ccc; padding: 8px; border-radius: 4px; font-size: 13px; cursor: pointer; min-height: 50px; max-height: 80px; overflow-y: auto; }
         .note-preview-box:hover { background: #f0f0f0; border-color: var(--accent); }
+
+        /* 家長日誌美化表格預覽樣式 */
+        .parent-report-card { background: #fff; border: 2px solid var(--primary); padding: 20px; border-radius: 8px; font-family: sans-serif; }
+        .parent-report-header { text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; }
+        .parent-report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .parent-report-table th, .parent-report-table td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 14px; }
+        .parent-report-table th { background: #f1f5f9; color: var(--primary); width: 30%; }
 
         @media print {
             header, .no-print { display: none !important; }
@@ -82,6 +94,7 @@
         <nav class="main-nav">
             <button class="nav-btn active" onclick="switchSection('teaching-logs-junior', this)">教學日誌 (國中部)</button>
             <button class="nav-btn" onclick="switchSection('teaching-logs-elementary', this)">教學日誌 (國小部)</button>
+            <button class="nav-btn" onclick="switchSection('director-overview', this)">👑 主任全校日誌總覽</button>
             <button class="nav-btn" onclick="switchSection('student-profiles', this)">學生檔案與通訊</button>
             <button class="nav-btn" onclick="switchSection('system-settings', this)">系統設定</button>
         </nav>
@@ -118,6 +131,25 @@
                 <div class="log-block-notes">
                     <label>📙 今日注意事項</label>
                     <textarea id="log-notes-junior" rows="3" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
+                </div>
+
+                <!-- 考試單元與試卷上傳區塊 -->
+                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
+                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷管理</h4>
+                    <div class="grid-3">
+                        <div>
+                            <label>考試單元名稱：</label>
+                            <input type="text" id="log-exam-unit-junior" placeholder="例如：第三單元分數計算">
+                        </div>
+                        <div>
+                            <label>📤 上傳當日考卷 (PDF/圖片)：</label>
+                            <input type="file" id="log-exam-file-junior">
+                        </div>
+                        <div>
+                            <label>📤 上傳當日答案卷 (PDF/圖片)：</label>
+                            <input type="file" id="log-answer-file-junior">
+                        </div>
+                    </div>
                 </div>
 
                 <h3>今日學生狀況填寫</h3>
@@ -166,6 +198,25 @@
                     <textarea id="log-notes-elementary" rows="3" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
+                <!-- 考試單元與試卷上傳區塊 -->
+                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
+                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷管理</h4>
+                    <div class="grid-3">
+                        <div>
+                            <label>考試單元名稱：</label>
+                            <input type="text" id="log-exam-unit-elementary" placeholder="例如：第一單元加減法">
+                        </div>
+                        <div>
+                            <label>📤 上傳當日考卷 (PDF/圖片)：</label>
+                            <input type="file" id="log-exam-file-elementary">
+                        </div>
+                        <div>
+                            <label>📤 上傳當日答案卷 (PDF/圖片)：</label>
+                            <input type="file" id="log-answer-file-elementary">
+                        </div>
+                    </div>
+                </div>
+
                 <h3>今日學生狀況填寫</h3>
                 <table>
                     <thead>
@@ -187,11 +238,33 @@
             </div>
         </section>
 
+        <!-- 👑 主任全校日誌快速總覽 -->
+        <section id="director-overview" class="section-content">
+            <div class="card">
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽</h3>
+                <div class="grid-2" style="align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <label>選擇檢視區間：</label>
+                        <select id="overview-filter-mode" onchange="renderDirectorOverview()">
+                            <option value="today">📅 檢視今天日誌</option>
+                            <option value="week">📊 檢視最近一個禮拜日誌</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right; padding-top: 15px;">
+                        <button class="btn" onclick="renderDirectorOverview()">重新整理總覽</button>
+                    </div>
+                </div>
+                <div id="director-overview-container">
+                    <!-- 動態載入總覽卡片 -->
+                </div>
+            </div>
+        </section>
+
         <!-- 學生檔案與通訊 -->
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div><h3 style="margin:0;">點擊按鈕查詢班級學生 (點擊學生姓名可修改資料)</h3></div>
+                    <div><h3 style="margin:0;">點擊按鈕查詢班級學生 (國小/國中部色彩區分)</h3></div>
                     <div><button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生資料</button></div>
                 </div>
                 <hr style="margin: 15px 0;">
@@ -213,7 +286,7 @@
                             <th width="18%">學生姓名 (點擊修改)</th>
                             <th width="18%">出席與請假狀況</th>
                             <th width="22%">補課/補考結果與分數</th>
-                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (點擊開啟大畫面)</th>
+                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄</th>
                         </tr>
                     </thead>
                     <tbody id="profile-students-tbody">
@@ -263,9 +336,7 @@
             <h3 id="notes-modal-title" style="margin-top:0; color:var(--primary);">📝 學生評語與電聯紀錄管理</h3>
             <p id="notes-modal-subtitle" style="font-size:13px; color:#666; margin-bottom:15px;"></p>
             
-            <div style="background: #fdfdfd; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;" id="notes-history-container">
-                <!-- 歷史紀錄列表 -->
-            </div>
+            <div style="background: #fdfdfd; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;" id="notes-history-container"></div>
 
             <div style="background: #f0f4f8; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
                 <h4 style="margin-top:0; color:var(--primary);">➕ 新增一筆記錄</h4>
@@ -307,15 +378,32 @@
         </div>
     </div>
 
-    <!-- 傳給家長的訊息預覽彈窗 -->
+    <!-- 傳給家長的精美圖表日誌預覽彈窗 -->
     <div class="modal-overlay" id="parent-msg-modal">
-        <div class="modal-box">
-            <h3 style="margin-top:0; color:var(--primary);">📋 傳給家長的學習日誌訊息</h3>
-            <textarea id="parent-msg-content" rows="9" style="font-family: monospace; font-size: 14px; background: #fdfdfd;"></textarea>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-success" onclick="copyParentMessage()">📋 一鍵複製訊息</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-msg-modal').style.display='none'">關閉視窗</button>
+        <div class="modal-box" style="width: 550px;">
+            <div class="parent-report-card" id="parent-report-printable">
+                <div class="parent-report-header">
+                    <h2 style="margin:0; color:var(--primary);">斗六顧德補習班</h2>
+                    <p style="margin:5px 0 0; color:#666; font-size:14px;">學員今日學習日誌報告</p>
+                </div>
+                <table class="parent-report-table">
+                    <tr><th>日期</th><td id="rep-date"></td></tr>
+                    <tr><th>課程名稱</th><td id="rep-course"></td></tr>
+                    <tr><th>學生姓名</th><td id="rep-name" style="font-weight:bold; color:var(--primary);"></td></tr>
+                    <tr><th>出缺勤狀況</th><td id="rep-attendance"></td></tr>
+                    <tr><th>考試與分數</th><td id="rep-score"></td></tr>
+                    <tr><th>作業完成度</th><td id="rep-homework"></td></tr>
+                    <tr><th>老師評語與叮嚀</th><td id="rep-note" style="white-space: pre-wrap;"></td></tr>
+                </table>
+                <p style="text-align:center; font-size:12px; color:#888; margin-top:15px;">感謝您的支持與配合，顧德補習班關心您的孩子每一天！</p>
             </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;" class="no-print">
+                <button class="btn btn-success" onclick="copyParentReportText()">📋 一鍵複製文字傳送 LINE</button>
+                <button class="btn" onclick="window.print()">🖨️ 列印此日誌卡片</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-msg-modal').style.display='none'">關閉</button>
+            </div>
+            <!-- 隱藏的純文字複製區 -->
+            <textarea id="parent-msg-content" style="display:none;"></textarea>
         </div>
     </div>
 
@@ -353,19 +441,21 @@
             students: [
                 { 
                     id: 1, name: '王小明', course: '國一數學課', 
-                    attendanceLogs: [{ date: '2026-08-25', status: '請假', score: '', homework: '完成', detail: '請假需補課：第一章複習' }],
-                    makeupPending: true, makeupType: 'absent', makeupDesc: '請假需補課：第一章複習', retestScore: null,
+                    attendanceLogs: [{ date: '2026-08-25', status: '請假', score: '', homework: '完成', detail: '2026-08-25 請假需補課：第一章複習' }],
+                    makeupPending: true, makeupType: 'absent', makeupDesc: '2026-08-25 請假需補課', retestScore: null,
                     notes: [
-                        { date: '2026-08-25', author: '老師建議', text: '上課態度認真，作業書寫工整。' },
-                        { date: '2026-08-26', author: '電聯紀錄', text: '已電聯家長說明本次小考狀況。' }
+                        { date: '2026-08-25', author: '老師建議', text: '上課態度認真。' }
                     ]
                 }
+            ],
+            historyLogs: [
+                { dept: 'junior', date: '2026-08-26', course: '國一數學課', content: '講解第一章綜合練習題，檢討測驗卷。', notes: '下次上課記得帶計算機。', examUnit: '第一章綜合測驗', examFile: 'exam_01.pdf', answerFile: 'ans_01.pdf' }
             ],
             selectedClassForProfile: null
         };
 
         let currentEditingNote = { dept: '', studentId: '', studentName: '' };
-        let currentManagingStudentId = null; // 記錄目前在大畫面編輯評語的學生ID
+        let currentManagingStudentId = null;
 
         document.getElementById('log-date-junior').valueAsDate = new Date();
         document.getElementById('log-date-elementary').valueAsDate = new Date();
@@ -377,23 +467,108 @@
             renderSettingsCourseList();
             renderClassButtons();
             updateGlobalAlertBanner();
+            renderDirectorOverview();
         }
 
         function switchSection(sectionId, btn) {
             document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
+            if(btn) btn.classList.add('active');
+            if(sectionId === 'director-overview') renderDirectorOverview();
         }
 
-        // ================= 開啟評語與電聯紀錄大畫面管理彈窗 =================
+        // ================= 👑 主任全校日誌快速總覽 =================
+        function renderDirectorOverview() {
+            const mode = document.getElementById('overview-filter-mode').value;
+            const container = document.getElementById('director-overview-container');
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let targetLogs = state.historyLogs;
+            if(mode === 'today') {
+                targetLogs = state.historyLogs.filter(l => l.date === todayStr);
+            } else {
+                // 最近一個禮拜
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                targetLogs = state.historyLogs.filter(l => new Date(l.date) >= oneWeekAgo);
+            }
+
+            if(targetLogs.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">此區間尚無任何教學日誌紀錄。</div>`;
+                return;
+            }
+
+            container.innerHTML = targetLogs.map(l => `
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                        <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 授課日期：${l.date}</h4>
+                        <span style="font-size:13px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px;">${l.dept === 'junior' ? '國中部' : '國小部'}</span>
+                    </div>
+                    <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
+                    <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                    <p style="margin:5px 0; font-size:13px; color:#475569;"><b>考試單元：</b>${l.examUnit || '無考試'} 
+                        ${l.examFile ? `| <a href="#" onclick="alert('模擬下載考卷：${l.examFile}')">📥 下載考卷</a>` : ''}
+                        ${l.answerFile ? `| <a href="#" onclick="alert('模擬下載答案卷：${l.answerFile}')">📥 下載答案卷</a>` : ''}
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        // ================= 📋 產生給家長的精美圖表日誌 =================
+        function generateParentMessage(dept, studentId, studentName) {
+            const date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
+            const course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
+            
+            const attendance = document.getElementById(`log-att-${dept}-${studentId}`).value;
+            const score = document.getElementById(`log-score-${dept}-${studentId}`).value;
+            const homework = document.getElementById(`log-hw-${dept}-${studentId}`).value;
+            const noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
+
+            let attText = attendance === '請假' ? '⚠️ 今日請假' : '✔️ 出席正常';
+            let scoreText = score !== '' ? `${score} 分 ${Number(score)<80?'(需補考)':''}` : '未測驗';
+            let hwText = homework === '完成' ? '✅ 已完成' : '❌ 未完成';
+
+            document.getElementById('rep-date').innerText = date;
+            document.getElementById('rep-course').innerText = course;
+            document.getElementById('rep-name').innerText = studentName;
+            document.getElementById('rep-attendance').innerText = attText;
+            document.getElementById('rep-score').innerText = scoreText;
+            document.getElementById('rep-homework').innerText = hwText;
+            document.getElementById('rep-note').innerText = noteText;
+
+            // 同步組合純文字方便 LINE 複製
+            const plainText = `【斗六顧德補習班 - 學習日誌報告】
+📅 日期：${date}
+📚 課程：${course}
+學員：${studentName}
+------------------------
+🔹 出缺勤：${attText}
+🔹 考試表現：${scoreText}
+🔹 作業狀態：${hwText}
+🔹 老師評語：${noteText}
+------------------------
+感謝您的配合與支持，顧德補習班關心您的孩子成長！`;
+
+            document.getElementById('parent-msg-content').value = plainText;
+            document.getElementById('parent-msg-modal').style.display = 'flex';
+        }
+
+        function copyParentReportText() {
+            const textarea = document.getElementById('parent-msg-content');
+            textarea.select();
+            document.execCommand('copy');
+            alert('已成功複製日誌文字，可直接貼到 LINE 傳給家長！');
+        }
+
+        // ================= 評語與電聯紀錄大畫面管理彈窗 =================
         function openNotesManagerModal(studentId) {
             currentManagingStudentId = studentId;
             const s = state.students.find(item => item.id === studentId);
             if(!s) return;
 
             document.getElementById('notes-modal-subtitle').innerText = `學生姓名：${s.name} （所屬課程：${s.course}）`;
-            document.getElementById('new-note-date').valueAsDate = new Date(); // 預設今天日期
+            document.getElementById('new-note-date').valueAsDate = new Date();
             document.getElementById('new-note-text').value = '';
 
             renderNotesHistoryList();
@@ -445,7 +620,6 @@
             renderProfileStudents();
         }
 
-        // ================= 開啟個別學生注意事項編輯彈窗 =================
         function openStudentNoteModal(dept, studentId, studentName) {
             currentEditingNote = { dept, studentId, studentName };
             const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
@@ -459,52 +633,6 @@
             const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
             if(textarea) textarea.value = text;
             document.getElementById('student-note-modal').style.display = 'none';
-        }
-
-        // ================= 產生傳給家長的日誌訊息 =================
-        function generateParentMessage(dept, studentId, studentName) {
-            const date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
-            const course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
-            
-            const attendance = document.getElementById(`log-att-${dept}-${studentId}`).value;
-            const score = document.getElementById(`log-score-${dept}-${studentId}`).value;
-            const homework = document.getElementById(`log-hw-${dept}-${studentId}`).value;
-            const noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
-            
-            let extraInfo = '';
-            if (attendance === '請假') {
-                const makeupInput = document.getElementById(`makeup-desc-${dept}-${studentId}`);
-                extraInfo = `\n⚠️ 出缺勤：今日請假\n📌 補課安排：${makeupInput ? makeupInput.value : '尚未約定'}`;
-            } else {
-                extraInfo = `\n✔️ 出缺勤：出席正常`;
-            }
-
-            if (score !== '' && Number(score) < 80) {
-                extraInfo += `\n⚠️ 考試分數：${score} 分 (需安排補考)`;
-            } else if (score !== '') {
-                extraInfo += `\n📝 考試分數：${score} 分`;
-            } else {
-                extraInfo += `\n📝 考試分數：未進行測驗`;
-            }
-
-            const message = `【斗六顧德補習班 - 學習日誌】
-📅 日期：${date}
-📚 課程：${course}
-親愛的 ${studentName} 家長您好，今日上課狀況如下：${extraInfo}
-📂 作業狀態：${homework === '完成' ? '✅ 已完成' : '❌ 未完成'}
-💡 老師給孩子的注意事項：${noteText}
-
-感謝您的配合與支持，顧德補習班關心您的孩子學習成長！`;
-
-            document.getElementById('parent-msg-content').value = message;
-            document.getElementById('parent-msg-modal').style.display = 'flex';
-        }
-
-        function copyParentMessage() {
-            const textarea = document.getElementById('parent-msg-content');
-            textarea.select();
-            document.execCommand('copy');
-            alert('已成功複製家長日誌訊息，可以直接貼上傳送到 LINE 了！');
         }
 
         // ================= 系統設定 =================
@@ -540,10 +668,13 @@
             document.getElementById('modal-course').innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
-        // ================= 學生檔案與按鈕查詢 =================
+        // ================= 學生檔案與國小/國中色彩區分按鈕 =================
         function renderClassButtons() {
             const container = document.getElementById('class-buttons-container');
-            const allCourses = [...state.courses.junior, ...state.courses.elementary];
+            const elemCourses = state.courses.elementary;
+            const junCourses = state.courses.junior;
+            const allCourses = [...junCourses, ...elemCourses];
+
             if(allCourses.length === 0) {
                 container.innerHTML = '<span style="color:#777">尚無建立任何課程</span>';
                 return;
@@ -551,9 +682,18 @@
             if(!state.selectedClassForProfile || !allCourses.includes(state.selectedClassForProfile)) {
                 state.selectedClassForProfile = allCourses[0];
             }
-            container.innerHTML = allCourses.map(c => `
-                <button class="class-filter-btn ${state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">${c}</button>
-            `).join('');
+
+            let html = '';
+            // 國中部按鈕 (黃色系)
+            junCourses.forEach(c => {
+                html += `<button class="btn-junior ${state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">國中：${c}</button>`;
+            });
+            // 國小部按鈕 (藍色系)
+            elemCourses.forEach(c => {
+                html += `<button class="btn-elementary ${state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">國小：${c}</button>`;
+            });
+
+            container.innerHTML = html;
             renderProfileStudents();
         }
 
@@ -589,7 +729,6 @@
                     </div>
                 `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
 
-                // 產生預覽框內的評語摘要
                 const notesPreview = s.notes && s.notes.length > 0 ? s.notes.map(n => `<div><b>[${n.author}]</b> (${n.date || '無日期'}) ${n.text}</div>`).join('') : '<span style="color:#999;">點擊此處新增老師建議、主任批示或電聯紀錄...</span>';
 
                 return `
@@ -624,7 +763,7 @@
             }).join('');
         }
 
-        // ================= 彈窗與學生編輯 (密碼保護) =================
+        // ================= 學生增刪改 (密碼保護) =================
         function openAddStudentModal() {
             document.getElementById('modal-title').innerText = '新增學生資料';
             document.getElementById('edit-student-id').value = '';
@@ -648,10 +787,7 @@
 
         function saveStudentModal() {
             const pwd = document.getElementById('modal-password').value;
-            if(pwd !== '0618') {
-                alert('密碼錯誤！修改資料需要輸入密碼 0618');
-                return;
-            }
+            if(pwd !== '0618') return alert('密碼錯誤！修改資料需要輸入密碼 0618');
 
             const id = document.getElementById('edit-student-id').value;
             const name = document.getElementById('modal-name').value.trim();
@@ -675,16 +811,11 @@
 
         function deleteStudentData() {
             const pwd = document.getElementById('modal-password').value;
-            if(pwd !== '0618') {
-                alert('密碼錯誤！刪除資料必須輸入密碼 0618');
-                return;
-            }
-
+            if(pwd !== '0618') return alert('密碼錯誤！刪除資料必須輸入密碼 0618');
             if(!confirm('確定要永久刪除這位學生資料嗎？')) return;
 
             const id = document.getElementById('edit-student-id').value;
             state.students = state.students.filter(item => item.id != id);
-
             document.getElementById('student-modal').style.display = 'none';
             init();
             alert('學生資料已成功刪除！');
@@ -757,14 +888,23 @@
             const courseSelectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
             const contentId = dept === 'junior' ? 'log-content-junior' : 'log-content-elementary';
             const notesId = dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary';
+            const examUnitId = dept === 'junior' ? 'log-exam-unit-junior' : 'log-exam-unit-elementary';
+            const examFileId = dept === 'junior' ? 'log-exam-file-junior' : 'log-exam-file-elementary';
+            const answerFileId = dept === 'junior' ? 'log-answer-file-junior' : 'log-answer-file-elementary';
             const containerId = dept === 'junior' ? 'logs-container-junior' : 'logs-container-elementary';
 
             const date = document.getElementById(dateInputId).value;
             const course = document.getElementById(courseSelectId).value;
             const content = document.getElementById(contentId).value;
             const notes = document.getElementById(notesId).value;
+            const examUnit = document.getElementById(examUnitId).value;
+            const examFile = document.getElementById(examFileId).files[0]?.name || '';
+            const answerFile = document.getElementById(answerFileId).files[0]?.name || '';
 
             if(!content) return alert('請填寫教學進度日誌！');
+
+            // 儲存至歷史日誌中供主任全校瀏覽與考卷下載
+            state.historyLogs.unshift({ dept, date, course, content, notes, examUnit, examFile, answerFile });
 
             const list = state.students.filter(s => s.course === course);
             list.forEach(s => {
@@ -779,12 +919,12 @@
 
                 if(att === '請假') {
                     const descInput = document.getElementById(`makeup-desc-${dept}-${s.id}`);
-                    pendingDesc = `請假需補課：${descInput ? descInput.value : '未填寫內容'}`;
+                    pendingDesc = `${date} 請假需補課：${descInput ? descInput.value : '未填寫內容'}`;
                     detailText = pendingDesc;
                     isPending = true;
                     pendingType = 'absent';
                 } else if(score !== '' && Number(score) < 80) {
-                    pendingDesc = `考試低於80分 (${score}分) 需補考`;
+                    pendingDesc = `${date} 考試低於80分 (${score}分) 需補考`;
                     detailText = pendingDesc;
                     isPending = true;
                     pendingType = 'lowScore';
@@ -805,20 +945,26 @@
                 }
             });
 
+            // 畫面歷史日誌區塊
             const container = document.getElementById(containerId);
             const newLog = document.createElement('div');
             newLog.style.cssText = 'border-left: 4px solid var(--accent); background: #f9f9f9; padding: 15px; margin-bottom: 15px;';
             newLog.innerHTML = `
                 <h4 style="margin:0 0 10px 0;">[${course}] 日期：${date}</h4>
                 <p><strong>教學進度：</strong><br>${content.replace(/\n/g, '<br>')}</p>
-                <p><strong>班級注意事項：</strong><br>${notes ? notes.replace(/\n/g, '<br>') : '無'}</p>
+                <p><strong>注意事項：</strong><br>${notes ? notes.replace(/\n/g, '<br>') : '無'}</p>
+                <p><strong>考試單元：</strong>${examUnit || '無考試'} 
+                    ${examFile ? `| 📥 考卷: ${examFile}` : ''}
+                    ${answerFile ? `| 📥 答案: ${answerFile}` : ''}
+                </p>
                 <p style="color:var(--success); font-size:13px;">✅ 日誌已儲存，學生補課與紅區警示已同步更新！</p>
             `;
             container.insertBefore(newLog, container.firstChild);
 
             document.getElementById(contentId).value = '';
             document.getElementById(notesId).value = '';
-            alert('日誌儲存成功！');
+            document.getElementById(examUnitId).value = '';
+            alert('日誌與試卷儲存成功！主任全校總覽已同步更新。');
             init();
         }
 
@@ -849,7 +995,7 @@
             init();
         }
 
-        // ================= 頂部紅色警示區 =================
+        // ================= 頂部紅色警示區 (顯示詳細日期) =================
         function updateGlobalAlertBanner() {
             const container = document.getElementById('alert-list-container');
             const pendingStudents = state.students.filter(s => s.makeupPending);
@@ -868,7 +1014,7 @@
         }
 
         function jumpToStudentProfile(studentId, courseName) {
-            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[2]);
+            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[3]);
             selectClassForProfile(courseName);
         }
 
