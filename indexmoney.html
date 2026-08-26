@@ -38,6 +38,9 @@
         .quick-btn.discount { background: #FEF3C7; border-color: #FBBF24; color: #B45309; }
         .quick-btn.discount:hover { background: #FDE68A; }
         .quick-btn.discount small { color: #D97706; }
+        .quick-btn.junior { background: #F3E8FF; border-color: #D8B4FE; color: #7E22CE; }
+        .quick-btn.junior:hover { background: #E9D5FF; }
+        .quick-btn.junior small { color: #9333EA; }
 
         /* 項目管理與新增區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
@@ -54,7 +57,9 @@
         .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; overflow-y: auto; }
 
         /* 紀錄管理與未繳費提醒 */
-        .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .finance-bar { background: #FFFBEB; padding: 15px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
         .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 12px; text-align: left; }
         .data-table th { background: #F1F5F9; color: #475569; font-weight: bold; }
@@ -87,15 +92,9 @@
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
             
+            /* 單據外框設定 (收據使用) */
             .receipt-box { 
-                border: 2px solid #000; 
-                padding: 20px 30px; 
-                width: 100%; 
-                max-width: 18cm; 
-                margin: 0 auto; 
-                box-sizing: border-box; 
-                position: relative; 
-                page-break-inside: avoid; 
+                border: 2px solid #000; padding: 20px 30px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; position: relative; page-break-inside: avoid; 
             }
             
             .receipt-title { text-align: center; font-size: 26px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px; }
@@ -109,6 +108,14 @@
             
             .cut-line { text-align: center; font-size: 14px; color: #666; margin: 15px auto; border-top: 1px dashed #666; padding-top: 15px; width: 18cm; font-weight: bold; page-break-inside: avoid; }
             .page-break { page-break-after: always; display: block; height: 0; border: none; margin: 0; padding: 0; }
+            
+            /* 財務報表專用樣式 */
+            .report-box { padding: 20px; width: 100%; box-sizing: border-box; }
+            .report-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .report-table th, .report-table td { border: 1px solid #000; padding: 10px; font-size: 16px; }
+            .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+            .report-total { text-align: right; font-size: 22px; font-weight: bold; padding-top: 10px; border-top: 2px solid #000; }
         }
     </style>
 </head>
@@ -127,6 +134,24 @@
 
     <!-- 頁籤 1：繳費紀錄管理 -->
     <div id="manage" class="content-area active">
+        
+        <!-- 財務報表列印區塊 -->
+        <div class="finance-bar">
+            <h4 style="margin-top: 0; color: #92400E; border-bottom: 1px dashed #FCD34D; padding-bottom: 10px; font-size:18px;">📊 結帳財務報表列印 (對帳專用)</h4>
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight:bold; color:#B45309; margin:0;">列印日報表：</label>
+                    <input type="date" id="dailyReportDate" style="padding: 6px; border-radius: 4px; border: 1px solid #FCD34D;">
+                    <button class="btn-select" style="background:#F59E0B; color:white; border:none; padding: 7px 15px; font-weight:bold;" onclick="printDailyReport()">🖨️ 印日報表</button>
+                </div>
+                <div style="border-left: 2px dashed #FCD34D; padding-left: 30px; display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight:bold; color:#B45309; margin:0;">列印月報表：</label>
+                    <input type="month" id="monthlyReportMonth" style="padding: 6px; border-radius: 4px; border: 1px solid #FCD34D;">
+                    <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 7px 15px; font-weight:bold;" onclick="printMonthlyReport()">🖨️ 印月報表</button>
+                </div>
+            </div>
+        </div>
+
         <div class="filter-bar">
             <div>
                 <label style="margin:0;">📅 查詢 年份-月份：</label>
@@ -138,7 +163,7 @@
             
             <!-- 批次列印區塊 -->
             <div>
-                <label style="margin:0; color: #1E40AF; font-weight: bold;">🏫 批次列印(環保模式-一頁兩張)：</label>
+                <label style="margin:0; color: #1E40AF; font-weight: bold;">🏫 批次列印(環保模式)：</label>
                 <select id="batchPrintClassSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #CBD5E1; margin-left: 5px;">
                     <!-- 動態載入班級選項 -->
                 </select>
@@ -172,8 +197,38 @@
         <div id="classGrid" class="btn-grid"></div>
         <div id="studentGrid" class="btn-grid" style="display: none; padding: 15px; background: #F1F5F9; border-radius: 8px;"></div>
 
+        <!-- 學生內部基本資料 -->
+        <div id="studentProfileSection" style="display: none; background: #FFFBEB; padding: 20px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h4 style="margin-top: 0; color: #B45309; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #FCD34D; padding-bottom: 10px;">
+                <span>🧑‍🎓 <span id="profileStudentName" style="font-size: 20px; font-weight: bold; color: #92400E;"></span> 的內部聯絡資料 (不會列印)</span>
+                <button class="btn-select" style="padding: 6px 15px; font-size: 14px; background: #FDE68A; color: #92400E; border-color: #F59E0B; font-weight: bold;" onclick="saveStudentProfile()">💾 儲存聯絡資料</button>
+            </h4>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">學校 (國小/國中)</label>
+                    <input type="text" id="profSchool" placeholder="如：斗南國小" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">學校班級</label>
+                    <input type="text" id="profClass" placeholder="如：三年二班" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">爸爸電話</label>
+                    <input type="text" id="profDad" placeholder="輸入手機號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">媽媽電話</label>
+                    <input type="text" id="profMom" placeholder="輸入手機號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">家中電話</label>
+                    <input type="text" id="profHome" placeholder="輸入市話" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                </div>
+            </div>
+        </div>
+
         <div id="billingSection" style="display: none;">
-            <h3 class="section-title">第二步：選擇收費項目與設定金額</h3>
+            <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
             <div class="form-row" style="width: 40%;">
                 <div style="flex: 1;">
@@ -250,7 +305,7 @@
             <div style="flex: 1;">
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
-                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 可使用右側的 ▲ ▼ 按鈕來調整開單時的顯示順序。</p>
+                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300）來設定為優惠折扣按鈕。</p>
                     
                     <div class="form-row">
                         <div style="flex: 2;">
@@ -294,6 +349,7 @@
     // 系統變數
     let config = { classes: {}, handler: "雅鴻" };
     let quickItems = [];
+    let studentDetails = JSON.parse(localStorage.getItem('gude_cfg_student_details_v4')) || {};
     let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || [];
     let currentClass = "";
     let currentStudent = "";
@@ -303,9 +359,16 @@
     let editingClass = "";
     let deletedClassBackup = null;
 
+    // 工具函式：取得今日 YYYY-MM
     function getCurrentMonthStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // 工具函式：取得今日 YYYY-MM-DD (確保時區正確)
+    function getCurrentDateStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
     function formatDisplayMonth(yearMonthStr) {
@@ -313,6 +376,19 @@
         const parts = yearMonthStr.split('-');
         if(parts.length === 2) return `${parts[0]}年${parts[1]}月`;
         return yearMonthStr;
+    }
+    
+    // 從舊系統的日期字串嘗試解析出 YYYY-MM-DD
+    function parseLegacyDateToIso(dateStr) {
+        const parts = dateStr.split('/');
+        if(parts.length === 3) {
+            return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+        return "";
+    }
+
+    function isJuniorHigh(name) {
+        return name.includes('國中') || name.includes('國一') || name.includes('國二') || name.includes('國三') || name.includes('理化') || name.includes('會考');
     }
 
     function init() {
@@ -336,15 +412,18 @@
         }
 
         const defaultQuickItems = [
-            { name: "國文", price: 2000 }, { name: "數學", price: 2000 }, 
-            { name: "餐費", price: 1500 }, { name: "交通車", price: null }, 
+            { name: "國小數學", price: 2000 }, { name: "國一數學", price: 2500 }, 
+            { name: "國二理化", price: 2500 }, { name: "餐費", price: 1500 }, 
             { name: "優惠折扣", price: -300 }
         ];
         const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
         quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
         
+        // 預設日期設定
         document.getElementById('billMonth').value = getCurrentMonthStr();
         document.getElementById('filterMonth').value = getCurrentMonthStr();
+        document.getElementById('dailyReportDate').value = getCurrentDateStr();
+        document.getElementById('monthlyReportMonth').value = getCurrentMonthStr();
         
         renderClassConfigList();
         renderQuickItemConfigList();
@@ -360,6 +439,32 @@
         
         if(tabId === 'manage') renderRecords();
         if(tabId === 'create') renderClassGrid();
+    }
+
+    // === 學生內部聯絡資料存取 ===
+    function loadStudentProfile(cls, stu) {
+        document.getElementById('profileStudentName').innerText = stu;
+        const key = cls + '_' + stu;
+        const data = studentDetails[key] || { school: '', gradeClass: '', dad: '', mom: '', home: '' };
+        document.getElementById('profSchool').value = data.school;
+        document.getElementById('profClass').value = data.gradeClass;
+        document.getElementById('profDad').value = data.dad;
+        document.getElementById('profMom').value = data.mom;
+        document.getElementById('profHome').value = data.home;
+    }
+
+    function saveStudentProfile() {
+        if(!currentClass || !currentStudent) return;
+        const key = currentClass + '_' + currentStudent;
+        studentDetails[key] = {
+            school: document.getElementById('profSchool').value.trim(),
+            gradeClass: document.getElementById('profClass').value.trim(),
+            dad: document.getElementById('profDad').value.trim(),
+            mom: document.getElementById('profMom').value.trim(),
+            home: document.getElementById('profHome').value.trim()
+        };
+        localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
+        alert('💾 學生內部資料已成功儲存！');
     }
 
     // === 系統設定區：班級與學生 ===
@@ -385,7 +490,7 @@
                         <span style="font-size:13px; color:#64748B; margin-left:10px;">(${studentCount} 位學生)</span>
                     </div>
                     <div>
-                        <button class="btn-edit-item" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️ 改名</button>
+                        <button class="btn-edit-item" style="padding: 6px 10px;" title="修改班級名稱" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️</button>
                         <button class="btn-delete-item" onclick="event.stopPropagation(); deleteClassConfig('${cls}')">刪除</button>
                     </div>
                 </div>
@@ -414,8 +519,22 @@
         if (trimmedName === oldName) return; 
         if (config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
+        // 無痛轉移學生名單
         config.classes[trimmedName] = config.classes[oldName];
         delete config.classes[oldName];
+
+        // 連動轉移學生詳細資料的 Key
+        const newStudentDetails = {};
+        for (let key in studentDetails) {
+            if (key.startsWith(oldName + '_')) {
+                const stuName = key.substring(oldName.length + 1);
+                newStudentDetails[trimmedName + '_' + stuName] = studentDetails[key];
+            } else {
+                newStudentDetails[key] = studentDetails[key];
+            }
+        }
+        studentDetails = newStudentDetails;
+        localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
 
         if (editingClass === oldName) {
             editingClass = trimmedName;
@@ -508,7 +627,7 @@
         alert('經手人名稱已儲存！');
     }
 
-    // === 系統設定區：快捷項目管理 (含排序) ===
+    // === 系統設定區：快捷項目管理 ===
     function renderQuickItemConfigList() {
         const list = document.getElementById('quickItemConfigList');
         if (quickItems.length === 0) {
@@ -517,10 +636,18 @@
         }
         list.innerHTML = quickItems.map((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
-            const rowStyle = (item.price !== null && item.price < 0) ? 'background:#FEF3C7; border-color:#FDE68A;' : 'background:#F1F5F9;';
-            const priceStyle = (item.price !== null && item.price < 0) ? 'color:#B45309;' : 'color:#64748B;';
             
-            // 判斷是否為第一筆或最後一筆來改變按鈕狀態
+            let rowStyle = 'background:#F1F5F9;';
+            let priceStyle = 'color:#64748B;';
+            
+            if (item.price !== null && item.price < 0) {
+                rowStyle = 'background:#FEF3C7; border-color:#FDE68A;';
+                priceStyle = 'color:#B45309;';
+            } else if (isJuniorHigh(item.name)) {
+                rowStyle = 'background:#F3E8FF; border-color:#D8B4FE;';
+                priceStyle = 'color:#7E22CE;';
+            }
+
             const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
             const disableDown = index === quickItems.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
 
@@ -561,7 +688,6 @@
         renderQuickItemConfigList();
     }
 
-    // 新增：上下移動快捷按鈕順序
     function moveQuickItemConfig(index, direction) {
         if (index + direction < 0 || index + direction >= quickItems.length) return;
         const temp = quickItems[index];
@@ -571,7 +697,6 @@
         localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
         renderQuickItemConfigList();
         
-        // 如果此時正在開單頁面，同步更新開單區的快捷按鈕
         if (document.getElementById('billingSection').style.display === 'block') {
             renderQuickButtonsForBilling();
         }
@@ -608,6 +733,7 @@
         });
         
         document.getElementById('billingSection').style.display = 'none';
+        document.getElementById('studentProfileSection').style.display = 'none';
     }
 
     function selectStudent(stu, btnEl) {
@@ -615,7 +741,11 @@
         document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
         
+        loadStudentProfile(currentClass, currentStudent);
+        document.getElementById('studentProfileSection').style.display = 'block';
+
         document.getElementById('billingSection').style.display = 'block';
+        document.getElementById('billingTargetName').innerText = currentStudent;
         currentBillItems = [];
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
@@ -628,8 +758,14 @@
         grid.innerHTML = quickItems.map(item => {
             const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '輸入金額';
             const priceArg = item.price !== null ? item.price : "''"; 
-            const isDiscount = item.price !== null && item.price < 0;
-            const btnClass = isDiscount ? 'quick-btn discount' : 'quick-btn';
+            
+            let btnClass = 'quick-btn';
+            if (item.price !== null && item.price < 0) {
+                btnClass += ' discount';
+            } else if (isJuniorHigh(item.name)) {
+                btnClass += ' junior';
+            }
+
             return `<button class="${btnClass}" onclick="clickQuickItem('${item.name}', ${priceArg})">
                         <span>${item.name}</span>
                         <small>${priceText}</small>
@@ -701,7 +837,8 @@
             studentName: currentStudent,
             items: [...currentBillItems],
             total: total, 
-            isPaid: false
+            isPaid: false,
+            paidDate: null // 新增：用於記錄實際繳款日期
         };
         
         bills.unshift(newBill);
@@ -713,7 +850,9 @@
         renderCurrentItems();
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
+        
         document.getElementById('billingSection').style.display = 'none';
+        document.getElementById('studentProfileSection').style.display = 'none';
         document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
         currentStudent = "";
     }
@@ -750,7 +889,6 @@
                     actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 單筆通知單</button>`;
                     actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認繳款</button>`;
                 } else {
-                    // 繳費完成的收據按鈕
                     actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆雙聯收據</button>`;
                     actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
                 }
@@ -796,6 +934,9 @@
         const bill = bills.find(b => b.id === id);
         if(bill) {
             bill.isPaid = true;
+            // 記錄實際繳款日期 (YYYY-MM-DD)
+            bill.paidDate = getCurrentDateStr();
+            
             localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
             renderRecords();
             if(confirm('已結帳成功！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
@@ -809,6 +950,7 @@
             const bill = bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = false;
+                bill.paidDate = null; // 清除繳款日期
                 localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
                 renderRecords();
             }
@@ -823,7 +965,127 @@
         }
     }
 
-    // 產生單一版面的 HTML (供列印使用)
+    // === 報表列印功能 (日報表 / 月報表) ===
+    function printDailyReport() {
+        const dateVal = document.getElementById('dailyReportDate').value;
+        if(!dateVal) { alert('請選擇報表日期！'); return; }
+
+        const targetBills = bills.filter(b => {
+            if(!b.isPaid) return false;
+            // 若有新版繳費日期就用新版，否則退而求其次用單據建立日期
+            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+            return pDate === dateVal;
+        });
+
+        if(targetBills.length === 0) { alert(`系統中找不到 ${dateVal} 當天繳費結帳的紀錄！`); return; }
+
+        let totalRevenue = 0;
+        let tableRows = targetBills.map((bill, idx) => {
+            totalRevenue += bill.total;
+            return `
+                <tr>
+                    <td style="text-align:center;">${idx + 1}</td>
+                    <td>${bill.className}</td>
+                    <td><strong>${bill.studentName}</strong></td>
+                    <td style="text-align:center;">${bill.yearMonth}</td>
+                    <td style="text-align:right;">$ ${bill.total.toLocaleString()}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const html = `
+            <div class="report-box">
+                <div class="report-title">顧德補習班 - 每日收費明細表</div>
+                <div style="font-size:18px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                    <span>報表日期：<strong>${dateVal}</strong></span>
+                    <span>列印時間：${new Date().toLocaleString()}</span>
+                </div>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th style="width:10%;">項次</th>
+                            <th style="width:30%;">班級</th>
+                            <th style="width:20%;">學生姓名</th>
+                            <th style="width:20%;">繳費單年月</th>
+                            <th style="width:20%;">實收金額</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div class="report-total">當日實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+                <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
+            </div>
+        `;
+
+        document.getElementById('printArea').innerHTML = html;
+        window.print();
+    }
+
+    function printMonthlyReport() {
+        const monthVal = document.getElementById('monthlyReportMonth').value; // YYYY-MM
+        if(!monthVal) { alert('請選擇報表月份！'); return; }
+
+        const targetBills = bills.filter(b => {
+            if(!b.isPaid) return false;
+            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+            // 只要繳款日期 (YYYY-MM-DD) 開頭是選擇的月份 (YYYY-MM) 即可
+            return pDate.startsWith(monthVal);
+        });
+
+        if(targetBills.length === 0) { alert(`系統中找不到 ${monthVal} 這個月繳費結帳的紀錄！`); return; }
+
+        // 依據繳費日期排序
+        targetBills.sort((a, b) => {
+            const dateA = a.paidDate || parseLegacyDateToIso(a.date);
+            const dateB = b.paidDate || parseLegacyDateToIso(b.date);
+            return dateA.localeCompare(dateB);
+        });
+
+        let totalRevenue = 0;
+        let tableRows = targetBills.map((bill, idx) => {
+            totalRevenue += bill.total;
+            const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
+            return `
+                <tr>
+                    <td style="text-align:center;">${idx + 1}</td>
+                    <td style="text-align:center;">${pDate}</td>
+                    <td>${bill.className}</td>
+                    <td><strong>${bill.studentName}</strong></td>
+                    <td style="text-align:center;">${bill.yearMonth}</td>
+                    <td style="text-align:right;">$ ${bill.total.toLocaleString()}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const html = `
+            <div class="report-box">
+                <div class="report-title">顧德補習班 - 每月收費總結表</div>
+                <div style="font-size:18px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                    <span>報表月份：<strong>${monthVal}</strong></span>
+                    <span>列印時間：${new Date().toLocaleString()}</span>
+                </div>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th style="width:10%;">項次</th>
+                            <th style="width:15%;">繳費日期</th>
+                            <th style="width:25%;">班級</th>
+                            <th style="width:15%;">學生姓名</th>
+                            <th style="width:15%;">單據年月</th>
+                            <th style="width:20%;">實收金額</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div class="report-total">當月實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+            </div>
+        `;
+
+        document.getElementById('printArea').innerHTML = html;
+        window.print();
+    }
+
+    // === 收據列印功能 ===
     function getSingleReceiptHtml(bill, isReceipt, copyLabel) {
         const docTitle = isReceipt ? '繳費收據' : '繳費通知單';
         const printDate = new Date().toLocaleDateString();
@@ -866,7 +1128,6 @@
         return html;
     }
 
-    // 單筆列印 (加入雙聯功能)
     function printDocument(id, type) {
         const bill = bills.find(b => b.id === id);
         if(!bill) return;
@@ -875,12 +1136,10 @@
         let allHtml = '';
 
         if (isReceipt) {
-            // 正式收據：印兩張 (家長聯 + 存根聯)
             allHtml += getSingleReceiptHtml(bill, true, '家長收執聯');
             allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            allHtml += getSingleReceiptHtml(bill, true, '補習班存根聯');
+            allHtml += getSingleReceiptHtml(bill, true, '存根聯');
         } else {
-            // 繳費通知單：印一張
             allHtml += getSingleReceiptHtml(bill, false, '');
         }
 
@@ -888,7 +1147,6 @@
         window.print();
     }
 
-    // 批次列印 (一頁兩張排版)
     function batchPrintNotices() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
@@ -905,7 +1163,6 @@
 
         let allHtml = '';
         targetBills.forEach((bill, index) => {
-            // 呼叫產生 HTML 的功能 (通知單不加聯單標籤)
             allHtml += getSingleReceiptHtml(bill, false, '');
 
             if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
