@@ -27,26 +27,26 @@
         .btn-select:hover { background: #E2E8F0; }
         .btn-select.active { background: #EFF6FF; border-color: var(--accent); color: var(--accent); font-weight: bold; }
         
-        input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 16px; }
+        input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
-        .form-row > div { flex: 1; }
+        
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
 
-        /* 快捷按鈕區 (POS感) */
-        .quick-btn { padding: 10px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; display: flex; flex-direction: column; gap: 5px; }
+        /* 快捷按鈕區 */
+        .quick-btn { padding: 10px 15px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; }
         .quick-btn:hover { background: #C7D2FE; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .quick-btn small { font-size: 13px; color: #4F46E5; font-weight: normal; }
+        .quick-btn small { font-size: 13px; color: #4F46E5; font-weight: normal; display: block; margin-top: 4px; }
 
-        /* 新增項目區塊 */
+        /* 項目管理與新增區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
-        .item-list { margin-top: 15px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .item-row strong { font-size: 16px; color: #1E293B; }
-        .item-row span { font-size: 16px; font-weight: bold; color: var(--accent); }
         .btn-delete-item { background: #FEE2E2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
-        
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
+
+        /* 設定區的條列清單 */
+        .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; height: 300px; overflow-y: auto; }
 
         /* 紀錄管理與未繳費提醒 */
         .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
@@ -96,7 +96,7 @@
     </div>
     
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('manage')">1. 學生繳費紀錄管理 (查詢與收據)</button>
+        <button class="tab-btn active" onclick="switchTab('manage')">1. 學生繳費紀錄管理</button>
         <button class="tab-btn" onclick="switchTab('create')">2. 產生新繳費單</button>
         <button class="tab-btn" onclick="switchTab('settings')">3. 系統基本設定</button>
     </div>
@@ -116,7 +116,7 @@
                     <th>班級 / 姓名</th>
                     <th>總金額</th>
                     <th>狀態</th>
-                    <th>操作與列印 (家長繳費後請點結帳)</th>
+                    <th>操作與列印</th>
                 </tr>
             </thead>
             <tbody id="recordTableBody"></tbody>
@@ -136,34 +136,35 @@
         <div id="studentGrid" class="btn-grid" style="display: none; padding: 15px; background: #F1F5F9; border-radius: 8px;"></div>
 
         <div id="billingSection" style="display: none;">
-            <h3 class="section-title">第二步：設定收費明細</h3>
+            <h3 class="section-title">第二步：選擇收費項目與設定金額</h3>
             
             <div class="form-row" style="width: 40%;">
-                <div>
+                <div style="flex: 1;">
                     <label>本張單據收費年月：</label>
                     <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:100%;">
                 </div>
             </div>
 
             <div class="item-builder">
-                <label style="margin-bottom:15px; color:#1E40AF;">👇 點擊快捷按鈕，直接加入帳單：</label>
-                <div id="quickItemGrid" class="btn-grid">
+                <label style="color:#1E40AF;">👇 1. 點擊下方按鈕選擇項目：</label>
+                <div id="quickItemGrid" class="btn-grid" style="margin-bottom: 10px;">
                     <!-- 動態載入快捷按鈕 -->
                 </div>
 
-                <div class="form-row" style="margin-top: 15px; border-top: 1px dashed #CBD5E1; padding-top: 15px;">
+                <label style="color:#1E40AF; margin-top: 15px;">👇 2. 確認金額後加入帳單：</label>
+                <div class="form-row" style="background: #EEF2FF; padding: 15px; border-radius: 8px; border: 1px solid #C7D2FE;">
                     <div style="flex: 2;">
-                        <input type="text" id="itemName" placeholder="或手動輸入其他項目名稱" style="width:100%;">
+                        <input type="text" id="itemName" placeholder="項目名稱 (點擊上方按鈕帶入或手動輸入)" style="width:100%;">
                     </div>
                     <div style="flex: 1;">
                         <input type="number" id="itemAmt" placeholder="金額 (元)" style="width:100%;">
                     </div>
                     <div>
-                        <button class="btn-add" onclick="addFeeItem()">➕ 手動加入</button>
+                        <button class="btn-add" onclick="addFeeItem()" style="padding: 10px 20px;">➕ 加入清單</button>
                     </div>
                 </div>
 
-                <div class="item-list" id="currentItemsList"></div>
+                <div class="item-list" id="currentItemsList" style="margin-top: 20px;"></div>
                 
                 <div style="text-align: right; font-size: 20px; font-weight: bold; margin-top: 15px; color: var(--primary);">
                     目前總金額： $<span id="currentTotal">0</span>
@@ -177,19 +178,39 @@
     <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
         <div style="display: flex; gap: 30px;">
+            <!-- 左側：班級設定 -->
             <div style="flex: 1;">
                 <label>班級與學生名單 (請自行命名，如「2026 六年級」)：</label>
-                <textarea id="setClasses" rows="12" style="width:100%;" placeholder="2026 六年級：王小明, 林小華&#10;2026 國一班：陳大頭, 張美麗"></textarea>
+                <textarea id="setClasses" rows="18" style="width:100%; margin-bottom: 15px;" placeholder="2026 六年級：王小明, 林小華&#10;2026 國一班：陳大頭, 張美麗"></textarea>
+                
+                <label>預設收款經手人 (印在收據上)：</label>
+                <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
+                
+                <button class="btn-submit" style="margin-top:20px;" onclick="saveBasicSettings()">💾 儲存名單與經手人</button>
             </div>
-            <div style="flex: 1;">
-                <label>快捷收費按鈕設定 (一行一個)：</label>
-                <p style="font-size:13px; color:#64748B; margin-top:0;">* 若有固定金額，請用冒號分隔，例如「國一數學:2000」。若無固定金額，只需打名稱，例如「交通車」。</p>
-                <textarea id="setItems" rows="8" style="width:100%; margin-bottom: 15px;" placeholder="國一數學:2000&#10;國中國文:2500&#10;交通車&#10;餐費:1500&#10;教材費"></textarea>
+            
+            <!-- 右側：快捷項目條列式設定 -->
+            <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
                 
-                <label>預設收款經手人：</label>
-                <input type="text" id="setHandler" style="width:100%; margin-bottom: 15px;" placeholder="例如：雅鴻">
-                
-                <button class="btn-add" style="width:100%; margin-top:10px;" onclick="saveConfig()">💾 儲存所有設定</button>
+                <div class="form-row">
+                    <div style="flex: 2;">
+                        <label>項目名稱</label>
+                        <input type="text" id="newConfigName" placeholder="例如：交通車" style="width:100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>預設金額(可空白)</label>
+                        <input type="number" id="newConfigPrice" placeholder="如: 1500" style="width:100%;">
+                    </div>
+                    <div>
+                        <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
+                    </div>
+                </div>
+
+                <label style="margin-top: 15px;">已設定的快捷項目：</label>
+                <div class="config-list-box" id="quickItemConfigList">
+                    <!-- 動態載入條列式設定 -->
+                </div>
             </div>
         </div>
     </div>
@@ -199,19 +220,20 @@
 <div id="printArea" class="print-only"></div>
 
 <script>
-    let config = { classes: {}, quickItems: [], handler: "雅鴻" };
+    // 系統變數
+    let config = { classes: {}, handler: "雅鴻" };
+    let quickItems = []; // 存放快捷按鈕的陣列
     let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || [];
     let currentClass = "";
     let currentStudent = "";
     let currentBillItems = [];
 
-    // 初始化格式化當前月份 YYYY-MM
+    // 初始化與日期處理
     function getCurrentMonthStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    // 格式化顯示用年月 (如 2026年08月)
     function formatDisplayMonth(yearMonthStr) {
         if(!yearMonthStr) return "未指定";
         const parts = yearMonthStr.split('-');
@@ -221,16 +243,27 @@
 
     function init() {
         const defaultClassText = "2026 六年級：王小明, 林小華\n2026 國一班：陳大頭, 張美麗\n2026 國二班：黃小琥";
-        const defaultItemsText = "國文:2000\n數學:2000\n英文:2000\n自然:1500\n社會:1500\n交通車\n餐費:1500\n教材費";
+        const defaultQuickItems = [
+            { name: "國文", price: 2000 },
+            { name: "數學", price: 2000 },
+            { name: "英文", price: 2000 },
+            { name: "交通車", price: null },
+            { name: "餐費", price: 1500 },
+            { name: "教材費", price: null }
+        ];
         
         document.getElementById('setClasses').value = localStorage.getItem('gude_cfg_classes') || defaultClassText;
-        document.getElementById('setItems').value = localStorage.getItem('gude_cfg_items') || defaultItemsText;
         document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
+        
+        // 讀取快捷項目 (如果沒有，載入預設)
+        const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
+        quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
         
         document.getElementById('billMonth').value = getCurrentMonthStr();
         document.getElementById('filterMonth').value = getCurrentMonthStr();
         
-        loadConfig();
+        loadBasicSettings();
+        renderQuickItemConfigList(); // 渲染設定區列表
         renderRecords();
     }
 
@@ -244,21 +277,9 @@
         if(tabId === 'create') renderClassGrid();
     }
 
-    function loadConfig() {
+    // === 系統設定區 (名單與經手人) ===
+    function loadBasicSettings() {
         config.handler = document.getElementById('setHandler').value.trim();
-        
-        // 解析快捷按鈕設定
-        config.quickItems = [];
-        const itemsLines = document.getElementById('setItems').value.split('\n');
-        itemsLines.forEach(line => {
-            if(!line.trim()) return;
-            const parts = line.split(/[:：]/);
-            const name = parts[0].trim();
-            const price = parts.length > 1 ? parseInt(parts[1].trim()) : null;
-            config.quickItems.push({ name, price: isNaN(price) ? null : price });
-        });
-        
-        // 解析班級與學生
         config.classes = {};
         const classLines = document.getElementById('setClasses').value.split('\n');
         classLines.forEach(line => {
@@ -270,16 +291,57 @@
         });
     }
 
-    function saveConfig() {
+    function saveBasicSettings() {
         localStorage.setItem('gude_cfg_classes', document.getElementById('setClasses').value);
-        localStorage.setItem('gude_cfg_items', document.getElementById('setItems').value);
         localStorage.setItem('gude_cfg_handler', document.getElementById('setHandler').value);
-        loadConfig();
-        alert('設定已成功儲存！快捷按鈕已更新。');
+        loadBasicSettings();
+        alert('名單與經手人設定已儲存！');
+    }
+
+    // === 系統設定區 (快捷項目 條列式管理) ===
+    function renderQuickItemConfigList() {
+        const list = document.getElementById('quickItemConfigList');
+        if (quickItems.length === 0) {
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚未設定任何項目</div>';
+            return;
+        }
+
+        list.innerHTML = quickItems.map((item, index) => {
+            const priceText = item.price ? `$ ${item.price.toLocaleString()}` : '無預設金額';
+            return `
+                <div class="item-row" style="background:#F1F5F9;">
+                    <div>
+                        <strong>${item.name}</strong>
+                        <span style="font-size:14px; color:#64748B; margin-left:10px;">(${priceText})</span>
+                    </div>
+                    <button class="btn-delete-item" onclick="removeQuickItemConfig(${index})">刪除</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function addQuickItemConfig() {
+        const name = document.getElementById('newConfigName').value.trim();
+        const priceVal = document.getElementById('newConfigPrice').value;
+        const price = priceVal === '' ? null : parseInt(priceVal);
+
+        if (!name) { alert('請輸入項目名稱！'); return; }
+
+        quickItems.push({ name, price });
+        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+        
+        document.getElementById('newConfigName').value = '';
+        document.getElementById('newConfigPrice').value = '';
+        renderQuickItemConfigList();
+    }
+
+    function removeQuickItemConfig(index) {
+        quickItems.splice(index, 1);
+        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+        renderQuickItemConfigList();
     }
 
     // === 開單作業區 ===
-    
     function renderClassGrid() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -321,39 +383,35 @@
         currentBillItems = [];
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
-        renderQuickButtons();
+        renderQuickButtonsForBilling();
         renderCurrentItems();
     }
 
-    // 產生 POS 快捷按鈕
-    function renderQuickButtons() {
+    // 產生開單區的快捷按鈕
+    function renderQuickButtonsForBilling() {
         const grid = document.getElementById('quickItemGrid');
-        grid.innerHTML = config.quickItems.map(item => {
-            const priceText = item.price ? `$${item.price.toLocaleString()}` : '(自訂金額)';
-            return `<button class="quick-btn" onclick="clickQuickItem('${item.name}', ${item.price})">
+        grid.innerHTML = quickItems.map(item => {
+            const priceText = item.price ? `$${item.price.toLocaleString()}` : '輸入金額';
+            // 將 defaultPrice 轉成字串傳遞，避免 null 在 JS 傳遞時變 0
+            const priceArg = item.price ? item.price : "''"; 
+            return `<button class="quick-btn" onclick="clickQuickItem('${item.name}', ${priceArg})">
                         <span>${item.name}</span>
                         <small>${priceText}</small>
                     </button>`;
         }).join('');
     }
 
+    // 點擊快捷按鈕：代入名稱，並跳至金額欄位等待輸入
     function clickQuickItem(name, defaultPrice) {
-        if (defaultPrice) {
-            // 有預設金額，直接加入
-            currentBillItems.push({ name: name, amount: defaultPrice });
-            renderCurrentItems();
-        } else {
-            // 無預設金額，幫使用者填入名稱並將游標跳到金額框
-            document.getElementById('itemName').value = name;
-            document.getElementById('itemAmt').value = '';
-            document.getElementById('itemAmt').focus();
-        }
+        document.getElementById('itemName').value = name;
+        document.getElementById('itemAmt').value = defaultPrice;
+        document.getElementById('itemAmt').focus();
     }
 
     function addFeeItem() {
         const name = document.getElementById('itemName').value.trim();
         const amt = parseInt(document.getElementById('itemAmt').value);
-        if(!name || isNaN(amt) || amt <= 0) { alert('請輸入正確的項目名稱與金額！'); return; }
+        if(!name || isNaN(amt) || amt <= 0) { alert('請確認「項目名稱」與「金額」都有正確輸入！'); return; }
         
         currentBillItems.push({ name: name, amount: amt });
         document.getElementById('itemName').value = '';
@@ -371,7 +429,7 @@
         let total = 0;
         
         if(currentBillItems.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px;">請點擊上方快捷按鈕加入收費項目</div>';
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px; background:#F1F5F9; border-radius:6px;">目前清單是空的，請加入收費項目</div>';
         } else {
             list.innerHTML = currentBillItems.map((item, index) => {
                 total += item.amount;
@@ -379,7 +437,7 @@
                     <div class="item-row">
                         <strong>${index + 1}. ${item.name}</strong>
                         <div>
-                            <span style="margin-right: 15px;">$ ${item.amount.toLocaleString()}</span>
+                            <span style="margin-right: 15px; color: var(--accent); font-weight: bold;">$ ${item.amount.toLocaleString()}</span>
                             <button class="btn-delete-item" onclick="removeFeeItem(${index})">刪除</button>
                         </div>
                     </div>`;
@@ -416,7 +474,6 @@
     }
 
     // === 管理區與列印 ===
-
     function clearFilter() {
         document.getElementById('filterMonth').value = '';
         renderRecords();
@@ -427,7 +484,6 @@
         const tbody = document.getElementById('recordTableBody');
         tbody.innerHTML = '';
         
-        // 篩選資料
         const filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth) : bills;
         
         if(filteredBills.length === 0) {
@@ -468,7 +524,6 @@
             return;
         }
 
-        // 依據年月分組排序顯示
         container.innerHTML = unpaidList.map(bill => {
             return `
                 <div class="unpaid-item">
