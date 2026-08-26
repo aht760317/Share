@@ -32,7 +32,12 @@
         .form-row > div { flex: 1; }
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
 
-        /* 新增項目區塊 (核心功能) */
+        /* 快捷按鈕區 (POS感) */
+        .quick-btn { padding: 10px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; display: flex; flex-direction: column; gap: 5px; }
+        .quick-btn:hover { background: #C7D2FE; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .quick-btn small { font-size: 13px; color: #4F46E5; font-weight: normal; }
+
+        /* 新增項目區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
         .item-list { margin-top: 15px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -43,20 +48,26 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
-        /* 紀錄管理表格 */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        /* 紀錄管理與未繳費提醒 */
+        .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 12px; text-align: left; }
         .data-table th { background: #F1F5F9; color: #475569; font-weight: bold; }
         .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
         .status-unpaid { background: #FEF3C7; color: #B45309; }
         .status-paid { background: #D1FAE5; color: #047857; }
         
+        .unpaid-reminder { margin-top: 30px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
+        .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 15px; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #FECACA; }
+        .unpaid-list { padding: 15px; background: white; max-height: 250px; overflow-y: auto; }
+        .unpaid-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB; }
+        .unpaid-item:last-child { border-bottom: none; }
+
         .action-btn { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 5px; color: white; }
         .btn-blue { background: var(--accent); }
         .btn-green { background: var(--success); }
         .btn-red { background: var(--danger); }
 
-        /* 區塊標題 */
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
         /* 列印樣式 */
@@ -79,37 +90,43 @@
 </head>
 <body>
 
-<datalist id="defaultItems"></datalist>
-
 <div class="app-container no-print">
     <div class="header">
         <h1>顧德補習班 繳費管理系統</h1>
     </div>
     
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('manage')">1. 學生繳費紀錄管理 (印收據)</button>
+        <button class="tab-btn active" onclick="switchTab('manage')">1. 學生繳費紀錄管理 (查詢與收據)</button>
         <button class="tab-btn" onclick="switchTab('create')">2. 產生新繳費單</button>
         <button class="tab-btn" onclick="switchTab('settings')">3. 系統基本設定</button>
     </div>
 
     <!-- 頁籤 1：繳費紀錄管理 -->
     <div id="manage" class="content-area active">
-        <h3 style="margin-top:0; color:#333;">目前所有繳費紀錄</h3>
+        <div class="filter-bar">
+            <label style="margin:0;">📅 查詢 年份-月份：</label>
+            <input type="month" id="filterMonth" onchange="renderRecords()">
+            <button class="btn-select active" style="margin-left:10px; padding:8px 15px;" onclick="clearFilter()">顯示全部月份</button>
+        </div>
+
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>建立日期</th>
-                    <th>月份</th>
+                    <th>單據年月</th>
                     <th>班級 / 姓名</th>
                     <th>總金額</th>
                     <th>狀態</th>
                     <th>操作與列印 (家長繳費後請點結帳)</th>
                 </tr>
             </thead>
-            <tbody id="recordTableBody">
-                <!-- 動態載入紀錄 -->
-            </tbody>
+            <tbody id="recordTableBody"></tbody>
         </table>
+
+        <!-- 欠費提醒清單 -->
+        <div class="unpaid-reminder">
+            <div class="unpaid-header">🔴 未繳費提醒總整理 (追蹤中)</div>
+            <div class="unpaid-list" id="unpaidListBody"></div>
+        </div>
     </div>
 
     <!-- 頁籤 2：產生新繳費單 -->
@@ -121,30 +138,32 @@
         <div id="billingSection" style="display: none;">
             <h3 class="section-title">第二步：設定收費明細</h3>
             
-            <div class="form-row" style="width: 50%;">
+            <div class="form-row" style="width: 40%;">
                 <div>
-                    <label>本張單據收費月份：</label>
-                    <input type="text" id="billMonth" placeholder="例如：9月" style="font-weight:bold; color:var(--accent); width:100%;">
+                    <label>本張單據收費年月：</label>
+                    <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:100%;">
                 </div>
             </div>
 
             <div class="item-builder">
-                <label>選擇或輸入收費項目 (點擊加入)：</label>
-                <div class="form-row" style="margin-bottom: 0;">
+                <label style="margin-bottom:15px; color:#1E40AF;">👇 點擊快捷按鈕，直接加入帳單：</label>
+                <div id="quickItemGrid" class="btn-grid">
+                    <!-- 動態載入快捷按鈕 -->
+                </div>
+
+                <div class="form-row" style="margin-top: 15px; border-top: 1px dashed #CBD5E1; padding-top: 15px;">
                     <div style="flex: 2;">
-                        <input type="text" id="itemName" list="defaultItems" placeholder="例如：國一數學、交通車(9月)、教材費..." style="width:100%;">
+                        <input type="text" id="itemName" placeholder="或手動輸入其他項目名稱" style="width:100%;">
                     </div>
                     <div style="flex: 1;">
                         <input type="number" id="itemAmt" placeholder="金額 (元)" style="width:100%;">
                     </div>
                     <div>
-                        <button class="btn-add" onclick="addFeeItem()">➕ 加入此項目</button>
+                        <button class="btn-add" onclick="addFeeItem()">➕ 手動加入</button>
                     </div>
                 </div>
 
-                <div class="item-list" id="currentItemsList">
-                    <!-- 這裡顯示已加入的項目 -->
-                </div>
+                <div class="item-list" id="currentItemsList"></div>
                 
                 <div style="text-align: right; font-size: 20px; font-weight: bold; margin-top: 15px; color: var(--primary);">
                     目前總金額： $<span id="currentTotal">0</span>
@@ -159,12 +178,13 @@
     <div id="settings" class="content-area">
         <div style="display: flex; gap: 30px;">
             <div style="flex: 1;">
-                <label>班級與學生名單設定 (一行一班)：</label>
-                <textarea id="setClasses" rows="12" style="width:100%;" placeholder="國一：王小明, 林小華&#10;國二：陳大頭, 張美麗"></textarea>
+                <label>班級與學生名單 (請自行命名，如「2026 六年級」)：</label>
+                <textarea id="setClasses" rows="12" style="width:100%;" placeholder="2026 六年級：王小明, 林小華&#10;2026 國一班：陳大頭, 張美麗"></textarea>
             </div>
             <div style="flex: 1;">
-                <label>常用收費項目 (半形逗號分隔)：</label>
-                <textarea id="setItems" rows="4" style="width:100%; margin-bottom: 15px;" placeholder="國小數學, 國中國文, 交通車費, 餐費, 教材費"></textarea>
+                <label>快捷收費按鈕設定 (一行一個)：</label>
+                <p style="font-size:13px; color:#64748B; margin-top:0;">* 若有固定金額，請用冒號分隔，例如「國一數學:2000」。若無固定金額，只需打名稱，例如「交通車」。</p>
+                <textarea id="setItems" rows="8" style="width:100%; margin-bottom: 15px;" placeholder="國一數學:2000&#10;國中國文:2500&#10;交通車&#10;餐費:1500&#10;教材費"></textarea>
                 
                 <label>預設收款經手人：</label>
                 <input type="text" id="setHandler" style="width:100%; margin-bottom: 15px;" placeholder="例如：雅鴻">
@@ -179,37 +199,41 @@
 <div id="printArea" class="print-only"></div>
 
 <script>
-    // 系統核心資料庫
-    let config = {
-        classes: {},
-        defaultItems: [],
-        handler: "雅鴻"
-    };
-    
-    // 繳費單資料庫
-    let bills = JSON.parse(localStorage.getItem('gude_bills')) || [];
-    
-    // 當前正在開立的單據狀態
+    let config = { classes: {}, quickItems: [], handler: "雅鴻" };
+    let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || [];
     let currentClass = "";
     let currentStudent = "";
     let currentBillItems = [];
 
-    // 初始化
+    // 初始化格式化當前月份 YYYY-MM
+    function getCurrentMonthStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // 格式化顯示用年月 (如 2026年08月)
+    function formatDisplayMonth(yearMonthStr) {
+        if(!yearMonthStr) return "未指定";
+        const parts = yearMonthStr.split('-');
+        if(parts.length === 2) return `${parts[0]}年${parts[1]}月`;
+        return yearMonthStr;
+    }
+
     function init() {
-        const defaultClassText = "國小部：王小明, 林小華\n國一班：陳大頭, 張美麗\n國二班：黃小琥\n國三班：吳大強";
-        const defaultItemsText = "國文, 數學, 自然, 英文, 社會, 交通車費, 餐費, 講義教材費";
+        const defaultClassText = "2026 六年級：王小明, 林小華\n2026 國一班：陳大頭, 張美麗\n2026 國二班：黃小琥";
+        const defaultItemsText = "國文:2000\n數學:2000\n英文:2000\n自然:1500\n社會:1500\n交通車\n餐費:1500\n教材費";
         
         document.getElementById('setClasses').value = localStorage.getItem('gude_cfg_classes') || defaultClassText;
         document.getElementById('setItems').value = localStorage.getItem('gude_cfg_items') || defaultItemsText;
         document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
         
-        document.getElementById('billMonth').value = (new Date().getMonth() + 1) + "月";
+        document.getElementById('billMonth').value = getCurrentMonthStr();
+        document.getElementById('filterMonth').value = getCurrentMonthStr();
         
         loadConfig();
         renderRecords();
     }
 
-    // 切換頁籤
     function switchTab(tabId) {
         document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -220,16 +244,19 @@
         if(tabId === 'create') renderClassGrid();
     }
 
-    // 讀取設定
     function loadConfig() {
         config.handler = document.getElementById('setHandler').value.trim();
         
-        // 解析常用項目
-        const itemsText = document.getElementById('setItems').value;
-        config.defaultItems = itemsText.split(',').map(s => s.trim()).filter(s => s);
-        
-        // 建立下拉選單
-        document.getElementById('defaultItems').innerHTML = config.defaultItems.map(item => `<option value="${item}">`).join('');
+        // 解析快捷按鈕設定
+        config.quickItems = [];
+        const itemsLines = document.getElementById('setItems').value.split('\n');
+        itemsLines.forEach(line => {
+            if(!line.trim()) return;
+            const parts = line.split(/[:：]/);
+            const name = parts[0].trim();
+            const price = parts.length > 1 ? parseInt(parts[1].trim()) : null;
+            config.quickItems.push({ name, price: isNaN(price) ? null : price });
+        });
         
         // 解析班級與學生
         config.classes = {};
@@ -243,13 +270,12 @@
         });
     }
 
-    // 儲存設定
     function saveConfig() {
         localStorage.setItem('gude_cfg_classes', document.getElementById('setClasses').value);
         localStorage.setItem('gude_cfg_items', document.getElementById('setItems').value);
         localStorage.setItem('gude_cfg_handler', document.getElementById('setHandler').value);
         loadConfig();
-        alert('設定已成功儲存！');
+        alert('設定已成功儲存！快捷按鈕已更新。');
     }
 
     // === 開單作業區 ===
@@ -291,146 +317,179 @@
         document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
         
-        // 顯示開單區，清空前一個人的資料
         document.getElementById('billingSection').style.display = 'block';
         currentBillItems = [];
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
+        renderQuickButtons();
         renderCurrentItems();
     }
 
-    // 加入收費項目
+    // 產生 POS 快捷按鈕
+    function renderQuickButtons() {
+        const grid = document.getElementById('quickItemGrid');
+        grid.innerHTML = config.quickItems.map(item => {
+            const priceText = item.price ? `$${item.price.toLocaleString()}` : '(自訂金額)';
+            return `<button class="quick-btn" onclick="clickQuickItem('${item.name}', ${item.price})">
+                        <span>${item.name}</span>
+                        <small>${priceText}</small>
+                    </button>`;
+        }).join('');
+    }
+
+    function clickQuickItem(name, defaultPrice) {
+        if (defaultPrice) {
+            // 有預設金額，直接加入
+            currentBillItems.push({ name: name, amount: defaultPrice });
+            renderCurrentItems();
+        } else {
+            // 無預設金額，幫使用者填入名稱並將游標跳到金額框
+            document.getElementById('itemName').value = name;
+            document.getElementById('itemAmt').value = '';
+            document.getElementById('itemAmt').focus();
+        }
+    }
+
     function addFeeItem() {
         const name = document.getElementById('itemName').value.trim();
         const amt = parseInt(document.getElementById('itemAmt').value);
-        
-        if(!name || isNaN(amt) || amt <= 0) {
-            alert('請輸入正確的項目名稱與金額！');
-            return;
-        }
+        if(!name || isNaN(amt) || amt <= 0) { alert('請輸入正確的項目名稱與金額！'); return; }
         
         currentBillItems.push({ name: name, amount: amt });
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
-        document.getElementById('itemName').focus();
         renderCurrentItems();
     }
 
-    // 刪除已加入的收費項目
     function removeFeeItem(index) {
         currentBillItems.splice(index, 1);
         renderCurrentItems();
     }
 
-    // 渲染當前開單明細
     function renderCurrentItems() {
         const list = document.getElementById('currentItemsList');
         let total = 0;
         
         if(currentBillItems.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px;">目前尚未加入任何項目</div>';
+            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px;">請點擊上方快捷按鈕加入收費項目</div>';
         } else {
             list.innerHTML = currentBillItems.map((item, index) => {
                 total += item.amount;
                 return `
                     <div class="item-row">
-                        <div>
-                            <strong>${index + 1}. ${item.name}</strong>
-                        </div>
+                        <strong>${index + 1}. ${item.name}</strong>
                         <div>
                             <span style="margin-right: 15px;">$ ${item.amount.toLocaleString()}</span>
                             <button class="btn-delete-item" onclick="removeFeeItem(${index})">刪除</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
-        
         document.getElementById('currentTotal').innerText = total.toLocaleString();
     }
 
-    // 儲存新單據
     function saveNewBill() {
-        if(currentBillItems.length === 0) {
-            alert('請至少加入一個收費項目！');
-            return;
-        }
+        if(currentBillItems.length === 0) { alert('請至少加入一個收費項目！'); return; }
         
-        const month = document.getElementById('billMonth').value.trim();
-        if(!month) { alert('請填寫收費月份'); return; }
+        const yearMonth = document.getElementById('billMonth').value;
+        if(!yearMonth) { alert('請選擇收費年月'); return; }
 
         let total = currentBillItems.reduce((sum, item) => sum + item.amount, 0);
         
         const newBill = {
             id: Date.now(),
             date: new Date().toLocaleDateString(),
-            month: month,
+            yearMonth: yearMonth,
             className: currentClass,
             studentName: currentStudent,
             items: [...currentBillItems],
             total: total,
-            isPaid: false // 預設未繳費
+            isPaid: false
         };
         
-        bills.unshift(newBill); // 加到最前面
-        localStorage.setItem('gude_bills', JSON.stringify(bills));
-        
+        bills.unshift(newBill);
+        localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
         alert(`已成功建立 ${currentStudent} 的繳費資料！`);
         
-        // 直接觸發列印繳費通知單
         printDocument(newBill.id, 'notice');
-        
-        // 切換回管理頁面
         switchTab('manage');
     }
 
     // === 管理區與列印 ===
 
+    function clearFilter() {
+        document.getElementById('filterMonth').value = '';
+        renderRecords();
+    }
+
     function renderRecords() {
+        const filterMonth = document.getElementById('filterMonth').value;
         const tbody = document.getElementById('recordTableBody');
         tbody.innerHTML = '';
         
-        if(bills.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">目前沒有任何繳費紀錄。</td></tr>';
-            return;
-        }
+        // 篩選資料
+        const filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth) : bills;
         
-        bills.forEach(bill => {
-            const statusHtml = bill.isPaid 
-                ? `<span class="status-badge status-paid">✅ 已結清</span>` 
-                : `<span class="status-badge status-unpaid">⏳ 未繳費</span>`;
+        if(filteredBills.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">此月份目前沒有繳費紀錄。</td></tr>`;
+        } else {
+            filteredBills.forEach(bill => {
+                const statusHtml = bill.isPaid ? `<span class="status-badge status-paid">✅ 已結清</span>` : `<span class="status-badge status-unpaid">⏳ 未繳費</span>`;
+                const displayMonth = formatDisplayMonth(bill.yearMonth);
                 
-            let actionHtml = '';
-            if(!bill.isPaid) {
-                actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 印通知單</button>`;
-                actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認家長已繳費</button>`;
-            } else {
-                actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 印正式收據</button>`;
-            }
-            actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
+                let actionHtml = '';
+                if(!bill.isPaid) {
+                    actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 印通知單</button>`;
+                    actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認已繳款</button>`;
+                } else {
+                    actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 印正式收據</button>`;
+                }
+                actionHtml += `<button class="action-btn btn-red" onclick="deleteBill(${bill.id})">刪除</button>`;
 
-            tbody.innerHTML += `
-                <tr>
-                    <td>${bill.date}</td>
-                    <td style="font-weight:bold;">${bill.month}</td>
-                    <td>${bill.className} - <strong>${bill.studentName}</strong></td>
-                    <td style="font-weight:bold; color:var(--primary);">$ ${bill.total.toLocaleString()}</td>
-                    <td>${statusHtml}</td>
-                    <td>${actionHtml}</td>
-                </tr>
-            `;
-        });
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:var(--primary);">${displayMonth}</td>
+                        <td>${bill.className} - <strong>${bill.studentName}</strong></td>
+                        <td style="font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
+                        <td>${statusHtml}</td>
+                        <td>${actionHtml}</td>
+                    </tr>`;
+            });
+        }
+        renderUnpaidReminder();
     }
 
-    // 確認繳費
+    function renderUnpaidReminder() {
+        const unpaidList = bills.filter(b => !b.isPaid);
+        const container = document.getElementById('unpaidListBody');
+        
+        if (unpaidList.length === 0) {
+            container.innerHTML = '<div style="color:#047857; font-weight:bold; padding:10px 0;">🎉 太棒了！目前沒有任何欠費名單。</div>';
+            return;
+        }
+
+        // 依據年月分組排序顯示
+        container.innerHTML = unpaidList.map(bill => {
+            return `
+                <div class="unpaid-item">
+                    <div>
+                        <span style="color:#991B1B; font-weight:bold; margin-right:15px;">[${formatDisplayMonth(bill.yearMonth)}]</span>
+                        <span>${bill.className} - <strong>${bill.studentName}</strong></span>
+                    </div>
+                    <div style="font-weight:bold; color:var(--danger);">
+                        欠款 $${bill.total.toLocaleString()}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
     function markAsPaid(id) {
-        if(confirm('確認家長已經繳納這筆費用了嗎？\n(確認後系統將轉為已結清狀態)')) {
+        if(confirm('確認家長已經繳納這筆費用了嗎？\n(確認後系統將轉為已結清，並從欠費名單中移除)')) {
             const bill = bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = true;
-                localStorage.setItem('gude_bills', JSON.stringify(bills));
+                localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
                 renderRecords();
-                // 繳費完成直接問要不要印收據
                 if(confirm('已結帳成功！需要立刻列印「正式收據」給家長嗎？')) {
                     printDocument(id, 'receipt');
                 }
@@ -441,12 +500,11 @@
     function deleteBill(id) {
         if(confirm('確定要刪除這筆紀錄嗎？刪除後無法復原喔！')) {
             bills = bills.filter(b => b.id !== id);
-            localStorage.setItem('gude_bills', JSON.stringify(bills));
+            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
             renderRecords();
         }
     }
 
-    // 執行列印
     function printDocument(id, type) {
         const bill = bills.find(b => b.id === id);
         if(!bill) return;
@@ -454,6 +512,7 @@
         const isReceipt = type === 'receipt';
         const docTitle = isReceipt ? '已繳費收據' : '繳費通知單';
         const printDate = new Date().toLocaleDateString();
+        const displayMonth = formatDisplayMonth(bill.yearMonth);
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
@@ -466,7 +525,7 @@
         let html = `
             <div class="receipt-box">
                 ${isReceipt ? '<div class="watermark">已結清</div>' : ''}
-                <div class="receipt-title">顧德補習班 ${bill.month} ${docTitle}</div>
+                <div class="receipt-title">顧德補習班 ${displayMonth} ${docTitle}</div>
                 <div class="receipt-header">
                     <div>班級：<strong>${bill.className}</strong></div>
                     <div>姓名：<strong>${bill.studentName}</strong></div>
@@ -491,7 +550,6 @@
         window.print();
     }
 
-    // 啟動系統
     init();
 </script>
 </body>
