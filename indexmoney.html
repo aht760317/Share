@@ -21,10 +21,10 @@
         .content-area.active { display: block; }
 
         /* 部門切換子頁籤 */
-        .sub-tabs { display: flex; border-bottom: 2px solid #E2E8F0; margin-bottom: 20px; }
-        .sub-tab-btn { padding: 12px 25px; background: transparent; border: none; font-size: 18px; font-weight: bold; color: #64748B; cursor: pointer; transition: 0.2s; }
-        .sub-tab-btn.active { color: var(--accent); border-bottom: 4px solid var(--accent); margin-bottom: -2px; }
-        .sub-tab-btn:hover { color: var(--primary); }
+        .sub-tabs { display: flex; border-bottom: 2px solid #E2E8F0; margin-bottom: 20px; gap: 10px; }
+        .sub-tab-btn { padding: 12px 25px; background: transparent; border: none; font-size: 18px; font-weight: bold; color: #64748B; cursor: pointer; transition: 0.2s; border-radius: 8px 8px 0 0; }
+        .sub-tab-btn.active { color: var(--accent); border-bottom: 4px solid var(--accent); background: #EFF6FF; }
+        .sub-tab-btn:hover { color: var(--primary); background: #F1F5F9; }
 
         /* 通用按鈕與表單 */
         button { cursor: pointer; font-family: inherit; }
@@ -73,7 +73,7 @@
         .status-unpaid { background: #FEF3C7; color: #B45309; }
         .status-paid { background: #D1FAE5; color: #047857; }
         
-        .unpaid-reminder { margin-top: 30px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
+        .unpaid-reminder { margin-top: 20px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
         .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 15px; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #FECACA; }
         .unpaid-list { padding: 15px; background: white; max-height: 250px; overflow-y: auto; }
         .unpaid-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB; }
@@ -170,10 +170,10 @@
             </div>
         </div>
 
-        <!-- 部門切換頁籤 -->
+        <!-- 國小與國中分區切換按鈕 -->
         <div class="sub-tabs">
-            <button id="tabPrimary" class="sub-tab-btn active" onclick="switchDeptRecord('primary')">📘 國小部收費紀錄</button>
-            <button id="tabJunior" class="sub-tab-btn" onclick="switchDeptRecord('junior')">📗 國中部收費紀錄</button>
+            <button id="tabPrimary" class="sub-tab-btn active" onclick="switchDeptRecord('primary')">📘 國小部 繳費與欠費紀錄</button>
+            <button id="tabJunior" class="sub-tab-btn" onclick="switchDeptRecord('junior')">📗 國中部 繳費與欠費紀錄</button>
         </div>
 
         <!-- 國小部收費區塊 -->
@@ -181,7 +181,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width:15%">單據期間</th>
+                        <th style="width:15%">單據年月</th>
                         <th style="width:25%">班級 / 姓名</th>
                         <th style="width:15%">總金額</th>
                         <th style="width:15%">狀態</th>
@@ -190,6 +190,12 @@
                 </thead>
                 <tbody id="primaryRecordTableBody"></tbody>
             </table>
+            
+            <!-- 國小欠費提醒 -->
+            <div class="unpaid-reminder">
+                <div class="unpaid-header" style="background:#FEF2F2; color:#991B1B;">🔴 國小部 - 未繳費提醒總整理</div>
+                <div class="unpaid-list" id="primaryUnpaidListBody"></div>
+            </div>
         </div>
 
         <!-- 國中部收費區塊 -->
@@ -206,12 +212,12 @@
                 </thead>
                 <tbody id="juniorRecordTableBody"></tbody>
             </table>
-        </div>
 
-        <!-- 欠費提醒清單 -->
-        <div class="unpaid-reminder">
-            <div class="unpaid-header">🔴 全校未繳費提醒總整理 (追蹤中)</div>
-            <div class="unpaid-list" id="unpaidListBody"></div>
+            <!-- 國中欠費提醒 -->
+            <div class="unpaid-reminder">
+                <div class="unpaid-header" style="background:#F3E8FF; color:#7E22CE; border-color:#D8B4FE;">🟣 國中部 - 未繳費提醒總整理</div>
+                <div class="unpaid-list" id="juniorUnpaidListBody"></div>
+            </div>
         </div>
     </div>
 
@@ -271,14 +277,11 @@
                         <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;">
                     </div>
                 </div>
-
             </div>
 
             <div class="item-builder">
                 <label style="color:#1E40AF;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
-                <div id="quickItemGrid" class="btn-grid" style="margin-bottom: 10px;">
-                    <!-- 動態載入快捷按鈕 -->
-                </div>
+                <div id="quickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
 
                 <label style="color:#1E40AF; margin-top: 15px;">👇 2. 確認金額後加入帳單：</label>
                 <div class="form-row" style="background: #EEF2FF; padding: 15px; border-radius: 8px; border: 1px solid #C7D2FE;">
@@ -362,7 +365,6 @@
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
-                <!-- 收款經手人 -->
                 <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
                     <label>預設收款經手人 (印在收據上)：</label>
                     <div class="form-row" style="margin-bottom: 0;">
@@ -388,9 +390,7 @@
             <label style="font-weight:bold; color:#065F46; font-size: 16px;">👇 請先選擇要查看的班級：</label>
             <div id="directoryClassGrid" class="btn-grid" style="margin-top: 10px;"></div>
         </div>
-        <div id="directoryContent">
-            <!-- 動態載入通訊錄 -->
-        </div>
+        <div id="directoryContent"></div>
     </div>
 </div>
 
@@ -398,11 +398,10 @@
 <div id="printArea" class="print-only"></div>
 
 <script>
-    // 系統變數
     let config = { classes: {}, handler: "雅鴻" };
     let quickItems = [];
     let studentDetails = JSON.parse(localStorage.getItem('gude_cfg_student_details_v4')) || {};
-    let bills = JSON.parse(localStorage.getItem('gude_bills_v3')) || []; // 版本升級以適應新欄位
+    let bills = JSON.parse(localStorage.getItem('gude_bills_v2')) || []; 
     let currentClass = "";
     let currentStudent = "";
     let currentBillItems = [];
@@ -411,7 +410,6 @@
     let deletedClassBackup = null;
     let currentDirectoryClass = 'all';
 
-    // 工具函式
     function getCurrentMonthStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -424,7 +422,7 @@
 
     function formatDisplayMonth(periodStr) {
         if(!periodStr) return "未指定";
-        if(periodStr.includes('~')) return periodStr; // 國中部區間格式
+        if(periodStr.includes('~')) return periodStr;
         const parts = periodStr.split('-');
         if(parts.length === 2) return `${parts[0]}年${parts[1]}月`;
         return periodStr;
@@ -438,17 +436,15 @@
         return "";
     }
 
-    // 判斷國中班級或科目
     function isJuniorHigh(name) {
         return name.includes('國中') || name.includes('國一') || name.includes('國二') || name.includes('國三') || name.includes('理化') || name.includes('會考') || name.includes('九年級') || name.includes('八年級') || name.includes('七年級');
     }
 
     function init() {
-        // 資料移轉相容處理 (v2 -> v3)
         const oldBills = JSON.parse(localStorage.getItem('gude_bills_v2'));
         if(oldBills && bills.length === 0) {
             bills = oldBills.map(b => {
-                b.periodStr = b.periodStr || b.yearMonth; // 建立顯示用的區間字串
+                b.periodStr = b.periodStr || b.yearMonth;
                 return b;
             });
             localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
@@ -481,7 +477,6 @@
         const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
         quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
         
-        // 預設日期設定
         document.getElementById('billMonth').value = getCurrentMonthStr();
         document.getElementById('filterMonth').value = getCurrentMonthStr();
         document.getElementById('dailyReportDate').value = getCurrentDateStr();
@@ -490,7 +485,7 @@
         const today = getCurrentDateStr();
         document.getElementById('billStartDate').value = today;
         const endDateObj = new Date();
-        endDateObj.setMonth(endDateObj.getMonth() + 3); // 預設加三個月
+        endDateObj.setMonth(endDateObj.getMonth() + 3); 
         document.getElementById('billEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
         
         renderClassConfigList();
@@ -510,7 +505,7 @@
         if(tabId === 'directory') renderDirectoryInit();
     }
 
-    // === 部門紀錄切換 ===
+    // === 切換國中與國小的管理頁面 ===
     function switchDeptRecord(dept) {
         document.getElementById('tabPrimary').classList.remove('active');
         document.getElementById('tabJunior').classList.remove('active');
@@ -526,7 +521,6 @@
         }
     }
 
-    // === 學生內部聯絡資料存取 ===
     function loadStudentProfile(cls, stu) {
         document.getElementById('profileStudentName').innerText = stu;
         const key = cls + '_' + stu;
@@ -534,13 +528,10 @@
         
         document.getElementById('profSchool').value = data.school || '';
         document.getElementById('profClass').value = data.gradeClass || '';
-        
         document.getElementById('profContact1Name').value = data.contact1Name || (data.dad ? '爸爸' : '聯絡人1');
         document.getElementById('profContact1Phone').value = data.contact1Phone || data.dad || '';
-        
         document.getElementById('profContact2Name').value = data.contact2Name || (data.mom ? '媽媽' : '聯絡人2');
         document.getElementById('profContact2Phone').value = data.contact2Phone || data.mom || '';
-        
         document.getElementById('profContact3Name').value = data.contact3Name || (data.home ? '家中電話' : '聯絡人3');
         document.getElementById('profContact3Phone').value = data.contact3Phone || data.home || '';
     }
@@ -559,10 +550,9 @@
             contact3Phone: document.getElementById('profContact3Phone').value.trim()
         };
         localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
-        alert('💾 學生內部資料已成功儲存！\n(自訂的聯絡人名稱已同步更新)');
+        alert('💾 學生內部資料已成功儲存！');
     }
 
-    // === 第4頁：全校通訊錄列印 ===
     function renderDirectoryInit() {
         const grid = document.getElementById('directoryClassGrid');
         grid.innerHTML = '';
@@ -664,7 +654,6 @@
         window.print();
     }
 
-    // === 系統設定區：班級與學生 ===
     function saveClassesToStorage() {
         localStorage.setItem('gude_cfg_classes_v3', JSON.stringify(config.classes));
         updateBatchPrintDropdown();
@@ -699,7 +688,6 @@
         const name = document.getElementById('newConfigClassName').value.trim();
         if (!name) { alert('請輸入班級名稱！'); return; }
         if (config.classes[name]) { alert('此班級名稱已存在！'); return; }
-        
         config.classes[name] = [];
         saveClassesToStorage();
         document.getElementById('newConfigClassName').value = '';
@@ -708,9 +696,8 @@
     }
     
     function renameClassConfig(oldName) {
-        const newName = prompt('請輸入新的班級名稱（例如升級後的名稱）：', oldName);
+        const newName = prompt('請輸入新的班級名稱：', oldName);
         if (newName === null) return; 
-        
         const trimmedName = newName.trim();
         if (!trimmedName) { alert('班級名稱不能為空！'); return; }
         if (trimmedName === oldName) return; 
@@ -738,7 +725,6 @@
 
         saveClassesToStorage();
         renderClassConfigList();
-        
         if (editingClass === trimmedName) {
             renderStudentConfigList();
         }
@@ -799,7 +785,6 @@
         const name = document.getElementById('newConfigStudentName').value.trim();
         if (!name) { alert('請輸入學生姓名！'); return; }
         if (config.classes[editingClass].includes(name)) { alert('此學生已存在該班級！'); return; }
-        
         config.classes[editingClass].push(name);
         saveClassesToStorage();
         document.getElementById('newConfigStudentName').value = '';
@@ -822,7 +807,6 @@
         alert('經手人名稱已儲存！');
     }
 
-    // === 系統設定區：快捷項目管理 ===
     function renderQuickItemConfigList() {
         const list = document.getElementById('quickItemConfigList');
         if (quickItems.length === 0) {
@@ -865,12 +849,9 @@
         const name = document.getElementById('newConfigName').value.trim();
         const priceVal = document.getElementById('newConfigPrice').value;
         const price = priceVal === '' ? null : parseInt(priceVal);
-
         if (!name) { alert('請輸入項目名稱！'); return; }
-
         quickItems.push({ name, price });
         localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
-        
         document.getElementById('newConfigName').value = '';
         document.getElementById('newConfigPrice').value = '';
         renderQuickItemConfigList();
@@ -887,16 +868,13 @@
         const temp = quickItems[index];
         quickItems[index] = quickItems[index + direction];
         quickItems[index + direction] = temp;
-        
         localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
         renderQuickItemConfigList();
-        
         if (document.getElementById('billingSection').style.display === 'block') {
             renderQuickButtonsForBilling();
         }
     }
 
-    // === 開單作業區 ===
     function renderClassGrid() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -938,7 +916,6 @@
         loadStudentProfile(currentClass, currentStudent);
         document.getElementById('studentProfileSection').style.display = 'block';
 
-        // 智慧判斷國中/國小輸入介面
         const isJH = isJuniorHigh(currentClass);
         if(isJH) {
             document.getElementById('primaryPeriodInput').style.display = 'none';
@@ -986,12 +963,10 @@
     function addFeeItem() {
         const name = document.getElementById('itemName').value.trim();
         const amt = parseInt(document.getElementById('itemAmt').value);
-        
         if(!name || isNaN(amt) || amt === 0) { 
             alert('請確認「項目名稱」與「金額」都有正確輸入！\n(金額不可為0，若為優惠折抵請輸入負數，例如：-300)'); 
             return; 
         }
-        
         currentBillItems.push({ name: name, amount: amt });
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
@@ -1037,7 +1012,7 @@
             const start = document.getElementById('billStartDate').value;
             const end = document.getElementById('billEndDate').value;
             if(!start || !end) { alert('國中部請完整選擇收費的起訖日期！'); return; }
-            yMonth = start.substring(0, 7); // 用於過濾的基準月份 (YYYY-MM)
+            yMonth = start.substring(0, 7); 
             displayPeriod = `${start} ~ ${end}`;
         } else {
             yMonth = document.getElementById('billMonth').value;
@@ -1050,8 +1025,8 @@
         const newBill = {
             id: Date.now(),
             date: new Date().toLocaleDateString(),
-            yearMonth: yMonth,       // 用於系統篩選關聯
-            periodStr: displayPeriod, // 實際印出、顯示的字串
+            yearMonth: yMonth,       
+            periodStr: displayPeriod, 
             className: currentClass,
             studentName: currentStudent,
             items: [...currentBillItems],
@@ -1061,7 +1036,7 @@
         };
         
         bills.unshift(newBill);
-        localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
+        localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
         
         alert(`✅ 已成功儲存【${currentStudent}】的繳費單！\n您可以直接點選下一位學生繼續開單。`);
         
@@ -1076,7 +1051,6 @@
         currentStudent = "";
     }
 
-    // === 管理區與列印 ===
     function clearFilter() {
         document.getElementById('filterMonth').value = '';
         renderRecords();
@@ -1097,7 +1071,6 @@
         primaryTbody.innerHTML = '';
         juniorTbody.innerHTML = '';
         
-        // 篩選邏輯：檢查 yearMonth 或是 periodStr 包含該月份
         const filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : bills;
         
         let primaryCount = 0;
@@ -1136,37 +1109,42 @@
         });
 
         if (primaryCount === 0) {
-            primaryTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">此月份目前沒有國小部的繳費紀錄。</td></tr>`;
+            primaryTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">目前沒有國小部的繳費紀錄。</td></tr>`;
         }
         if (juniorCount === 0) {
-            juniorTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">此月份目前沒有國中部的繳費紀錄。</td></tr>`;
+            juniorTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">目前沒有國中部的繳費紀錄。</td></tr>`;
         }
         
         renderUnpaidReminder();
     }
 
     function renderUnpaidReminder() {
-        const unpaidList = bills.filter(b => !b.isPaid);
-        const container = document.getElementById('unpaidListBody');
+        const primaryContainer = document.getElementById('primaryUnpaidListBody');
+        const juniorContainer = document.getElementById('juniorUnpaidListBody');
         
-        if (unpaidList.length === 0) {
-            container.innerHTML = '<div style="color:#047857; font-weight:bold; padding:10px 0;">🎉 太棒了！目前沒有任何欠費名單。</div>';
-            return;
-        }
+        const unpaidBills = bills.filter(b => !b.isPaid);
+        const primaryUnpaid = unpaidBills.filter(b => !isJuniorHigh(b.className));
+        const juniorUnpaid = unpaidBills.filter(b => isJuniorHigh(b.className));
 
-        container.innerHTML = unpaidList.map(bill => {
-            const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
-            return `
-                <div class="unpaid-item">
-                    <div>
-                        <span style="color:#991B1B; font-weight:bold; margin-right:15px;">[${displayMonth}]</span>
-                        <span>${bill.className} - <strong>${bill.studentName}</strong></span>
-                    </div>
-                    <div style="font-weight:bold; color:var(--danger);">
-                        欠款 $${bill.total.toLocaleString()}
-                    </div>
-                </div>`;
-        }).join('');
+        const buildHtml = (list) => {
+            if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:10px 0;">🎉 太棒了！目前沒有欠費名單。</div>';
+            return list.map(bill => {
+                const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+                return `
+                    <div class="unpaid-item">
+                        <div>
+                            <span style="color:#991B1B; font-weight:bold; margin-right:15px;">[${displayMonth}]</span>
+                            <span>${bill.className} - <strong>${bill.studentName}</strong></span>
+                        </div>
+                        <div style="font-weight:bold; color:var(--danger);">
+                            欠款 $${bill.total.toLocaleString()}
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        primaryContainer.innerHTML = buildHtml(primaryUnpaid);
+        juniorContainer.innerHTML = buildHtml(juniorUnpaid);
     }
 
     function markAsPaid(id) {
@@ -1174,7 +1152,7 @@
         if(bill) {
             bill.isPaid = true;
             bill.paidDate = getCurrentDateStr();
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
+            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
             renderRecords();
             if(confirm('已結帳成功！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
                 printDocument(id, 'receipt');
@@ -1188,7 +1166,7 @@
             if(bill) {
                 bill.isPaid = false;
                 bill.paidDate = null;
-                localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
+                localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
                 renderRecords();
             }
         }
@@ -1197,12 +1175,11 @@
     function deleteBill(id) {
         if(confirm('確定要刪除這筆紀錄嗎？刪除後無法復原喔！')) {
             bills = bills.filter(b => b.id !== id);
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
+            localStorage.setItem('gude_bills_v2', JSON.stringify(bills));
             renderRecords();
         }
     }
 
-    // === 報表列印 ===
     function printDailyReport() {
         const dateVal = document.getElementById('dailyReportDate').value;
         if(!dateVal) { alert('請選擇報表日期！'); return; }
@@ -1325,7 +1302,6 @@
         window.print();
     }
 
-    // === 收據列印 ===
     function getSingleReceiptHtml(bill, isReceipt, copyLabel) {
         const docTitle = isReceipt ? '繳費收據' : '繳費通知單';
         const printDate = new Date().toLocaleDateString();
