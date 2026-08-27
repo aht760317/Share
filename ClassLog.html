@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (歷史日誌密碼防護版)</title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (家長日誌圖片化與補考補課紅字追蹤版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -16,7 +16,6 @@
         }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; }
         
-        /* 頂部標題與大卡片區塊導覽列 */
         header { background: var(--primary); color: white; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         header h2 { margin: 0 0 15px 0; font-size: 24px; text-align: center; letter-spacing: 1px; }
         
@@ -68,6 +67,7 @@
         
         .badge-danger { color: var(--danger); font-weight: bold; }
         .badge-success { color: var(--success); font-weight: bold; }
+        .text-alert { color: var(--danger); font-weight: bold; font-size: 12px; background: #fde8e8; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
@@ -144,33 +144,47 @@
                     <textarea id="log-notes-junior" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
+                <!-- 💡 智慧測驗條件式選單 -->
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
-                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
-                    <div style="margin-bottom: 12px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
-                        <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
-                        <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
-                    </div>
-                    <div class="grid-4">
+                    <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
+                    <div class="grid-2">
                         <div>
-                            <label>考試單元名稱：</label>
-                            <input type="text" id="log-exam-unit-junior" placeholder="例如：第三單元分數計算">
+                            <label><b>今天是否有測驗？</b></label>
+                            <select id="has-exam-junior" onchange="toggleExamSection('junior')">
+                                <option value="no">❌ 否 (無測驗)</option>
+                                <option value="yes">✅ 是 (有安排測驗)</option>
+                            </select>
                         </div>
                         <div>
-                            <label>自訂及格分數：</label>
+                            <label>自訂及格分數標準：</label>
                             <input type="number" id="log-pass-score-junior" value="80" placeholder="及格分數">
                         </div>
-                        <div>
-                            <label>🔗 考卷雲端連結：</label>
-                            <input type="text" id="log-exam-file-junior" placeholder="Google 雲端共用網址">
+                    </div>
+
+                    <!-- 只有當天有測驗才出現的區塊 -->
+                    <div id="exam-details-container-junior" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:12px;">
+                        <div style="margin-bottom: 10px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
+                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
+                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
                         </div>
-                        <div>
-                            <label>🔗 答案卷雲端連結：</label>
-                            <input type="text" id="log-answer-file-junior" placeholder="Google 雲端共用網址">
+                        <div class="grid-3">
+                            <div>
+                                <label>考試單元名稱：</label>
+                                <input type="text" id="log-exam-unit-junior" placeholder="例如：第三單元分數計算">
+                            </div>
+                            <div>
+                                <label>🔗 考卷雲端連結：</label>
+                                <input type="text" id="log-exam-file-junior" placeholder="Google 雲端共用網址">
+                            </div>
+                            <div>
+                                <label>🔗 答案卷雲端連結：</label>
+                                <input type="text" id="log-answer-file-junior" placeholder="Google 雲端共用網址">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌，點擊「產生給家長日誌」可一鍵複製傳送)</small></h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌與補課/補考狀態)</small></h3>
                 <table>
                     <thead>
                         <tr>
@@ -178,7 +192,7 @@
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="14%">作業狀態</th>
-                            <th width="40%">狀態提醒與補課安排 / 個別注意事項</th>
+                            <th width="40%">狀態提醒與補課/補考安排 / 注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-junior"></tbody>
@@ -221,33 +235,46 @@
                     <textarea id="log-notes-elementary" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
+                <!-- 💡 智慧測驗條件式選單 -->
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
-                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
-                    <div style="margin-bottom: 12px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
-                        <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
-                        <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
-                    </div>
-                    <div class="grid-4">
+                    <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
+                    <div class="grid-2">
                         <div>
-                            <label>考試單元名稱：</label>
-                            <input type="text" id="log-exam-unit-elementary" placeholder="例如：第一單元加減法">
+                            <label><b>今天是否有測驗？</b></label>
+                            <select id="has-exam-elementary" onchange="toggleExamSection('elementary')">
+                                <option value="no">❌ 否 (無測驗)</option>
+                                <option value="yes">✅ 是 (有安排測驗)</option>
+                            </select>
                         </div>
                         <div>
-                            <label>自訂及格分數：</label>
+                            <label>自訂及格分數標準：</label>
                             <input type="number" id="log-pass-score-elementary" value="80" placeholder="及格分數">
                         </div>
-                        <div>
-                            <label>🔗 考卷雲端連結：</label>
-                            <input type="text" id="log-exam-file-elementary" placeholder="Google 雲端共用網址">
+                    </div>
+
+                    <div id="exam-details-container-elementary" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:12px;">
+                        <div style="margin-bottom: 10px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
+                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
+                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
                         </div>
-                        <div>
-                            <label>🔗 答案卷雲端連結：</label>
-                            <input type="text" id="log-answer-file-elementary" placeholder="Google 雲端共用網址">
+                        <div class="grid-3">
+                            <div>
+                                <label>考試單元名稱：</label>
+                                <input type="text" id="log-exam-unit-elementary" placeholder="例如：第一單元加減法">
+                            </div>
+                            <div>
+                                <label>🔗 考卷雲端連結：</label>
+                                <input type="text" id="log-exam-file-elementary" placeholder="Google 雲端共用網址">
+                            </div>
+                            <div>
+                                <label>🔗 答案卷雲端連結：</label>
+                                <input type="text" id="log-answer-file-elementary" placeholder="Google 雲端共用網址">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌，點擊「產生給家長日誌」可一鍵複製傳送)</small></h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌與補課/補考狀態)</small></h3>
                 <table>
                     <thead>
                         <tr>
@@ -255,7 +282,7 @@
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="14%">作業狀態</th>
-                            <th width="40%">狀態提醒與補課安排 / 個別注意事項</th>
+                            <th width="40%">狀態提醒與補課/補考安排 / 注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-elementary"></tbody>
@@ -385,6 +412,64 @@
         </section>
     </div>
 
+    <!-- 🎨 圖片化表格排版的家長日誌彈窗 -->
+    <div class="modal-overlay" id="parent-log-modal">
+        <div class="modal-box" style="width: 650px;">
+            <h3 style="margin-top:0; color:var(--primary); text-align:center;">📋 斗六顧德補習班 - 學習日誌專屬卡片</h3>
+            <p style="font-size:13px; color:#666; text-align:center;">已自動排版為清晰的表格化訊息，點擊按鈕即可一鍵複製傳送至 LINE：</p>
+            <textarea id="parent-log-text" rows="14" style="font-family: monospace; font-size: 13px; background: #f8fafc; border: 2px solid #3498db; border-radius: 8px; padding: 12px;"></textarea>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-success" onclick="copyParentLog()" style="font-size:15px; padding:10px 20px;">📋 一鍵複製圖文日誌</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✏️ 當日學生個人日誌快速修改 (含補課與補考約定狀態) -->
+    <div class="modal-overlay" id="daily-student-edit-modal">
+        <div class="modal-box" style="width: 520px;">
+            <h3 id="daily-modal-title" style="margin-top:0; color:var(--primary);">✏️ 修正學生當日狀況與追蹤提醒</h3>
+            <input type="hidden" id="daily-modal-firestore-id">
+            <input type="hidden" id="daily-modal-dept">
+
+            <div class="grid-2">
+                <div>
+                    <label>出席狀況：</label>
+                    <select id="daily-modal-att">
+                        <option value="出席">出席</option>
+                        <option value="請假">請假</option>
+                        <option value="曠課">曠課</option>
+                    </select>
+                </div>
+                <div>
+                    <label>考試分數：</label>
+                    <input type="number" id="daily-modal-score" placeholder="分數">
+                </div>
+            </div>
+
+            <label>作業狀態：</label>
+            <select id="daily-modal-hw-status">
+                <option value="完成">完成</option>
+                <option value="未交">未交</option>
+                <option value="部分完成">部分完成</option>
+            </select>
+
+            <div style="background: #fdf2f2; border: 1px solid #f5c6cb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <label style="color: #721c24; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ 主任/老師待辦追蹤處理：</label>
+                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-makeup-done"> <b>已完成補課約定</b> (勾選後系統將自動消除「須約補課」紅字)</label><br>
+                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-retest-done" style="margin-top:8px;"> <b>已完成補考與訂正</b> (勾選後系統將自動消除「須安排補考」紅字)</label>
+            </div>
+
+            <label>狀態提醒與個別注意事項：</label>
+            <textarea id="daily-modal-note" rows="2" placeholder="請輸入個別注意事項..."></textarea>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-success" onclick="saveDailyStudentEdit()">確認修改並更新狀態</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('daily-student-edit-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 🔒 安全密碼驗證彈窗 -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 400px;">
@@ -430,58 +515,6 @@
                     <button class="btn btn-success" onclick="saveHistoryLogEdit()">確認儲存修改</button>
                     <button class="btn" style="background:#999;" onclick="document.getElementById('history-log-edit-modal').style.display='none'">取消</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💡 給家長的日誌預覽與複製彈窗 -->
-    <div class="modal-overlay" id="parent-log-modal">
-        <div class="modal-box" style="width: 600px;">
-            <h3 style="margin-top:0; color:var(--primary);">📋 產生給家長日誌</h3>
-            <p style="font-size:13px; color:#666;">您可以直接點擊下方按鈕複製內容，透過 LINE 傳送給家長：</p>
-            <textarea id="parent-log-text" rows="12" style="font-family: monospace; font-size: 14px; background: #f8fafc;"></textarea>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-success" onclick="copyParentLog()">📋 複製給家長日誌內容</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉視窗</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💡 當日學生個人日誌快速修改彈窗 -->
-    <div class="modal-overlay" id="daily-student-edit-modal">
-        <div class="modal-box" style="width: 500px;">
-            <h3 id="daily-modal-title" style="margin-top:0; color:var(--primary);">✏️ 修正學生當日學習狀況</h3>
-            <input type="hidden" id="daily-modal-firestore-id">
-            <input type="hidden" id="daily-modal-dept">
-
-            <div class="grid-2">
-                <div>
-                    <label>出席狀況：</label>
-                    <select id="daily-modal-att">
-                        <option value="出席">出席</option>
-                        <option value="請假">請假</option>
-                        <option value="曠課">曠課</option>
-                    </select>
-                </div>
-                <div>
-                    <label>考試分數：</label>
-                    <input type="number" id="daily-modal-score" placeholder="分數">
-                </div>
-            </div>
-
-            <label>作業狀態：</label>
-            <select id="daily-modal-hw-status">
-                <option value="完成">完成</option>
-                <option value="未交">未交</option>
-                <option value="部分完成">部分完成</option>
-            </select>
-
-            <label>狀態提醒與補課安排 / 個別注意事項：</label>
-            <textarea id="daily-modal-note" rows="3" placeholder="請輸入個別注意事項..."></textarea>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button class="btn btn-success" onclick="saveDailyStudentEdit()">確認修改並更新</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('daily-student-edit-modal').style.display='none'">取消</button>
             </div>
         </div>
     </div>
@@ -652,25 +685,27 @@
         }
 
         window.updateCourseDropdowns = function() {
-            const juniorSelect = document.getElementById('log-course-select-junior');
-            const elementarySelect = document.getElementById('log-course-select-elementary');
-            
-            if (juniorSelect) {
-                const currentVal = juniorSelect.value;
-                juniorSelect.innerHTML = window.state.courses.junior.map(c => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<option value="${cName}">${cName}</option>`;
-                }).join('');
-                if(currentVal) juniorSelect.value = currentVal;
-            }
-            
-            if (elementarySelect) {
-                const currentVal = elementarySelect.value;
-                elementarySelect.innerHTML = window.state.courses.elementary.map(c => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<option value="${cName}">${cName}</option>`;
-                }).join('');
-                if(currentVal) elementarySelect.value = currentVal;
+            ['junior', 'elementary'].forEach(dept => {
+                const select = document.getElementById(`log-course-select-${dept}`);
+                if(select) {
+                    const currentVal = select.value;
+                    select.innerHTML = window.state.courses[dept].map(c => {
+                        const cName = typeof c === 'object' ? c.name : c;
+                        return `<option value="${cName}">${cName}</option>`;
+                    }).join('');
+                    if(currentVal) select.value = currentVal;
+                }
+            });
+        };
+
+        // 💡 智慧控制是否展開測驗上傳考卷區塊
+        window.toggleExamSection = function(dept) {
+            const hasExamVal = document.getElementById(`has-exam-${dept}`).value;
+            const container = document.getElementById(`exam-details-container-${dept}`);
+            if(hasExamVal === 'yes') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
             }
         };
 
@@ -697,13 +732,13 @@
                         <button class="btn btn-small btn-warning" style="margin-top:4px;" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 產生給家長日誌</button>
                     </td>
                     <td>
-                        <select class="log-att-status">
+                        <select class="log-att-status" onchange="checkRowAlerts(this)">
                             <option value="出席">出席</option>
                             <option value="請假">請假</option>
                             <option value="曠課">曠課</option>
                         </select>
                     </td>
-                    <td><input type="number" class="log-score" placeholder="分數" style="margin:0;"></td>
+                    <td><input type="number" class="log-score" placeholder="分數" style="margin:0;" oninput="checkRowAlerts(this)"></td>
                     <td>
                         <select class="log-homework-status" style="margin:0;">
                             <option value="完成">完成</option>
@@ -711,9 +746,251 @@
                             <option value="部分完成">部分完成</option>
                         </select>
                     </td>
-                    <td><input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;"></td>
+                    <td>
+                        <input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;">
+                        <div class="alert-badge-box"></div>
+                    </td>
                 </tr>
             `).join('');
+        };
+
+        // 即時檢測分數不及格或請假以顯示紅字提醒
+        window.checkRowAlerts = function(element) {
+            const row = element.closest('tr');
+            if(!row) return;
+            const dept = row.closest('section').id.includes('junior') ? 'junior' : 'elementary';
+            const passScore = Number(document.getElementById(`log-pass-score-${dept}`).value) || 80;
+            const attStatus = row.querySelector('.log-att-status').value;
+            const scoreVal = row.querySelector('.log-score').value;
+            const alertBox = row.querySelector('.alert-badge-box');
+
+            let alertsHtml = '';
+            if(attStatus === '請假' || attStatus === '曠課') {
+                alertsHtml += `<div class="text-alert">⚠️ 須約補課</div>`;
+            }
+            if(scoreVal !== '' && Number(scoreVal) < passScore) {
+                alertsHtml += `<div class="text-alert">⚠️ 須安排補考 (低於${passScore}分)</div>`;
+            }
+            alertBox.innerHTML = alertsHtml;
+        };
+
+        // 📋 產生表格化與圖片化的家長日誌
+        window.generateParentLog = function(firestoreId, dept) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
+            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
+            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
+
+            const date = dateInput ? dateInput.value : '';
+            const course = courseSelect ? courseSelect.value : '';
+            const progress = contentInput ? contentInput.value.trim() : '';
+            const homework = homeworkInput ? homeworkInput.value.trim() : '';
+
+            const row = document.querySelector(`tr[data-firestore-id="${firestoreId}"]`);
+            let att = '出席', score = '無', hwStatus = '完成', note = '無';
+            if(row) {
+                att = row.querySelector('.log-att-status').value;
+                const scoreVal = row.querySelector('.log-score').value;
+                score = scoreVal !== '' ? scoreVal + '分' : '無';
+                hwStatus = row.querySelector('.log-homework-status').value;
+                note = row.querySelector('.log-student-note').value.trim() || '無';
+            }
+
+            const parentMsg = `╔════════════════════════╗\n` +
+                `   🏫 【斗六顧德補習班】學習日誌\n` +
+                `╚════════════════════════╝\n\n` +
+                `📅 【上課日期】 ${date}\n` +
+                `📚 【修習課程】 ${course}\n` +
+                `👨‍🎓 【學生姓名】 ${student.name}\n` +
+                `────────────────────────\n` +
+                `📌 【今日教學進度摘要】\n` +
+                `${progress || '（詳見課堂講義與內容）'}\n\n` +
+                `📝 【指定回家作業範圍】\n` +
+                `${homework || '無指定作業'}\n` +
+                `────────────────────────\n` +
+                `📊 【今日學習表現統計表】\n` +
+                `┌──────────┬─────────────┐\n` +
+                `│ 出席狀況 │   ${att.padEnd(7, ' ')}   │\n` +
+                `├──────────┼─────────────┤\n` +
+                `│ 考試成績 │   ${score.padEnd(7, ' ')}   │\n` +
+                `├──────────┼─────────────┤\n` +
+                `│ 作業狀態 │   ${hwStatus.padEnd(7, ' ')}   │\n` +
+                `└──────────┴─────────────┘\n\n` +
+                `💡 【老師叮嚀 / 個別注意事項】\n` +
+                `${note}\n` +
+                `────────────────────────\n` +
+                `✨ 感謝家長您的全力配合與支援！\n` +
+                `若有任何學習疑問，歡迎隨時與我們聯繫。`;
+
+            document.getElementById('parent-log-text').value = parentMsg;
+            document.getElementById('parent-log-modal').style.display = 'flex';
+        };
+
+        window.copyParentLog = function() {
+            const textarea = document.getElementById('parent-log-text');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ 已成功複製圖文表格化家長日誌！可直接貼上至 LINE 傳送給家長。');
+        };
+
+        // 💡 點擊學生名字彈出快速修改當日狀況與追蹤補課補考狀態
+        window.openDailyStudentEdit = function(firestoreId, dept) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+            const existingLog = (student.attendanceLogs || []).find(l => l.date === targetDate);
+
+            document.getElementById('daily-modal-title').innerText = `✏️ 修正 ${student.name} (${targetDate}) 當日日誌與待辦狀態`;
+            document.getElementById('daily-modal-firestore-id').value = firestoreId;
+            document.getElementById('daily-modal-dept').value = dept;
+
+            document.getElementById('daily-modal-att').value = existingLog ? existingLog.status : '出席';
+            document.getElementById('daily-modal-score').value = (existingLog && existingLog.score !== null) ? existingLog.score : '';
+            document.getElementById('daily-modal-hw-status').value = existingLog ? (existingLog.homework || '完成') : '完成';
+            document.getElementById('daily-modal-note').value = existingLog ? (existingLog.detail || '') : '';
+            
+            document.getElementById('daily-modal-makeup-done').checked = existingLog ? !!existingLog.makeupDone : false;
+            document.getElementById('daily-modal-retest-done').checked = existingLog ? !!existingLog.retestDone : false;
+
+            document.getElementById('daily-student-edit-modal').style.display = 'flex';
+        };
+
+        // 💡 儲存當日個人日誌修改 (連動補課補考消除紅字)
+        window.saveDailyStudentEdit = async function() {
+            const firestoreId = document.getElementById('daily-modal-firestore-id').value;
+            const dept = document.getElementById('daily-modal-dept').value;
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+            const status = document.getElementById('daily-modal-att').value;
+            const scoreVal = document.getElementById('daily-modal-score').value;
+            const score = scoreVal !== '' ? Number(scoreVal) : null;
+            const homework = document.getElementById('daily-modal-hw-status').value;
+            const detail = document.getElementById('daily-modal-note').value.trim();
+            const makeupDone = document.getElementById('daily-modal-makeup-done').checked;
+            const retestDone = document.getElementById('daily-modal-retest-done').checked;
+
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            if(!student.attendanceLogs) student.attendanceLogs = [];
+            const logIndex = student.attendanceLogs.findIndex(l => l.date === targetDate);
+
+            if(logIndex >= 0) {
+                student.attendanceLogs[logIndex].status = status;
+                student.attendanceLogs[logIndex].score = score;
+                student.attendanceLogs[logIndex].homework = homework;
+                student.attendanceLogs[logIndex].detail = detail;
+                student.attendanceLogs[logIndex].makeupDone = makeupDone;
+                student.attendanceLogs[logIndex].retestDone = retestDone;
+            } else {
+                student.attendanceLogs.unshift({
+                    date: targetDate, status, score, homework, progress: '', homeworkContent: '', passScore: 80, detail, makeupDone, retestDone
+                });
+            }
+
+            try {
+                await setDoc(doc(db, "classLogStudents", firestoreId), {
+                    id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                    attendanceLogs: student.attendanceLogs, notes: student.notes || []
+                });
+
+                document.getElementById('daily-student-edit-modal').style.display = 'none';
+                alert(`✅ ${student.name} 的狀態與追蹤提醒已成功更新！`);
+                window.renderProfileStudents();
+            } catch (e) {
+                console.error("更新失敗：", e);
+                alert('更新失敗，請檢查網路連線。');
+            }
+        };
+
+        window.saveLog = async function(dept) {
+            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
+            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
+            const notesInput = document.getElementById(dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary');
+            
+            const hasExam = document.getElementById(`has-exam-${dept}`).value === 'yes';
+            const passScoreInput = document.getElementById(`log-pass-score-${dept}`);
+            const examUnitInput = document.getElementById(`log-exam-unit-${dept}`);
+            const examFileInput = document.getElementById(`log-exam-file-${dept}`);
+            const answerFileInput = document.getElementById(`log-answer-file-${dept}`);
+
+            const course = courseSelect.value;
+            const date = dateInput.value;
+            const content = contentInput.value.trim();
+            const homework = homeworkInput.value.trim();
+            const notes = notesInput.value.trim();
+            const passScore = Number(passScoreInput.value) || 80;
+            const examUnit = hasExam && examUnitInput ? examUnitInput.value.trim() : '';
+            const examFile = hasExam && examFileInput ? examFileInput.value.trim() : '';
+            const answerFile = hasExam && answerFileInput ? answerFileInput.value.trim() : '';
+
+            if(!date) return alert('請選擇上課日期！');
+            if(!course) return alert('請選擇課程！');
+            if(!content) return alert('請填寫教學進度！');
+
+            const newLog = {
+                id: Date.now(),
+                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile
+            };
+
+            try {
+                const logRef = await addDoc(collection(db, "classLogHistory"), newLog);
+                newLog.firestoreId = logRef.id;
+                window.state.historyLogs.unshift(newLog);
+
+                const tbody = document.getElementById(dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary');
+                const rows = tbody.querySelectorAll('tr[data-firestore-id]');
+
+                for (let row of rows) {
+                    const firestoreId = row.getAttribute('data-firestore-id');
+                    const status = row.querySelector('.log-att-status').value;
+                    const scoreVal = row.querySelector('.log-score').value;
+                    const score = scoreVal !== '' ? Number(scoreVal) : null;
+                    const homeworkStatus = row.querySelector('.log-homework-status').value;
+                    const studentNote = row.querySelector('.log-student-note').value.trim();
+
+                    const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                    if (student) {
+                        if (!student.attendanceLogs) student.attendanceLogs = [];
+                        
+                        const existingIdx = student.attendanceLogs.findIndex(l => l.date === date);
+                        if (existingIdx >= 0) {
+                            student.attendanceLogs[existingIdx] = {
+                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
+                                makeupDone: student.attendanceLogs[existingIdx].makeupDone || false,
+                                retestDone: student.attendanceLogs[existingIdx].retestDone || false
+                            };
+                        } else {
+                            student.attendanceLogs.unshift({
+                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
+                                makeupDone: false, retestDone: false
+                            });
+                        }
+
+                        await setDoc(doc(db, "classLogStudents", firestoreId), {
+                            id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                            attendanceLogs: student.attendanceLogs, notes: student.notes || []
+                        });
+                    }
+                }
+
+                alert('✅ 今日教學日誌已成功儲存並同步至雲端與學生檔案！');
+                window.renderHistoryLogs();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+            } catch (e) {
+                console.error("儲存日誌失敗：", e);
+                alert('儲存失敗，請檢查網路連線後再試一次。');
+            }
         };
 
         // 🔒 點擊歷史日誌標題 -> 彈出密碼驗證 (0618)
@@ -723,7 +1000,6 @@
             document.getElementById('password-verify-modal').style.display = 'flex';
         };
 
-        // 🔒 確認密碼通過後開啟歷史日誌編輯視窗
         window.confirmPasswordAction = function() {
             const pwd = document.getElementById('global-verify-pwd').value;
             if(pwd !== "0618") {
@@ -746,7 +1022,6 @@
             document.getElementById('history-log-edit-modal').style.display = 'flex';
         };
 
-        // 💾 儲存歷史日誌修改
         window.saveHistoryLogEdit = async function() {
             const firestoreId = document.getElementById('edit-history-firestore-id').value;
             const date = document.getElementById('edit-history-date').value;
@@ -783,7 +1058,6 @@
             }
         };
 
-        // 🗑️ 刪除歷史日誌
         window.requestDeleteHistoryLog = async function() {
             if(!confirm('⚠️ 確定要永久刪除這筆歷史教學日誌嗎？')) return;
             const firestoreId = document.getElementById('edit-history-firestore-id').value;
@@ -804,7 +1078,6 @@
             }
         };
 
-        // 渲染歷史日誌列表 (標題加上點擊修改超連結)
         window.renderHistoryLogs = function() {
             ['junior', 'elementary'].forEach(dept => {
                 const container = document.getElementById(`logs-container-${dept}`);
@@ -831,214 +1104,7 @@
             });
         };
 
-        // 📋 產生給家長日誌功能
-        window.generateParentLog = function(firestoreId, dept) {
-            const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student) return;
-
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
-            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
-            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
-
-            const date = dateInput ? dateInput.value : '';
-            const course = courseSelect ? courseSelect.value : '';
-            const progress = contentInput ? contentInput.value.trim() : '';
-            const homework = homeworkInput ? homeworkInput.value.trim() : '';
-
-            const row = document.querySelector(`tr[data-firestore-id="${firestoreId}"]`);
-            let att = '出席', score = '無', hwStatus = '完成', note = '無';
-            if(row) {
-                att = row.querySelector('.log-att-status').value;
-                const scoreVal = row.querySelector('.log-score').value;
-                score = scoreVal !== '' ? scoreVal + '分' : '無';
-                hwStatus = row.querySelector('.log-homework-status').value;
-                note = row.querySelector('.log-student-note').value.trim() || '無';
-            }
-
-            const parentMsg = `【斗六顧德補習班】學習日誌\n` +
-                `📅 日期：${date}\n` +
-                `📚 課程：${course}\n` +
-                `👨‍🎓 學生：${student.name}\n` +
-                `--------------------\n` +
-                `📌 今日教學進度：\n${progress || '（請參考上課內容）'}\n\n` +
-                `📝 回家作業範圍：\n${homework || '無'}\n` +
-                `--------------------\n` +
-                `📊 學生今日表現：\n` +
-                `• 出席狀況：${att}\n` +
-                `• 考試成績：${score}\n` +
-                `• 作業狀態：${hwStatus}\n` +
-                `• 老師叮嚀 / 注意事項：${note}\n` +
-                `--------------------\n` +
-                `感謝家長您的配合與支持！若有任何學習相關問題，歡迎隨時與我們聯繫。`;
-
-            document.getElementById('parent-log-text').value = parentMsg;
-            document.getElementById('parent-log-modal').style.display = 'flex';
-        };
-
-        window.copyParentLog = function() {
-            const textarea = document.getElementById('parent-log-text');
-            textarea.select();
-            document.execCommand('copy');
-            alert('✅ 已成功複製給家長日誌內容！可直接貼上至 LINE 傳送給家長。');
-        };
-
-        // 💡 點擊學生名字彈出快速修改當日狀況視窗
-        window.openDailyStudentEdit = function(firestoreId, dept) {
-            const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student) return;
-
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-
-            const existingLog = (student.attendanceLogs || []).find(l => l.date === targetDate);
-
-            document.getElementById('daily-modal-title').innerText = `✏️ 修改 ${student.name} (${targetDate}) 當日日誌`;
-            document.getElementById('daily-modal-firestore-id').value = firestoreId;
-            document.getElementById('daily-modal-dept').value = dept;
-
-            document.getElementById('daily-modal-att').value = existingLog ? existingLog.status : '出席';
-            document.getElementById('daily-modal-score').value = (existingLog && existingLog.score !== null) ? existingLog.score : '';
-            document.getElementById('daily-modal-hw-status').value = existingLog ? (existingLog.homework || '完成') : '完成';
-            document.getElementById('daily-modal-note').value = existingLog ? (existingLog.detail || '') : '';
-
-            document.getElementById('daily-student-edit-modal').style.display = 'flex';
-        };
-
-        // 💡 儲存當日個人日誌修改
-        window.saveDailyStudentEdit = async function() {
-            const firestoreId = document.getElementById('daily-modal-firestore-id').value;
-            const dept = document.getElementById('daily-modal-dept').value;
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-
-            const status = document.getElementById('daily-modal-att').value;
-            const scoreVal = document.getElementById('daily-modal-score').value;
-            const score = scoreVal !== '' ? Number(scoreVal) : null;
-            const homework = document.getElementById('daily-modal-hw-status').value;
-            const detail = document.getElementById('daily-modal-note').value.trim();
-
-            const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student) return;
-
-            if(!student.attendanceLogs) student.attendanceLogs = [];
-            const logIndex = student.attendanceLogs.findIndex(l => l.date === targetDate);
-
-            if(logIndex >= 0) {
-                student.attendanceLogs[logIndex].status = status;
-                student.attendanceLogs[logIndex].score = score;
-                student.attendanceLogs[logIndex].homework = homework;
-                student.attendanceLogs[logIndex].detail = detail;
-            } else {
-                student.attendanceLogs.unshift({
-                    date: targetDate, status, score, homework, progress: '', homeworkContent: '', passScore: 80, detail
-                });
-            }
-
-            if(detail) {
-                if(!student.notes) student.notes = [];
-                student.notes.unshift({ date: targetDate, author: '日誌修正', text: detail });
-            }
-
-            try {
-                await setDoc(doc(db, "classLogStudents", firestoreId), {
-                    id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
-                    attendanceLogs: student.attendanceLogs, notes: student.notes || []
-                });
-
-                document.getElementById('daily-student-edit-modal').style.display = 'none';
-                alert(`✅ ${student.name} 的當日日誌已成功修正並同步至雲端！`);
-                window.renderProfileStudents();
-            } catch (e) {
-                console.error("更新失敗：", e);
-                alert('更新失敗，請檢查網路連線。');
-            }
-        };
-
-        window.saveLog = async function(dept) {
-            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
-            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
-            const notesInput = document.getElementById(dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary');
-            const examUnitInput = document.getElementById(dept === 'junior' ? 'log-exam-unit-junior' : 'log-exam-unit-elementary');
-            const passScoreInput = document.getElementById(dept === 'junior' ? 'log-pass-score-junior' : 'log-pass-score-elementary');
-            const examFileInput = document.getElementById(dept === 'junior' ? 'log-exam-file-junior' : 'log-exam-file-elementary');
-            const answerFileInput = document.getElementById(dept === 'junior' ? 'log-answer-file-junior' : 'log-answer-file-elementary');
-
-            const course = courseSelect.value;
-            const date = dateInput.value;
-            const content = contentInput.value.trim();
-            const homework = homeworkInput.value.trim();
-            const notes = notesInput.value.trim();
-            const examUnit = examUnitInput.value.trim();
-            const passScore = Number(passScoreInput.value) || 80;
-            const examFile = examFileInput.value.trim();
-            const answerFile = answerFileInput.value.trim();
-
-            if(!date) return alert('請選擇上課日期！');
-            if(!course) return alert('請選擇課程！');
-            if(!content) return alert('請填寫教學進度！');
-
-            const newLog = {
-                id: Date.now(),
-                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile
-            };
-
-            try {
-                const logRef = await addDoc(collection(db, "classLogHistory"), newLog);
-                newLog.firestoreId = logRef.id;
-                window.state.historyLogs.unshift(newLog);
-
-                const tbody = document.getElementById(dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary');
-                const rows = tbody.querySelectorAll('tr[data-firestore-id]');
-
-                for (let row of rows) {
-                    const firestoreId = row.getAttribute('data-firestore-id');
-                    const status = row.querySelector('.log-att-status').value;
-                    const scoreVal = row.querySelector('.log-score').value;
-                    const score = scoreVal !== '' ? Number(scoreVal) : null;
-                    const homeworkStatus = row.querySelector('.log-homework-status').value;
-                    const studentNote = row.querySelector('.log-student-note').value.trim();
-
-                    const student = window.state.students.find(s => s.firestoreId === firestoreId);
-                    if (student) {
-                        if (!student.attendanceLogs) student.attendanceLogs = [];
-                        
-                        const existingIdx = student.attendanceLogs.findIndex(l => l.date === date);
-                        if (existingIdx >= 0) {
-                            student.attendanceLogs[existingIdx] = {
-                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
-                            };
-                        } else {
-                            student.attendanceLogs.unshift({
-                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
-                            });
-                        }
-
-                        if (studentNote) {
-                            if (!student.notes) student.notes = [];
-                            student.notes.unshift({ date, author: '教學日誌', text: studentNote });
-                        }
-
-                        await setDoc(doc(db, "classLogStudents", firestoreId), {
-                            id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
-                            attendanceLogs: student.attendanceLogs, notes: student.notes || []
-                        });
-                    }
-                }
-
-                alert('✅ 今日教學日誌已成功儲存並同步至雲端與學生檔案！');
-                window.renderHistoryLogs();
-                window.generateMonthDaysGrid();
-                window.renderDirectorOverview();
-            } catch (e) {
-                console.error("儲存日誌失敗：", e);
-                alert('儲存失敗，請檢查網路連線後再試一次。');
-            }
-        };
-
-        // 主任全校教學日誌快速總覽
+        // 主任全校教學日誌快速總覽 (支援紅色追蹤提醒)
         window.generateMonthDaysGrid = function() {
             const monthInput = document.getElementById('overview-target-month').value;
             const container = document.getElementById('month-days-container');
@@ -1111,17 +1177,35 @@
                 return;
             }
 
-            container.innerHTML = targetLogs.map(l => `
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                        <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 授課日期：${l.date}</h4>
-                        <span style="font-size:13px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px;">${l.dept === 'junior' ? '國中部' : '國小部'}</span>
+            container.innerHTML = targetLogs.map(l => {
+                // 檢查該日誌對應學生的未完成追蹤紅字
+                let alertsHtml = '';
+                window.state.students.forEach(s => {
+                    const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
+                    if(logMatch) {
+                        if((logMatch.status === '請假' || logMatch.status === '曠課') && !logMatch.makeupDone) {
+                            alertsHtml += `<div class="text-alert">⚠️ 學生 [${s.name}] 須約補課</div> `;
+                        }
+                        const passScore = logMatch.passScore || 80;
+                        if(logMatch.score !== null && logMatch.score < passScore && !logMatch.retestDone) {
+                            alertsHtml += `<div class="text-alert">⚠️ 學生 [${s.name}] 須安排補考 (${logMatch.score}分)</div> `;
+                        }
+                    }
+                });
+
+                return `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                            <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 授課日期：${l.date}</h4>
+                            <span style="font-size:13px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px;">${l.dept === 'junior' ? '國中部' : '國小部'}</span>
+                        </div>
+                        <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
+                        <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
+                        <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        ${alertsHtml ? `<div style="margin-top:8px; background:#fff5f5; padding:8px; border-radius:4px; border:1px solid #feb2b2;"><b>主任提醒與待辦追蹤：</b><br>${alertsHtml}</div>` : ''}
                     </div>
-                    <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
-                    <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
-                    <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         };
 
         // 學生檔案管理
@@ -1172,8 +1256,8 @@
 
             tbody.innerHTML = students.map(s => {
                 let phonesStr = (s.phones || []).map(p => `${p.label}: ${p.number}`).join('<br>');
-                let attHtml = (s.attendanceLogs || []).map(l => `${l.date}: <span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span>`).join('<br>') || '尚無紀錄';
-                let scoreHtml = (s.attendanceLogs || []).map(l => `${l.date}: <b>${l.score !== null ? l.score : '無'}分</b> (${l.homework || ''})`).join('<br>') || '尚無紀錄';
+                let attHtml = (s.attendanceLogs || []).map(l => `${l.date}: <span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span> ${(!l.makeupDone && l.status!=='出席')?'<span class="text-alert">須補課</span>':''}`).join('<br>') || '尚無紀錄';
+                let scoreHtml = (s.attendanceLogs || []).map(l => `${l.date}: <b>${l.score !== null ? l.score : '無'}分</b> ${(!l.retestDone && l.score !== null && l.score < (l.passScore||80))?'<span class="text-alert">須補考</span>':''}`).join('<br>') || '尚無紀錄';
                 let notesHtml = (s.notes || []).map(n => `[${n.date}]: ${n.text}`).join('<br>') || '無備註';
 
                 return `
