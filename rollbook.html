@@ -71,7 +71,7 @@
 
         /* 學生點名卡片 */
         .student-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 14px; margin-top: 15px;
         }
         .student-card {
@@ -86,13 +86,44 @@
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
         .btn:hover { opacity: 0.9; }
 
         /* 表格與列印排版 */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { border: 1px solid var(--border); padding: 6px 3px; text-align: center; }
+        th, td { border: 1px solid var(--border); padding: 6px 4px; text-align: center; }
         th { background: #f1f3f5; color: var(--primary); font-weight: bold; }
         .holiday-col { background: #fff3cd !important; color: #856404; font-weight: bold; }
+
+        /* 仿紙本點名單視覺樣式 (A4 Paper Style) */
+        .paper-sheet {
+            background: #ffffff;
+            padding: 30px 25px;
+            border-radius: 3px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12), 0 0 0 1px #bbb;
+            margin-top: 25px;
+            position: relative;
+        }
+        .paper-sheet::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+        .paper-sheet table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        .paper-sheet th, .paper-sheet td {
+            border: 1px solid #333 !important;
+            padding: 7px 5px;
+        }
+        .paper-sheet th {
+            background-color: #f5f5f5;
+        }
 
         @media print {
             @page { size: landscape; margin: 6mm; }
@@ -102,6 +133,7 @@
             .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
             table { font-size: 9pt; width: 100%; }
             th, td { border: 1px solid #000 !important; padding: 4px 2px; }
+            .paper-sheet { box-shadow: none; border: none; padding: 0; }
         }
         .print-header { display: none; }
     </style>
@@ -136,9 +168,10 @@
         <div class="card no-print">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <h3 id="currentDayText" style="color:var(--primary);">📅 今日課堂清單</h3>
-                <div>
+                <div style="display:flex; align-items:center; gap:10px;">
                     <label style="font-weight:bold;">點名日期：</label>
                     <input type="date" id="rollDateInput" onchange="onDateChange()" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
+                    <button id="btnToggleAllCourses" class="btn btn-outline" onclick="toggleCourseFilter()">👁️ 顯示全部課程</button>
                 </div>
             </div>
             <div class="course-grid" id="courseGrid"></div>
@@ -158,10 +191,36 @@
 
             <div style="margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <span id="rollStatsText" style="font-weight:bold; color:var(--primary);">應到 0 人 / 出席 0 人</span>
-                <span style="font-size:13px; color:#888;">💡 老師在教學日誌填寫請假或成績，此處與點名表皆會即時自動連動！</span>
+                <span style="font-size:13px; color:#888;">💡 點名與成績修改後將即時同步，並在下方產生紙本點名單。</span>
             </div>
 
             <div class="student-grid" id="studentRollGrid"></div>
+
+            <div class="paper-sheet" id="paperSheetArea">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px;">
+                    <div>
+                        <h3 id="paperCourseTitle" style="font-size:18px; color:#111;">斗六顧德補習班 - 今日課堂點名單</h3>
+                        <p id="paperMetaInfo" style="font-size:12px; color:#444; margin-top:4px;"></p>
+                    </div>
+                    <button class="btn btn-primary no-print" onclick="window.print()" style="font-size:12px; padding:6px 12px;">🖨️ 列印此點名單</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">序</th>
+                            <th style="width: 110px;">學生姓名</th>
+                            <th style="width: 120px;">學校</th>
+                            <th style="width: 160px;">家長電話 (第一順位)</th>
+                            <th style="width: 90px;">版本</th>
+                            <th style="width: 100px;">點名出缺席</th>
+                            <th style="width: 90px;">測驗成績</th>
+                            <th>課堂備註</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paperTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -243,7 +302,8 @@
         historyLogs: [],
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
-        attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}')
+        attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
+        showAllCourses: false // 預設只顯示今日有課班級
     };
 
     window.onload = function() {
@@ -344,7 +404,20 @@
         if (window.state.currentCourse) selectCourse(window.state.currentCourse.name);
     };
 
-    // 取得所有課程清單 (含學制與開課日推算)
+    window.toggleCourseFilter = function() {
+        window.state.showAllCourses = !window.state.showAllCourses;
+        const btn = document.getElementById('btnToggleAllCourses');
+        btn.innerText = window.state.showAllCourses ? "📅 僅顯示今日排課" : "👁️ 顯示全部課程";
+        renderCourseCards();
+    };
+
+    // 輔助函式：取得家長第一順位聯絡電話
+    function getParentPhone(stu) {
+        if (!stu) return '-';
+        return stu.parentPhone || stu.phone || stu.motherPhone || stu.fatherPhone || stu.contactPhone || stu.tel || '-';
+    }
+
+    // 取得所有課程清單
     function getAllCoursesList() {
         let list = [];
         const defaultStart = new Date().toISOString().slice(0, 8) + '01';
@@ -389,7 +462,19 @@
 
         const allCourses = getAllCoursesList();
 
-        allCourses.forEach(c => {
+        // 依據開關過濾：只顯示今日有排課的班級 或 顯示全部
+        const filteredCourses = window.state.showAllCourses 
+            ? allCourses 
+            : allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+
+        if (filteredCourses.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">
+                本日 (${curDayName}) 無設定固定排課班級。若需點名其他課程，請點擊右上角「👁️ 顯示全部課程」。
+            </div>`;
+            return;
+        }
+
+        filteredCourses.forEach(c => {
             const isToday = c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'));
             const card = document.createElement('div');
             card.className = `course-card ${window.state.currentCourse && window.state.currentCourse.name === c.name ? 'active' : ''}`;
@@ -441,20 +526,29 @@
         const courseStudents = window.state.students.filter(s => s.course === c.name);
 
         let presentCount = 0;
+        let paperRowsHtml = '';
 
-        courseStudents.forEach(stu => {
+        courseStudents.forEach((stu, idx) => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
             const record = window.state.attendanceData[key] || { status: '未到', time: '', score: '' };
             if (record.status === '出席') presentCount++;
 
+            const phone = getParentPhone(stu);
+
+            // 1. 互動點名卡片
             const card = document.createElement('div');
             card.className = `student-card ${record.status === '出席' ? 'present' : (record.status === '請假' ? 'leave' : '')}`;
 
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between;">
-                    <span style="font-size:17px; font-weight:bold; color:var(--primary);">${stu.name}</span>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div style="font-size:17px; font-weight:bold; color:var(--primary);">${stu.name}</div>
+                        <div style="font-size:12px; color:#555; margin-top:2px;">
+                            ${stu.school || '-'} | 電話：${phone}
+                        </div>
+                    </div>
                     <span style="font-size:12px; background:#f1f5f9; padding:2px 8px; border-radius:4px; color:#475569;">
-                        ${stu.school || ''} ${stu.studentClass || ''} | ${stu.studentVersion || '通用'}版
+                        ${stu.studentVersion || '通用'}版
                     </span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-top:12px;">
@@ -468,13 +562,37 @@
                 </div>
             `;
             grid.appendChild(card);
+
+            // 2. 仿紙本點名單 Row (欄位順序：學生姓名 -> 學校 -> 家長聯絡電話 -> 版本 -> 點名狀況 -> 成績 -> 備註)
+            let statusText = `<span style="color:#999;">未到</span>`;
+            if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold;">✔ 出席</span>`;
+            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold;">假 (請假)</span>`;
+
+            paperRowsHtml += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${stu.name}</b></td>
+                    <td>${stu.school || '-'}</td>
+                    <td>${phone}</td>
+                    <td>${stu.studentVersion || '通用'}</td>
+                    <td>${statusText}</td>
+                    <td style="font-weight:bold; color:#0284c7;">${record.score !== undefined && record.score !== '' ? record.score + ' 分' : '-'}</td>
+                    <td></td>
+                </tr>
+            `;
         });
 
+        // 統計文字
         document.getElementById('rollStatsText').innerText = 
             `應到：${courseStudents.length} 人 / 出席：${presentCount} 人 / 請假：${courseStudents.filter(s => {
                 const k = `${dateStr}_${c.name}_${s.name}`;
                 return window.state.attendanceData[k] && window.state.attendanceData[k].status === '請假';
             }).length} 人`;
+
+        // 填入下方仿紙本點名單資訊
+        document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名單`;
+        document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 授課教師：${c.teacher || '任課老師'} | 應到人數：${courseStudents.length} 人 | 實到：${presentCount} 人`;
+        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="8" style="padding:15px; color:#888;">此班級目前無學生名冊</td></tr>`;
     }
 
     window.setAttendance = function(key, status) {
@@ -489,6 +607,7 @@
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '出席' };
         window.state.attendanceData[key].score = val !== '' ? Number(val) : '';
         localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        renderStudentList();
     };
 
     window.quickMarkAll = function() {
@@ -627,6 +746,7 @@
         }
     };
 
+    // 2. 自動生成點名表 (欄位：序 -> 學生姓名 -> 學校 -> 家長電話 -> 版本 -> 各週點名格 -> 備註)
     window.generateCustomSheet = function() {
         const courseName = document.getElementById('sheetCourseSelect').value;
         const allCourses = getAllCoursesList();
@@ -664,10 +784,10 @@
         let html = `<table>
             <thead>
                 <tr>
-                    <th style="width:30px;">序</th>
-                    <th style="width:75px;">姓名</th>
+                    <th style="width:28px;">序</th>
+                    <th style="width:75px;">學生姓名</th>
                     <th style="width:70px;">學校</th>
-                    <th style="width:50px;">班級</th>
+                    <th style="width:95px;">家長電話</th>
                     <th style="width:45px;">版本</th>`;
 
         dateList.forEach((d, i) => {
@@ -680,11 +800,12 @@
         html += `<th style="width:60px;">備註</th></tr></thead><tbody>`;
 
         courseStudents.forEach((stu, idx) => {
+            const phone = getParentPhone(stu);
             html += `<tr>
                 <td>${idx + 1}</td>
                 <td><b>${stu.name}</b></td>
                 <td>${stu.school || '-'}</td>
-                <td>${stu.studentClass || '-'}</td>
+                <td style="font-size:8.5pt;">${phone}</td>
                 <td>${stu.studentVersion || '-'}</td>`;
 
             dateList.forEach(d => {
