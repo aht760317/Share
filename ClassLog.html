@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 </title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (全安防密碼與即時補課補考追蹤版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -67,8 +67,13 @@
         
         .badge-danger { color: var(--danger); font-weight: bold; }
         .badge-success { color: var(--success); font-weight: bold; }
-        .text-alert { color: var(--danger); font-weight: bold; font-size: 12px; background: #fde8e8; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+        .text-alert { color: var(--danger); font-weight: bold; font-size: 12px; background: #fde8e8; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; cursor: pointer; }
         
+        /* 獨立待辦追蹤提醒區塊樣式 */
+        .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .pending-todo-panel h4 { margin: 0 0 10px 0; color: #c53030; display: flex; align-items: center; gap: 8px; }
+        .todo-badge-item { background: #fff; border: 1px solid #fc8181; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; }
@@ -89,10 +94,9 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: white; width: 650px; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
 
-        .student-name-link, .history-log-title-link, .course-edit-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
-        .student-name-link:hover, .history-log-title-link:hover, .course-edit-link:hover { color: var(--primary); }
+        .student-name-link, .history-log-title-link, .course-edit-link, .interactive-tag { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .student-name-link:hover, .history-log-title-link:hover, .course-edit-link:hover, .interactive-tag:hover { color: var(--primary); }
         
-        /* 截圖風格日誌卡片樣式 */
         .preview-card { border: 2px solid #cbd5e1; border-radius: 12px; background: #fff; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
         .preview-header { background: var(--primary); color: white; text-align: center; padding: 18px; }
         .preview-header h3 { margin: 0; font-size: 20px; }
@@ -126,6 +130,12 @@
 
         <!-- 國中部教學日誌 -->
         <section id="teaching-logs-junior" class="section-content active">
+            <!-- 國中部待辦追蹤提醒專區 -->
+            <div class="pending-todo-panel">
+                <h4>📌 國中部 - 待辦追蹤提醒 (尚有未完成補課 / 補考名單)</h4>
+                <div id="junior-pending-todo-list"><p style="color:#666; font-size:13px; margin:0;">目前無待辦追蹤事項。</p></div>
+            </div>
+
             <div class="card no-print">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國中部 - 教室教學日誌</h3>
                 <div class="grid-2">
@@ -154,7 +164,6 @@
                     <textarea id="log-notes-junior" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
-                <!-- 💡 智慧測驗條件式選單 -->
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
                     <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
                     <div class="grid-2">
@@ -216,6 +225,12 @@
 
         <!-- 國小部教學日誌 -->
         <section id="teaching-logs-elementary" class="section-content">
+            <!-- 國小部待辦追蹤提醒專區 -->
+            <div class="pending-todo-panel">
+                <h4>📌 國小部 - 待辦追蹤提醒 (尚有無完成補課 / 補考名單)</h4>
+                <div id="elementary-pending-todo-list"><p style="color:#666; font-size:13px; margin:0;">目前無待辦追蹤事項。</p></div>
+            </div>
+
             <div class="card no-print">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國小部 - 教室教學日誌</h3>
                 <div class="grid-2">
@@ -244,7 +259,6 @@
                     <textarea id="log-notes-elementary" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
-                <!-- 💡 智慧測驗條件式選單 -->
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
                     <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
                     <div class="grid-2">
@@ -304,7 +318,7 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 (左右分流與文字批示功能) -->
+        <!-- 👑 主任全校日誌快速總覽 -->
         <section id="director-overview" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽 (分流與文字批示)</h3>
@@ -329,7 +343,6 @@
 
                 <h4 id="overview-current-title" style="color: var(--primary);">檢視結果：</h4>
                 
-                <!-- 主任左右分流雙欄版面 -->
                 <div class="grid-2">
                     <div style="background: #fdf8f6; border: 2px solid #bae6fd; padding: 18px; border-radius: 8px;">
                         <h4 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-top:0;">📘 國小部教學日誌總覽</h4>
@@ -343,7 +356,7 @@
             </div>
         </section>
 
-        <!-- 學生檔案與通訊 -->
+        <!-- 學生檔案與通訊 (含點擊即時處理補課與補考) -->
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -360,8 +373,8 @@
                     <thead>
                         <tr>
                             <th width="18%">學生姓名與電話 (點擊修改)</th>
-                            <th width="18%">出席與請假狀況</th>
-                            <th width="22%">考試成績紀錄</th>
+                            <th width="18%">出席與請假狀況 (可點擊處理補課)</th>
+                            <th width="22%">考試成績紀錄 (可點擊處理補考)</th>
                             <th width="42%">備註紀錄</th>
                         </tr>
                     </thead>
@@ -372,7 +385,7 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 (支援點擊課程名稱修改) -->
+        <!-- ⚙️ 系統與課程設定 -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
@@ -432,6 +445,61 @@
         </section>
     </div>
 
+    <!-- 💡 互動式處理補課彈窗 -->
+    <div class="modal-overlay" id="makeup-modal">
+        <div class="modal-box" style="width: 450px;">
+            <h3 style="margin-top:0; color:var(--primary);">📅 處理學生補課紀錄</h3>
+            <input type="hidden" id="makeup-student-id">
+            <input type="hidden" id="makeup-log-index">
+            <p id="makeup-student-info" style="font-size:14px; color:#555;"></p>
+
+            <label>補課狀態：</label>
+            <select id="makeup-status-select" onchange="toggleMakeupDateInput()">
+                <option value="pending">❌ 尚未補課 (須補課)</option>
+                <option value="done">✅ 已完成補課</option>
+            </select>
+
+            <div id="makeup-date-wrapper" style="display:none;">
+                <label>實際補課日期：</label>
+                <input type="date" id="makeup-date-input">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveMakeupAction()">確認儲存</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💡 互動式處理補考彈窗 -->
+    <div class="modal-overlay" id="retest-modal">
+        <div class="modal-box" style="width: 450px;">
+            <h3 style="margin-top:0; color:var(--primary);">📝 處理學生補考與成績紀錄</h3>
+            <input type="hidden" id="retest-student-id">
+            <input type="hidden" id="retest-log-index">
+            <p id="retest-student-info" style="font-size:14px; color:#555;"></p>
+
+            <label>補考狀態：</label>
+            <select id="retest-status-select" onchange="toggleRetestInputs()">
+                <option value="pending">❌ 尚未補考 (須補考)</option>
+                <option value="done">✅ 已完成補考</option>
+            </select>
+
+            <div id="retest-inputs-wrapper" style="display:none;">
+                <label>補考日期：</label>
+                <input type="date" id="retest-date-input">
+
+                <label>補考分數：</label>
+                <input type="number" id="retest-score-input" placeholder="請輸入分數">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveRetestAction()">確認儲存</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('retest-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 👑 主任互動式文字批示彈窗 -->
     <div class="modal-overlay" id="director-approval-modal">
         <div class="modal-box" style="width: 500px;">
@@ -466,7 +534,7 @@
             <input type="text" id="edit-course-teacher" placeholder="授課老師">
 
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-danger" onclick="deleteCourse()">🗑️ 刪除此課程</button>
+                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除此課程</button>
                 <div>
                     <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
                     <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
@@ -509,7 +577,7 @@
         </div>
     </div>
 
-    <!-- ✏️ 當日學生個人日誌快速修改 (含補課與補考約定狀態) -->
+    <!-- ✏️ 當日學生個人日誌快速修改 -->
     <div class="modal-overlay" id="daily-student-edit-modal">
         <div class="modal-box" style="width: 520px;">
             <h3 id="daily-modal-title" style="margin-top:0; color:var(--primary);">✏️ 修正學生當日狀況與追蹤提醒</h3>
@@ -540,8 +608,8 @@
 
             <div style="background: #fdf2f2; border: 1px solid #f5c6cb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
                 <label style="color: #721c24; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ 主任/老師待辦追蹤處理：</label>
-                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-makeup-done"> <b>已完成補課約定</b> (勾選後系統將自動消除「須約補課」紅字)</label><br>
-                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-retest-done" style="margin-top:8px;"> <b>已完成補考與訂正</b> (勾選後系統將自動消除「須安排補考」紅字)</label>
+                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-makeup-done"> <b>已完成補課約定</b></label><br>
+                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-retest-done" style="margin-top:8px;"> <b>已完成補考與訂正</b></label>
             </div>
 
             <label>狀態提醒與個別注意事項：</label>
@@ -554,12 +622,12 @@
         </div>
     </div>
 
-    <!-- 🔒 安全密碼驗證彈窗 -->
+    <!-- 🔒 安全密碼驗證彈窗 (全面 0618 防護) -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 400px;">
-            <h3 style="margin-top:0; color:var(--danger);">🔒 歷史日誌安全驗證</h3>
-            <p style="font-size: 14px; color: #555;">修改或刪除歷史日誌需要輸入管理密碼 (0618)：</p>
-            <input type="password" id="global-verify-pwd" placeholder="請輸入密碼 0618">
+            <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
+            <p style="font-size: 14px; color: #555;">執行此動作需要輸入管理密碼：</p>
+            <input type="password" id="global-verify-pwd" placeholder="請輸入管理密碼">
             <div style="display: flex; justify-content: space-between; margin-top: 15px;">
                 <button class="btn btn-danger" onclick="confirmPasswordAction()">確認通過</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
@@ -701,7 +769,7 @@
             currentViewMode: 'single'
         };
 
-        window.pendingHistoryEditId = null;
+        window.pendingActionCallback = null;
 
         async function initCloudData() {
             try {
@@ -738,6 +806,7 @@
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
                 window.renderHistoryLogs();
+                window.renderPendingTodoPanels();
             } catch (e) {
                 console.error("載入雲端資料失敗：", e);
             }
@@ -758,6 +827,7 @@
             window.updateCourseDropdowns();
             window.renderSettingsCourseList();
             window.renderClassButtons();
+            window.renderPendingTodoPanels();
 
             if(sectionId === 'director-overview') {
                 window.generateMonthDaysGrid();
@@ -790,6 +860,46 @@
             } else {
                 container.style.display = 'none';
             }
+        };
+
+        // 📌 渲染國小部與國中部專屬待辦追蹤面板
+        window.renderPendingTodoPanels = function() {
+            ['junior', 'elementary'].forEach(dept => {
+                const container = document.getElementById(`${dept}-pending-todo-list`);
+                if(!container) return;
+
+                const courses = window.state.courses[dept].map(c => typeof c === 'object' ? c.name : c);
+                let pendingItems = [];
+
+                window.state.students.forEach(s => {
+                    if(courses.includes(s.course)) {
+                        (s.attendanceLogs || []).forEach((l, logIdx) => {
+                            const needsMakeup = (l.status === '請假' || l.status === '曠課') && !l.makeupDone;
+                            const passScore = l.passScore || 80;
+                            const needsRetest = l.score !== null && l.score < passScore && !l.retestDone;
+
+                            if(needsMakeup) {
+                                pendingItems.push(`
+                                    <div class="todo-badge-item">
+                                        <span><b>${s.name}</b> (${l.date}) - <span style="color:var(--danger); font-weight:bold;">[須補課]</span></span>
+                                        <button class="btn btn-small btn-success" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">去處理補課</button>
+                                    </div>
+                                `);
+                            }
+                            if(needsRetest) {
+                                pendingItems.push(`
+                                    <div class="todo-badge-item">
+                                        <span><b>${s.name}</b> (${l.date}) - <span style="color:var(--danger); font-weight:bold;">[須補考 (考${l.score}分)]</span></span>
+                                        <button class="btn btn-small btn-success" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">去處理補考</button>
+                                    </div>
+                                `);
+                            }
+                        });
+                    }
+                });
+
+                container.innerHTML = pendingItems.length > 0 ? pendingItems.join('') : `<p style="color:#28a745; font-size:13px; margin:0;">🎉 太棒了！此部門目前無任何待辦補課或補考。</p>`;
+            });
         };
 
         window.renderLogStudents = function(dept) {
@@ -856,7 +966,7 @@
             alertBox.innerHTML = alertsHtml;
         };
 
-        // 📋 產生視覺化表格卡片的家長日誌
+        // 📋 產生家長日誌
         window.generateParentLog = function(firestoreId, dept) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student) return;
@@ -923,61 +1033,93 @@
             alert('✅ 已成功複製學習日誌內容！可直接貼上至 LINE 傳送給家長。');
         };
 
-        window.openDailyStudentEdit = function(firestoreId, dept) {
+        // 🎯 學生檔案通訊互動式補課/補考處理
+        window.openMakeupModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student) return;
+            if(!student || !student.attendanceLogs[logIndex]) return;
 
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            const log = student.attendanceLogs[logIndex];
+            document.getElementById('makeup-student-id').value = firestoreId;
+            document.getElementById('makeup-log-index').value = logIndex;
+            document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 狀況：${log.status}`;
+            document.getElementById('makeup-status-select').value = log.makeupDone ? 'done' : 'pending';
+            document.getElementById('makeup-date-input').value = log.makeupDate || new Date().toISOString().split('T')[0];
+            toggleMakeupDateInput();
 
-            const existingLog = (student.attendanceLogs || []).find(l => l.date === targetDate);
-
-            document.getElementById('daily-modal-title').innerText = `✏️ 修正 ${student.name} (${targetDate}) 當日日誌與待辦狀態`;
-            document.getElementById('daily-modal-firestore-id').value = firestoreId;
-            document.getElementById('daily-modal-dept').value = dept;
-
-            document.getElementById('daily-modal-att').value = existingLog ? existingLog.status : '出席';
-            document.getElementById('daily-modal-score').value = (existingLog && existingLog.score !== null) ? existingLog.score : '';
-            document.getElementById('daily-modal-hw-status').value = existingLog ? (existingLog.homework || '完成') : '完成';
-            document.getElementById('daily-modal-note').value = existingLog ? (existingLog.detail || '') : '';
-            
-            document.getElementById('daily-modal-makeup-done').checked = existingLog ? !!existingLog.makeupDone : false;
-            document.getElementById('daily-modal-retest-done').checked = existingLog ? !!existingLog.retestDone : false;
-
-            document.getElementById('daily-student-edit-modal').style.display = 'flex';
+            document.getElementById('makeup-modal').style.display = 'flex';
         };
 
-        window.saveDailyStudentEdit = async function() {
-            const firestoreId = document.getElementById('daily-modal-firestore-id').value;
-            const dept = document.getElementById('daily-modal-dept').value;
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+        window.toggleMakeupDateInput = function() {
+            const status = document.getElementById('makeup-status-select').value;
+            document.getElementById('makeup-date-wrapper').style.display = status === 'done' ? 'block' : 'none';
+        };
 
-            const status = document.getElementById('daily-modal-att').value;
-            const scoreVal = document.getElementById('daily-modal-score').value;
-            const score = scoreVal !== '' ? Number(scoreVal) : null;
-            const homework = document.getElementById('daily-modal-hw-status').value;
-            const detail = document.getElementById('daily-modal-note').value.trim();
-            const makeupDone = document.getElementById('daily-modal-makeup-done').checked;
-            const retestDone = document.getElementById('daily-modal-retest-done').checked;
+        window.saveMakeupAction = async function() {
+            const firestoreId = document.getElementById('makeup-student-id').value;
+            const logIndex = Number(document.getElementById('makeup-log-index').value);
+            const status = document.getElementById('makeup-status-select').value;
+            const makeupDate = document.getElementById('makeup-date-input').value;
 
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student) return;
+            if(!student || !student.attendanceLogs[logIndex]) return;
 
-            if(!student.attendanceLogs) student.attendanceLogs = [];
-            const logIndex = student.attendanceLogs.findIndex(l => l.date === targetDate);
+            student.attendanceLogs[logIndex].makeupDone = status === 'done';
+            student.attendanceLogs[logIndex].makeupDate = status === 'done' ? makeupDate : '';
 
-            if(logIndex >= 0) {
-                student.attendanceLogs[logIndex].status = status;
-                student.attendanceLogs[logIndex].score = score;
-                student.attendanceLogs[logIndex].homework = homework;
-                student.attendanceLogs[logIndex].detail = detail;
-                student.attendanceLogs[logIndex].makeupDone = makeupDone;
-                student.attendanceLogs[logIndex].retestDone = retestDone;
-            } else {
-                student.attendanceLogs.unshift({
-                    date: targetDate, status, score, homework, progress: '', homeworkContent: '', passScore: 80, detail, makeupDone, retestDone
+            try {
+                await setDoc(doc(db, "classLogStudents", firestoreId), {
+                    id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                    attendanceLogs: student.attendanceLogs, notes: student.notes || []
                 });
+
+                document.getElementById('makeup-modal').style.display = 'none';
+                alert('✅ 補課狀態已更新！');
+                window.renderProfileStudents();
+                window.renderPendingTodoPanels();
+            } catch (e) {
+                console.error(e);
+                alert('更新失敗');
+            }
+        };
+
+        window.openRetestModal = function(firestoreId, logIndex) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student || !student.attendanceLogs[logIndex]) return;
+
+            const log = student.attendanceLogs[logIndex];
+            document.getElementById('retest-student-id').value = firestoreId;
+            document.getElementById('retest-log-index').value = logIndex;
+            document.getElementById('retest-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 原考成績：${log.score}分 (及格標準:${log.passScore||80}分)`;
+            document.getElementById('retest-status-select').value = log.retestDone ? 'done' : 'pending';
+            document.getElementById('retest-date-input').value = log.retestDate || new Date().toISOString().split('T')[0];
+            document.getElementById('retest-score-input').value = log.retestScore !== undefined ? log.retestScore : '';
+            toggleRetestInputs();
+
+            document.getElementById('retest-modal').style.display = 'flex';
+        };
+
+        window.toggleRetestInputs = function() {
+            const status = document.getElementById('retest-status-select').value;
+            document.getElementById('retest-inputs-wrapper').style.display = status === 'done' ? 'block' : 'none';
+        };
+
+        window.saveRetestAction = async function() {
+            const firestoreId = document.getElementById('retest-student-id').value;
+            const logIndex = Number(document.getElementById('retest-log-index').value);
+            const status = document.getElementById('retest-status-select').value;
+            const retestDate = document.getElementById('retest-date-input').value;
+            const retestScore = Number(document.getElementById('retest-score-input').value);
+
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student || !student.attendanceLogs[logIndex]) return;
+
+            student.attendanceLogs[logIndex].retestDone = status === 'done';
+            student.attendanceLogs[logIndex].retestDate = status === 'done' ? retestDate : '';
+            student.attendanceLogs[logIndex].retestScore = status === 'done' ? retestScore : null;
+
+            // 若補考成績通過及格分數則自動更新分數或做標記
+            if(status === 'done' && retestScore >= (student.attendanceLogs[logIndex].passScore || 80)) {
+                student.attendanceLogs[logIndex].score = retestScore; // 更新為補考通過成績
             }
 
             try {
@@ -986,16 +1128,165 @@
                     attendanceLogs: student.attendanceLogs, notes: student.notes || []
                 });
 
-                document.getElementById('daily-student-edit-modal').style.display = 'none';
-                alert(`✅ ${student.name} 的狀態與追蹤提醒已成功更新！`);
+                document.getElementById('retest-modal').style.display = 'none';
+                alert('✅ 補考紀錄與成績已更新！');
                 window.renderProfileStudents();
-                window.renderDirectorOverview();
+                window.renderPendingTodoPanels();
             } catch (e) {
-                console.error("更新失敗：", e);
-                alert('更新失敗，請檢查網路連線。');
+                console.error(e);
+                alert('更新失敗');
             }
         };
 
+        // 鎖定密碼驗證核心 (統一 0618)
+        window.requestSecureAction = function(callback) {
+            window.pendingActionCallback = callback;
+            document.getElementById('global-verify-pwd').value = "";
+            document.getElementById('password-verify-modal').style.display = 'flex';
+        };
+
+        window.confirmPasswordAction = function() {
+            const pwd = document.getElementById('global-verify-pwd').value;
+            if(pwd !== "0618") {
+                alert('❌ 密碼錯誤！');
+                return;
+            }
+            document.getElementById('password-verify-modal').style.display = 'none';
+            if(window.pendingActionCallback) {
+                window.pendingActionCallback();
+                window.pendingActionCallback = null;
+            }
+        };
+
+        // 歷史日誌編輯與刪除安全保護
+        window.promptEditHistoryLog = function(firestoreId) {
+            window.requestSecureAction(() => {
+                const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+                if(!log) return;
+
+                document.getElementById('edit-history-firestore-id').value = firestoreId;
+                document.getElementById('edit-history-date').value = log.date;
+                document.getElementById('edit-history-course').value = log.course;
+                document.getElementById('edit-history-content').value = log.content;
+                document.getElementById('edit-history-homework').value = log.homework || '';
+                document.getElementById('edit-history-notes').value = log.notes || '';
+
+                document.getElementById('history-log-edit-modal').style.display = 'flex';
+            });
+        };
+
+        window.saveHistoryLogEdit = async function() {
+            const firestoreId = document.getElementById('edit-history-firestore-id').value;
+            const date = document.getElementById('edit-history-date').value;
+            const course = document.getElementById('edit-history-course').value.trim();
+            const content = document.getElementById('edit-history-content').value.trim();
+            const homework = document.getElementById('edit-history-homework').value.trim();
+            const notes = document.getElementById('edit-history-notes').value.trim();
+
+            if(!date || !course || !content) return alert('不得為空白！');
+
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if(!log) return;
+
+            log.date = date; log.course = course; log.content = content; log.homework = homework; log.notes = notes;
+
+            try {
+                await setDoc(doc(db, "classLogHistory", firestoreId), {
+                    id: log.id, dept: log.dept, date, course, content, homework, notes,
+                    examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || '',
+                    directorApprovalText: log.directorApprovalText || ''
+                });
+
+                document.getElementById('history-log-edit-modal').style.display = 'none';
+                alert('✅ 歷史日誌已修改！');
+                window.renderHistoryLogs();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+            } catch (e) { alert('更新失敗'); }
+        };
+
+        window.requestDeleteHistoryLog = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('edit-history-firestore-id').value;
+                if(!firestoreId) return;
+
+                try {
+                    await deleteDoc(doc(db, "classLogHistory", firestoreId));
+                    window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
+
+                    document.getElementById('history-log-edit-modal').style.display = 'none';
+                    alert('✅ 歷史日誌已刪除！');
+                    window.renderHistoryLogs();
+                    window.generateMonthDaysGrid();
+                    window.renderDirectorOverview();
+                } catch (e) { alert('刪除失敗'); }
+            });
+        };
+
+        // 課程修改安全保護
+        window.openCourseEditModal = function(dept, index) {
+            window.requestSecureAction(() => {
+                const course = window.state.courses[dept][index];
+                if(!course) return;
+
+                document.getElementById('edit-course-dept').value = dept;
+                document.getElementById('edit-course-original-name').value = index;
+                document.getElementById('edit-course-name').value = typeof course === 'object' ? course.name : course;
+                document.getElementById('edit-course-day').value = course.day || '';
+                document.getElementById('edit-course-time').value = course.time || '';
+                document.getElementById('edit-course-teacher').value = course.teacher || '';
+
+                document.getElementById('course-edit-modal').style.display = 'flex';
+            });
+        };
+
+        window.saveCourseEdit = async function() {
+            const dept = document.getElementById('edit-course-dept').value;
+            const index = Number(document.getElementById('edit-course-original-name').value);
+            const name = document.getElementById('edit-course-name').value.trim();
+            const day = document.getElementById('edit-course-day').value.trim();
+            const time = document.getElementById('edit-course-time').value.trim();
+            const teacher = document.getElementById('edit-course-teacher').value.trim();
+
+            if(!name) return alert('不得為空白！');
+
+            window.state.courses[dept][index] = { name, day, time, teacher };
+            await saveCoursesToCloud();
+
+            document.getElementById('course-edit-modal').style.display = 'none';
+            alert('✅ 課程修改成功！');
+            initCloudData();
+        };
+
+        window.requestDeleteCourse = function() {
+            window.requestSecureAction(async () => {
+                const dept = document.getElementById('edit-course-dept').value;
+                const index = Number(document.getElementById('edit-course-original-name').value);
+
+                window.state.courses[dept].splice(index, 1);
+                await saveCoursesToCloud();
+
+                document.getElementById('course-edit-modal').style.display = 'none';
+                alert('✅ 課程已刪除！');
+                initCloudData();
+            });
+        };
+
+        // 學生刪除安全保護
+        window.requestDeleteStudent = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('edit-student-id').value;
+                if(!firestoreId) return;
+
+                await deleteDoc(doc(db, "classLogStudents", firestoreId));
+                window.state.students = window.state.students.filter(s => s.firestoreId !== firestoreId);
+                document.getElementById('student-modal').style.display = 'none';
+                initCloudData();
+                alert('✅ 學生已刪除！');
+            });
+        };
+
+        // 儲存日誌與主任批示邏輯
         window.saveLog = async function(dept) {
             const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
             const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
@@ -1019,13 +1310,10 @@
             const examFile = hasExam && examFileInput ? examFileInput.value.trim() : '';
             const answerFile = hasExam && answerFileInput ? answerFileInput.value.trim() : '';
 
-            if(!date) return alert('請選擇上課日期！');
-            if(!course) return alert('請選擇課程！');
-            if(!content) return alert('請填寫教學進度！');
+            if(!date || !course || !content) return alert('請填寫完整資訊！');
 
             const newLog = {
-                id: Date.now(),
-                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApprovalText: ''
+                id: Date.now(), dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApprovalText: ''
             };
 
             try {
@@ -1069,17 +1357,14 @@
                     }
                 }
 
-                alert('✅ 今日教學日誌已成功儲存並同步至雲端與學生檔案！');
+                alert('✅ 今日教學日誌已成功儲存與同步！');
                 window.renderHistoryLogs();
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
-            } catch (e) {
-                console.error("儲存日誌失敗：", e);
-                alert('儲存失敗，請檢查網路連線後再試一次。');
-            }
+                window.renderPendingTodoPanels();
+            } catch (e) { alert('儲存失敗'); }
         };
 
-        // 👑 主任互動式批示功能
         window.openDirectorApprovalModal = function(firestoreId) {
             const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
             if(!log) return;
@@ -1105,98 +1390,10 @@
                 });
 
                 document.getElementById('director-approval-modal').style.display = 'none';
-                alert('✅ 主任批示已成功儲存並同步至老師端！');
+                alert('✅ 主任批示已儲存！');
                 window.renderDirectorOverview();
                 window.renderHistoryLogs();
-            } catch (e) {
-                console.error("主任批示更新失敗：", e);
-                alert('更新失敗，請檢查網路連線。');
-            }
-        };
-
-        window.promptEditHistoryLog = function(firestoreId) {
-            window.pendingHistoryEditId = firestoreId;
-            document.getElementById('global-verify-pwd').value = "";
-            document.getElementById('password-verify-modal').style.display = 'flex';
-        };
-
-        window.confirmPasswordAction = function() {
-            const pwd = document.getElementById('global-verify-pwd').value;
-            if(pwd !== "0618") {
-                alert('❌ 密碼錯誤！請輸入正確的管理密碼 (0618)。');
-                return;
-            }
-            document.getElementById('password-verify-modal').style.display = 'none';
-
-            const firestoreId = window.pendingHistoryEditId;
-            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
-            if(!log) return;
-
-            document.getElementById('edit-history-firestore-id').value = firestoreId;
-            document.getElementById('edit-history-date').value = log.date;
-            document.getElementById('edit-history-course').value = log.course;
-            document.getElementById('edit-history-content').value = log.content;
-            document.getElementById('edit-history-homework').value = log.homework || '';
-            document.getElementById('edit-history-notes').value = log.notes || '';
-
-            document.getElementById('history-log-edit-modal').style.display = 'flex';
-        };
-
-        window.saveHistoryLogEdit = async function() {
-            const firestoreId = document.getElementById('edit-history-firestore-id').value;
-            const date = document.getElementById('edit-history-date').value;
-            const course = document.getElementById('edit-history-course').value.trim();
-            const content = document.getElementById('edit-history-content').value.trim();
-            const homework = document.getElementById('edit-history-homework').value.trim();
-            const notes = document.getElementById('edit-history-notes').value.trim();
-
-            if(!date || !course || !content) return alert('日期、課程與教學進度不得為空白！');
-
-            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
-            if(!log) return;
-
-            log.date = date;
-            log.course = course;
-            log.content = content;
-            log.homework = homework;
-            log.notes = notes;
-
-            try {
-                await setDoc(doc(db, "classLogHistory", firestoreId), {
-                    id: log.id, dept: log.dept, date, course, content, homework, notes,
-                    examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || '',
-                    directorApprovalText: log.directorApprovalText || ''
-                });
-
-                document.getElementById('history-log-edit-modal').style.display = 'none';
-                alert('✅ 歷史教學日誌已成功修改並同步至雲端！');
-                window.renderHistoryLogs();
-                window.generateMonthDaysGrid();
-                window.renderDirectorOverview();
-            } catch (e) {
-                console.error("更新歷史日誌失敗：", e);
-                alert('更新失敗，請檢查網路連線。');
-            }
-        };
-
-        window.requestDeleteHistoryLog = async function() {
-            if(!confirm('⚠️ 確定要永久刪除這筆歷史教學日誌嗎？')) return;
-            const firestoreId = document.getElementById('edit-history-firestore-id').value;
-            if(!firestoreId) return;
-
-            try {
-                await deleteDoc(doc(db, "classLogHistory", firestoreId));
-                window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
-
-                document.getElementById('history-log-edit-modal').style.display = 'none';
-                alert('✅ 歷史教學日誌已成功刪除！');
-                window.renderHistoryLogs();
-                window.generateMonthDaysGrid();
-                window.renderDirectorOverview();
-            } catch (e) {
-                console.error("刪除失敗：", e);
-                alert('刪除失敗，請檢查網路連線。');
-            }
+            } catch (e) { alert('更新失敗'); }
         };
 
         window.renderHistoryLogs = function() {
@@ -1272,7 +1469,6 @@
             renderDirectorOverview();
         };
 
-        // 👑 主任左右分流總覽渲染 (含互動式批示按鈕與紅字追蹤)
         window.renderDirectorOverview = function() {
             const elemContainer = document.getElementById('director-overview-elementary');
             const juniorContainer = document.getElementById('director-overview-junior');
@@ -1338,7 +1534,6 @@
             juniorContainer.innerHTML = juniorLogs.length > 0 ? juniorLogs.map(renderLogCard).join('') : `<p style="color:#777; text-align:center;">此區間無國中部日誌。</p>`;
         };
 
-        // ⚙️ 課程修改與刪除功能
         window.renderSettingsCourseList = function() {
             const elemList = document.getElementById('elementary-courses-list');
             const junList = document.getElementById('junior-courses-list');
@@ -1355,51 +1550,6 @@
                     return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('junior', ${idx})"><b>🏫 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
                 }).join('');
             }
-        };
-
-        window.openCourseEditModal = function(dept, index) {
-            const course = window.state.courses[dept][index];
-            if(!course) return;
-
-            document.getElementById('edit-course-dept').value = dept;
-            document.getElementById('edit-course-original-name').value = index;
-            document.getElementById('edit-course-name').value = typeof course === 'object' ? course.name : course;
-            document.getElementById('edit-course-day').value = course.day || '';
-            document.getElementById('edit-course-time').value = course.time || '';
-            document.getElementById('edit-course-teacher').value = course.teacher || '';
-
-            document.getElementById('course-edit-modal').style.display = 'flex';
-        };
-
-        window.saveCourseEdit = async function() {
-            const dept = document.getElementById('edit-course-dept').value;
-            const index = Number(document.getElementById('edit-course-original-name').value);
-            const name = document.getElementById('edit-course-name').value.trim();
-            const day = document.getElementById('edit-course-day').value.trim();
-            const time = document.getElementById('edit-course-time').value.trim();
-            const teacher = document.getElementById('edit-course-teacher').value.trim();
-
-            if(!name) return alert('課程名稱不得為空白！');
-
-            window.state.courses[dept][index] = { name, day, time, teacher };
-            await saveCoursesToCloud();
-
-            document.getElementById('course-edit-modal').style.display = 'none';
-            alert('✅ 課程資料已成功修改！');
-            initCloudData();
-        };
-
-        window.deleteCourse = async function() {
-            if(!confirm('⚠️ 確定要刪除此課程嗎？')) return;
-            const dept = document.getElementById('edit-course-dept').value;
-            const index = Number(document.getElementById('edit-course-original-name').value);
-
-            window.state.courses[dept].splice(index, 1);
-            await saveCoursesToCloud();
-
-            document.getElementById('course-edit-modal').style.display = 'none';
-            alert('✅ 課程已成功刪除！');
-            initCloudData();
         };
 
         // 學生檔案管理
@@ -1450,8 +1600,33 @@
 
             tbody.innerHTML = students.map(s => {
                 let phonesStr = (s.phones || []).map(p => `${p.label}: ${p.number}`).join('<br>');
-                let attHtml = (s.attendanceLogs || []).map(l => `${l.date}: <span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span> ${(!l.makeupDone && l.status!=='出席')?'<span class="text-alert">須補課</span>':''}`).join('<br>') || '尚無紀錄';
-                let scoreHtml = (s.attendanceLogs || []).map(l => `${l.date}: <b>${l.score !== null ? l.score : '無'}分</b> ${(!l.retestDone && l.score !== null && l.score < (l.passScore||80))?'<span class="text-alert">須補考</span>':''}`).join('<br>') || '尚無紀錄';
+                
+                let attHtml = (s.attendanceLogs || []).map((l, logIdx) => {
+                    let attStatusStr = `<span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span>`;
+                    if(l.status !== '出席') {
+                        if(l.makeupDone) {
+                            attStatusStr += ` <span style="color:#28a745; font-size:11px;">(已補課: ${l.makeupDate||''})</span>`;
+                        } else {
+                            attStatusStr += ` <span class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">[須補課 點此處理]</span>`;
+                        }
+                    }
+                    return `${l.date}: ${attStatusStr}`;
+                }).join('<br>') || '尚無紀錄';
+
+                let scoreHtml = (s.attendanceLogs || []).map((l, logIdx) => {
+                    const passScore = l.passScore || 80;
+                    let scoreStr = `<b>${l.score !== null ? l.score : '無'}分</b>`;
+                    if(l.score !== null && l.score < passScore) {
+                        if(l.retestDone) {
+                            let passText = l.score >= passScore ? '<span style="color:#28a745;">(補考已通過)</span>' : '<span style="color:#e74c3c;">(補考未過)</span>';
+                            scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${passText}</span>`;
+                        } else {
+                            scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考 點此處理]</span>`;
+                        }
+                    }
+                    return `${l.date}: ${scoreStr}`;
+                }).join('<br>') || '尚無紀錄';
+
                 let notesHtml = (s.notes || []).map(n => `[${n.date}]: ${n.text}`).join('<br>') || '無備註';
 
                 return `
@@ -1556,18 +1731,6 @@
             window.state.selectedClassForProfile = course;
             initCloudData();
             alert('學生資料已成功儲存！');
-        };
-
-        window.requestDeleteStudent = async function() {
-            if(!confirm('確定要永久刪除這位學生嗎？')) return;
-            const firestoreId = document.getElementById('edit-student-id').value;
-            if(!firestoreId) return;
-
-            await deleteDoc(doc(db, "classLogStudents", firestoreId));
-            window.state.students = window.state.students.filter(s => s.firestoreId !== firestoreId);
-            document.getElementById('student-modal').style.display = 'none';
-            initCloudData();
-            alert('學生已刪除！');
         };
 
         window.addCourse = async function() {
