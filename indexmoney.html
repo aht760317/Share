@@ -136,7 +136,7 @@
 
 <div class="app-container no-print">
     <div class="header">
-        <h1>顧德補習班 繳費管理系統</h1>
+        <h1>顧德補習班 繳費管理系統 (雲端同步版)</h1>
     </div>
     
     <div class="tabs">
@@ -334,7 +334,7 @@
                         </div>
                     </div>
 
-                    <label style="margin-top: 15px;">已設定的快捷項目 (可拖拉排序)：</label>
+                    <label style="margin-top: 15px;">已設定的快捷項目 (可調整順序)：</label>
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
@@ -408,44 +408,157 @@
 <!-- 列印專用區塊 -->
 <div id="printArea" class="print-only"></div>
 
-<script>
+<!-- 引入 Firebase 程式碼與雲端同步邏輯 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 填入你在 Firebase 取得的設定
+    const firebaseConfig = {
+        apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+        authDomain: "my-project-9999-479215.firebaseapp.com",
+        projectId: "my-project-9999-479215",
+        storageBucket: "my-project-9999-479215.firebasestorage.app",
+        messagingSenderId: "1020162825898",
+        appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     // 系統變數
-    let config = { classes: {}, handler: "雅鴻" };
-    let quickItems = [];
-    let studentDetails = JSON.parse(localStorage.getItem('gude_cfg_student_details_v4')) || {};
-    let bills = JSON.parse(localStorage.getItem('gude_bills_v3')) || []; 
-    let currentClass = "";
-    let currentStudent = "";
-    let currentBillItems = [];
+    window.config = { classes: {}, handler: "雅鴻" };
+    window.quickItems = [];
+    window.studentDetails = {};
+    window.bills = [];
+    window.currentClass = "";
+    window.currentStudent = "";
+    window.currentBillItems = [];
     
-    let editingClass = "";
-    let deletedClassBackup = null;
-    let currentDirectoryClass = 'all';
-    let editingProfileClass = "";
-    let editingProfileStudent = "";
+    window.editingClass = "";
+    window.deletedClassBackup = null;
+    window.currentDirectoryClass = 'all';
+    window.editingProfileClass = "";
+    window.editingProfileStudent = "";
+
+    // 從雲端讀取所有資料
+    async function initCloudData() {
+        try {
+            // 1. 讀取經手人
+            const handlerDoc = await getDoc(doc(db, "settings", "handler"));
+            if (handlerDoc.exists()) {
+                window.config.handler = handlerDoc.data().name || "雅鴻";
+            }
+            document.getElementById('setHandler').value = window.config.handler;
+
+            // 2. 讀取班級與學生設定
+            const classesDoc = await getDoc(doc(db, "settings", "classes"));
+            if (classesDoc.exists()) {
+                window.config.classes = classesDoc.data().data || {};
+            } else {
+                // 預設資料
+                window.config.classes = {
+                    "2026 六年級": ["王小明", "林小華"],
+                    "2026 國一班": ["陳大頭", "張美麗"],
+                    "2026 國二班": ["黃小琥"]
+                };
+                await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
+            }
+
+            // 3. 讀取快捷收費項目
+            const quickItemsDoc = await getDoc(doc(db, "settings", "quickItems"));
+            if (quickItemsDoc.exists()) {
+                window.quickItems = quickItemsDoc.data().data || [];
+            } else {
+                window.quickItems = [
+                    { name: "國小數學", price: 2000 }, { name: "國一數學", price: 2500 }, 
+                    { name: "國二理化", price: 2500 }, { name: "餐費", price: 1500 }, 
+                    { name: "優惠折扣", price: -300 }
+                ];
+                await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
+            }
+
+            // 4. 讀取學生詳細資料與備註
+            const studentDetailsDoc = await getDoc(doc(db, "settings", "studentDetails"));
+            if (studentDetailsDoc.exists()) {
+                window.studentDetails = studentDetailsDoc.data().data || {};
+            }
+
+            // 5. 讀取繳費帳單紀錄
+            const billsSnapshot = await getDocs(collection(db, "bills"));
+            window.bills = [];
+            billsSnapshot.forEach((document) => {
+                window.bills.push({ firestoreId: document.id, ...document.data() });
+            });
+            // 依照 id 排序最新的在前面
+            window.bills.sort((a, b) => b.id - a.id);
+
+            // 初始化畫面
+            document.getElementById('billMonth').value = getCurrentMonthStr();
+            document.getElementById('filterMonth').value = getCurrentMonthStr();
+            document.getElementById('dailyReportDate').value = getCurrentDateStr();
+            document.getElementById('monthlyReportMonth').value = getCurrentMonthStr();
+            
+            const today = getCurrentDateStr();
+            document.getElementById('billStartDate').value = today;
+            const endDateObj = new Date();
+            endDateObj.setMonth(endDateObj.getMonth() + 3); 
+            document.getElementById('billEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
+            
+            renderClassConfigList();
+            renderQuickItemConfigList();
+            updateBatchPrintDropdown();
+            renderRecords();
+        } catch (e) {
+            console.error("載入雲端資料失敗：", e);
+            alert("載入雲端資料失敗，請檢查網路連線或 Firebase 設定。");
+        }
+    }
+
+    // 儲存班級到雲端
+    async function saveClassesToCloud() {
+        try {
+            await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
+            updateBatchPrintDropdown();
+        } catch (e) { console.error(e); }
+    }
+
+    // 儲存學生詳細資料到雲端
+    async function saveStudentDetailsToCloud() {
+        try {
+            await setDoc(doc(db, "settings", "studentDetails"), { data: window.studentDetails });
+        } catch (e) { console.error(e); }
+    }
+
+    // 儲存快捷項目到雲端
+    async function saveQuickItemsToCloud() {
+        try {
+            await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
+        } catch (e) { console.error(e); }
+    }
 
     // 刪除密碼驗證核心函式
-    function verifyAndDelete(actionDescription, callback) {
+    window.verifyAndDelete = function(actionDescription, callback) {
         const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入刪除密碼以繼續：`);
-        if (pwd === null) return; // 使用者按取消
+        if (pwd === null) return;
         if (pwd === '0618') {
-            callback(); // 密碼正確，執行刪除動作
+            callback();
         } else {
             alert('❌ 密碼錯誤！刪除動作已取消。');
         }
     }
 
-    function getCurrentMonthStr() {
+    window.getCurrentMonthStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    function getCurrentDateStr() {
+    window.getCurrentDateStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    function formatDisplayMonth(periodStr) {
+    window.formatDisplayMonth = function(periodStr) {
         if(!periodStr) return "未指定";
         if(periodStr.includes('~')) return periodStr;
         const parts = periodStr.split('-');
@@ -453,73 +566,20 @@
         return periodStr;
     }
     
-    function parseLegacyDateToIso(dateStr) {
+    window.parseLegacyDateToIso = function(dateStr) {
+        if(!dateStr) return "";
         const parts = dateStr.split('/');
         if(parts.length === 3) {
             return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
         }
-        return "";
+        return dateStr;
     }
 
-    function isJuniorHigh(name) {
+    window.isJuniorHigh = function(name) {
         return name.includes('國中') || name.includes('國一') || name.includes('國二') || name.includes('國三') || name.includes('理化') || name.includes('會考') || name.includes('九年級') || name.includes('八年級') || name.includes('七年級');
     }
 
-    function init() {
-        const oldBills = JSON.parse(localStorage.getItem('gude_bills_v2'));
-        if(oldBills && bills.length === 0) {
-            bills = oldBills.map(b => {
-                b.periodStr = b.periodStr || b.yearMonth;
-                return b;
-            });
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-        }
-
-        document.getElementById('setHandler').value = localStorage.getItem('gude_cfg_handler') || "雅鴻";
-        config.handler = document.getElementById('setHandler').value;
-        
-        const savedClassesV3 = localStorage.getItem('gude_cfg_classes_v3');
-        if (savedClassesV3) {
-            config.classes = JSON.parse(savedClassesV3);
-        } else {
-            const oldText = localStorage.getItem('gude_cfg_classes') || "2026 六年級：王小明, 林小華\n2026 國一班：陳大頭, 張美麗\n2026 國二班：黃小琥";
-            const classLines = oldText.split('\n');
-            classLines.forEach(line => {
-                if(!line.trim()) return;
-                const parts = line.split(/[:：]/);
-                if(parts.length > 0 && parts[0].trim()) {
-                    config.classes[parts[0].trim()] = parts.length > 1 ? parts[1].split(',').map(s => s.trim()).filter(s => s) : [];
-                }
-            });
-            saveClassesToStorage();
-        }
-
-        const defaultQuickItems = [
-            { name: "國小數學", price: 2000 }, { name: "國一數學", price: 2500 }, 
-            { name: "國二理化", price: 2500 }, { name: "餐費", price: 1500 }, 
-            { name: "優惠折扣", price: -300 }
-        ];
-        const savedItems = localStorage.getItem('gude_cfg_quick_items_v3');
-        quickItems = savedItems ? JSON.parse(savedItems) : defaultQuickItems;
-        
-        document.getElementById('billMonth').value = getCurrentMonthStr();
-        document.getElementById('filterMonth').value = getCurrentMonthStr();
-        document.getElementById('dailyReportDate').value = getCurrentDateStr();
-        document.getElementById('monthlyReportMonth').value = getCurrentMonthStr();
-        
-        const today = getCurrentDateStr();
-        document.getElementById('billStartDate').value = today;
-        const endDateObj = new Date();
-        endDateObj.setMonth(endDateObj.getMonth() + 3); 
-        document.getElementById('billEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
-        
-        renderClassConfigList();
-        renderQuickItemConfigList();
-        updateBatchPrintDropdown();
-        renderRecords();
-    }
-
-    function switchTab(tabId) {
+    window.switchTab = function(tabId) {
         document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
@@ -530,7 +590,7 @@
         if(tabId === 'directory') renderDirectoryInit();
     }
 
-    function switchDeptRecord(dept) {
+    window.switchDeptRecord = function(dept) {
         document.getElementById('tabPrimary').classList.remove('active');
         document.getElementById('tabJunior').classList.remove('active');
         document.getElementById('primaryRecordSection').style.display = 'none';
@@ -545,13 +605,13 @@
         }
     }
 
-    function loadStudentProfile(cls, stu) {
-        editingProfileClass = cls;
-        editingProfileStudent = stu;
+    window.loadStudentProfile = function(cls, stu) {
+        window.editingProfileClass = cls;
+        window.editingProfileStudent = stu;
         document.getElementById('profileStudentName').innerText = stu;
         
         const key = cls + '_' + stu;
-        const data = studentDetails[key] || {};
+        const data = window.studentDetails[key] || {};
         
         document.getElementById('profSchool').value = data.school || '';
         document.getElementById('profClass').value = data.gradeClass || '';
@@ -567,16 +627,16 @@
         document.getElementById('studentProfileSection').scrollIntoView({behavior: 'smooth', block: 'start'});
     }
 
-    function closeStudentProfile() {
+    window.closeStudentProfile = function() {
         document.getElementById('studentProfileSection').style.display = 'none';
-        editingProfileClass = "";
-        editingProfileStudent = "";
+        window.editingProfileClass = "";
+        window.editingProfileStudent = "";
     }
 
-    function saveStudentProfile() {
-        if(!editingProfileClass || !editingProfileStudent) return;
-        const key = editingProfileClass + '_' + editingProfileStudent;
-        studentDetails[key] = {
+    window.saveStudentProfile = async function() {
+        if(!window.editingProfileClass || !window.editingProfileStudent) return;
+        const key = window.editingProfileClass + '_' + window.editingProfileStudent;
+        window.studentDetails[key] = {
             school: document.getElementById('profSchool').value.trim(),
             gradeClass: document.getElementById('profClass').value.trim(),
             contact1Name: document.getElementById('profContact1Name').value.trim(),
@@ -587,36 +647,36 @@
             contact3Phone: document.getElementById('profContact3Phone').value.trim(),
             note: document.getElementById('profNote').value.trim() 
         };
-        localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
-        alert('💾 學生資料與備註已成功儲存！');
+        await saveStudentDetailsToCloud();
+        alert('💾 學生資料與備註已成功同步至雲端！');
         
         closeStudentProfile();
-        showDirectoryClass(currentDirectoryClass); 
+        showDirectoryClass(window.currentDirectoryClass); 
     }
 
-    function renderDirectoryInit() {
+    window.renderDirectoryInit = function() {
         const grid = document.getElementById('directoryClassGrid');
         grid.innerHTML = '';
 
         const btnAll = document.createElement('button');
-        btnAll.className = `btn-select ${currentDirectoryClass === 'all' ? 'active' : ''}`;
+        btnAll.className = `btn-select ${window.currentDirectoryClass === 'all' ? 'active' : ''}`;
         btnAll.innerText = '全校總覽';
         btnAll.onclick = () => showDirectoryClass('all');
         grid.appendChild(btnAll);
 
-        Object.keys(config.classes).forEach(cls => {
+        Object.keys(window.config.classes).forEach(cls => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${cls === currentDirectoryClass ? 'active' : ''}`;
+            btn.className = `btn-select ${cls === window.currentDirectoryClass ? 'active' : ''}`;
             btn.innerText = cls;
             btn.onclick = () => showDirectoryClass(cls);
             grid.appendChild(btn);
         });
 
-        showDirectoryClass(currentDirectoryClass);
+        showDirectoryClass(window.currentDirectoryClass);
     }
 
-    function showDirectoryClass(cls) {
-        currentDirectoryClass = cls;
+    window.showDirectoryClass = function(cls) {
+        window.currentDirectoryClass = cls;
         
         document.querySelectorAll('#directoryClassGrid .btn-select').forEach(btn => {
             btn.classList.remove('active');
@@ -630,13 +690,13 @@
         
         let classesToRender = [];
         if (cls === 'all') {
-            classesToRender = Object.keys(config.classes);
+            classesToRender = Object.keys(window.config.classes);
         } else {
             classesToRender = [cls];
         }
 
         classesToRender.forEach(className => {
-            const students = config.classes[className];
+            const students = window.config.classes[className];
             if(!students || students.length === 0) return;
             
             const titleColor = isJuniorHigh(className) ? '#7E22CE' : '#EA580C';
@@ -657,7 +717,7 @@
             
             students.forEach(stu => {
                 const key = className + '_' + stu;
-                const d = studentDetails[key] || {};
+                const d = window.studentDetails[key] || {};
                 const c1n = d.contact1Name || (d.dad ? '爸爸' : '');
                 const c1p = d.contact1Phone || d.dad || '';
                 const c2n = d.contact2Name || (d.mom ? '媽媽' : '');
@@ -686,10 +746,10 @@
         container.innerHTML = html || '<div style="padding:20px; text-align:center; color:#94A3B8;">目前沒有任何學生資料可以顯示。</div>';
     }
 
-    function printDirectory() {
+    window.printDirectory = function() {
         const printContent = document.getElementById('directoryContent').innerHTML;
         const printDate = new Date().toLocaleDateString();
-        const printTitle = currentDirectoryClass === 'all' ? '全校學生通訊錄' : `${currentDirectoryClass} - 學生通訊錄`;
+        const printTitle = window.currentDirectoryClass === 'all' ? '全校學生通訊錄' : `${window.currentDirectoryClass} - 學生通訊錄`;
 
         const html = `
             <div class="report-box">
@@ -702,21 +762,16 @@
         window.print();
     }
 
-    function saveClassesToStorage() {
-        localStorage.setItem('gude_cfg_classes_v3', JSON.stringify(config.classes));
-        updateBatchPrintDropdown();
-    }
-
-    function renderClassConfigList() {
+    window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
-        const classNames = Object.keys(config.classes);
+        const classNames = Object.keys(window.config.classes);
         if (classNames.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚無班級，請於上方新增</div>';
             return;
         }
         list.innerHTML = classNames.map(cls => {
-            const studentCount = config.classes[cls].length;
-            const isActive = cls === editingClass;
+            const studentCount = window.config.classes[cls].length;
+            const isActive = cls === window.editingClass;
             return `
                 <div class="item-row" style="background:${isActive ? '#DBEAFE' : '#F1F5F9'}; border-color:${isActive ? '#3B82F6' : '#E2E8F0'}; cursor: pointer;" onclick="editClassStudents('${cls}')">
                     <div>
@@ -732,90 +787,89 @@
         }).join('');
     }
 
-    function addClassConfig() {
+    window.addClassConfig = async function() {
         const name = document.getElementById('newConfigClassName').value.trim();
         if (!name) { alert('請輸入班級名稱！'); return; }
-        if (config.classes[name]) { alert('此班級名稱已存在！'); return; }
-        config.classes[name] = [];
-        saveClassesToStorage();
+        if (window.config.classes[name]) { alert('此班級名稱已存在！'); return; }
+        window.config.classes[name] = [];
+        await saveClassesToCloud();
         document.getElementById('newConfigClassName').value = '';
         renderClassConfigList();
         editClassStudents(name);
     }
     
-    function renameClassConfig(oldName) {
+    window.renameClassConfig = async function(oldName) {
         const newName = prompt('請輸入新的班級名稱：', oldName);
         if (newName === null) return; 
         const trimmedName = newName.trim();
         if (!trimmedName) { alert('班級名稱不能為空！'); return; }
         if (trimmedName === oldName) return; 
-        if (config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
+        if (window.config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
-        config.classes[trimmedName] = config.classes[oldName];
-        delete config.classes[oldName];
+        window.config.classes[trimmedName] = window.config.classes[oldName];
+        delete window.config.classes[oldName];
 
         const newStudentDetails = {};
-        for (let key in studentDetails) {
+        for (let key in window.studentDetails) {
             if (key.startsWith(oldName + '_')) {
                 const stuName = key.substring(oldName.length + 1);
-                newStudentDetails[trimmedName + '_' + stuName] = studentDetails[key];
+                newStudentDetails[trimmedName + '_' + stuName] = window.studentDetails[key];
             } else {
-                newStudentDetails[key] = studentDetails[key];
+                newStudentDetails[key] = window.studentDetails[key];
             }
         }
-        studentDetails = newStudentDetails;
-        localStorage.setItem('gude_cfg_student_details_v4', JSON.stringify(studentDetails));
+        window.studentDetails = newStudentDetails;
+        await saveStudentDetailsToCloud();
 
-        if (editingClass === oldName) {
-            editingClass = trimmedName;
+        if (window.editingClass === oldName) {
+            window.editingClass = trimmedName;
             document.getElementById('editingClassName').innerText = trimmedName;
         }
 
-        saveClassesToStorage();
+        await saveClassesToCloud();
         renderClassConfigList();
-        if (editingClass === trimmedName) {
+        if (window.editingClass === trimmedName) {
             renderStudentConfigList();
         }
     }
 
-    // 加上密碼保護的刪除班級
-    function promptDeleteClass(cls) {
-        verifyAndDelete(`刪除班級「${cls}」及其所有學生`, () => {
-            deletedClassBackup = { name: cls, students: [...config.classes[cls]] };
-            delete config.classes[cls];
-            if (editingClass === cls) {
-                editingClass = "";
+    window.promptDeleteClass = function(cls) {
+        verifyAndDelete(`刪除班級「${cls}」及其所有學生`, async () => {
+            window.deletedClassBackup = { name: cls, students: [...window.config.classes[cls]] };
+            delete window.config.classes[cls];
+            if (window.editingClass === cls) {
+                window.editingClass = "";
                 document.getElementById('studentConfigSection').style.display = 'none';
             }
-            saveClassesToStorage();
+            await saveClassesToCloud();
             renderClassConfigList();
             document.getElementById('undoClassBtn').style.display = 'inline-block';
             alert('🗑️ 班級已刪除！');
         });
     }
 
-    function undoDeleteClass() {
-        if (deletedClassBackup) {
-            config.classes[deletedClassBackup.name] = deletedClassBackup.students;
-            saveClassesToStorage();
+    window.undoDeleteClass = async function() {
+        if (window.deletedClassBackup) {
+            window.config.classes[window.deletedClassBackup.name] = window.deletedClassBackup.students;
+            await saveClassesToCloud();
             renderClassConfigList();
             document.getElementById('undoClassBtn').style.display = 'none';
-            deletedClassBackup = null;
+            window.deletedClassBackup = null;
             alert('已成功復原剛才刪除的班級！');
         }
     }
 
-    function editClassStudents(cls) {
-        editingClass = cls;
+    window.editClassStudents = function(cls) {
+        window.editingClass = cls;
         renderClassConfigList();
         document.getElementById('editingClassName').innerText = cls;
         document.getElementById('studentConfigSection').style.display = 'block';
         renderStudentConfigList();
     }
 
-    function renderStudentConfigList() {
+    window.renderStudentConfigList = function() {
         const list = document.getElementById('studentConfigList');
-        const students = config.classes[editingClass];
+        const students = window.config.classes[window.editingClass];
         if (!students || students.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前班上尚無學生，請於上方新增</div>';
             return;
@@ -830,42 +884,45 @@
         }).join('');
     }
 
-    function addStudentConfig() {
-        if (!editingClass) return;
+    window.addStudentConfig = async function() {
+        if (!window.editingClass) return;
         const name = document.getElementById('newConfigStudentName').value.trim();
         if (!name) { alert('請輸入學生姓名！'); return; }
-        if (config.classes[editingClass].includes(name)) { alert('此學生已存在該班級！'); return; }
-        config.classes[editingClass].push(name);
-        saveClassesToStorage();
+        if (window.config.classes[window.editingClass].includes(name)) { alert('此學生已存在該班級！'); return; }
+        window.config.classes[window.editingClass].push(name);
+        await saveClassesToCloud();
         document.getElementById('newConfigStudentName').value = '';
         renderStudentConfigList();
         renderClassConfigList();
     }
 
-    // 加上密碼保護的移除學生
-    function promptDeleteStudent(index, stuName) {
-        verifyAndDelete(`從班級移除學生「${stuName}」`, () => {
-            config.classes[editingClass].splice(index, 1);
-            saveClassesToStorage();
+    window.promptDeleteStudent = function(index, stuName) {
+        verifyAndDelete(`從班級移除學生「${stuName}」`, async () => {
+            window.config.classes[window.editingClass].splice(index, 1);
+            await saveClassesToCloud();
             renderStudentConfigList();
             renderClassConfigList();
         });
     }
 
-    function saveHandler() {
+    window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
-        config.handler = handler;
-        localStorage.setItem('gude_cfg_handler', handler);
-        alert('經手人名稱已儲存！');
+        window.config.handler = handler;
+        try {
+            await setDoc(doc(db, "settings", "handler"), { name: handler });
+            alert('經手人名稱已成功儲存至雲端！');
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    function renderQuickItemConfigList() {
+    window.renderQuickItemConfigList = function() {
         const list = document.getElementById('quickItemConfigList');
-        if (quickItems.length === 0) {
+        if (window.quickItems.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚未設定任何項目</div>';
             return;
         }
-        list.innerHTML = quickItems.map((item, index) => {
+        list.innerHTML = window.quickItems.map((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
             let rowStyle = 'background:#F1F5F9;';
             let priceStyle = 'color:#64748B;';
@@ -879,7 +936,7 @@
             }
 
             const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
-            const disableDown = index === quickItems.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+            const disableDown = index === window.quickItems.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
 
             return `
                 <div class="item-row" style="${rowStyle}">
@@ -897,33 +954,32 @@
         }).join('');
     }
 
-    function addQuickItemConfig() {
+    window.addQuickItemConfig = async function() {
         const name = document.getElementById('newConfigName').value.trim();
         const priceVal = document.getElementById('newConfigPrice').value;
         const price = priceVal === '' ? null : parseInt(priceVal);
         if (!name) { alert('請輸入項目名稱！'); return; }
-        quickItems.push({ name, price });
-        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+        window.quickItems.push({ name, price });
+        await saveQuickItemsToCloud();
         document.getElementById('newConfigName').value = '';
         document.getElementById('newConfigPrice').value = '';
         renderQuickItemConfigList();
     }
 
-    // 加上密碼保護的刪除快捷項目
-    function promptDeleteQuickItem(index, itemName) {
-        verifyAndDelete(`刪除快捷項目「${itemName}」`, () => {
-            quickItems.splice(index, 1);
-            localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+    window.promptDeleteQuickItem = function(index, itemName) {
+        verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
+            window.quickItems.splice(index, 1);
+            await saveQuickItemsToCloud();
             renderQuickItemConfigList();
         });
     }
 
-    function moveQuickItemConfig(index, direction) {
-        if (index + direction < 0 || index + direction >= quickItems.length) return;
-        const temp = quickItems[index];
-        quickItems[index] = quickItems[index + direction];
-        quickItems[index + direction] = temp;
-        localStorage.setItem('gude_cfg_quick_items_v3', JSON.stringify(quickItems));
+    window.moveQuickItemConfig = async function(index, direction) {
+        if (index + direction < 0 || index + direction >= window.quickItems.length) return;
+        const temp = window.quickItems[index];
+        window.quickItems[index] = window.quickItems[index + direction];
+        window.quickItems[index + direction] = temp;
+        await saveQuickItemsToCloud();
         renderQuickItemConfigList();
         if (document.getElementById('billingSection').style.display === 'block') {
             renderQuickButtonsForBilling();
@@ -931,28 +987,28 @@
     }
 
     // === 開單作業區 ===
-    function renderClassGrid() {
+    window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
-        Object.keys(config.classes).forEach(cls => {
+        Object.keys(window.config.classes).forEach(cls => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${cls === currentClass ? 'active' : ''}`;
+            btn.className = `btn-select ${cls === window.currentClass ? 'active' : ''}`;
             btn.innerText = cls;
             btn.onclick = () => selectClass(cls);
             grid.appendChild(btn);
         });
     }
 
-    function selectClass(cls) {
-        currentClass = cls;
-        currentStudent = "";
+    window.selectClass = function(cls) {
+        window.currentClass = cls;
+        window.currentStudent = "";
         renderClassGrid();
         
         const sGrid = document.getElementById('studentGrid');
         sGrid.style.display = 'flex';
         sGrid.innerHTML = '<span style="padding:10px; font-weight:bold; color:#475569;">選擇學生：</span>';
         
-        config.classes[cls].forEach(stu => {
+        window.config.classes[cls].forEach(stu => {
             const btn = document.createElement('button');
             btn.className = `btn-select`;
             btn.innerText = stu;
@@ -963,12 +1019,12 @@
         document.getElementById('billingSection').style.display = 'none';
     }
 
-    function selectStudent(stu, btnEl) {
-        currentStudent = stu;
+    window.selectStudent = function(stu, btnEl) {
+        window.currentStudent = stu;
         document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
 
-        const isJH = isJuniorHigh(currentClass);
+        const isJH = isJuniorHigh(window.currentClass);
         if(isJH) {
             document.getElementById('primaryPeriodInput').style.display = 'none';
             document.getElementById('juniorPeriodInput').style.display = 'block';
@@ -978,17 +1034,17 @@
         }
 
         document.getElementById('billingSection').style.display = 'block';
-        document.getElementById('billingTargetName').innerText = currentStudent;
-        currentBillItems = [];
+        document.getElementById('billingTargetName').innerText = window.currentStudent;
+        window.currentBillItems = [];
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
         renderQuickButtonsForBilling();
         renderCurrentItems();
     }
 
-    function renderQuickButtonsForBilling() {
+    window.renderQuickButtonsForBilling = function() {
         const grid = document.getElementById('quickItemGrid');
-        grid.innerHTML = quickItems.map(item => {
+        grid.innerHTML = window.quickItems.map(item => {
             const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '輸入金額';
             const priceArg = item.price !== null ? item.price : "''"; 
             
@@ -1006,38 +1062,38 @@
         }).join('');
     }
 
-    function clickQuickItem(name, defaultPrice) {
+    window.clickQuickItem = function(name, defaultPrice) {
         document.getElementById('itemName').value = name;
         document.getElementById('itemAmt').value = defaultPrice;
         document.getElementById('itemAmt').focus();
     }
 
-    function addFeeItem() {
+    window.addFeeItem = function() {
         const name = document.getElementById('itemName').value.trim();
         const amt = parseInt(document.getElementById('itemAmt').value);
         if(!name || isNaN(amt) || amt === 0) { 
             alert('請確認「項目名稱」與「金額」都有正確輸入！\n(金額不可為0，若為優惠折抵請輸入負數，例如：-300)'); 
             return; 
         }
-        currentBillItems.push({ name: name, amount: amt });
+        window.currentBillItems.push({ name: name, amount: amt });
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
         renderCurrentItems();
     }
 
-    function removeFeeItem(index) {
-        currentBillItems.splice(index, 1);
+    window.removeFeeItem = function(index) {
+        window.currentBillItems.splice(index, 1);
         renderCurrentItems();
     }
 
-    function renderCurrentItems() {
+    window.renderCurrentItems = function() {
         const list = document.getElementById('currentItemsList');
         let total = 0;
         
-        if(currentBillItems.length === 0) {
+        if(window.currentBillItems.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:10px; background:#F1F5F9; border-radius:6px;">目前清單是空的，請加入收費項目</div>';
         } else {
-            list.innerHTML = currentBillItems.map((item, index) => {
+            list.innerHTML = window.currentBillItems.map((item, index) => {
                 total += item.amount;
                 const amtStyle = item.amount < 0 ? 'color: var(--danger);' : 'color: var(--accent);';
                 return `
@@ -1053,10 +1109,10 @@
         document.getElementById('currentTotal').innerText = total.toLocaleString();
     }
 
-    function saveNewBill() {
-        if(currentBillItems.length === 0) { alert('請至少加入一個收費項目！'); return; }
+    window.saveNewBill = async function() {
+        if(window.currentBillItems.length === 0) { alert('請至少加入一個收費項目！'); return; }
         
-        const isJH = isJuniorHigh(currentClass);
+        const isJH = isJuniorHigh(window.currentClass);
         let yMonth = '';
         let displayPeriod = '';
 
@@ -1072,50 +1128,58 @@
             displayPeriod = yMonth;
         }
 
-        let total = currentBillItems.reduce((sum, item) => sum + item.amount, 0);
+        let total = window.currentBillItems.reduce((sum, item) => sum + item.amount, 0);
         
         const newBill = {
             id: Date.now(),
             date: new Date().toLocaleDateString(),
             yearMonth: yMonth,       
             periodStr: displayPeriod, 
-            className: currentClass,
-            studentName: currentStudent,
-            items: [...currentBillItems],
+            className: window.currentClass,
+            studentName: window.currentStudent,
+            items: [...window.currentBillItems],
             total: total, 
             isPaid: false,
             paidDate: null
         };
         
-        bills.unshift(newBill);
-        localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-        
-        alert(`✅ 已成功儲存【${currentStudent}】的繳費單！\n您可以直接點選下一位學生繼續開單。`);
-        
-        currentBillItems = [];
-        renderCurrentItems();
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemAmt').value = '';
-        
-        document.getElementById('billingSection').style.display = 'none';
-        document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
-        currentStudent = "";
+        try {
+            // 寫入 Firebase 雲端資料庫
+            const docRef = await addDoc(collection(db, "bills"), newBill);
+            newBill.firestoreId = docRef.id;
+            
+            window.bills.unshift(newBill);
+            
+            alert(`✅ 已成功儲存【${window.currentStudent}】的繳費單至雲端！\n您可以直接點選下一位學生繼續開單。`);
+            
+            window.currentBillItems = [];
+            renderCurrentItems();
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemAmt').value = '';
+            
+            document.getElementById('billingSection').style.display = 'none';
+            document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
+            window.currentStudent = "";
+        } catch (e) {
+            console.error("儲存帳單失敗：", e);
+            alert("儲存帳單到雲端失敗，請稍後再試。");
+        }
     }
 
     // === 管理區與列印 ===
-    function clearFilter() {
+    window.clearFilter = function() {
         document.getElementById('filterMonth').value = '';
         renderRecords();
     }
 
-    function updateBatchPrintDropdown() {
+    window.updateBatchPrintDropdown = function() {
         const select = document.getElementById('batchPrintClassSelect');
-        const classNames = Object.keys(config.classes);
+        const classNames = Object.keys(window.config.classes);
         select.innerHTML = '<option value="">請選擇班級...</option>' + 
             classNames.map(cls => `<option value="${cls}">${cls}</option>`).join('');
     }
 
-    function renderRecords() {
+    window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         
         const primaryTbody = document.getElementById('primaryRecordTableBody');
@@ -1123,7 +1187,7 @@
         primaryTbody.innerHTML = '';
         juniorTbody.innerHTML = '';
         
-        let filteredBills = filterMonth ? bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : [...bills];
+        let filteredBills = filterMonth ? window.bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : [...window.bills];
         
         filteredBills.sort((a, b) => Number(a.isPaid) - Number(b.isPaid));
         
@@ -1137,13 +1201,12 @@
             let actionHtml = '';
             if(!bill.isPaid) {
                 actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 單筆通知單</button>`;
-                actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid(${bill.id})">💰 確認繳款</button>`;
+                actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid('${bill.firestoreId}', ${bill.id})">💰 確認繳款</button>`;
             } else {
                 actionHtml += `<button class="action-btn btn-warning" style="background:#F59E0B;" onclick="printDocument(${bill.id}, 'receipt')">🖨️ 單筆雙聯收據</button>`;
-                actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment(${bill.id})">↩️ 取消繳費</button>`;
+                actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment('${bill.firestoreId}', ${bill.id})">↩️ 取消繳費</button>`;
             }
-            // 加上密碼保護的刪除帳單按鈕
-            actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill(${bill.id}, '${bill.studentName}')">刪除</button>`;
+            actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill('${bill.firestoreId}', ${bill.id}, '${bill.studentName}')">刪除</button>`;
 
             const trHtml = `
                 <tr>
@@ -1173,11 +1236,11 @@
         renderUnpaidReminder();
     }
 
-    function renderUnpaidReminder() {
+    window.renderUnpaidReminder = function() {
         const primaryContainer = document.getElementById('primaryUnpaidListBody');
         const juniorContainer = document.getElementById('juniorUnpaidListBody');
         
-        const unpaidBills = bills.filter(b => !b.isPaid);
+        const unpaidBills = window.bills.filter(b => !b.isPaid);
         const primaryUnpaid = unpaidBills.filter(b => !isJuniorHigh(b.className));
         const juniorUnpaid = unpaidBills.filter(b => isJuniorHigh(b.className));
 
@@ -1202,45 +1265,78 @@
         juniorContainer.innerHTML = buildHtml(juniorUnpaid);
     }
 
-    function markAsPaid(id) {
-        const bill = bills.find(b => b.id === id);
+    window.markAsPaid = async function(firestoreId, id) {
+        const bill = window.bills.find(b => b.id === id);
         if(bill) {
             bill.isPaid = true;
             bill.paidDate = getCurrentDateStr();
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-            renderRecords();
-            if(confirm('已結帳成功！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
-                printDocument(id, 'receipt');
+            try {
+                await setDoc(doc(db, "bills", firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: true,
+                    paidDate: bill.paidDate
+                });
+                renderRecords();
+                if(confirm('已結帳成功並同步至雲端！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
+                    printDocument(id, 'receipt');
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
     }
 
-    function cancelPayment(id) {
+    window.cancelPayment = async function(firestoreId, id) {
         if(confirm('【警告】確定要取消這筆繳費紀錄，將狀態恢復為「未繳費」嗎？\n(這通常用於您不小心按錯結帳的情況)')) {
-            const bill = bills.find(b => b.id === id);
+            const bill = window.bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = false;
                 bill.paidDate = null;
-                localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-                renderRecords();
+                try {
+                    await setDoc(doc(db, "bills", firestoreId), {
+                        id: bill.id,
+                        date: bill.date,
+                        yearMonth: bill.yearMonth,
+                        periodStr: bill.periodStr,
+                        className: bill.className,
+                        studentName: bill.studentName,
+                        items: bill.items,
+                        total: bill.total,
+                        isPaid: false,
+                        paidDate: null
+                    });
+                    renderRecords();
+                } catch (e) {
+                    console.error(e);
+                }
             }
         }
     }
 
-    // 加上密碼保護的刪除繳費單
-    function promptDeleteBill(id, studentName) {
-        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, () => {
-            bills = bills.filter(b => b.id !== id);
-            localStorage.setItem('gude_bills_v3', JSON.stringify(bills));
-            renderRecords();
+    window.promptDeleteBill = function(firestoreId, id, studentName) {
+        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
+            try {
+                await deleteDoc(doc(db, "bills", firestoreId));
+                window.bills = window.bills.filter(b => b.id !== id);
+                renderRecords();
+            } catch (e) {
+                console.error(e);
+            }
         });
     }
 
-    function printDailyReport() {
+    window.printDailyReport = function() {
         const dateVal = document.getElementById('dailyReportDate').value;
         if(!dateVal) { alert('請選擇報表日期！'); return; }
 
-        const targetBills = bills.filter(b => {
+        const targetBills = window.bills.filter(b => {
             if(!b.isPaid) return false;
             const pDate = b.paidDate || parseLegacyDateToIso(b.date);
             return pDate === dateVal;
@@ -1293,11 +1389,11 @@
         window.print();
     }
 
-    function printMonthlyReport() {
+    window.printMonthlyReport = function() {
         const monthVal = document.getElementById('monthlyReportMonth').value; 
         if(!monthVal) { alert('請選擇報表月份！'); return; }
 
-        const targetBills = bills.filter(b => {
+        const targetBills = window.bills.filter(b => {
             if(!b.isPaid) return false;
             const pDate = b.paidDate || parseLegacyDateToIso(b.date);
             return pDate.startsWith(monthVal);
@@ -1358,9 +1454,7 @@
         window.print();
     }
 
-    function getSingleReceiptHtml(bill, isReceipt, copyLabel) {
-        const docTitle = isReceipt ? '繳費收據' : '繳費通知單';
-        const printDate = new Date().toLocaleDateString();
+    window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
         const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
         
         let tableRows = bill.items.map((item, idx) => `
@@ -1391,7 +1485,7 @@
         `;
 
         if(isReceipt) {
-            html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>收款經手人：<strong>${config.handler}</strong></div></div>`;
+            html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>收款經手人：<strong>${window.config.handler}</strong></div></div>`;
         } else {
             html += `<div style="margin-top: 20px; font-size: 15px;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
         }
@@ -1400,8 +1494,8 @@
         return html;
     }
 
-    function printDocument(id, type) {
-        const bill = bills.find(b => b.id === id);
+    window.printDocument = function(id, type) {
+        const bill = window.bills.find(b => b.id === id);
         if(!bill) return;
         
         const isReceipt = type === 'receipt';
@@ -1419,14 +1513,14 @@
         window.print();
     }
 
-    function batchPrintNotices() {
+    window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
 
         if(!filterMonth) { alert('請先在左方選擇「查詢年月」，系統才能知道要印哪個月的單據！'); return; }
         if(!targetClass) { alert('請先選擇要列印的班級！'); return; }
 
-        const targetBills = bills.filter(b => (b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) && b.className === targetClass && !b.isPaid);
+        const targetBills = window.bills.filter(b => (b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) && b.className === targetClass && !b.isPaid);
 
         if(targetBills.length === 0) {
             alert(`在 ${formatDisplayMonth(filterMonth)} 的區間內，【${targetClass}】目前沒有未繳費的單據可供列印！`);
@@ -1448,7 +1542,8 @@
         window.print();
     }
 
-    init();
+    // 啟動載入雲端資料
+    initCloudData();
 </script>
 </body>
 </html>
