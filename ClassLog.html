@@ -61,7 +61,6 @@
         .grid-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; }
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 8px; border-radius: 4px; }
         
-        /* 國小與國中部按鈕色彩區分 */
         .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
         .btn-elementary { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-weight: bold; }
         .btn-elementary.active { background: #0284c7; color: white; }
@@ -153,6 +152,10 @@
 
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
                     <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
+                    <div style="margin-bottom: 12px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
+                        <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
+                        <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
+                    </div>
                     <div class="grid-4">
                         <div>
                             <label>考試單元名稱：</label>
@@ -226,6 +229,10 @@
 
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
                     <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
+                    <div style="margin-bottom: 12px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
+                        <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
+                        <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
+                    </div>
                     <div class="grid-4">
                         <div>
                             <label>考試單元名稱：</label>
@@ -597,16 +604,23 @@
         </div>
     </div>
 
-    <!-- 學生新增/修改彈窗 -->
-    <div class="card" id="student-modal" style="display:none; position:fixed; top:10%; left:28%; width:44%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto;">
+    <!-- 💡 學生新增/修改彈窗 (含學校、班級、三支電話與版本欄位) -->
+    <div class="card" id="student-modal" style="display:none; position:fixed; top:10%; left:25%; width:50%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto;">
         <h3 id="modal-title">新增/修改學生資料</h3>
         <input type="hidden" id="edit-student-id">
         
-        <div class="grid-3">
+        <div class="grid-2">
             <div>
                 <label>學生姓名：</label>
                 <input type="text" id="modal-name" placeholder="例如：王小明">
             </div>
+            <div>
+                <label>選擇修習課程 (班級)：</label>
+                <select id="modal-course"></select>
+            </div>
+        </div>
+
+        <div class="grid-3">
             <div>
                 <label>就讀學校：</label>
                 <input type="text" id="modal-school" placeholder="例如：斗六國中">
@@ -615,10 +629,11 @@
                 <label>班級座號/年班：</label>
                 <input type="text" id="modal-class" placeholder="例如：國一忠班">
             </div>
+            <div>
+                <label>學生版本 (教材/版本)：</label>
+                <input type="text" id="modal-version" placeholder="例如：康軒版 / 翰林版">
+            </div>
         </div>
-
-        <label>選擇修習課程：</label>
-        <select id="modal-course"></select>
 
         <h4 style="margin: 10px 0 5px 0; color: var(--primary); border-bottom: 1px solid #ddd; padding-bottom: 3px;">📞 設定三支聯絡電話</h4>
         <div class="grid-3">
@@ -708,7 +723,7 @@
                 
                 if (window.state.students.length === 0) {
                     const defaultStudent = {
-                        id: 1, name: '王小明', school: '斗六國中', studentClass: '國一忠班', course: '國一數學課', 
+                        id: 1, name: '王小明', school: '斗六國中', studentClass: '國一忠班', studentVersion: '康軒版', course: '國一數學課', 
                         phones: [
                             { label: '爸爸', number: '0912-111-111' },
                             { label: '媽媽', number: '0912-222-222' },
@@ -794,6 +809,7 @@
             }
             if(sectionId === 'system-settings') renderSettingsCourseList();
             if(sectionId === 'attendance-sheet-section') updateSheetCourseDropdown();
+            if(sectionId === 'student-profiles') renderClassButtons();
         }
 
         window.copyParentReportText = function() {
@@ -822,6 +838,241 @@
             }
         }
 
+        // ================= 📅 自動產生班級點名表核心邏輯 (含版本顯示) =================
+        window.updateSheetCourseDropdown = function() {
+            const select = document.getElementById('sheet-course-select');
+            const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
+            select.innerHTML = allCourses.map(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const info = typeof c === 'object' ? `(${c.day} ${c.time} - ${c.teacher})` : '';
+                return `<option value="${cName}">${cName} ${info}</option>`;
+            }).join('');
+        }
+
+        window.toggleSheetMode = function() {
+            const mode = document.getElementById('sheet-mode-select').value;
+            const startInput = document.getElementById('sheet-start-date');
+            const endInput = document.getElementById('sheet-end-date');
+            
+            const startDate = new Date();
+            startInput.valueAsDate = startDate;
+            
+            const endDate = new Date();
+            if (mode === 'junior') {
+                endDate.setMonth(endDate.getMonth() + 3);
+            } else {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+            endInput.valueAsDate = endDate;
+        }
+
+        window.addHolidayRow = function() {
+            const container = document.getElementById('holiday-rows-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'grid-2 holiday-row';
+            newRow.style.marginBottom = '8px';
+            newRow.innerHTML = `
+                <input type="date" class="holiday-date">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" class="holiday-reason" placeholder="請輸入放假原因">
+                    <button class="btn btn-danger btn-small" onclick="this.parentElement.parentElement.remove()" style="height:42px;">X</button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+
+        window.generateAttendanceSheet = function() {
+            const courseName = document.getElementById('sheet-course-select').value;
+            const startDateStr = document.getElementById('sheet-start-date').value;
+            const endDateStr = document.getElementById('sheet-end-date').value;
+
+            if(!startDateStr || !endDateStr) return alert('請完整選擇點名表的起訖日期！');
+
+            const holidayRows = document.querySelectorAll('.holiday-row');
+            const holidayMap = {};
+            holidayRows.forEach(row => {
+                const dateVal = row.querySelector('.holiday-date').value;
+                const reasonVal = row.querySelector('.holiday-reason').value.trim();
+                if(dateVal) {
+                    holidayMap[dateVal] = reasonVal || '放假';
+                }
+            });
+
+            const allCoursesList = [...window.state.courses.elementary, ...window.state.courses.junior];
+            const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
+            
+            const targetDayStr = foundCourse && typeof foundCourse === 'object' ? foundCourse.day : '星期二';
+            const teacherName = foundCourse && typeof foundCourse === 'object' ? foundCourse.teacher : '老師';
+            const courseTime = foundCourse && typeof foundCourse === 'object' ? foundCourse.time : '';
+
+            const dayMap = { '星期日': 0, '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6 };
+            const targetDaysOfWeek = [];
+            Object.keys(dayMap).forEach(dName => {
+                if(targetDayStr.includes(dName)) {
+                    targetDaysOfWeek.push(dayMap[dName]);
+                }
+            });
+            if(targetDaysOfWeek.length === 0) targetDaysOfWeek.push(2);
+
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+            let classDates = [];
+
+            let curr = new Date(start);
+            while(curr <= end) {
+                if(targetDaysOfWeek.includes(curr.getDay())) {
+                    const y = curr.getFullYear();
+                    const m = String(curr.getMonth() + 1).padStart(2, '0');
+                    const d = String(curr.getDate()).padStart(2, '0');
+                    const dateStr = `${y}-${m}-${d}`;
+
+                    if(holidayMap[dateStr] !== undefined) {
+                        classDates.push({ date: `${Number(m)}/${Number(d)}`, isHoliday: true, reason: holidayMap[dateStr] });
+                    } else {
+                        classDates.push({ date: `${Number(m)}/${Number(d)}`, isHoliday: false, reason: '' });
+                    }
+                }
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            const studentsInClass = window.state.students.filter(s => s.course === courseName);
+
+            if(classDates.length === 0) {
+                document.getElementById('sheet-render-area').innerHTML = `<p style="text-align:center; color:red; padding:20px;">所選日期區間內沒有符合「${targetDayStr}」的上課日期！</p>`;
+                return;
+            }
+
+            let html = `
+                <div class="attendance-sheet-box">
+                    <div style="text-align:center; margin-bottom:15px;">
+                        <h2 style="margin:0; color:var(--primary);">斗六顧德補習班 - 學生課堂點名表</h2>
+                        <p style="margin:5px 0; font-size:15px; font-weight:bold;">班級名稱：${courseName} | 上課時間：${targetDayStr} ${courseTime} | 授課老師：${teacherName}</p>
+                        <p style="margin:0; font-size:14px; color:#555;">收費點名區間：${startDateStr} ~ ${endDateStr}</p>
+                    </div>
+                    <table class="attendance-sheet-table">
+                        <thead>
+                            <tr>
+                                <th width="5%">座號</th>
+                                <th width="12%">學生姓名</th>
+                                <th width="12%">學校/班級/版本</th>
+            `;
+
+            classDates.forEach(item => {
+                const headerStyle = item.isHoliday ? 'background:#fee2e2; color:#b91c1c;' : '';
+                const headerTitle = item.isHoliday ? `<br><small>(${item.reason})</small>` : '';
+                html += `<th style="${headerStyle}">${item.date}${headerTitle}</th>`;
+            });
+
+            html += `
+                                <th width="8%">備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if(studentsInClass.length === 0) {
+                html += `<tr><td colspan="${classDates.length + 4}" style="text-align:center; color:#777; padding:20px;">目前此班級尚無學生資料，請至學生檔案區新增。</td></tr>`;
+            } else {
+                studentsInClass.forEach((s, index) => {
+                    const versionInfo = s.studentVersion ? `[${s.studentVersion}]` : '';
+                    html += `
+                        <tr>
+                            <td><b>${index + 1}</b></td>
+                            <td style="text-align:left; font-weight:bold;">${s.name}</td>
+                            <td style="font-size:11px; color:#555;">${s.school || ''} ${s.studentClass || ''}<br><span style="color:#0284c7; font-weight:bold;">${versionInfo}</span></td>
+                    `;
+                    classDates.forEach(item => {
+                        if (item.isHoliday) {
+                            html += `<td style="background:#f1f5f9; color:#94a3b8; font-size:11px;" title="${item.reason}">休</td>`;
+                        } else {
+                            html += `<td></td>`;
+                        }
+                    });
+                    html += `
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:14px; font-weight:bold;">
+                        <div>主任簽章：___________</div>
+                        <div>授課老師簽章：___________</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('sheet-render-area').innerHTML = html;
+        }
+
+        // ================= ✏️ 密碼保護的課程修改與刪除面板 =================
+        window.openCourseEditModal = function(dept, index) {
+            verifyPasswordAndExecute(() => {
+                window.pendingCourseEdit = { dept, index };
+                const courseObj = window.state.courses[dept][index];
+                
+                const cName = typeof courseObj === 'object' ? courseObj.name : courseObj;
+                const cDayStr = typeof courseObj === 'object' ? courseObj.day : '星期一';
+                const cTime = typeof courseObj === 'object' ? courseObj.time : '';
+                const cTeacher = typeof courseObj === 'object' ? courseObj.teacher : '';
+
+                document.getElementById('modal-course-name').value = cName;
+                document.getElementById('modal-course-time').value = cTime;
+                document.getElementById('modal-course-teacher').value = cTeacher;
+
+                const checkboxes = document.querySelectorAll('input[name="modal-course-days"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = cDayStr.includes(cb.value);
+                });
+
+                document.getElementById('course-edit-modal').style.display = 'flex';
+            });
+        }
+
+        window.saveCourseEdit = async function() {
+            const { dept, index } = window.pendingCourseEdit;
+            const oldCourse = window.state.courses[dept][index];
+            const oldName = typeof oldCourse === 'object' ? oldCourse.name : oldCourse;
+
+            const newName = document.getElementById('modal-course-name').value.trim();
+            const checkedDays = Array.from(document.querySelectorAll('input[name="modal-course-days"]:checked')).map(cb => cb.value);
+            const newDayStr = checkedDays.length > 0 ? checkedDays.join('、') : '星期一';
+            const newTime = document.getElementById('modal-course-time').value.trim();
+            const newTeacher = document.getElementById('modal-course-teacher').value.trim();
+
+            if(!newName) return alert('課程名稱不能為空白！');
+
+            window.state.courses[dept][index] = {
+                name: newName,
+                day: newDayStr,
+                time: newTime || '時間未定',
+                teacher: newTeacher || '老師未定'
+            };
+
+            window.state.students.forEach(s => { if(s.course === oldName) s.course = newName; });
+            window.state.historyLogs.forEach(l => { if(l.course === oldName) l.course = newName; });
+
+            await saveCoursesToCloud();
+            document.getElementById('course-edit-modal').style.display = 'none';
+            alert('課程資料已成功修改並同步至雲端！');
+            initCloudData();
+        }
+
+        window.requestDeleteCourse = async function() {
+            if(!confirm('確定要永久刪除這個課程嗎？')) return;
+            const { dept, index } = window.pendingCourseEdit;
+            
+            window.state.courses[dept].splice(index, 1);
+            await saveCoursesToCloud();
+            
+            document.getElementById('course-edit-modal').style.display = 'none';
+            alert('課程已成功刪除！');
+            initCloudData();
+        }
+
         window.promptResolveMakeup = function(studentId) {
             window.pendingResolveStudentId = studentId;
             document.getElementById('actual-makeup-date').valueAsDate = new Date();
@@ -839,7 +1090,7 @@
                 s.notes.push({ date: dateVal, author: '系統自動', text: `已於 ${dateVal} 確認補課完成，自動解除警示。` });
                 try {
                     await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                        id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
+                        id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', studentVersion: s.studentVersion || '', course: s.course, phones: s.phones,
                         attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
                         makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
                     });
@@ -861,7 +1112,7 @@
             
             try {
                 await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                    id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
+                    id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', studentVersion: s.studentVersion || '', course: s.course, phones: s.phones,
                     attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
                     makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
                 });
