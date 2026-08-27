@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與智慧管理系統 (雲端同步版)</title>
+    <title>斗六顧德補習班 - 教室教學日誌與點名表系統 (雲端同步版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -17,8 +17,8 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; }
         header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         
-        .main-nav { display: flex; gap: 8px; flex-wrap: wrap; }
-        .nav-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 14px; padding: 8px 14px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .main-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 13px; padding: 8px 12px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .nav-btn.active, .nav-btn:hover { background: var(--accent); }
         
         .container { max-width: 1350px; margin: 20px auto; padding: 0 15px; }
@@ -50,8 +50,8 @@
         .alert-item { background: white; padding: 10px; border-left: 5px solid var(--danger); margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; }
-        th { background: #f1f1f1; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: middle; }
+        th { background: #f1f1f1; text-align: center; }
         
         .badge-danger { color: var(--danger); font-weight: bold; }
         .badge-success { color: var(--success); font-weight: bold; }
@@ -88,9 +88,14 @@
         .parent-report-table th, .parent-report-table td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 14px; }
         .parent-report-table th { background: #f1f5f9; color: var(--primary); width: 30%; }
 
+        /* 點名表列印專用樣式 */
+        .attendance-sheet-box { background: white; padding: 20px; border: 2px solid #333; margin-top: 15px; }
+        .attendance-sheet-table th, .attendance-sheet-table td { border: 1px solid #333; padding: 6px; text-align: center; }
+
         @media print {
             header, .no-print { display: none !important; }
-            .card { box-shadow: none; border: 1px solid #000; }
+            .card { box-shadow: none; border: none; padding: 0; margin: 0; }
+            body { background: white; }
         }
     </style>
 </head>
@@ -102,6 +107,7 @@
             <button class="nav-btn active" onclick="switchSection('teaching-logs-junior', this)">教學日誌 (國中部)</button>
             <button class="nav-btn" onclick="switchSection('teaching-logs-elementary', this)">教學日誌 (國小部)</button>
             <button class="nav-btn" onclick="switchSection('director-overview', this)">👑 主任全校日誌總覽</button>
+            <button class="nav-btn" onclick="switchSection('attendance-sheet-section', this)">📅 自動產生點名表</button>
             <button class="nav-btn" onclick="switchSection('student-profiles', this)">學生檔案與通訊</button>
             <button class="nav-btn" onclick="switchSection('system-settings', this)">⚙️ 系統與課程設定</button>
         </nav>
@@ -146,7 +152,7 @@
                 </div>
 
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
-                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理 (雲端輕量化)</h4>
+                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
                     <div class="grid-4">
                         <div>
                             <label>考試單元名稱：</label>
@@ -219,7 +225,7 @@
                 </div>
 
                 <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
-                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理 (雲端輕量化)</h4>
+                    <h4 style="margin-top:0; color:var(--primary);">📝 考試與試卷連結管理</h4>
                     <div class="grid-4">
                         <div>
                             <label>考試單元名稱：</label>
@@ -289,6 +295,39 @@
             </div>
         </section>
 
+        <!-- 📅 自動產生點名表專區 -->
+        <section id="attendance-sheet-section" class="section-content">
+            <div class="card no-print">
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">📅 自動產生班級點名表</h3>
+                <div class="grid-3">
+                    <div>
+                        <label>選擇班級課程：</label>
+                        <select id="sheet-course-select"></select>
+                    </div>
+                    <div>
+                        <label>選擇月份：</label>
+                        <input type="month" id="sheet-target-month">
+                    </div>
+                    <div>
+                        <label>設定放假日期 (若有多個請用逗號隔開)：</label>
+                        <input type="text" id="sheet-holiday-input" placeholder="例如：2026-09-03, 2026-09-28">
+                    </div>
+                </div>
+                <button class="btn" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;" onclick="generateAttendanceSheet()">🚀 自動產生點名表</button>
+            </div>
+
+            <!-- 點名表預覽與列印輸出區 -->
+            <div class="card" id="attendance-sheet-output">
+                <div style="display:flex; justify-content:space-between; align-items:center;" class="no-print">
+                    <h3 style="margin:0; color:var(--primary);">點名表預覽</h3>
+                    <button class="btn btn-success" onclick="window.print()">🖨️ 列印 / 下載點名表</button>
+                </div>
+                <div id="sheet-render-area">
+                    <p style="text-align:center; color:#777; padding:30px;">請先在上方設定條件並點擊「自動產生點名表」</p>
+                </div>
+            </div>
+        </section>
+
         <!-- 學生檔案與通訊 -->
         <section id="student-profiles" class="section-content">
             <div class="card">
@@ -312,7 +351,7 @@
                 <table id="profile-table">
                     <thead>
                         <tr>
-                            <th width="18%">學生姓名、學校與電話 (點擊修改)</th>
+                            <th width="18%">學生姓名與電話 (點擊修改)</th>
                             <th width="18%">出席與請假狀況</th>
                             <th width="22%">補課/補考結果與分數</th>
                             <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (點擊看全部)</th>
@@ -489,7 +528,7 @@
         </div>
     </div>
 
-    <!-- 學生新增/修改彈窗 (含學校、班級與三支電話) -->
+    <!-- 學生新增/修改彈窗 -->
     <div class="card" id="student-modal" style="display:none; position:fixed; top:10%; left:28%; width:44%; z-index:999; background:white; border:2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto;">
         <h3 id="modal-title">新增/修改學生資料</h3>
         <input type="hidden" id="edit-student-id">
@@ -640,6 +679,7 @@
                 document.getElementById('log-date-elementary').valueAsDate = new Date();
                 const now = new Date();
                 document.getElementById('overview-target-month').value = now.toISOString().slice(0, 7);
+                document.getElementById('sheet-target-month').value = now.toISOString().slice(0, 7);
 
                 updateCourseDropdowns();
                 renderLogStudents('junior');
@@ -649,6 +689,7 @@
                 updateGlobalAlertBanner();
                 generateMonthDaysGrid();
                 renderDirectorOverview();
+                updateSheetCourseDropdown();
             } catch (e) {
                 console.error("載入教室日誌雲端資料失敗：", e);
             }
@@ -667,7 +708,7 @@
             if(btn) btn.classList.add('active');
 
             const banner = document.getElementById('global-alert-banner');
-            if (sectionId === 'student-profiles' || sectionId === 'system-settings') {
+            if (sectionId === 'student-profiles' || sectionId === 'system-settings' || sectionId === 'attendance-sheet-section') {
                 banner.style.display = 'none';
             } else {
                 banner.style.display = 'block';
@@ -678,8 +719,129 @@
                 renderDirectorOverview();
             }
             if(sectionId === 'system-settings') renderSettingsCourseList();
+            if(sectionId === 'attendance-sheet-section') updateSheetCourseDropdown();
         }
 
+        // ================= 📅 自動產生點名表核心邏輯 =================
+        window.updateSheetCourseDropdown = function() {
+            const select = document.getElementById('sheet-course-select');
+            const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
+            select.innerHTML = allCourses.map(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const info = typeof c === 'object' ? `(${c.day} ${c.time} - ${c.teacher})` : '';
+                return `<option value="${cName}">${cName} ${info}</option>`;
+            }).join('');
+        }
+
+        window.generateAttendanceSheet = function() {
+            const courseName = document.getElementById('sheet-course-select').value;
+            const monthVal = document.getElementById('sheet-target-month').value;
+            const holidaysInput = document.getElementById('sheet-holiday-input').value.trim();
+
+            if(!monthVal) return alert('請選擇點名表月份！');
+
+            // 解析放假日期陣列
+            const holidays = holidaysInput ? holidaysInput.split(',').map(d => d.trim()) : [];
+
+            // 尋找該課程對應的上課星期
+            const allCoursesList = [...window.state.courses.elementary, ...window.state.courses.junior];
+            const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
+            
+            const targetDayName = foundCourse && typeof foundCourse === 'object' ? foundCourse.day : '星期二';
+            const teacherName = foundCourse && typeof foundCourse === 'object' ? foundCourse.teacher : '老師';
+            const courseTime = foundCourse && typeof foundCourse === 'object' ? foundCourse.time : '';
+
+            // 星期對照表 (0:日, 1:一, 2:二, 3:三, 4:四, 5:五, 6:六)
+            const dayMap = { '星期日': 0, '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6 };
+            const targetDayOfWeek = dayMap[targetDayName] !== undefined ? dayMap[targetDayName] : 2;
+
+            // 計算該月所有符合星期的日期
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const classDates = [];
+
+            for(let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month - 1, d);
+                if(dateObj.getDay() === targetDayOfWeek) {
+                    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    // 檢查是否被列入放假
+                    if(!holidays.includes(dateStr)) {
+                        classDates.push(`${month}/${d}`);
+                    }
+                }
+            }
+
+            // 取得該班級學生名單
+            const studentsInClass = window.state.students.filter(s => s.course === courseName);
+
+            if(classDates.length === 0) {
+                document.getElementById('sheet-render-area').innerHTML = `<p style="text-align:center; color:red; padding:20px;">所選月份中沒有符合「${targetDayName}」的上課日期，或全部被設定為放假！</p>`;
+                return;
+            }
+
+            // 組合 HTML 表格
+            let html = `
+                <div class="attendance-sheet-box">
+                    <div style="text-align:center; margin-bottom:15px;">
+                        <h2 style="margin:0; color:var(--primary);">斗六顧德補習班 - 學生課堂點名表</h2>
+                        <p style="margin:5px 0; font-size:15px; font-weight:bold;">班級名稱：${courseName} | 上課時間：${targetDayName} ${courseTime} | 授課老師：${teacherName}</p>
+                        <p style="margin:0; font-size:14px; color:#555;">點名月份：${monthVal} (已自動扣除指定放假日期)</p>
+                    </div>
+                    <table class="attendance-sheet-table">
+                        <thead>
+                            <tr>
+                                <th width="6%">座號</th>
+                                <th width="12%">學生姓名</th>
+                                <th width="12%">學校 / 班級</th>
+            `;
+
+            // 動態產生上課日期欄位
+            classDates.forEach(dateStr => {
+                html += `<th>${dateStr}</th>`;
+            });
+
+            html += `
+                                <th width="10%">備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if(studentsInClass.length === 0) {
+                html += `<tr><td colspan="${classDates.length + 4}" style="text-align:center; color:#777; padding:20px;">目前此班級尚無學生資料，請至學生檔案區新增。</td></tr>`;
+            } else {
+                studentsInClass.forEach((s, index) => {
+                    html += `
+                        <tr>
+                            <td><b>${index + 1}</b></td>
+                            <td style="text-align:left; font-weight:bold;">${s.name}</td>
+                            <td style="font-size:12px; color:#555;">${s.school || ''}<br>${s.studentClass || ''}</td>
+                    `;
+                    // 每一天上課日留空格供老師打勾簽名
+                    classDates.forEach(() => {
+                        html += `<td></td>`;
+                    });
+                    html += `
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:14px; font-weight:bold;">
+                        <div>主任簽章：___________</div>
+                        <div>授課老師簽章：___________</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('sheet-render-area').innerHTML = html;
+        }
+
+        // ================= 其他系統函數 =================
         window.copyParentReportText = function() {
             const textToCopy = document.getElementById('parent-msg-content').value;
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -872,9 +1034,9 @@
             if(!newName || !newName.trim()) return;
             const trimmedName = newName.trim();
 
-            const newDay = prompt(`修改上課星期：`, typeof oldCourse === 'object' ? oldCourse.day : '星期一');
-            const newTime = prompt(`修改上課時間：`, typeof oldCourse === 'object' ? oldCourse.time : '19:00 - 21:00');
-            const newTeacher = prompt(`修改授課老師：`, typeof oldCourse === 'object' ? oldCourse.teacher : '王老師');
+            const newDay = prompt(`修改上課星期 (例如: 星期二)：`, typeof oldCourse === 'object' ? oldCourse.day : '星期一');
+            const newTime = prompt(`修改上課時間 (例如: 18:30 - 20:30)：`, typeof oldCourse === 'object' ? oldCourse.time : '19:00 - 21:00');
+            const newTeacher = prompt(`修改授課老師 (例如: 陳老師)：`, typeof oldCourse === 'object' ? oldCourse.teacher : '王老師');
             
             window.state.courses[dept][index] = {
                 name: trimmedName,
@@ -1155,7 +1317,6 @@
                     phonesHtml = s.phones.map(p => p.number ? `<div style="font-size:12px; color:#555;">📞 ${p.label || '電話'}: ${p.number}</div>` : '').join('');
                 }
 
-                // 💡 組合學校與班級資訊顯示在表格中
                 const schoolInfo = s.school || s.studentClass ? `<div style="font-size:12px; color:#0284c7; font-weight:bold;">🏫 ${s.school || ''} ${s.studentClass || ''}</div>` : '';
 
                 let notesToDisplay = s.notes || [];
@@ -1467,7 +1628,7 @@
 
             if(score >= passStandard) {
                 s.makeupPending = false;
-                s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: `補考成績 ${score} 分已達及格標準 (${passStandard}分), 自動解除紅區警示。` });
+                s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: `補考成績 ${score} 分已達及格標準 (${passStandard}分)，自動解除紅區警示。` });
                 alert(`恭喜！補考分數 ${score} 分已達標，系統已自動將該生自警示區移除。`);
             } else {
                 alert(`補考分數為 ${score} 分，仍低於及格標準 (${passStandard}分)，需繼續安排補考！`);
@@ -1502,7 +1663,7 @@
         }
 
         window.jumpToStudentProfile = function(studentId, courseName) {
-            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[3]);
+            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[4]);
             selectClassForProfile(courseName);
         }
 
