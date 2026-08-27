@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (主任批示與卡片化日誌版)</title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 </title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -89,8 +89,8 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: white; width: 650px; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
 
-        .student-name-link, .history-log-title-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
-        .student-name-link:hover, .history-log-title-link:hover { color: var(--primary); }
+        .student-name-link, .history-log-title-link, .course-edit-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .student-name-link:hover, .history-log-title-link:hover, .course-edit-link:hover { color: var(--primary); }
         
         /* 截圖風格日誌卡片樣式 */
         .preview-card { border: 2px solid #cbd5e1; border-radius: 12px; background: #fff; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
@@ -304,10 +304,10 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 (左右分流與批示功能) -->
+        <!-- 👑 主任全校日誌快速總覽 (左右分流與文字批示功能) -->
         <section id="director-overview" class="section-content">
             <div class="card">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽 (分流與批示)</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽 (分流與文字批示)</h3>
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                     <div class="grid-2" style="align-items: center; margin-bottom: 10px;">
@@ -372,7 +372,7 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 -->
+        <!-- ⚙️ 系統與課程設定 (支援點擊課程名稱修改) -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
@@ -417,7 +417,7 @@
 
                 <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">＋ 確認加入新課程並同步至雲端</button>
 
-                <h4 style="margin-top: 30px; color: var(--primary);">目前系統已有課程清單：</h4>
+                <h4 style="margin-top: 30px; color: var(--primary);">目前系統已有課程清單：<small style="font-size:12px; color:#666; font-weight:normal;">(💡 點擊下方課程名稱即可進行修改或刪除)</small></h4>
                 <div class="grid-2">
                     <div>
                         <h5 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 5px;">國小部課程</h5>
@@ -432,12 +432,53 @@
         </section>
     </div>
 
+    <!-- 👑 主任互動式文字批示彈窗 -->
+    <div class="modal-overlay" id="director-approval-modal">
+        <div class="modal-box" style="width: 500px;">
+            <h3 style="margin-top:0; color:var(--primary);">👑 主任批示與交代事項</h3>
+            <input type="hidden" id="approval-history-id">
+            <p style="font-size:13px; color:#666;">請輸入主任批示內容或叮嚀，老師將於日誌中同步看到此批示：</p>
+            <textarea id="approval-text-input" rows="4" placeholder="例如：主任已閱，請加強第一章複習。"></textarea>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-success" onclick="saveDirectorApproval()">送出主任批示</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('director-approval-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 課程修改/刪除彈窗 -->
+    <div class="modal-overlay" id="course-edit-modal">
+        <div class="modal-box" style="width: 500px;">
+            <h3 style="margin-top:0; color:var(--primary);">✏️ 修改或刪除課程</h3>
+            <input type="hidden" id="edit-course-dept">
+            <input type="hidden" id="edit-course-original-name">
+
+            <label>課程名稱：</label>
+            <input type="text" id="edit-course-name" placeholder="課程名稱">
+
+            <label>上課星期：</label>
+            <input type="text" id="edit-course-day" placeholder="例如：星期一、星期三">
+
+            <label>上課時間：</label>
+            <input type="text" id="edit-course-time" placeholder="例如：19:00 - 21:00">
+
+            <label>授課老師：</label>
+            <input type="text" id="edit-course-teacher" placeholder="授課老師">
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="deleteCourse()">🗑️ 刪除此課程</button>
+                <div>
+                    <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 📋 圖片化表格卡片設計的家長日誌彈窗 -->
     <div class="modal-overlay" id="parent-log-modal">
         <div class="modal-box" style="width: 580px; background: #f1f5f9;">
             <h3 style="margin-top:0; color:var(--primary); text-align:center;">📋 學習日誌卡片預覽</h3>
-            
-            <!-- 視覺化圖文卡片 -->
             <div class="preview-card">
                 <div class="preview-header">
                     <h3>斗六顧德補習班</h3>
@@ -459,9 +500,7 @@
                     感謝您的支持與配合，顧德補習班關心您的孩子每一天！
                 </div>
             </div>
-
             <textarea id="parent-log-text" style="display:none;"></textarea>
-
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
                 <button class="btn btn-success" onclick="copyParentLog()" style="font-size:15px; padding:10px 18px;">📋 一鍵複製文字傳送 LINE</button>
                 <button class="btn" style="background:#0284c7;" onclick="window.print()">🖨️ 列印此日誌卡片</button>
@@ -832,7 +871,6 @@
             const progress = contentInput ? contentInput.value.trim() : '';
             const homework = homeworkInput ? homeworkInput.value.trim() : '';
 
-            // 尋找對應老師姓名
             const courseObj = window.state.courses[dept].find(c => (typeof c === 'object' ? c.name : c) === course);
             const teacherName = (courseObj && courseObj.teacher) ? courseObj.teacher : '本班老師';
 
@@ -848,7 +886,6 @@
                 note = row.querySelector('.log-student-note').value.trim() || '出席正常';
             }
 
-            // 填充預覽卡片畫面
             document.getElementById('card-date').innerText = date;
             document.getElementById('card-course').innerText = course;
             document.getElementById('card-teacher').innerText = teacherName;
@@ -860,7 +897,6 @@
             document.getElementById('card-hwstatus').innerText = hwStatus;
             document.getElementById('card-note').innerText = note;
 
-            // 同時產生純文字供複製 LINE
             const parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
                 `------------------------\n` +
                 `📅 日期：${date}\n` +
@@ -989,7 +1025,7 @@
 
             const newLog = {
                 id: Date.now(),
-                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApproved: false
+                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApprovalText: ''
             };
 
             try {
@@ -1043,20 +1079,35 @@
             }
         };
 
-        // 👑 主任批示切換功能
-        window.toggleDirectorApproval = async function(firestoreId) {
+        // 👑 主任互動式批示功能
+        window.openDirectorApprovalModal = function(firestoreId) {
             const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
             if(!log) return;
 
-            log.directorApproved = !log.directorApproved;
+            document.getElementById('approval-history-id').value = firestoreId;
+            document.getElementById('approval-text-input').value = log.directorApprovalText || '';
+            document.getElementById('director-approval-modal').style.display = 'flex';
+        };
+
+        window.saveDirectorApproval = async function() {
+            const firestoreId = document.getElementById('approval-history-id').value;
+            const approvalText = document.getElementById('approval-text-input').value.trim();
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if(!log) return;
+
+            log.directorApprovalText = approvalText;
 
             try {
                 await setDoc(doc(db, "classLogHistory", firestoreId), {
                     id: log.id, dept: log.dept, date: log.date, course: log.course, content: log.content, homework: log.homework, notes: log.notes,
                     examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || '',
-                    directorApproved: log.directorApproved
+                    directorApprovalText: approvalText
                 });
+
+                document.getElementById('director-approval-modal').style.display = 'none';
+                alert('✅ 主任批示已成功儲存並同步至老師端！');
                 window.renderDirectorOverview();
+                window.renderHistoryLogs();
             } catch (e) {
                 console.error("主任批示更新失敗：", e);
                 alert('更新失敗，請檢查網路連線。');
@@ -1114,7 +1165,7 @@
                 await setDoc(doc(db, "classLogHistory", firestoreId), {
                     id: log.id, dept: log.dept, date, course, content, homework, notes,
                     examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || '',
-                    directorApproved: log.directorApproved || false
+                    directorApprovalText: log.directorApprovalText || ''
                 });
 
                 document.getElementById('history-log-edit-modal').style.display = 'none';
@@ -1169,6 +1220,7 @@
                         <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
                         <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
                         <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        ${l.directorApprovalText ? `<div style="margin-top:8px; background:#e0f2fe; padding:8px; border-radius:4px; border:1px solid #3498db; font-size:13px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
                     </div>
                 `).join('');
             });
@@ -1220,7 +1272,7 @@
             renderDirectorOverview();
         };
 
-        // 👑 主任左右分流總覽渲染 (含批示按鈕與紅字追蹤)
+        // 👑 主任左右分流總覽渲染 (含互動式批示按鈕與紅字追蹤)
         window.renderDirectorOverview = function() {
             const elemContainer = document.getElementById('director-overview-elementary');
             const juniorContainer = document.getElementById('director-overview-junior');
@@ -1258,9 +1310,9 @@
                     }
                 });
 
-                const approved = l.directorApproved;
-                const approveBtnStyle = approved ? 'background: var(--success); color: white;' : 'background: #e2e8f0; color: #334155;';
-                const approveText = approved ? '✅ 主任已批示 (已了解)' : '⏳ 點此進行主任批示 (標記為已了解)';
+                const hasApproval = !!l.directorApprovalText;
+                const approveBtnStyle = hasApproval ? 'background: var(--success); color: white;' : 'background: #e2e8f0; color: #334155;';
+                const approveText = hasApproval ? '✏️ 主任已批示 (點擊修改)' : '➕ 點此寫主任批示';
 
                 return `
                     <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
@@ -1268,11 +1320,12 @@
                             <h4 style="margin:0; color:var(--primary);">
                                 <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] ${l.date}</span>
                             </h4>
-                            <button class="btn btn-small" style="${approveBtnStyle}" onclick="toggleDirectorApproval('${l.firestoreId}')">${approveText}</button>
+                            <button class="btn btn-small" style="${approveBtnStyle}" onclick="openDirectorApprovalModal('${l.firestoreId}')">${approveText}</button>
                         </div>
                         <p style="margin:5px 0; font-size:14px;"><b>教學進度：</b>${l.content}</p>
                         <p style="margin:5px 0; font-size:14px;"><b>回家作業：</b>${l.homework || '無'}</p>
                         <p style="margin:5px 0; font-size:14px;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        ${hasApproval ? `<div style="margin-top:8px; background:#e0f2fe; padding:8px; border-radius:4px; border:1px solid #3498db; font-size:13px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
                         ${alertsHtml ? `<div style="margin-top:8px; background:#fff5f5; padding:8px; border-radius:4px; border:1px solid #feb2b2; font-size:13px;"><b>待辦追蹤提醒：</b><br>${alertsHtml}</div>` : ''}
                     </div>
                 `;
@@ -1283,6 +1336,70 @@
 
             elemContainer.innerHTML = elemLogs.length > 0 ? elemLogs.map(renderLogCard).join('') : `<p style="color:#777; text-align:center;">此區間無國小部日誌。</p>`;
             juniorContainer.innerHTML = juniorLogs.length > 0 ? juniorLogs.map(renderLogCard).join('') : `<p style="color:#777; text-align:center;">此區間無國中部日誌。</p>`;
+        };
+
+        // ⚙️ 課程修改與刪除功能
+        window.renderSettingsCourseList = function() {
+            const elemList = document.getElementById('elementary-courses-list');
+            const junList = document.getElementById('junior-courses-list');
+            
+            if(elemList) {
+                elemList.innerHTML = window.state.courses.elementary.map((c, idx) => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('elementary', ${idx})"><b>🏫 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
+                }).join('');
+            }
+            if(junList) {
+                junList.innerHTML = window.state.courses.junior.map((c, idx) => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('junior', ${idx})"><b>🏫 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
+                }).join('');
+            }
+        };
+
+        window.openCourseEditModal = function(dept, index) {
+            const course = window.state.courses[dept][index];
+            if(!course) return;
+
+            document.getElementById('edit-course-dept').value = dept;
+            document.getElementById('edit-course-original-name').value = index;
+            document.getElementById('edit-course-name').value = typeof course === 'object' ? course.name : course;
+            document.getElementById('edit-course-day').value = course.day || '';
+            document.getElementById('edit-course-time').value = course.time || '';
+            document.getElementById('edit-course-teacher').value = course.teacher || '';
+
+            document.getElementById('course-edit-modal').style.display = 'flex';
+        };
+
+        window.saveCourseEdit = async function() {
+            const dept = document.getElementById('edit-course-dept').value;
+            const index = Number(document.getElementById('edit-course-original-name').value);
+            const name = document.getElementById('edit-course-name').value.trim();
+            const day = document.getElementById('edit-course-day').value.trim();
+            const time = document.getElementById('edit-course-time').value.trim();
+            const teacher = document.getElementById('edit-course-teacher').value.trim();
+
+            if(!name) return alert('課程名稱不得為空白！');
+
+            window.state.courses[dept][index] = { name, day, time, teacher };
+            await saveCoursesToCloud();
+
+            document.getElementById('course-edit-modal').style.display = 'none';
+            alert('✅ 課程資料已成功修改！');
+            initCloudData();
+        };
+
+        window.deleteCourse = async function() {
+            if(!confirm('⚠️ 確定要刪除此課程嗎？')) return;
+            const dept = document.getElementById('edit-course-dept').value;
+            const index = Number(document.getElementById('edit-course-original-name').value);
+
+            window.state.courses[dept].splice(index, 1);
+            await saveCoursesToCloud();
+
+            document.getElementById('course-edit-modal').style.display = 'none';
+            alert('✅ 課程已成功刪除！');
+            initCloudData();
         };
 
         // 學生檔案管理
@@ -1468,24 +1585,6 @@
             document.getElementById('new-course-name').value = '';
             alert('已成功新增課程！');
             initCloudData();
-        };
-
-        window.renderSettingsCourseList = function() {
-            const elemList = document.getElementById('elementary-courses-list');
-            const junList = document.getElementById('junior-courses-list');
-            
-            if(elemList) {
-                elemList.innerHTML = window.state.courses.elementary.map((c) => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<div class="course-item"><span><b>${cName}</b></span></div>`;
-                }).join('');
-            }
-            if(junList) {
-                junList.innerHTML = window.state.courses.junior.map((c) => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<div class="course-item"><span><b>${cName}</b></span></div>`;
-                }).join('');
-            }
         };
 
         initCloudData();
