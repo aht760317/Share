@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (精簡流暢版)</title>
+    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (日誌儲存修復版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -95,12 +95,6 @@
         .student-name-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
         .student-name-link:hover { color: var(--primary); }
         
-        .parent-report-card { background: #fff; border: 2px solid var(--primary); padding: 20px; border-radius: 8px; font-family: sans-serif; }
-        .parent-report-header { text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; }
-        .parent-report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .parent-report-table th, .parent-report-table td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 14px; }
-        .parent-report-table th { background: #f1f5f9; color: var(--primary); width: 30%; }
-
         @media print {
             header, .no-print { display: none !important; }
             .card { box-shadow: none; border: none; padding: 0; margin: 0; }
@@ -122,12 +116,6 @@
     </header>
 
     <div class="container">
-
-        <!-- 紅色即時警示專區 -->
-        <div class="alert-banner no-print log-only-view" id="global-alert-banner">
-            <h3>⚠️ 需要補課與補考關注名單 (系統自動追蹤)</h3>
-            <div id="alert-list-container"></div>
-        </div>
 
         <!-- 國中部教學日誌 -->
         <section id="teaching-logs-junior" class="section-content active">
@@ -189,11 +177,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名 (可產生家長日誌)</th>
+                            <th width="18%">姓名</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="15%">作業狀態</th>
-                            <th width="43%">狀態提醒與補課安排 / 個別注意事項編輯</th>
+                            <th width="43%">個別注意事項 / 補充說明</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-junior"></tbody>
@@ -266,11 +254,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名 (可產生家長日誌)</th>
+                            <th width="18%">姓名</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="15%">作業狀態</th>
-                            <th width="43%">狀態提醒與補課安排 / 個別注意事項編輯</th>
+                            <th width="43%">個別注意事項 / 補充說明</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-elementary"></tbody>
@@ -315,18 +303,11 @@
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div><h3 style="margin:0;">點擊下方班級按鈕查詢學生 (國小/國中部色彩區分)</h3></div>
+                    <div><h3 style="margin:0;">點擊下方班級按鈕查詢學生</h3></div>
                     <div><button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生資料</button></div>
                 </div>
                 <hr style="margin: 15px 0;">
                 <div class="class-btn-group" id="class-buttons-container"></div>
-                <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-                    <label style="font-size:14px; font-weight:bold;">出缺勤紀錄顯示範圍：</label>
-                    <select id="attendance-filter-mode" onchange="renderProfileStudents()" style="width:160px; margin:0;">
-                        <option value="all">顯示全部紀錄</option>
-                        <option value="month">最近一個月</option>
-                    </select>
-                </div>
             </div>
 
             <div class="card">
@@ -336,8 +317,8 @@
                         <tr>
                             <th width="18%">學生姓名與電話 (點擊修改)</th>
                             <th width="18%">出席與請假狀況</th>
-                            <th width="22%">補課/補考結果與分數</th>
-                            <th width="42%">備註 / 老師建議 / 主任批示 / 電聯紀錄 (點擊看全部)</th>
+                            <th width="22%">考試成績紀錄</th>
+                            <th width="42%">備註紀錄</th>
                         </tr>
                     </thead>
                     <tbody id="profile-students-tbody">
@@ -464,41 +445,6 @@
         </div>
     </div>
 
-    <!-- 評語與電聯紀錄大畫面彈窗 -->
-    <div class="modal-overlay" id="notes-manager-modal">
-        <div class="modal-box">
-            <h3 id="notes-modal-title" style="margin-top:0; color:var(--primary);">📝 學生評語與電聯紀錄管理 (完整清單)</h3>
-            <p id="notes-modal-subtitle" style="font-size:13px; color:#666; margin-bottom:15px;"></p>
-            
-            <div style="background: #fdfdfd; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;" id="notes-history-container"></div>
-
-            <div style="background: #f0f4f8; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                <h4 style="margin-top:0; color:var(--primary);">➕ 新增一筆記錄</h4>
-                <div class="grid-2" style="margin-bottom:0;">
-                    <div>
-                        <label>記錄類型：</label>
-                        <select id="new-note-type">
-                            <option value="老師建議">💬 老師建議</option>
-                            <option value="主任批示">👑 主任批示 (已確認)</option>
-                            <option value="電聯紀錄">📞 電聯紀錄</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>記錄日期：</label>
-                        <input type="date" id="new-note-date">
-                    </div>
-                </div>
-                <label>詳細內容：</label>
-                <textarea id="new-note-text" rows="3" placeholder="請在此輸入詳細評語或電聯內容..."></textarea>
-                <button class="btn btn-success" onclick="addNewNoteFromModal()">確認新增記錄</button>
-            </div>
-
-            <div style="margin-top: 20px; text-align: right;">
-                <button class="btn" style="background:#999;" onclick="document.getElementById('notes-manager-modal').style.display='none'">關閉視窗</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 學生新增/修改彈窗 -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
@@ -597,8 +543,6 @@
             currentViewMode: 'single'
         };
 
-        window.currentEditingNote = { dept: '', studentId: '', studentName: '' };
-        window.currentManagingStudentId = null;
         window.pendingDeleteAction = null;
         window.pendingCourseEdit = { dept: '', index: 0 };
 
@@ -616,26 +560,6 @@
                 studentsSnapshot.forEach((document) => {
                     window.state.students.push({ firestoreId: document.id, ...document.data() });
                 });
-                
-                if (window.state.students.length === 0) {
-                    const defaultStudent = {
-                        id: Date.now(), name: '王小明', school: '斗六國中', studentClass: '國一忠班', studentVersion: '康軒版', course: '國一數學課', 
-                        phones: [
-                            { label: '爸爸', number: '0912-111-111' },
-                            { label: '媽媽', number: '0912-222-222' },
-                            { label: '學生', number: '0912-333-333' }
-                        ],
-                        attendanceLogs: [
-                            { date: '2026-08-26', status: '出席', score: 85, homework: '完成', progress: '講解第一章綜合練習題', homeworkContent: '習題 P.15', passScore: 80, detail: '出席正常' }
-                        ],
-                        notes: [
-                            { date: '2026-08-26', author: '老師建議', text: '上課態度認真。' }
-                        ]
-                    };
-                    const docRef = await addDoc(collection(db, "classLogStudents"), defaultStudent);
-                    defaultStudent.firestoreId = docRef.id;
-                    window.state.students.push(defaultStudent);
-                }
 
                 const logsSnapshot = await getDocs(collection(db, "classLogHistory"));
                 window.state.historyLogs = [];
@@ -649,7 +573,6 @@
                 const now = new Date();
                 document.getElementById('overview-target-month').value = now.toISOString().slice(0, 7);
 
-                // 強制重新整理所有選單與畫面
                 window.updateCourseDropdowns();
                 window.renderLogStudents('junior');
                 window.renderLogStudents('elementary');
@@ -657,6 +580,7 @@
                 window.renderClassButtons();
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
+                window.renderHistoryLogs();
             } catch (e) {
                 console.error("載入雲端資料失敗：", e);
             }
@@ -674,13 +598,6 @@
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             if(btn) btn.classList.add('active');
 
-            const banner = document.getElementById('global-alert-banner');
-            if (sectionId === 'student-profiles' || sectionId === 'system-settings') {
-                banner.style.display = 'none';
-            } else {
-                banner.style.display = 'block';
-            }
-
             window.updateCourseDropdowns();
             window.renderSettingsCourseList();
             window.renderClassButtons();
@@ -694,27 +611,262 @@
             if(sectionId === 'student-profiles') window.renderProfileStudents();
         }
 
-        // ================= 🔄 下拉選單連動核心 =================
         window.updateCourseDropdowns = function() {
             const juniorSelect = document.getElementById('log-course-select-junior');
             const elementarySelect = document.getElementById('log-course-select-elementary');
             
             if (juniorSelect) {
+                const currentVal = juniorSelect.value;
                 juniorSelect.innerHTML = window.state.courses.junior.map(c => {
                     const cName = typeof c === 'object' ? c.name : c;
                     return `<option value="${cName}">${cName}</option>`;
                 }).join('');
+                if(currentVal) juniorSelect.value = currentVal;
             }
             
             if (elementarySelect) {
+                const currentVal = elementarySelect.value;
                 elementarySelect.innerHTML = window.state.courses.elementary.map(c => {
                     const cName = typeof c === 'object' ? c.name : c;
                     return `<option value="${cName}">${cName}</option>`;
                 }).join('');
+                if(currentVal) elementarySelect.value = currentVal;
             }
         };
 
-        // ================= 👥 學生檔案與按鈕管理 =================
+        // ================= 📝 教學日誌儲存與歷史紀錄核心 =================
+        window.renderLogStudents = function(dept) {
+            const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
+            const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
+            
+            const courseSelect = document.getElementById(selectId);
+            const tbody = document.getElementById(tbodyId);
+            if(!courseSelect || !tbody) return;
+
+            const courseName = courseSelect.value;
+            const students = window.state.students.filter(s => s.course === courseName);
+
+            if(students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程目前尚無學生，請先至「學生檔案與通訊」新增學生並指定到此課程。</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = students.map(s => `
+                <tr data-firestore-id="${s.firestoreId}">
+                    <td><b>${s.name}</b></td>
+                    <td>
+                        <select class="log-att-status">
+                            <option value="出席">出席</option>
+                            <option value="請假">請假</option>
+                            <option value="曠課">曠課</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="log-score" placeholder="分數" style="margin:0;"></td>
+                    <td>
+                        <select class="log-homework-status" style="margin:0;">
+                            <option value="完成">完成</option>
+                            <option value="未交">未交</option>
+                            <option value="部分完成">部分完成</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;"></td>
+                </tr>
+            `).join('');
+        };
+
+        window.saveLog = async function(dept) {
+            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
+            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
+            const notesInput = document.getElementById(dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary');
+            const examUnitInput = document.getElementById(dept === 'junior' ? 'log-exam-unit-junior' : 'log-exam-unit-elementary');
+            const passScoreInput = document.getElementById(dept === 'junior' ? 'log-pass-score-junior' : 'log-pass-score-elementary');
+            const examFileInput = document.getElementById(dept === 'junior' ? 'log-exam-file-junior' : 'log-exam-file-elementary');
+            const answerFileInput = document.getElementById(dept === 'junior' ? 'log-answer-file-junior' : 'log-answer-file-elementary');
+
+            const course = courseSelect.value;
+            const date = dateInput.value;
+            const content = contentInput.value.trim();
+            const homework = homeworkInput.value.trim();
+            const notes = notesInput.value.trim();
+            const examUnit = examUnitInput.value.trim();
+            const passScore = Number(passScoreInput.value) || 80;
+            const examFile = examFileInput.value.trim();
+            const answerFile = answerFileInput.value.trim();
+
+            if(!date) return alert('請選擇上課日期！');
+            if(!course) return alert('請選擇課程！');
+            if(!content) return alert('請填寫教學進度！');
+
+            // 1. 儲存日誌到歷史紀錄
+            const newLog = {
+                id: Date.now(),
+                dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile
+            };
+
+            try {
+                const logRef = await addDoc(collection(db, "classLogHistory"), newLog);
+                newLog.firestoreId = logRef.id;
+                window.state.historyLogs.unshift(newLog);
+
+                // 2. 更新該班級每一位學生的出缺勤與成績紀錄
+                const tbody = document.getElementById(dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary');
+                const rows = tbody.querySelectorAll('tr[data-firestore-id]');
+
+                for (let row of rows) {
+                    const firestoreId = row.getAttribute('data-firestore-id');
+                    const status = row.querySelector('.log-att-status').value;
+                    const scoreVal = row.querySelector('.log-score').value;
+                    const score = scoreVal !== '' ? Number(scoreVal) : null;
+                    const homeworkStatus = row.querySelector('.log-homework-status').value;
+                    const studentNote = row.querySelector('.log-student-note').value.trim();
+
+                    const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                    if (student) {
+                        if (!student.attendanceLogs) student.attendanceLogs = [];
+                        student.attendanceLogs.unshift({
+                            date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
+                        });
+
+                        if (studentNote) {
+                            if (!student.notes) student.notes = [];
+                            student.notes.unshift({
+                                date, author: '教學日誌', text: studentNote
+                            });
+                        }
+
+                        await setDoc(doc(db, "classLogStudents", firestoreId), {
+                            id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                            attendanceLogs: student.attendanceLogs, notes: student.notes || []
+                        });
+                    }
+                }
+
+                alert('✅ 今日教學日誌已成功儲存並同步至雲端與學生檔案！');
+                window.renderHistoryLogs();
+                window.renderDirectorOverview();
+            } catch (e) {
+                console.error("儲存日誌失敗：", e);
+                alert('儲存失敗，請檢查網路連線後再試一次。');
+            }
+        };
+
+        window.renderHistoryLogs = function() {
+            ['junior', 'elementary'].forEach(dept => {
+                const container = document.getElementById(`logs-container-${dept}`);
+                if(!container) return;
+
+                const logs = window.state.historyLogs.filter(l => l.dept === dept);
+                if(logs.length === 0) {
+                    container.innerHTML = `<p style="color:#777; text-align:center;">尚無歷史教學日誌紀錄。</p>`;
+                    return;
+                }
+
+                container.innerHTML = logs.map(l => `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                            <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 日期：${l.date}</h4>
+                        </div>
+                        <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
+                        <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
+                        <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        <p style="margin:5px 0; font-size:13px; color:#475569;"><b>考試單元：</b>${l.examUnit || '無'} 
+                            ${l.examFile ? `| <a href="${l.examFile}" target="_blank">📥 檢視考卷</a>` : ''}
+                            ${l.answerFile ? `| <a href="${l.answerFile}" target="_blank">📥 檢視答案</a>` : ''}
+                        </p>
+                    </div>
+                `).join('');
+            });
+        };
+
+        // ================= 👑 主任總覽與月曆選單 =================
+        window.generateMonthDaysGrid = function() {
+            const monthInput = document.getElementById('overview-target-month').value;
+            const container = document.getElementById('month-days-container');
+            if(!container || !monthInput) return;
+
+            const [year, month] = monthInput.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            let html = '';
+            for(let day = 1; day <= daysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${dayStr}`;
+                const hasLog = window.state.historyLogs.some(l => l.date === dateStr);
+                const badge = hasLog ? ' 🟢' : '';
+
+                html += `<button class="day-block-btn ${window.state.currentSelectedDate === dateStr && window.state.currentViewMode === 'single' ? 'active' : ''}" onclick="selectDate('${dateStr}')">${day}日${badge}</button>`;
+            }
+            container.innerHTML = html;
+        };
+
+        window.selectDate = function(dateStr) {
+            window.state.currentSelectedDate = dateStr;
+            window.state.currentViewMode = 'single';
+            generateMonthDaysGrid();
+            renderDirectorOverview();
+        };
+
+        window.setOverviewToday = function() {
+            const today = new Date().toISOString().split('T')[0];
+            window.state.currentSelectedDate = today;
+            window.state.currentViewMode = 'single';
+            document.getElementById('overview-target-month').value = today.slice(0, 7);
+            generateMonthDaysGrid();
+            renderDirectorOverview();
+        };
+
+        window.setOverviewThisWeek = function() {
+            window.state.currentViewMode = 'week';
+            renderDirectorOverview();
+        };
+
+        window.setOverviewThisMonth = function() {
+            window.state.currentViewMode = 'month';
+            renderDirectorOverview();
+        };
+
+        window.renderDirectorOverview = function() {
+            const container = document.getElementById('director-overview-container');
+            const titleEl = document.getElementById('overview-current-title');
+            if(!container || !titleEl) return;
+            
+            let targetLogs = [];
+            const monthInput = document.getElementById('overview-target-month').value;
+
+            if(window.state.currentViewMode === 'week') {
+                titleEl.innerText = `檢視結果：最近一個禮拜 (7天內) 的所有教學日誌`;
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                targetLogs = window.state.historyLogs.filter(l => new Date(l.date) >= oneWeekAgo);
+            } else if(window.state.currentViewMode === 'month') {
+                titleEl.innerText = `檢視結果：當月 (${monthInput}) 的所有教學日誌`;
+                targetLogs = window.state.historyLogs.filter(l => l.date.startsWith(monthInput));
+            } else {
+                titleEl.innerText = `檢視結果：指定日期 ${window.state.currentSelectedDate} 的教學日誌`;
+                targetLogs = window.state.historyLogs.filter(l => l.date === window.state.currentSelectedDate);
+            }
+
+            if(targetLogs.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">📅 該區間尚無任何教學日誌紀錄。</div>`;
+                return;
+            }
+
+            container.innerHTML = targetLogs.map(l => `
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                        <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 授課日期：${l.date}</h4>
+                        <span style="font-size:13px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px;">${l.dept === 'junior' ? '國中部' : '國小部'}</span>
+                    </div>
+                    <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
+                    <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
+                    <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                </div>
+            `).join('');
+        };
+
+        // ================= 👥 學生檔案管理 =================
         window.renderClassButtons = function() {
             const container = document.getElementById('class-buttons-container');
             if(!container) return;
@@ -756,51 +908,31 @@
             const students = window.state.students.filter(s => s.course === selectedClass);
 
             if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">此班級目前沒有學生資料，請點擊上方「+ 新增學生資料」加入。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">此班級目前沒有學生資料，請點擊上方新增。</td></tr>`;
                 return;
             }
 
-            const filterMode = document.getElementById('attendance-filter-mode')?.value || 'all';
-            const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
             tbody.innerHTML = students.map(s => {
-                let phonesStr = '';
-                if(s.phones && Array.isArray(s.phones)) {
-                    phonesStr = s.phones.map(p => `${p.label}: ${p.number}`).join('<br>');
-                }
-
-                let filteredLogs = s.attendanceLogs || [];
-                if(filterMode === 'month') {
-                    filteredLogs = filteredLogs.filter(l => new Date(l.date) >= oneMonthAgo);
-                }
-
-                let attHtml = filteredLogs.map(l => `${l.date}: <span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span>`).join('<br>') || '尚無紀錄';
-                let scoreHtml = filteredLogs.map(l => `${l.date}: <b>${l.score !== undefined ? l.score : '無'}分</b> (${l.homework || '作業未填'})`).join('<br>') || '尚無紀錄';
-
-                let notesHtml = (s.notes || []).map(n => `[${n.date}] (${n.author}): ${n.text}`).join('<br>') || '無備註';
+                let phonesStr = (s.phones || []).map(p => `${p.label}: ${p.number}`).join('<br>');
+                let attHtml = (s.attendanceLogs || []).map(l => `${l.date}: <span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span>`).join('<br>') || '尚無紀錄';
+                let scoreHtml = (s.attendanceLogs || []).map(l => `${l.date}: <b>${l.score !== null ? l.score : '無'}分</b> (${l.homework || ''})`).join('<br>') || '尚無紀錄';
+                let notesHtml = (s.notes || []).map(n => `[${n.date}]: ${n.text}`).join('<br>') || '無備註';
 
                 return `
                     <tr>
                         <td>
                             <span class="student-name-link" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
                             <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small><br>
-                            <span style="color:#0284c7; font-size:12px;">教材: ${s.studentVersion || '未填'}</span><br>
-                            <div style="font-size:12px; margin-top:4px; background:#f8fafc; padding:4px; border-radius:4px;">${phonesStr}</div>
+                            <div style="font-size:11px; margin-top:4px; background:#f8fafc; padding:4px; border-radius:4px;">${phonesStr}</div>
                         </td>
                         <td style="font-size:13px;">${attHtml}</td>
                         <td style="font-size:13px;">${scoreHtml}</td>
-                        <td>
-                            <div class="note-preview-box" onclick="openNotesManagerModal('${s.firestoreId}')" style="background: #f9f9f9; border: 1px solid #ccc; padding: 8px; border-radius: 4px; font-size: 13px; cursor: pointer; min-height: 50px; max-height: 100px; overflow-y: auto;">
-                                ${notesHtml}
-                            </div>
-                        </td>
+                        <td style="font-size:13px;">${notesHtml}</td>
                     </tr>
                 `;
             }).join('');
         };
 
-        // ================= 📝 新增與修改學生 Modal =================
         window.openAddStudentModal = function() {
             document.getElementById('modal-title').innerText = "新增學生資料";
             document.getElementById('edit-student-id').value = "";
@@ -814,8 +946,7 @@
             document.getElementById('delete-student-btn').style.display = "none";
 
             const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
-            const select = document.getElementById('modal-course');
-            select.innerHTML = allCourses.map(c => {
+            document.getElementById('modal-course').innerHTML = allCourses.map(c => {
                 const cName = typeof c === 'object' ? c.name : c;
                 return `<option value="${cName}">${cName}</option>`;
             }).join('');
@@ -835,24 +966,15 @@
             document.getElementById('modal-version').value = s.studentVersion || '';
 
             const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
-            const select = document.getElementById('modal-course');
-            select.innerHTML = allCourses.map(c => {
+            document.getElementById('modal-course').innerHTML = allCourses.map(c => {
                 const cName = typeof c === 'object' ? c.name : c;
-                const selected = cName === s.course ? 'selected' : '';
-                return `<option value="${cName}" ${selected}>${cName}</option>`;
+                return `<option value="${cName}" ${cName === s.course ? 'selected' : ''}>${cName}</option>`;
             }).join('');
 
-            if(s.phones && s.phones[0]) {
-                document.getElementById('modal-label1').value = s.phones[0].label || '爸爸';
-                document.getElementById('modal-phone1').value = s.phones[0].number || '';
-            }
-            if(s.phones && s.phones[1]) {
-                document.getElementById('modal-label2').value = s.phones[1].label || '媽媽';
-                document.getElementById('modal-phone2').value = s.phones[1].number || '';
-            }
-            if(s.phones && s.phones[2]) {
-                document.getElementById('modal-label3').value = s.phones[2].label || '學生';
-                document.getElementById('modal-phone3').value = s.phones[2].number || '';
+            if(s.phones) {
+                if(s.phones[0]) { document.getElementById('modal-label1').value = s.phones[0].label; document.getElementById('modal-phone1').value = s.phones[0].number; }
+                if(s.phones[1]) { document.getElementById('modal-label2').value = s.phones[1].label; document.getElementById('modal-phone2').value = s.phones[1].number; }
+                if(s.phones[2]) { document.getElementById('modal-label3').value = s.phones[2].label; document.getElementById('modal-phone3').value = s.phones[2].number; }
             }
 
             document.getElementById('delete-student-btn').style.display = "inline-block";
@@ -867,57 +989,37 @@
             const course = document.getElementById('modal-course').value;
             const studentVersion = document.getElementById('modal-version').value.trim();
 
-            const p1Label = document.getElementById('modal-label1').value;
-            const p1Num = document.getElementById('modal-phone1').value.trim();
-            const p2Label = document.getElementById('modal-label2').value;
-            const p2Num = document.getElementById('modal-phone2').value.trim();
-            const p3Label = document.getElementById('modal-label3').value;
-            const p3Num = document.getElementById('modal-phone3').value.trim();
+            const phones = [
+                { label: document.getElementById('modal-label1').value, number: document.getElementById('modal-phone1').value.trim() },
+                { label: document.getElementById('modal-label2').value, number: document.getElementById('modal-phone2').value.trim() },
+                { label: document.getElementById('modal-label3').value, number: document.getElementById('modal-phone3').value.trim() }
+            ];
 
             if(!name) return alert('學生姓名不能為空白！');
-            if(!course) return alert('請選擇修習課程！');
-
-            const phones = [
-                { label: p1Label, number: p1Num },
-                { label: p2Label, number: p2Num },
-                { label: p3Label, number: p3Num }
-            ];
 
             if(firestoreId) {
                 const s = window.state.students.find(item => item.firestoreId === firestoreId);
                 if(s) {
-                    s.name = name;
-                    s.school = school;
-                    s.studentClass = studentClass;
-                    s.course = course;
-                    s.studentVersion = studentVersion;
-                    s.phones = phones;
-
-                    try {
-                        await setDoc(doc(db, "classLogStudents", firestoreId), {
-                            id: s.id, name: s.name, school: s.school, studentClass: s.studentClass, studentVersion: s.studentVersion, course: s.course, phones: s.phones,
-                            attendanceLogs: s.attendanceLogs || [], notes: s.notes || []
-                        });
-                    } catch(e) { console.error(e); }
+                    s.name = name; s.school = school; s.studentClass = studentClass; s.course = course; s.studentVersion = studentVersion; s.phones = phones;
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        id: s.id, name: s.name, school: s.school, studentClass: s.studentClass, studentVersion: s.studentVersion, course: s.course, phones: s.phones,
+                        attendanceLogs: s.attendanceLogs || [], notes: s.notes || []
+                    });
                 }
             } else {
                 const newStudent = {
-                    id: Date.now(),
-                    name, school, studentClass, course, studentVersion, phones,
-                    attendanceLogs: [],
-                    notes: [{ date: new Date().toISOString().split('T')[0], author: '系統建立', text: '建立學生基本資料。' }]
+                    id: Date.now(), name, school, studentClass, course, studentVersion, phones,
+                    attendanceLogs: [], notes: []
                 };
-                try {
-                    const docRef = await addDoc(collection(db, "classLogStudents"), newStudent);
-                    newStudent.firestoreId = docRef.id;
-                    window.state.students.push(newStudent);
-                } catch(e) { console.error(e); }
+                const docRef = await addDoc(collection(db, "classLogStudents"), newStudent);
+                newStudent.firestoreId = docRef.id;
+                window.state.students.push(newStudent);
             }
 
             document.getElementById('student-modal').style.display = 'none';
             window.state.selectedClassForProfile = course;
             initCloudData();
-            alert('學生資料已成功儲存並同步至雲端！');
+            alert('學生資料已成功儲存！');
         };
 
         window.requestDeleteStudent = async function() {
@@ -925,16 +1027,13 @@
             const firestoreId = document.getElementById('edit-student-id').value;
             if(!firestoreId) return;
 
-            try {
-                await deleteDoc(doc(db, "classLogStudents", firestoreId));
-                window.state.students = window.state.students.filter(s => s.firestoreId !== firestoreId);
-                document.getElementById('student-modal').style.display = 'none';
-                initCloudData();
-                alert('學生已成功刪除！');
-            } catch(e) { console.error(e); }
+            await deleteDoc(doc(db, "classLogStudents", firestoreId));
+            window.state.students = window.state.students.filter(s => s.firestoreId !== firestoreId);
+            document.getElementById('student-modal').style.display = 'none';
+            initCloudData();
+            alert('學生已刪除！');
         };
 
-        // ================= ⚙️ 課程新增與管理 =================
         window.addCourse = async function() {
             const dept = document.getElementById('new-course-dept').value;
             const name = document.getElementById('new-course-name').value.trim();
@@ -945,17 +1044,10 @@
 
             if(!name) return alert('請輸入課程名稱！');
             
-            window.state.courses[dept].push({
-                name, day: dayStr, time: time || '時間未定', teacher: teacher || '老師未定'
-            });
-
+            window.state.courses[dept].push({ name, day: dayStr, time: time || '時間未定', teacher: teacher || '老師未定' });
             await saveCoursesToCloud();
             document.getElementById('new-course-name').value = '';
-            document.getElementById('new-course-time').value = '';
-            document.getElementById('new-course-teacher').value = '';
-            document.querySelectorAll('input[name="course-days"]').forEach(cb => cb.checked = false);
-
-            alert(`已成功新增課程並同步至雲端！`);
+            alert('已成功新增課程！');
             initCloudData();
         };
 
@@ -966,150 +1058,16 @@
             if(elemList) {
                 elemList.innerHTML = window.state.courses.elementary.map((c, idx) => {
                     const cName = typeof c === 'object' ? c.name : c;
-                    const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                    return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('elementary', ${idx})">修改</button></div>`;
+                    return `<div class="course-item"><span><b>${cName}</b></span></div>`;
                 }).join('');
             }
-
             if(junList) {
                 junList.innerHTML = window.state.courses.junior.map((c, idx) => {
                     const cName = typeof c === 'object' ? c.name : c;
-                    const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                    return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('junior', ${idx})">修改</button></div>`;
+                    return `<div class="course-item"><span><b>${cName}</b></span></div>`;
                 }).join('');
             }
         };
-
-        window.openCourseEditModal = function(dept, index) {
-            verifyPasswordAndExecute(() => {
-                window.pendingCourseEdit = { dept, index };
-                const courseObj = window.state.courses[dept][index];
-                
-                const cName = typeof courseObj === 'object' ? courseObj.name : courseObj;
-                const cDayStr = typeof courseObj === 'object' ? courseObj.day : '星期一';
-                const cTime = typeof courseObj === 'object' ? courseObj.time : '';
-                const cTeacher = typeof courseObj === 'object' ? courseObj.teacher : '';
-
-                document.getElementById('modal-course-name').value = cName;
-                document.getElementById('modal-course-time').value = cTime;
-                document.getElementById('modal-course-teacher').value = cTeacher;
-
-                const checkboxes = document.querySelectorAll('input[name="modal-course-days"]');
-                checkboxes.forEach(cb => {
-                    cb.checked = cDayStr.includes(cb.value);
-                });
-
-                document.getElementById('course-edit-modal').style.display = 'flex';
-            });
-        };
-
-        window.saveCourseEdit = async function() {
-            const { dept, index } = window.pendingCourseEdit;
-            const oldCourse = window.state.courses[dept][index];
-            const oldName = typeof oldCourse === 'object' ? oldCourse.name : oldCourse;
-
-            const newName = document.getElementById('modal-course-name').value.trim();
-            const checkedDays = Array.from(document.querySelectorAll('input[name="modal-course-days"]:checked')).map(cb => cb.value);
-            const newDayStr = checkedDays.length > 0 ? checkedDays.join('、') : '星期一';
-            const newTime = document.getElementById('modal-course-time').value.trim();
-            const newTeacher = document.getElementById('modal-course-teacher').value.trim();
-
-            if(!newName) return alert('課程名稱不能為空白！');
-
-            window.state.courses[dept][index] = {
-                name: newName,
-                day: newDayStr,
-                time: newTime || '時間未定',
-                teacher: newTeacher || '老師未定'
-            };
-
-            window.state.students.forEach(s => { if(s.course === oldName) s.course = newName; });
-            window.state.historyLogs.forEach(l => { if(l.course === oldName) l.course = newName; });
-
-            await saveCoursesToCloud();
-            document.getElementById('course-edit-modal').style.display = 'none';
-            alert('課程資料已成功修改並同步至雲端！');
-            initCloudData();
-        };
-
-        window.requestDeleteCourse = async function() {
-            if(!confirm('確定要永久刪除這個課程嗎？')) return;
-            const { dept, index } = window.pendingCourseEdit;
-            
-            window.state.courses[dept].splice(index, 1);
-            await saveCoursesToCloud();
-            
-            document.getElementById('course-edit-modal').style.display = 'none';
-            alert('課程已成功刪除！');
-            initCloudData();
-        };
-
-        // ================= 📋 其它輔助與日誌渲染 =================
-        window.renderLogStudents = function(dept) {
-            const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
-            const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
-            
-            const courseSelect = document.getElementById(selectId);
-            const tbody = document.getElementById(tbodyId);
-            if(!courseSelect || !tbody) return;
-
-            const courseName = courseSelect.value;
-            const students = window.state.students.filter(s => s.course === courseName);
-
-            if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程目前尚無學生，請先至「學生檔案與通訊」新增學生並指定到此課程。</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = students.map(s => `
-                <tr data-student-id="${s.id}">
-                    <td><b>${s.name}</b></td>
-                    <td>
-                        <select class="log-att-status">
-                            <option value="出席">出席</option>
-                            <option value="請假">請假</option>
-                            <option value="曠課">曠課</option>
-                        </select>
-                    </td>
-                    <td><input type="number" class="log-score" placeholder="分數" style="margin:0;"></td>
-                    <td>
-                        <select class="log-homework-status" style="margin:0;">
-                            <option value="完成">完成</option>
-                            <option value="未交">未交</option>
-                            <option value="部分完成">部分完成</option>
-                        </select>
-                    </td>
-                    <td><input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;"></td>
-                </tr>
-            `).join('');
-        };
-
-        window.saveLog = async function(dept) {
-            alert('教學日誌儲存功能運作中！');
-        };
-
-        window.verifyPasswordAndExecute = function(actionCallback) {
-            window.pendingDeleteAction = actionCallback;
-            document.getElementById('global-verify-pwd').value = '';
-            document.getElementById('password-verify-modal').style.display = 'flex';
-        };
-
-        window.confirmPasswordAction = function() {
-            const pwd = document.getElementById('global-verify-pwd').value;
-            if (pwd !== '0618') {
-                alert('密碼錯誤！安全驗證需要輸入正確密碼 0618');
-                return;
-            }
-            document.getElementById('password-verify-modal').style.display = 'none';
-            if (window.pendingDeleteAction) {
-                window.pendingDeleteAction();
-                window.pendingDeleteAction = null;
-            }
-        };
-
-        window.generateMonthDaysGrid = function() {};
-        window.renderDirectorOverview = function() {};
-        window.openNotesManagerModal = function() {};
 
         initCloudData();
     </script>
