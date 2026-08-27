@@ -62,8 +62,22 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
-        /* 設定區的條列清單 */
-        .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; overflow-y: auto; }
+        /* 設定區的純按鈕樣式 */
+        .pill-btn { padding: 8px 16px; background: #F1F5F9; border: 2px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: bold; color: #334155; cursor: pointer; transition: 0.2s; user-select: none; }
+        .pill-btn:hover { background: #E2E8F0; border-color: #94A3B8; }
+        .pill-btn.active { box-shadow: 0 0 0 3px rgba(37,99,235,0.4); }
+
+        /* 學生性別樣式 */
+        .student-boy { background: #EFF6FF !important; border-color: #93C5FD !important; color: #1E40AF !important; }
+        .student-boy:hover { background: #DBEAFE !important; }
+        .student-girl { background: #FDF2F8 !important; border-color: #F9A8D4 !important; color: #BE185D !important; }
+        .student-girl:hover { background: #FCE7F3 !important; }
+
+        /* 班級分類樣式 */
+        .class-junior { background: #FAF5FF; border-color: #D8B4FE; color: #7E22CE; }
+        .class-math { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }
+        .class-writing { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
+        .class-daycare { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
 
         /* 紀錄管理與未繳費提醒 */
         .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
@@ -101,10 +115,12 @@
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
 
-        /* 拖曳專用樣式 */
+        /* 拖曳樣式 */
         .sortable-ghost { opacity: 0.4; background-color: #CBD5E1 !important; }
-        .drag-handle { cursor: grab; }
-        .drag-handle:active { cursor: grabbing; }
+
+        /* 彈出視窗 Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .modal-box { background: white; padding: 25px; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
         /* 列印樣式 */
         @media screen { .print-only { display: none; } }
@@ -262,18 +278,23 @@
                 
                 <div id="primaryPeriodInput" style="flex: 1;">
                     <label>本張單據收費年月：</label>
-                    <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:200px;">
+                    <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:200px;" onchange="checkAndAutoMergeUnpaidBill()">
                 </div>
 
                 <div id="juniorPeriodInput" style="flex: 1; display: none; background: #F3E8FF; padding: 10px 15px; border-radius: 8px; border: 1px solid #D8B4FE;">
                     <label style="color: #7E22CE;">國中部專屬 - 收費起訖日期 (三個月一期)：</label>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="date" id="billStartDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;">
+                        <input type="date" id="billStartDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;" onchange="checkAndAutoMergeUnpaidBill()">
                         <span style="font-weight:bold; color:#7E22CE;">至</span>
-                        <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;">
+                        <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;" onchange="checkAndAutoMergeUnpaidBill()">
                     </div>
                 </div>
 
+            </div>
+
+            <!-- 自動合併提示 -->
+            <div id="autoMergeNotice" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold;">
+                🔄 系統已自動載入該學生同期間【未繳費】之既有項目！您新增的項目將自動合併儲存。
             </div>
 
             <div class="item-builder">
@@ -304,15 +325,22 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：系統設定 (上下區塊佈局) -->
+    <!-- 頁籤 3：系統設定 -->
     <div id="settings" class="content-area">
         <!-- 區塊 1：班級設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
-            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定 (點擊選取／修改名稱，可直接拖曳調整前後順序)</h3>
+            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定 (依分類自動呈現專屬顏色，點擊展開學生；可拖曳排序)</h3>
             
+            <div style="display:flex; gap:15px; font-size:13px; margin-bottom:15px; flex-wrap:wrap;">
+                <span>🟣 國中部 (紫色)</span>
+                <span>🔵 國小安親班/年級 (藍色)</span>
+                <span>🟢 數學班 (綠色)</span>
+                <span>🟡 作文班 (黃色)</span>
+            </div>
+
             <div class="form-row" style="margin-bottom: 15px;">
                 <div style="flex: 1;">
-                    <input type="text" id="newConfigClassName" placeholder="輸入新增班級名稱 (如: 2026 六年級)" style="width:100%;">
+                    <input type="text" id="newConfigClassName" placeholder="輸入新增班級名稱 (如: 2026 六年級、三年級作文班)" style="width:100%;">
                 </div>
                 <div>
                     <button class="btn-add" style="padding: 10px 15px;" onclick="addClassConfig()">➕ 新增班級</button>
@@ -320,30 +348,39 @@
                 </div>
             </div>
             
-            <div class="btn-grid drag-handle" id="classConfigList" style="margin-top: 10px; margin-bottom: 0;"></div>
+            <div class="btn-grid" id="classConfigList" style="margin-top: 10px; margin-bottom: 0;"></div>
         </div>
 
         <!-- 區塊 2：學生名單編輯 -->
         <div id="studentConfigSection" style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; margin-bottom: 25px; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: var(--accent);">🧑‍🎓 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</h3>
-                <button class="btn-select" style="background: #E0E7FF; color: #3730A3; font-weight: bold; border-color: #A5B4FC; padding: 6px 14px; font-size: 14px;" onclick="sortCurrentStudentsByStroke()">🔤 依姓氏筆畫排序</button>
+                <h3 style="margin: 0; color: var(--accent);">🧑‍🎓 班級：<span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生 (<span style="color:#1E40AF;">👦 男生藍色</span> / <span style="color:#BE185D;">👧 女生粉紅色</span>，可拖曳排序)</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-select" style="background: #EFF6FF; color: var(--accent); font-weight: bold; border-color: #BFDBFE; padding: 6px 12px; font-size: 14px;" onclick="openClassModal(window.editingClass)">✏️ 修改/刪除本班級</button>
+                    <button class="btn-select" style="background: #E0E7FF; color: #3730A3; font-weight: bold; border-color: #A5B4FC; padding: 6px 12px; font-size: 14px;" onclick="sortCurrentStudentsByStroke()">🔤 依姓氏筆畫排序</button>
+                </div>
             </div>
             
             <div class="form-row" style="margin-bottom: 15px;">
-                <div style="flex: 1;">
+                <div style="flex: 2;">
                     <input type="text" id="newConfigStudentName" placeholder="輸入學生姓名" style="width:100%;">
+                </div>
+                <div style="flex: 1;">
+                    <select id="newConfigStudentGender" style="width:100%;">
+                        <option value="male">👦 男生</option>
+                        <option value="female">👧 女生</option>
+                    </select>
                 </div>
                 <div>
                     <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
                 </div>
             </div>
-            <div class="config-list-box" id="studentConfigList" style="max-height: 260px;"></div>
+            <div class="btn-grid" id="studentConfigList" style="margin-top: 10px; margin-bottom: 0; min-height: 40px;"></div>
         </div>
 
         <!-- 區塊 3：快捷收費按鈕與經手人設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定 (點擊名稱修改，可直接拖曳調整順序)</h3>
+            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定 (點擊按鈕可修改名稱/金額或刪除，可直接拖曳調整順序)</h3>
             <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300 折扣優惠）。</p>
             
             <div class="form-row">
@@ -360,7 +397,7 @@
                 </div>
             </div>
 
-            <div class="config-list-box drag-handle" id="quickItemConfigList" style="max-height: 260px; margin-bottom: 20px;"></div>
+            <div class="btn-grid" id="quickItemConfigList" style="margin-top: 10px; margin-bottom: 20px; min-height: 40px;"></div>
 
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
                 <label>預設收款經手人 (印在收據上)：</label>
@@ -406,6 +443,13 @@
                     <input type="text" id="profClass" placeholder="如：三年二班" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
                 <div style="flex: 1; min-width: 140px;">
+                    <label style="font-size: 14px; color: #92400E; margin-bottom: 5px;">性別</label>
+                    <select id="profGender" style="width: 100%; padding: 8px; border-color: #FCD34D;">
+                        <option value="male">👦 男生</option>
+                        <option value="female">👧 女生</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 140px;">
                     <input type="text" id="profContact1Name" placeholder="聯絡人1 (如: 爸爸)" style="width: 100%; border:none; border-bottom:1px solid #FCD34D; background:transparent; font-size:14px; color:#92400E; font-weight:bold; margin-bottom:5px;">
                     <input type="text" id="profContact1Phone" placeholder="輸入號碼" style="width: 100%; padding: 8px; border-color: #FCD34D;">
                 </div>
@@ -425,6 +469,65 @@
         </div>
 
         <div id="directoryContent"></div>
+    </div>
+</div>
+
+<!-- 彈出視窗：編輯班級 -->
+<div id="classModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--primary);">🏫 修改 / 刪除班級</h3>
+        <input type="hidden" id="modalOldClassName">
+        <label>班級名稱：</label>
+        <input type="text" id="modalClassNameInput" style="width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+            <button class="btn-delete-item" onclick="deleteClassFromModal()">🗑️ 刪除班級</button>
+            <div>
+                <button class="btn-select" style="padding: 8px 15px; margin-right: 8px;" onclick="closeModal('classModal')">取消</button>
+                <button class="btn-add" style="padding: 8px 15px;" onclick="saveClassFromModal()">💾 確認修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 彈出視窗：編輯學生 -->
+<div id="studentModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--accent);">🧑‍🎓 修改 / 刪除學生</h3>
+        <input type="hidden" id="modalStudentIndex">
+        <input type="hidden" id="modalOldStudentName">
+        <label>學生姓名：</label>
+        <input type="text" id="modalStudentNameInput" style="width: 100%; margin-bottom: 15px;">
+        <label>性別設定：</label>
+        <select id="modalStudentGenderSelect" style="width: 100%; margin-bottom: 20px;">
+            <option value="male">👦 男生 (藍色)</option>
+            <option value="female">👧 女生 (粉紅色)</option>
+        </select>
+        <div style="display: flex; justify-content: space-between;">
+            <button class="btn-delete-item" onclick="deleteStudentFromModal()">🗑️ 刪除學生</button>
+            <div>
+                <button class="btn-select" style="padding: 8px 15px; margin-right: 8px;" onclick="closeModal('studentModal')">取消</button>
+                <button class="btn-add" style="padding: 8px 15px;" onclick="saveStudentFromModal()">💾 確認修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 彈出視窗：編輯快捷收費項目 -->
+<div id="quickItemModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--primary);">⚙️ 修改 / 刪除快捷收費項目</h3>
+        <input type="hidden" id="modalQuickItemIndex">
+        <label>項目名稱：</label>
+        <input type="text" id="modalQuickItemNameInput" style="width: 100%; margin-bottom: 15px;">
+        <label>預設金額 (可填負數優惠)：</label>
+        <input type="number" id="modalQuickItemPriceInput" style="width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+            <button class="btn-delete-item" onclick="deleteQuickItemFromModal()">🗑️ 刪除項目</button>
+            <div>
+                <button class="btn-select" style="padding: 8px 15px; margin-right: 8px;" onclick="closeModal('quickItemModal')">取消</button>
+                <button class="btn-add" style="padding: 8px 15px;" onclick="saveQuickItemFromModal()">💾 確認修改</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -455,6 +558,7 @@
     window.currentClass = "";
     window.currentStudent = "";
     window.currentBillItems = [];
+    window.existingUnpaidBill = null; // 紀錄比對到的同期間未繳費帳單
     
     window.editingClass = "";
     window.deletedClassBackup = null;
@@ -463,7 +567,22 @@
     window.editingProfileStudent = "";
 
     let classSortable = null;
+    let studentSortable = null;
     let quickItemSortable = null;
+
+    // === 判斷班級分類並回傳專屬 CSS class ===
+    window.getClassCategoryStyle = function(className) {
+        if (className.includes('國中') || className.includes('國一') || className.includes('國二') || className.includes('國三') || className.includes('會考') || className.includes('理化')) {
+            return 'class-junior'; // 國中 (紫色)
+        }
+        if (className.includes('數學') || className.includes('奧數') || className.includes('資優')) {
+            return 'class-math'; // 國小數學班 (綠色)
+        }
+        if (className.includes('作文') || className.includes('語文') || className.includes('閱讀')) {
+            return 'class-writing'; // 作文班 (黃色)
+        }
+        return 'class-daycare'; // 國小安親班 / 各年級 (藍色)
+    }
 
     // === 登入系統邏輯 ===
     window.checkLogin = function() {
@@ -650,6 +769,7 @@
         
         document.getElementById('profSchool').value = data.school || '';
         document.getElementById('profClass').value = data.gradeClass || '';
+        document.getElementById('profGender').value = data.gender || 'male';
         document.getElementById('profContact1Name').value = data.contact1Name || (data.dad ? '爸爸' : '聯絡人1');
         document.getElementById('profContact1Phone').value = data.contact1Phone || data.dad || '';
         document.getElementById('profContact2Name').value = data.contact2Name || (data.mom ? '媽媽' : '聯絡人2');
@@ -674,6 +794,7 @@
         window.studentDetails[key] = {
             school: document.getElementById('profSchool').value.trim(),
             gradeClass: document.getElementById('profClass').value.trim(),
+            gender: document.getElementById('profGender').value,
             contact1Name: document.getElementById('profContact1Name').value.trim(),
             contact1Phone: document.getElementById('profContact1Phone').value.trim(),
             contact2Name: document.getElementById('profContact2Name').value.trim(),
@@ -701,7 +822,8 @@
 
         Object.keys(window.config.classes).forEach(cls => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${cls === window.currentDirectoryClass ? 'active' : ''}`;
+            const classColor = getClassCategoryStyle(cls);
+            btn.className = `btn-select ${classColor} ${cls === window.currentDirectoryClass ? 'active' : ''}`;
             btn.innerText = cls;
             btn.onclick = () => showDirectoryClass(cls);
             grid.appendChild(btn);
@@ -753,6 +875,7 @@
             students.forEach(stu => {
                 const key = className + '_' + stu;
                 const d = window.studentDetails[key] || {};
+                const genderIcon = d.gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
                 const c1n = d.contact1Name || (d.dad ? '爸爸' : '');
                 const c1p = d.contact1Phone || d.dad || '';
                 const c2n = d.contact2Name || (d.mom ? '媽媽' : '');
@@ -766,7 +889,7 @@
 
                 html += `<tr>
                     <td style="vertical-align: top;">
-                        <span class="student-link" title="點擊修改資料" onclick="loadStudentProfile('${className}', '${stu}')">${stu}</span>
+                        ${genderIcon}<span class="student-link" title="點擊修改資料" onclick="loadStudentProfile('${className}', '${stu}')">${stu}</span>
                     </td>
                     <td style="color:#64748B; font-size:14px; vertical-align: top;">${schoolInfo}</td>
                     <td style="vertical-align: top;">${c1n ? `<span style="color:#92400E; font-size:13px;">${c1n}:</span><br>` : ''}${c1p}</td>
@@ -797,7 +920,12 @@
         window.print();
     }
 
-    // === 設定區：班級管理 (支援拖曳排序) ===
+    // === Modal 操作邏輯 ===
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // === 區塊 1：班級設定 ===
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
         const classEntries = Object.entries(window.config.classes);
@@ -809,14 +937,12 @@
         list.innerHTML = classEntries.map(([cls, students]) => {
             const isActive = cls === window.editingClass;
             const studentCount = students.length;
+            const classColor = getClassCategoryStyle(cls);
 
             return `
-                <div class="class-drag-item" data-class="${cls}" style="display: inline-flex; align-items: center; background: ${isActive ? '#EFF6FF' : '#F8FAFC'}; border: 2px solid ${isActive ? 'var(--accent)' : '#CBD5E1'}; border-radius: 8px; padding: 4px 8px; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); user-select: none;">
-                    <span style="font-size: 16px; font-weight: bold; color: ${isActive ? 'var(--accent)' : '#334155'}; cursor: pointer; padding: 4px;" title="點擊編輯學生名單 (雙擊修改班級名稱)" onclick="editClassStudents('${cls}')" ondblclick="promptRenameClass('${cls}')">
-                        ${cls} <span style="font-size: 13px; color: #64748B; font-weight: normal;">(${studentCount}人)</span>
-                    </span>
-                    <button class="btn-delete-item" style="padding: 2px 7px; font-size: 12px; margin-left: 2px;" title="刪除班級" onclick="event.stopPropagation(); promptDeleteClass('${cls}')">✕</button>
-                </div>
+                <button class="pill-btn class-drag-item ${classColor} ${isActive ? 'active' : ''}" data-class="${cls}" onclick="editClassStudents('${cls}')">
+                    ${cls} <span style="font-size: 13px; opacity:0.85; font-weight: normal;">(${studentCount}人)</span>
+                </button>
             `;
         }).join('');
 
@@ -846,20 +972,25 @@
         renderClassConfigList();
         editClassStudents(name);
     }
-    
-    window.promptRenameClass = function(oldName) {
-        verifyAndDelete(`修改班級名稱「${oldName}」`, () => {
-            const newName = prompt('請輸入新的班級名稱：', oldName);
-            if (newName === null) return; 
-            const trimmedName = newName.trim();
-            if (!trimmedName) { alert('班級名稱不能為空！'); return; }
-            if (trimmedName === oldName) return; 
-            if (window.config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
+    window.openClassModal = function(cls) {
+        document.getElementById('modalOldClassName').value = cls;
+        document.getElementById('modalClassNameInput').value = cls;
+        document.getElementById('classModal').style.display = 'flex';
+    }
+
+    window.saveClassFromModal = function() {
+        const oldName = document.getElementById('modalOldClassName').value;
+        const newName = document.getElementById('modalClassNameInput').value.trim();
+        if (!newName) { alert('班級名稱不能為空！'); return; }
+        if (newName === oldName) { closeModal('classModal'); return; }
+        if (window.config.classes[newName]) { alert('此班級名稱已經存在囉！'); return; }
+
+        verifyAndDelete(`修改班級名稱「${oldName}」為「${newName}」`, async () => {
             const newClasses = {};
             for (let key in window.config.classes) {
                 if (key === oldName) {
-                    newClasses[trimmedName] = window.config.classes[oldName];
+                    newClasses[newName] = window.config.classes[oldName];
                 } else {
                     newClasses[key] = window.config.classes[key];
                 }
@@ -870,7 +1001,7 @@
             for (let key in window.studentDetails) {
                 if (key.startsWith(oldName + '_')) {
                     const stuName = key.substring(oldName.length + 1);
-                    newStudentDetails[trimmedName + '_' + stuName] = window.studentDetails[key];
+                    newStudentDetails[newName + '_' + stuName] = window.studentDetails[key];
                 } else {
                     newStudentDetails[key] = window.studentDetails[key];
                 }
@@ -879,20 +1010,22 @@
             saveStudentDetailsToCloud();
 
             if (window.editingClass === oldName) {
-                window.editingClass = trimmedName;
-                document.getElementById('editingClassName').innerText = trimmedName;
+                window.editingClass = newName;
+                document.getElementById('editingClassName').innerText = newName;
             }
 
-            saveClassesToCloud();
+            await saveClassesToCloud();
             renderClassConfigList();
-            if (window.editingClass === trimmedName) {
+            if (window.editingClass === newName) {
                 renderStudentConfigList();
             }
+            closeModal('classModal');
             alert('✏️ 班級名稱修改成功！');
         });
     }
 
-    window.promptDeleteClass = function(cls) {
+    window.deleteClassFromModal = function() {
+        const cls = document.getElementById('modalOldClassName').value;
         verifyAndDelete(`刪除班級「${cls}」及其所有學生`, async () => {
             window.deletedClassBackup = { name: cls, students: [...window.config.classes[cls]] };
             delete window.config.classes[cls];
@@ -902,6 +1035,7 @@
             }
             await saveClassesToCloud();
             renderClassConfigList();
+            closeModal('classModal');
             document.getElementById('undoClassBtn').style.display = 'inline-block';
             alert('🗑️ 班級已刪除！');
         });
@@ -918,7 +1052,7 @@
         }
     }
 
-    // === 設定區：學生名單管理 ===
+    // === 區塊 2：學生名單管理 ===
     window.editClassStudents = function(cls) {
         window.editingClass = cls;
         renderClassConfigList();
@@ -931,41 +1065,117 @@
         const list = document.getElementById('studentConfigList');
         const students = window.config.classes[window.editingClass];
         if (!students || students.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前班上尚無學生，請於上方新增</div>';
+            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前班上尚無學生，請於上方新增</div>';
             return;
         }
         list.innerHTML = students.map((stu, index) => {
+            const key = window.editingClass + '_' + stu;
+            const gender = (window.studentDetails[key] && window.studentDetails[key].gender) || 'male';
+            const genderClass = gender === 'female' ? 'student-girl' : 'student-boy';
+            const icon = gender === 'female' ? '👧' : '👦';
+
             return `
-                <div class="item-row" style="background:#FFFFFF;">
-                    <div><strong>${index + 1}. ${stu}</strong></div>
-                    <button class="btn-delete-item" onclick="promptDeleteStudent(${index}, '${stu}')">移除</button>
-                </div>
+                <button class="pill-btn student-drag-item ${genderClass}" data-index="${index}" onclick="openStudentModal(${index}, '${stu}')">
+                    ${icon} ${index + 1}. ${stu}
+                </button>
             `;
         }).join('');
+
+        if (studentSortable) studentSortable.destroy();
+        studentSortable = new Sortable(list, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function () {
+                const newOrderedIndices = Array.from(list.querySelectorAll('.student-drag-item')).map(el => parseInt(el.getAttribute('data-index')));
+                const currentStudents = window.config.classes[window.editingClass];
+                const reordered = newOrderedIndices.map(i => currentStudents[i]);
+                window.config.classes[window.editingClass] = reordered;
+                await saveClassesToCloud();
+                renderStudentConfigList();
+            }
+        });
     }
 
     window.addStudentConfig = async function() {
         if (!window.editingClass) return;
         const name = document.getElementById('newConfigStudentName').value.trim();
+        const gender = document.getElementById('newConfigStudentGender').value;
         if (!name) { alert('請輸入學生姓名！'); return; }
         if (window.config.classes[window.editingClass].includes(name)) { alert('此學生已存在該班級！'); return; }
+        
         window.config.classes[window.editingClass].push(name);
+        
+        const key = window.editingClass + '_' + name;
+        if (!window.studentDetails[key]) window.studentDetails[key] = {};
+        window.studentDetails[key].gender = gender;
+
         await saveClassesToCloud();
+        await saveStudentDetailsToCloud();
+
         document.getElementById('newConfigStudentName').value = '';
         renderStudentConfigList();
         renderClassConfigList();
     }
 
-    window.promptDeleteStudent = function(index, stuName) {
+    window.openStudentModal = function(index, stuName) {
+        document.getElementById('modalStudentIndex').value = index;
+        document.getElementById('modalOldStudentName').value = stuName;
+        document.getElementById('modalStudentNameInput').value = stuName;
+        
+        const key = window.editingClass + '_' + stuName;
+        const gender = (window.studentDetails[key] && window.studentDetails[key].gender) || 'male';
+        document.getElementById('modalStudentGenderSelect').value = gender;
+
+        document.getElementById('studentModal').style.display = 'flex';
+    }
+
+    window.saveStudentFromModal = async function() {
+        const index = parseInt(document.getElementById('modalStudentIndex').value);
+        const oldName = document.getElementById('modalOldStudentName').value;
+        const newName = document.getElementById('modalStudentNameInput').value.trim();
+        const newGender = document.getElementById('modalStudentGenderSelect').value;
+
+        if (!newName) { alert('學生姓名不能為空！'); return; }
+        
+        if (newName !== oldName && window.config.classes[window.editingClass].includes(newName)) {
+            alert('此班級已有同名學生！');
+            return;
+        }
+
+        window.config.classes[window.editingClass][index] = newName;
+        
+        // 同步修改通訊錄 key 及 性別
+        const oldKey = window.editingClass + '_' + oldName;
+        const newKey = window.editingClass + '_' + newName;
+        
+        let targetData = window.studentDetails[oldKey] || {};
+        targetData.gender = newGender;
+
+        if (oldKey !== newKey) {
+            delete window.studentDetails[oldKey];
+        }
+        window.studentDetails[newKey] = targetData;
+
+        await saveClassesToCloud();
+        await saveStudentDetailsToCloud();
+
+        renderStudentConfigList();
+        closeModal('studentModal');
+        alert('✏️ 學生資料修改成功！');
+    }
+
+    window.deleteStudentFromModal = function() {
+        const index = parseInt(document.getElementById('modalStudentIndex').value);
+        const stuName = document.getElementById('modalOldStudentName').value;
         verifyAndDelete(`從班級移除學生「${stuName}」`, async () => {
             window.config.classes[window.editingClass].splice(index, 1);
             await saveClassesToCloud();
             renderStudentConfigList();
             renderClassConfigList();
+            closeModal('studentModal');
         });
     }
 
-    // 依繁體中文姓氏筆畫排序
     window.sortCurrentStudentsByStroke = async function() {
         if (!window.editingClass) return;
         const students = window.config.classes[window.editingClass];
@@ -977,7 +1187,7 @@
         alert(`🔤 已成功將【${window.editingClass}】學生依筆畫排序！`);
     }
 
-    // === 設定區：快捷收費項目設定 (支援拖曳排序) ===
+    // === 區塊 3：快捷收費項目設定 ===
     window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
         window.config.handler = handler;
@@ -992,32 +1202,23 @@
     window.renderQuickItemConfigList = function() {
         const list = document.getElementById('quickItemConfigList');
         if (window.quickItems.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚未設定任何項目</div>';
+            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚未設定任何項目</div>';
             return;
         }
         list.innerHTML = window.quickItems.map((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
-            let rowStyle = 'background:#F1F5F9;';
-            let priceStyle = 'color:#64748B;';
+            let itemStyle = '';
             
             if (item.price !== null && item.price < 0) {
-                rowStyle = 'background:#FEF3C7; border-color:#FDE68A;';
-                priceStyle = 'color:#B45309;';
+                itemStyle = 'background:#FEF3C7; border-color:#FDE68A; color:#B45309;';
             } else if (isJuniorHigh(item.name)) {
-                rowStyle = 'background:#F3E8FF; border-color:#D8B4FE;';
-                priceStyle = 'color:#7E22CE;';
+                itemStyle = 'background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;';
             }
 
             return `
-                <div class="item-row quick-drag-item" data-index="${index}" style="${rowStyle} user-select: none;">
-                    <div>
-                        <strong title="點擊修改項目名稱" onclick="promptRenameQuickItem(${index})">${item.name}</strong>
-                        <span style="font-size:14px; ${priceStyle} margin-left:10px;">(${priceText})</span>
-                    </div>
-                    <div>
-                        <button class="btn-delete-item" onclick="promptDeleteQuickItem(${index}, '${item.name}')">刪除</button>
-                    </div>
-                </div>
+                <button class="pill-btn quick-drag-item" data-index="${index}" style="${itemStyle}" onclick="openQuickItemModal(${index})">
+                    ${item.name} <span style="font-size:13px; font-weight:normal; opacity:0.85;">(${priceText})</span>
+                </button>
             `;
         }).join('');
 
@@ -1047,26 +1248,37 @@
         renderQuickItemConfigList();
     }
 
-    window.promptRenameQuickItem = function(index) {
+    window.openQuickItemModal = function(index) {
         const item = window.quickItems[index];
-        verifyAndDelete(`修改快捷項目「${item.name}」`, () => {
-            const newName = prompt('請輸入新的項目名稱：', item.name);
-            if (newName === null) return;
-            const trimmed = newName.trim();
-            if (!trimmed) { alert('名稱不能為空！'); return; }
-            
-            item.name = trimmed;
-            saveQuickItemsToCloud();
-            renderQuickItemConfigList();
-            alert('✏️ 快捷項目修改成功！');
-        });
+        document.getElementById('modalQuickItemIndex').value = index;
+        document.getElementById('modalQuickItemNameInput').value = item.name;
+        document.getElementById('modalQuickItemPriceInput').value = item.price !== null ? item.price : '';
+        document.getElementById('quickItemModal').style.display = 'flex';
     }
 
-    window.promptDeleteQuickItem = function(index, itemName) {
+    window.saveQuickItemFromModal = function() {
+        const index = parseInt(document.getElementById('modalQuickItemIndex').value);
+        const name = document.getElementById('modalQuickItemNameInput').value.trim();
+        const priceVal = document.getElementById('modalQuickItemPriceInput').value;
+        const price = priceVal === '' ? null : parseInt(priceVal);
+
+        if (!name) { alert('項目名稱不能為空！'); return; }
+
+        window.quickItems[index] = { name, price };
+        saveQuickItemsToCloud();
+        renderQuickItemConfigList();
+        closeModal('quickItemModal');
+        alert('✏️ 快捷項目修改成功！');
+    }
+
+    window.deleteQuickItemFromModal = function() {
+        const index = parseInt(document.getElementById('modalQuickItemIndex').value);
+        const itemName = window.quickItems[index].name;
         verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
             window.quickItems.splice(index, 1);
             await saveQuickItemsToCloud();
             renderQuickItemConfigList();
+            closeModal('quickItemModal');
         });
     }
 
@@ -1076,7 +1288,8 @@
         grid.innerHTML = '';
         Object.keys(window.config.classes).forEach(cls => {
             const btn = document.createElement('button');
-            btn.className = `btn-select ${cls === window.currentClass ? 'active' : ''}`;
+            const classColor = getClassCategoryStyle(cls);
+            btn.className = `btn-select ${classColor} ${cls === window.currentClass ? 'active' : ''}`;
             btn.innerText = cls;
             btn.onclick = () => selectClass(cls);
             grid.appendChild(btn);
@@ -1094,8 +1307,13 @@
         
         window.config.classes[cls].forEach(stu => {
             const btn = document.createElement('button');
-            btn.className = `btn-select`;
-            btn.innerText = stu;
+            const key = cls + '_' + stu;
+            const gender = (window.studentDetails[key] && window.studentDetails[key].gender) || 'male';
+            const genderClass = gender === 'female' ? 'student-girl' : 'student-boy';
+            const icon = gender === 'female' ? '👧' : '👦';
+
+            btn.className = `btn-select ${genderClass}`;
+            btn.innerText = `${icon} ${stu}`;
             btn.onclick = (e) => selectStudent(stu, e.target);
             sGrid.appendChild(btn);
         });
@@ -1119,10 +1337,54 @@
 
         document.getElementById('billingSection').style.display = 'block';
         document.getElementById('billingTargetName').innerText = window.currentStudent;
-        window.currentBillItems = [];
+        
         document.getElementById('itemName').value = '';
         document.getElementById('itemAmt').value = '';
         renderQuickButtonsForBilling();
+        
+        // 觸發自動比對與載入同期間未繳費項目
+        checkAndAutoMergeUnpaidBill();
+    }
+
+    // 自動檢查並合併既有未繳費項目
+    window.checkAndAutoMergeUnpaidBill = function() {
+        if (!window.currentStudent || !window.currentClass) return;
+
+        const isJH = isJuniorHigh(window.currentClass);
+        let yMonth = '';
+        let displayPeriod = '';
+
+        if (isJH) {
+            const start = document.getElementById('billStartDate').value;
+            const end = document.getElementById('billEndDate').value;
+            if (!start || !end) return;
+            yMonth = start.substring(0, 7);
+            displayPeriod = `${start} ~ ${end}`;
+        } else {
+            yMonth = document.getElementById('billMonth').value;
+            if (!yMonth) return;
+            displayPeriod = yMonth;
+        }
+
+        // 搜尋此學生在同班級、同期間且【尚未繳費】的帳單
+        const matched = window.bills.find(b => 
+            !b.isPaid && 
+            b.studentName === window.currentStudent && 
+            b.className === window.currentClass &&
+            (b.periodStr === displayPeriod || b.yearMonth === yMonth)
+        );
+
+        const noticeBox = document.getElementById('autoMergeNotice');
+        if (matched) {
+            window.existingUnpaidBill = matched;
+            window.currentBillItems = JSON.parse(JSON.stringify(matched.items)); // 深度複製既有項目
+            if (noticeBox) noticeBox.style.display = 'block';
+        } else {
+            window.existingUnpaidBill = null;
+            window.currentBillItems = [];
+            if (noticeBox) noticeBox.style.display = 'none';
+        }
+
         renderCurrentItems();
     }
 
@@ -1214,28 +1476,51 @@
 
         let total = window.currentBillItems.reduce((sum, item) => sum + item.amount, 0);
         
-        const newBill = {
-            id: Date.now(),
-            date: new Date().toLocaleDateString(),
-            yearMonth: yMonth,       
-            periodStr: displayPeriod, 
-            className: window.currentClass,
-            studentName: window.currentStudent,
-            items: [...window.currentBillItems],
-            total: total, 
-            isPaid: false,
-            paidDate: null
-        };
-        
         try {
-            const docRef = await addDoc(collection(db, "bills"), newBill);
-            newBill.firestoreId = docRef.id;
-            
-            window.bills.unshift(newBill);
-            
-            alert(`✅ 已成功儲存【${window.currentStudent}】的繳費單至雲端！\n您可以直接點選下一位學生繼續開單。`);
+            // 如果已存在同期間未繳費帳單，直接更新覆蓋原帳單（實現自動合併）
+            if (window.existingUnpaidBill && window.existingUnpaidBill.firestoreId) {
+                const targetBill = window.existingUnpaidBill;
+                targetBill.items = [...window.currentBillItems];
+                targetBill.total = total;
+                targetBill.date = new Date().toLocaleDateString();
+
+                await setDoc(doc(db, "bills", targetBill.firestoreId), {
+                    id: targetBill.id,
+                    date: targetBill.date,
+                    yearMonth: targetBill.yearMonth,
+                    periodStr: targetBill.periodStr,
+                    className: targetBill.className,
+                    studentName: targetBill.studentName,
+                    items: targetBill.items,
+                    total: targetBill.total,
+                    isPaid: false,
+                    paidDate: null
+                });
+
+                alert(`🔄 已成功將新項目自動合併至【${window.currentStudent}】原本的未繳費單據中！`);
+            } else {
+                const newBill = {
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString(),
+                    yearMonth: yMonth,       
+                    periodStr: displayPeriod, 
+                    className: window.currentClass,
+                    studentName: window.currentStudent,
+                    items: [...window.currentBillItems],
+                    total: total, 
+                    isPaid: false,
+                    paidDate: null
+                };
+
+                const docRef = await addDoc(collection(db, "bills"), newBill);
+                newBill.firestoreId = docRef.id;
+                window.bills.unshift(newBill);
+                
+                alert(`✅ 已成功儲存【${window.currentStudent}】的繳費單至雲端！\n您可以直接點選下一位學生繼續開單。`);
+            }
             
             window.currentBillItems = [];
+            window.existingUnpaidBill = null;
             renderCurrentItems();
             document.getElementById('itemName').value = '';
             document.getElementById('itemAmt').value = '';
