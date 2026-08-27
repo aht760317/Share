@@ -329,7 +329,7 @@
     <div id="settings" class="content-area">
         <!-- 區塊 1：班級設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
-            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定 (依分類自動呈現專屬顏色，點擊展開學生；可拖曳排序)</h3>
+            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定</h3>
             
             <div style="display:flex; gap:15px; font-size:13px; margin-bottom:15px; flex-wrap:wrap;">
                 <span>🟣 國中部 (紫色)</span>
@@ -354,7 +354,7 @@
         <!-- 區塊 2：學生名單編輯 -->
         <div id="studentConfigSection" style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; margin-bottom: 25px; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: var(--accent);">🧑‍🎓 班級：<span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生 (<span style="color:#1E40AF;">👦 男生藍色</span> / <span style="color:#BE185D;">👧 女生粉紅色</span>，可拖曳排序)</h3>
+                <h3 style="margin: 0; color: var(--accent);">🧑‍🎓 班級：<span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生</h3>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-select" style="background: #EFF6FF; color: var(--accent); font-weight: bold; border-color: #BFDBFE; padding: 6px 12px; font-size: 14px;" onclick="openClassModal(window.editingClass)">✏️ 修改/刪除本班級</button>
                     <button class="btn-select" style="background: #E0E7FF; color: #3730A3; font-weight: bold; border-color: #A5B4FC; padding: 6px 12px; font-size: 14px;" onclick="sortCurrentStudentsByStroke()">🔤 依姓氏筆畫排序</button>
@@ -380,7 +380,7 @@
 
         <!-- 區塊 3：快捷收費按鈕與經手人設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定 (點擊按鈕可修改名稱/金額或刪除，可直接拖曳調整順序)</h3>
+            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
             <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300 折扣優惠）。</p>
             
             <div class="form-row">
@@ -1477,9 +1477,16 @@
         let total = window.currentBillItems.reduce((sum, item) => sum + item.amount, 0);
         
         try {
+            // 確認最新資料庫中是否已有符合條件的未繳費單據，避免重疊
+            const targetBill = window.bills.find(b => 
+                !b.isPaid && 
+                b.studentName === window.currentStudent && 
+                b.className === window.currentClass &&
+                (b.periodStr === displayPeriod || b.yearMonth === yMonth)
+            );
+
             // 如果已存在同期間未繳費帳單，直接更新覆蓋原帳單（實現自動合併）
-            if (window.existingUnpaidBill && window.existingUnpaidBill.firestoreId) {
-                const targetBill = window.existingUnpaidBill;
+            if (targetBill && targetBill.firestoreId) {
                 targetBill.items = [...window.currentBillItems];
                 targetBill.total = total;
                 targetBill.date = new Date().toLocaleDateString();
@@ -1524,10 +1531,14 @@
             renderCurrentItems();
             document.getElementById('itemName').value = '';
             document.getElementById('itemAmt').value = '';
+            document.getElementById('autoMergeNotice').style.display = 'none';
             
             document.getElementById('billingSection').style.display = 'none';
             document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
             window.currentStudent = "";
+
+            // 更新管理列表畫面
+            renderRecords();
         } catch (e) {
             console.error("儲存帳單失敗：", e);
             alert("儲存帳單到雲端失敗，請稍後再試。");
