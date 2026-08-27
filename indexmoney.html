@@ -59,8 +59,11 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
-        /* 設定區的條列清單 */
-        .config-list-box { background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; overflow-y: auto; }
+        /* 設定區的按鈕式班級網格卡片 */
+        .class-card-grid { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px; }
+        .class-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .class-card:hover { background: #F1F5F9; border-color: #CBD5E1; }
+        .class-card.active { background: #EFF6FF; border-color: var(--accent); box-shadow: 0 2px 5px rgba(37,99,235,0.15); }
 
         /* 紀錄管理與未繳費提醒 */
         .filter-bar { background: #F1F5F9; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
@@ -301,9 +304,9 @@
                 
                 <!-- 升級後的按鈕式班級清單與排序 -->
                 <label>現有班級列表 (點擊可編輯學生，可調整順序)：</label>
-                <div class="config-list-box" id="classConfigList" style="height: 160px; margin-bottom: 20px;"></div>
+                <div class="class-card-grid" id="classConfigList"></div>
 
-                <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1;">
+                <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1; margin-top: 20px;">
                     <label style="color: var(--accent);">2. 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</label>
                     <div class="form-row" style="margin-bottom: 15px;">
                         <div style="flex: 1;">
@@ -313,7 +316,7 @@
                             <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
                         </div>
                     </div>
-                    <div class="config-list-box" id="studentConfigList" style="height: 250px;"></div>
+                    <div class="config-list-box" id="studentConfigList" style="height: 220px;"></div>
                 </div>
             </div>
             
@@ -336,7 +339,7 @@
                         </div>
                     </div>
 
-                    <label style="margin-top: 15px;">已設定的快捷項目 (可拖拉排序)：</label>
+                    <label style="margin-top: 15px;">已設定的快捷項目 (可調整順序)：</label>
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
@@ -525,13 +528,14 @@
         } catch (e) { console.error(e); }
     }
 
+    // 刪除與修改密碼驗證核心函式 (密碼 0618)
     window.verifyAndDelete = function(actionDescription, callback) {
-        const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入刪除密碼以繼續：`);
+        const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入安全密碼以繼續 (0618)：`);
         if (pwd === null) return;
         if (pwd === '0618') {
             callback();
         } else {
-            alert('❌ 密碼錯誤！刪除動作已取消。');
+            alert('❌ 密碼錯誤！動作已取消。');
         }
     }
 
@@ -779,16 +783,16 @@
             const disableDown = index === classEntries.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
 
             return `
-                <div class="item-row" style="background:${isActive ? '#DBEAFE' : '#F1F5F9'}; border-color:${isActive ? '#3B82F6' : '#E2E8F0'}; cursor: pointer;" onclick="editClassStudents('${cls}')">
+                <div class="class-card ${isActive ? 'active' : ''}" onclick="editClassStudents('${cls}')">
                     <div>
                         <strong>${cls}</strong>
                         <span style="font-size:13px; color:#64748B; margin-left:10px;">(${studentCount} 位學生)</span>
                     </div>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="event.stopPropagation(); moveClassConfig(${index}, -1)" ${disableUp}>▲</button>
-                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="event.stopPropagation(); moveClassConfig(${index}, 1)" ${disableDown}>▼</button>
-                        <button class="btn-edit-item" style="padding: 6px 10px;" title="修改班級名稱" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️</button>
-                        <button class="btn-delete-item" onclick="event.stopPropagation(); promptDeleteClass('${cls}')">刪除</button>
+                    <div style="display: flex; gap: 5px;" onclick="event.stopPropagation();">
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveClassConfig(${index}, -1)" ${disableUp}>▲</button>
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveClassConfig(${index}, 1)" ${disableDown}>▼</button>
+                        <button class="btn-edit-item" style="padding: 6px 10px;" title="修改班級名稱" onclick="promptRenameClass('${cls}')">✏️</button>
+                        <button class="btn-delete-item" onclick="promptDeleteClass('${cls}')">刪除</button>
                     </div>
                 </div>
             `;
@@ -806,46 +810,50 @@
         editClassStudents(name);
     }
     
-    window.renameClassConfig = async function(oldName) {
-        const newName = prompt('請輸入新的班級名稱：', oldName);
-        if (newName === null) return; 
-        const trimmedName = newName.trim();
-        if (!trimmedName) { alert('班級名稱不能為空！'); return; }
-        if (trimmedName === oldName) return; 
-        if (window.config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
+    // 加上密碼保護的修改班級名稱
+    window.promptRenameClass = function(oldName) {
+        verifyAndDelete(`修改班級名稱「${oldName}」`, () => {
+            const newName = prompt('請輸入新的班級名稱：', oldName);
+            if (newName === null) return; 
+            const trimmedName = newName.trim();
+            if (!trimmedName) { alert('班級名稱不能為空！'); return; }
+            if (trimmedName === oldName) return; 
+            if (window.config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
-        const newClasses = {};
-        for (let key in window.config.classes) {
-            if (key === oldName) {
-                newClasses[trimmedName] = window.config.classes[oldName];
-            } else {
-                newClasses[key] = window.config.classes[key];
+            const newClasses = {};
+            for (let key in window.config.classes) {
+                if (key === oldName) {
+                    newClasses[trimmedName] = window.config.classes[oldName];
+                } else {
+                    newClasses[key] = window.config.classes[key];
+                }
             }
-        }
-        window.config.classes = newClasses;
+            window.config.classes = newClasses;
 
-        const newStudentDetails = {};
-        for (let key in window.studentDetails) {
-            if (key.startsWith(oldName + '_')) {
-                const stuName = key.substring(oldName.length + 1);
-                newStudentDetails[trimmedName + '_' + stuName] = window.studentDetails[key];
-            } else {
-                newStudentDetails[key] = window.studentDetails[key];
+            const newStudentDetails = {};
+            for (let key in window.studentDetails) {
+                if (key.startsWith(oldName + '_')) {
+                    const stuName = key.substring(oldName.length + 1);
+                    newStudentDetails[trimmedName + '_' + stuName] = window.studentDetails[key];
+                } else {
+                    newStudentDetails[key] = window.studentDetails[key];
+                }
             }
-        }
-        window.studentDetails = newStudentDetails;
-        await saveStudentDetailsToCloud();
+            window.studentDetails = newStudentDetails;
+            saveStudentDetailsToCloud();
 
-        if (window.editingClass === oldName) {
-            window.editingClass = trimmedName;
-            document.getElementById('editingClassName').innerText = trimmedName;
-        }
+            if (window.editingClass === oldName) {
+                window.editingClass = trimmedName;
+                document.getElementById('editingClassName').innerText = trimmedName;
+            }
 
-        await saveClassesToCloud();
-        renderClassConfigList();
-        if (window.editingClass === trimmedName) {
-            renderStudentConfigList();
-        }
+            saveClassesToCloud();
+            renderClassConfigList();
+            if (window.editingClass === trimmedName) {
+                renderStudentConfigList();
+            }
+            alert('✏️ 班級名稱修改成功！');
+        });
     }
 
     window.promptDeleteClass = function(cls) {
