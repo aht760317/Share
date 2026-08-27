@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與點名表系統 (全功能完整修復版)</title>
+    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (精簡流暢版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -20,7 +20,7 @@
         header { background: var(--primary); color: white; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         header h2 { margin: 0 0 15px 0; font-size: 24px; text-align: center; letter-spacing: 1px; }
         
-        .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; max-width: 1350px; margin: 0 auto; }
+        .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; max-width: 1200px; margin: 0 auto; }
         .nav-btn { 
             background: rgba(255, 255, 255, 0.12); 
             border: 2px solid rgba(255, 255, 255, 0.2); 
@@ -64,7 +64,6 @@
 
         .alert-banner { background: #ffebee; border: 2px solid var(--danger); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .alert-banner h3 { color: var(--danger); margin-top: 0; display: flex; align-items: center; gap: 8px; }
-        .alert-item { background: white; padding: 10px; border-left: 5px solid var(--danger); margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: middle; }
@@ -102,9 +101,6 @@
         .parent-report-table th, .parent-report-table td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 14px; }
         .parent-report-table th { background: #f1f5f9; color: var(--primary); width: 30%; }
 
-        .attendance-sheet-box { background: white; padding: 20px; border: 2px solid #333; margin-top: 15px; }
-        .attendance-sheet-table th, .attendance-sheet-table td { border: 1px solid #333; padding: 6px; text-align: center; font-size: 13px; }
-
         @media print {
             header, .no-print { display: none !important; }
             .card { box-shadow: none; border: none; padding: 0; margin: 0; }
@@ -115,12 +111,11 @@
 <body>
 
     <header>
-        <h2>斗六顧德補習班 智慧管理系統 (全功能完整修復版)</h2>
+        <h2>斗六顧德補習班 智慧管理系統</h2>
         <nav class="main-nav">
             <button class="nav-btn active" onclick="switchSection('teaching-logs-junior', this)">📖 教學日誌<br><small>(國中部)</small></button>
             <button class="nav-btn" onclick="switchSection('teaching-logs-elementary', this)">📘 教學日誌<br><small>(國小部)</small></button>
             <button class="nav-btn" onclick="switchSection('director-overview', this)">👑 主任全校日誌總覽</button>
-            <button class="nav-btn" onclick="switchSection('attendance-sheet-section', this)">📅 自動產生點名表</button>
             <button class="nav-btn" onclick="switchSection('student-profiles', this)">👥 學生檔案與通訊</button>
             <button class="nav-btn" onclick="switchSection('system-settings', this)">⚙️ 系統與課程設定</button>
         </nav>
@@ -316,63 +311,6 @@
             </div>
         </section>
 
-        <!-- 📅 自動產生班級點名表 -->
-        <section id="attendance-sheet-section" class="section-content">
-            <div class="card no-print">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">📅 自動產生班級點名表</h3>
-                
-                <div class="grid-2">
-                    <div>
-                        <label>選擇班級課程：</label>
-                        <select id="sheet-course-select"></select>
-                    </div>
-                    <div>
-                        <label>選擇收費類型模式：</label>
-                        <select id="sheet-mode-select" onchange="toggleSheetMode()">
-                            <option value="elementary">國小部 (單月收費區間)</option>
-                            <option value="junior">國中部 (三個月收費區間)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div>
-                        <label>開始日期 (起)：</label>
-                        <input type="date" id="sheet-start-date">
-                    </div>
-                    <div>
-                        <label>結束日期 (迄)：</label>
-                        <input type="date" id="sheet-end-date">
-                    </div>
-                </div>
-
-                <div style="background: #fdf2f2; border: 1px dashed #ef4444; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <h4 style="margin:0; color:#b91c1c;">🏖️ 設定放假日期與原因 (自動顯示在點名表中)</h4>
-                        <button class="btn btn-small btn-danger" onclick="addHolidayRow()">＋ 新增放假日期</button>
-                    </div>
-                    <div id="holiday-rows-container">
-                        <div class="grid-2 holiday-row" style="margin-bottom:8px;">
-                            <input type="date" class="holiday-date">
-                            <input type="text" class="holiday-reason" placeholder="請輸入放假原因 (例如：中秋節連假)">
-                        </div>
-                    </div>
-                </div>
-
-                <button class="btn" style="width: 100%; padding: 12px; font-size: 16px;" onclick="generateAttendanceSheet()">🚀 自動產生點名表</button>
-            </div>
-
-            <div class="card" id="attendance-sheet-output">
-                <div style="display:flex; justify-content:space-between; align-items:center;" class="no-print">
-                    <h3 style="margin:0; color:var(--primary);">點名表預覽</h3>
-                    <button class="btn btn-success" onclick="window.print()">🖨️ 列印 / 下載點名表</button>
-                </div>
-                <div id="sheet-render-area">
-                    <p style="text-align:center; color:#777; padding:30px;">請先在上方設定日期區間並點擊「自動產生點名表」</p>
-                </div>
-            </div>
-        </section>
-
         <!-- 學生檔案與通訊 -->
         <section id="student-profiles" class="section-content">
             <div class="card">
@@ -526,19 +464,6 @@
         </div>
     </div>
 
-    <!-- 標記補課完成輸入日期彈窗 -->
-    <div class="modal-overlay" id="makeup-date-modal">
-        <div class="modal-box" style="width: 400px;">
-            <h3 style="margin-top:0; color:var(--success);">✅ 標記補課完成</h3>
-            <p style="font-size: 14px; color: #555;">請選擇該學生實際補課完成的日期：</p>
-            <input type="date" id="actual-makeup-date">
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-success" onclick="confirmResolveMakeup()">確認標記完成</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-date-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 評語與電聯紀錄大畫面彈窗 -->
     <div class="modal-overlay" id="notes-manager-modal">
         <div class="modal-box">
@@ -571,50 +496,6 @@
             <div style="margin-top: 20px; text-align: right;">
                 <button class="btn" style="background:#999;" onclick="document.getElementById('notes-manager-modal').style.display='none'">關閉視窗</button>
             </div>
-        </div>
-    </div>
-
-    <!-- 編輯個別學生注意事項彈窗 -->
-    <div class="modal-overlay" id="student-note-modal">
-        <div class="modal-box">
-            <h3 id="note-modal-title" style="margin-top:0; color:var(--primary);">✏️ 編輯學生當日注意事項</h3>
-            <p id="note-modal-subtitle" style="font-size:13px; color:#666;"></p>
-            <textarea id="student-daily-note-input" rows="5" placeholder="請輸入該學生今日的特別注意事項、表現或老師建議..."></textarea>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-success" onclick="saveStudentDailyNote()">儲存注意事項</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('student-note-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 傳給家長的精美圖表日誌預覽彈窗 -->
-    <div class="modal-overlay" id="parent-msg-modal">
-        <div class="modal-box" style="width: 550px;">
-            <div class="parent-report-card" id="parent-report-printable">
-                <div class="parent-report-header">
-                    <h2 style="margin:0; color:var(--primary);">斗六顧德補習班</h2>
-                    <p style="margin:5px 0 0; color:#666; font-size:14px;">學員學習日誌報告</p>
-                </div>
-                <table class="parent-report-table">
-                    <tr><th>日期</th><td id="rep-date"></td></tr>
-                    <tr><th>課程名稱</th><td id="rep-course"></td></tr>
-                    <tr><th>授課老師</th><td id="rep-teacher" style="font-weight:bold; color:#0e6655;"></td></tr>
-                    <tr><th>學生姓名</th><td id="rep-name" style="font-weight:bold; color:var(--primary);"></td></tr>
-                    <tr><th>出缺勤狀況</th><td id="rep-attendance"></td></tr>
-                    <tr><th>教學進度</th><td id="rep-progress-content" style="color:#084298;"></td></tr>
-                    <tr><th>考試與分數</th><td id="rep-score"></td></tr>
-                    <tr><th>作業內容</th><td id="rep-homework-content" style="color:#0e6655; font-weight:bold;"></td></tr>
-                    <tr><th>作業完成度</th><td id="rep-homework"></td></tr>
-                    <tr><th>老師評語與叮嚀</th><td id="rep-note" style="white-space: pre-wrap;"></td></tr>
-                </table>
-                <p style="text-align:center; font-size:12px; color:#888; margin-top:15px;">感謝您的支持與配合，斗六顧德補習班關心您的孩子每一天！</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;" class="no-print">
-                <button class="btn btn-success" onclick="copyParentReportText()">📋 一鍵複製文字傳送 LINE</button>
-                <button class="btn" onclick="window.print()">🖨️ 列印此日誌卡片</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-msg-modal').style.display='none'">關閉</button>
-            </div>
-            <textarea id="parent-msg-content" style="display:none;"></textarea>
         </div>
     </div>
 
@@ -719,7 +600,6 @@
         window.currentEditingNote = { dept: '', studentId: '', studentName: '' };
         window.currentManagingStudentId = null;
         window.pendingDeleteAction = null;
-        window.pendingResolveStudentId = null;
         window.pendingCourseEdit = { dept: '', index: 0 };
 
         async function initCloudData() {
@@ -748,7 +628,6 @@
                         attendanceLogs: [
                             { date: '2026-08-26', status: '出席', score: 85, homework: '完成', progress: '講解第一章綜合練習題', homeworkContent: '習題 P.15', passScore: 80, detail: '出席正常' }
                         ],
-                        makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
                         notes: [
                             { date: '2026-08-26', author: '老師建議', text: '上課態度認真。' }
                         ]
@@ -769,11 +648,6 @@
                 document.getElementById('log-date-elementary').valueAsDate = new Date();
                 const now = new Date();
                 document.getElementById('overview-target-month').value = now.toISOString().slice(0, 7);
-                document.getElementById('sheet-start-date').valueAsDate = new Date();
-                
-                const endDate = new Date();
-                endDate.setMonth(endDate.getMonth() + 1);
-                document.getElementById('sheet-end-date').valueAsDate = endDate;
 
                 // 強制重新整理所有選單與畫面
                 window.updateCourseDropdowns();
@@ -781,10 +655,8 @@
                 window.renderLogStudents('elementary');
                 window.renderSettingsCourseList();
                 window.renderClassButtons();
-                window.updateGlobalAlertBanner();
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
-                window.updateSheetCourseDropdown();
             } catch (e) {
                 console.error("載入雲端資料失敗：", e);
             }
@@ -803,7 +675,7 @@
             if(btn) btn.classList.add('active');
 
             const banner = document.getElementById('global-alert-banner');
-            if (sectionId === 'student-profiles' || sectionId === 'system-settings' || sectionId === 'attendance-sheet-section') {
+            if (sectionId === 'student-profiles' || sectionId === 'system-settings') {
                 banner.style.display = 'none';
             } else {
                 banner.style.display = 'block';
@@ -817,7 +689,6 @@
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
             }
-            if(sectionId === 'attendance-sheet-section') window.updateSheetCourseDropdown();
             if(sectionId === 'teaching-logs-junior') window.renderLogStudents('junior');
             if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
             if(sectionId === 'student-profiles') window.renderProfileStudents();
@@ -920,10 +791,9 @@
                         <td style="font-size:13px;">${attHtml}</td>
                         <td style="font-size:13px;">${scoreHtml}</td>
                         <td>
-                            <div class="note-preview-box" onclick="openNotesManagerModal('${s.firestoreId}')">
+                            <div class="note-preview-box" onclick="openNotesManagerModal('${s.firestoreId}')" style="background: #f9f9f9; border: 1px solid #ccc; padding: 8px; border-radius: 4px; font-size: 13px; cursor: pointer; min-height: 50px; max-height: 100px; overflow-y: auto;">
                                 ${notesHtml}
                             </div>
-                            <button class="btn btn-small btn-success" style="margin-top:6px;" onclick="openNotesManagerModal('${s.firestoreId}')">➕ 新增評語/電聯紀錄</button>
                         </td>
                     </tr>
                 `;
@@ -1026,7 +896,7 @@
                     try {
                         await setDoc(doc(db, "classLogStudents", firestoreId), {
                             id: s.id, name: s.name, school: s.school, studentClass: s.studentClass, studentVersion: s.studentVersion, course: s.course, phones: s.phones,
-                            attendanceLogs: s.attendanceLogs || [], makeupPending: s.makeupPending || false, makeupType: s.makeupType || '', makeupDesc: s.makeupDesc || '', retestScore: s.retestScore || null, notes: s.notes || []
+                            attendanceLogs: s.attendanceLogs || [], notes: s.notes || []
                         });
                     } catch(e) { console.error(e); }
                 }
@@ -1034,7 +904,7 @@
                 const newStudent = {
                     id: Date.now(),
                     name, school, studentClass, course, studentVersion, phones,
-                    attendanceLogs: [], makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
+                    attendanceLogs: [],
                     notes: [{ date: new Date().toISOString().split('T')[0], author: '系統建立', text: '建立學生基本資料。' }]
                 };
                 try {
@@ -1193,7 +1063,7 @@
 
             tbody.innerHTML = students.map(s => `
                 <tr data-student-id="${s.id}">
-                    <td><b>${s.name}</b><br><button class="btn btn-small" style="margin-top:4px;" onclick="previewParentReport('${s.firestoreId}', '${dept}')">📄 家長日誌</button></td>
+                    <td><b>${s.name}</b></td>
                     <td>
                         <select class="log-att-status">
                             <option value="出席">出席</option>
@@ -1209,7 +1079,7 @@
                             <option value="部分完成">部分完成</option>
                         </select>
                     </td>
-                    <td><input type="text" class="log-student-note" placeholder="個別注意事項或補課安排..." style="margin:0;"></td>
+                    <td><input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;"></td>
                 </tr>
             `).join('');
         };
@@ -1237,13 +1107,9 @@
             }
         };
 
-        window.updateGlobalAlertBanner = function() {};
         window.generateMonthDaysGrid = function() {};
         window.renderDirectorOverview = function() {};
-        window.updateSheetCourseDropdown = function() {};
-        window.generateAttendanceSheet = function() {};
         window.openNotesManagerModal = function() {};
-        window.previewParentReport = function() {};
 
         initCloudData();
     </script>
