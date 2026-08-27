@@ -387,7 +387,7 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 (支援一週上兩天以上多選) -->
+        <!-- ⚙️ 系統與課程設定 -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
@@ -821,7 +821,7 @@
             }
         }
 
-        // ================= 📅 自動產生點名表核心邏輯 (支援多天複選與動態放假原因) =================
+        // ================= 📅 自動產生班級點名表核心邏輯 =================
         window.updateSheetCourseDropdown = function() {
             const select = document.getElementById('sheet-course-select');
             const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
@@ -842,9 +842,9 @@
             
             const endDate = new Date();
             if (mode === 'junior') {
-                endDate.setMonth(endDate.getMonth() + 3); // 國中部三個月
+                endDate.setMonth(endDate.getMonth() + 3);
             } else {
-                endDate.setMonth(endDate.getMonth() + 1); // 國小部一個月
+                endDate.setMonth(endDate.getMonth() + 1);
             }
             endInput.valueAsDate = endDate;
         }
@@ -871,7 +871,6 @@
 
             if(!startDateStr || !endDateStr) return alert('請完整選擇點名表的起訖日期！');
 
-            // 收集所有放假日期與原因
             const holidayRows = document.querySelectorAll('.holiday-row');
             const holidayMap = {};
             holidayRows.forEach(row => {
@@ -882,7 +881,6 @@
                 }
             });
 
-            // 尋找課程對應的上課星期 (支援多天組合字串如 "星期一、星期四" 或舊格式)
             const allCoursesList = [...window.state.courses.elementary, ...window.state.courses.junior];
             const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
             
@@ -891,15 +889,13 @@
             const courseTime = foundCourse && typeof foundCourse === 'object' ? foundCourse.time : '';
 
             const dayMap = { '星期日': 0, '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6 };
-            
-            // 找出所有符合的上課星期數字陣列
             const targetDaysOfWeek = [];
             Object.keys(dayMap).forEach(dName => {
                 if(targetDayStr.includes(dName)) {
                     targetDaysOfWeek.push(dayMap[dName]);
                 }
             });
-            if(targetDaysOfWeek.length === 0) targetDaysOfWeek.push(2); // 預設星期二
+            if(targetDaysOfWeek.length === 0) targetDaysOfWeek.push(2);
 
             const start = new Date(startDateStr);
             const end = new Date(endDateStr);
@@ -1009,7 +1005,6 @@
                 document.getElementById('modal-course-time').value = cTime;
                 document.getElementById('modal-course-teacher').value = cTeacher;
 
-                // 還原勾選狀態
                 const checkboxes = document.querySelectorAll('input[name="modal-course-days"]');
                 checkboxes.forEach(cb => {
                     cb.checked = cDayStr.includes(cb.value);
