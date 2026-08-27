@@ -9,6 +9,14 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
         .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
+        /* 登入畫面專用樣式 */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; }
+        .login-box h2 { color: var(--primary); margin-top: 0; margin-bottom: 25px; font-size: 24px; letter-spacing: 2px; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; }
+        .login-input-group { text-align: left; margin-bottom: 20px; }
+        .login-input { width: 100%; padding: 12px 15px; margin-top: 8px; border: 2px solid #CBD5E1; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: 0.2s; }
+        .login-input:focus { border-color: var(--accent); outline: none; }
+        
         /* 導覽列 */
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
         .header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
@@ -142,6 +150,22 @@
     </style>
 </head>
 <body>
+
+<!-- 登入鎖定畫面 -->
+<div id="loginOverlay" class="login-overlay no-print">
+    <div class="login-box">
+        <h2>顧德補習班 - 系統登入</h2>
+        <div class="login-input-group">
+            <label style="color: #475569;">帳號：</label>
+            <input type="text" id="loginUser" class="login-input" placeholder="請輸入登入帳號">
+        </div>
+        <div class="login-input-group" style="margin-bottom: 30px;">
+            <label style="color: #475569;">密碼：</label>
+            <input type="password" id="loginPass" class="login-input" placeholder="請輸入登入密碼" onkeypress="handleLoginEnter(event)">
+        </div>
+        <button class="btn-submit" style="margin-top: 0; background: var(--accent);" onclick="checkLogin()">🔒 登 入 系 統</button>
+    </div>
+</div>
 
 <div class="app-container no-print">
     <div class="header">
@@ -308,7 +332,6 @@
                     </div>
                 </div>
                 
-                <!-- 升級後的按鈕式班級一覽清單 -->
                 <label>現有班級列表 (點擊名稱修改，點擊卡片編輯學生，可調整順序)：</label>
                 <div class="class-overview-grid" id="classConfigList"></div>
 
@@ -322,7 +345,7 @@
                             <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
                         </div>
                     </div>
-                    <div class="config-list-box" id="studentConfigList" style="height: 200px;"></div>
+                    <div class="config-list-box" id="studentConfigList" style="height: 220px;"></div>
                 </div>
             </div>
             
@@ -436,6 +459,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // 系統變數
     window.config = { classes: {}, handler: "雅鴻" };
     window.quickItems = [];
     window.studentDetails = {};
@@ -450,6 +474,28 @@
     window.editingProfileClass = "";
     window.editingProfileStudent = "";
 
+    // === 登入系統邏輯 ===
+    window.checkLogin = function() {
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        if(u === 'dgood' && p === 'good0000') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            sessionStorage.setItem('gude_system_logged_in', 'true');
+        } else {
+            alert('❌ 帳號或密碼錯誤！請重新輸入。');
+        }
+    }
+
+    window.handleLoginEnter = function(e) {
+        if(e.key === 'Enter') checkLogin();
+    }
+
+    // 檢查 Session 是否已登入
+    if(sessionStorage.getItem('gude_system_logged_in') === 'true') {
+        document.getElementById('loginOverlay').style.display = 'none';
+    }
+
+    // === 資料庫與工具 ===
     async function initCloudData() {
         try {
             const handlerDoc = await getDoc(doc(db, "settings", "handler"));
@@ -534,7 +580,6 @@
         } catch (e) { console.error(e); }
     }
 
-    // 刪除與修改密碼驗證核心函式 (密碼 0618)
     window.verifyAndDelete = function(actionDescription, callback) {
         const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入安全密碼以繼續 (0618)：`);
         if (pwd === null) return;
@@ -759,7 +804,6 @@
         window.print();
     }
 
-    // === 班級排序功能 (上移 / 下移) ===
     window.moveClassConfig = async function(index, direction) {
         const classEntries = Object.entries(window.config.classes);
         if (index + direction < 0 || index + direction >= classEntries.length) return;
@@ -773,7 +817,6 @@
         renderClassConfigList();
     }
 
-    // 渲染一覽模式的班級網格卡片
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
         const classEntries = Object.entries(window.config.classes);
@@ -792,7 +835,6 @@
             return `
                 <div class="class-overview-card ${isActive ? 'active' : ''}" onclick="editClassStudents('${cls}')">
                     <div class="class-card-header">
-                        <!-- 點擊名稱直接修改 (需密碼 0618) -->
                         <span class="class-card-name" title="點擊修改班級名稱" onclick="event.stopPropagation(); promptRenameClass('${cls}')">${cls}</span>
                         <span style="font-size:12px; color:#64748B; background:#E2E8F0; padding:2px 8px; border-radius:10px;">${studentCount}人</span>
                     </div>
@@ -820,7 +862,6 @@
         editClassStudents(name);
     }
     
-    // 點擊班級名稱修改 (密碼保護 0618)
     window.promptRenameClass = function(oldName) {
         verifyAndDelete(`修改班級名稱「${oldName}」`, () => {
             const newName = prompt('請輸入新的班級名稱：', oldName);
@@ -974,7 +1015,6 @@
             return `
                 <div class="item-row" style="${rowStyle}">
                     <div>
-                        <!-- 點擊快捷項目名稱直接修改 (需密碼 0618) -->
                         <strong title="點擊修改項目名稱" onclick="promptRenameQuickItem(${index})">${item.name}</strong>
                         <span style="font-size:14px; ${priceStyle} margin-left:10px;">(${priceText})</span>
                     </div>
@@ -1000,7 +1040,6 @@
         renderQuickItemConfigList();
     }
 
-    // 點擊快捷項目名稱修改 (密碼保護 0618)
     window.promptRenameQuickItem = function(index) {
         const item = window.quickItems[index];
         verifyAndDelete(`修改快捷項目「${item.name}」`, () => {
@@ -1504,6 +1543,8 @@
     }
 
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
+        const docTitle = isReceipt ? '繳費收據' : '繳費通知單';
+        const printDate = new Date().toLocaleDateString();
         const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
         
         let tableRows = bill.items.map((item, idx) => `
@@ -1566,13 +1607,13 @@
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('batchPrintClassSelect').value;
 
-        if(!filterMonth) { alert('請先在左方選擇查詢年月！'); return; }
+        if(!filterMonth) { alert('請先在左方選擇「查詢年月」，系統才能知道要印哪個月的單據！'); return; }
         if(!targetClass) { alert('請先選擇要列印的班級！'); return; }
 
         const targetBills = window.bills.filter(b => (b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) && b.className === targetClass && !b.isPaid);
 
         if(targetBills.length === 0) {
-            alert(`在選定區間內，【${targetClass}】目前沒有未繳費的單據可供列印！`);
+            alert(`在 ${formatDisplayMonth(filterMonth)} 的區間內，【${targetClass}】目前沒有未繳費的單據可供列印！`);
             return;
         }
 
@@ -1591,6 +1632,7 @@
         window.print();
     }
 
+    // 啟動載入雲端資料
     initCloudData();
 </script>
 </body>
