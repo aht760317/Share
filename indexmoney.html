@@ -49,6 +49,9 @@
         .quick-btn.junior { background: #F3E8FF; border-color: #D8B4FE; color: #7E22CE; }
         .quick-btn.junior:hover { background: #E9D5FF; }
         .quick-btn.junior small { color: #9333EA; }
+        .quick-btn.other { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
+        .quick-btn.other:hover { background: #FEF3C7; }
+        .quick-btn.other small { color: #D97706; }
 
         /* 項目管理與新增區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
@@ -298,12 +301,15 @@
             <div class="item-builder">
                 <label style="color:#1E40AF; margin-bottom: 5px;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
                 
-                <!-- 開單區分成兩個區塊 -->
-                <div style="font-size: 14px; font-weight: bold; color: #1E40AF; margin-top: 10px; margin-bottom: 5px;">🔵 國小/其他 項目</div>
+                <!-- 開單區分成三個區塊 -->
+                <div style="font-size: 14px; font-weight: bold; color: #1E40AF; margin-top: 10px; margin-bottom: 5px;">🔵 國小 項目</div>
                 <div id="primaryQuickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
                 
                 <div style="font-size: 14px; font-weight: bold; color: #7E22CE; margin-top: 10px; margin-bottom: 5px;">🟣 國中部 項目</div>
-                <div id="juniorQuickItemGrid" class="btn-grid" style="margin-bottom: 15px;"></div>
+                <div id="juniorQuickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
+
+                <div style="font-size: 14px; font-weight: bold; color: #B45309; margin-top: 10px; margin-bottom: 5px;">🟡 其它 項目</div>
+                <div id="otherQuickItemGrid" class="btn-grid" style="margin-bottom: 15px;"></div>
 
                 <label style="color:#1E40AF; margin-top: 15px;">👇 2. 確認金額後加入帳單：</label>
                 <div class="form-row" style="background: #EEF2FF; padding: 15px; border-radius: 8px; border: 1px solid #C7D2FE;">
@@ -382,7 +388,7 @@
             <div class="form-row">
                 <div style="flex: 2;">
                     <label>項目名稱</label>
-                    <input type="text" id="newConfigName" placeholder="例如：全科優惠" style="width:100%;">
+                    <input type="text" id="newConfigName" placeholder="例如：全科優惠 或 (餐費)" style="width:100%;">
                 </div>
                 <div style="flex: 1;">
                     <label>預設金額</label>
@@ -393,13 +399,17 @@
                 </div>
             </div>
 
-            <!-- 國小/其他 區塊 -->
-            <h4 style="margin: 15px 0 5px 0; color: #1E40AF;">🔵 國小/其他 快捷項目</h4>
+            <!-- 國小 區塊 -->
+            <h4 style="margin: 15px 0 5px 0; color: #1E40AF;">🔵 國小 快捷項目</h4>
             <div class="btn-grid" id="primaryQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white;"></div>
             
             <!-- 國中部 區塊 -->
             <h4 style="margin: 15px 0 5px 0; color: #7E22CE;">🟣 國中部 快捷項目</h4>
-            <div class="btn-grid" id="juniorQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white; margin-bottom: 20px;"></div>
+            <div class="btn-grid" id="juniorQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white;"></div>
+
+            <!-- 其它 區塊 (包含括號 () 或 （）) -->
+            <h4 style="margin: 15px 0 5px 0; color: #B45309;">🟡 其它 快捷項目 (名稱含括號，如: (餐費)、(車費))</h4>
+            <div class="btn-grid" id="otherQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white; margin-bottom: 20px;"></div>
 
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
                 <label>預設收款經手人 (印在收據上)：</label>
@@ -553,7 +563,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 新增 classOrder 以確保留存排序
     window.config = { classes: {}, classOrder: [], handler: "" };
     window.quickItems = [];
     window.studentDetails = {};
@@ -573,6 +582,12 @@
     let studentSortable = null;
     let pQuickSortable = null;
     let jQuickSortable = null;
+    let oQuickSortable = null;
+
+    // === 判斷項目是否為其它 (包含半形或全形括號) ===
+    window.isOtherItem = function(name) {
+        return (name.includes('(') && name.includes(')')) || (name.includes('（') && name.includes('）'));
+    }
 
     // === 判斷班級分類並回傳專屬 CSS class ===
     window.getClassCategoryStyle = function(className) {
@@ -622,7 +637,6 @@
                 window.config.classes = docData.data || {};
                 window.config.classOrder = docData.order || Object.keys(window.config.classes);
                 
-                // 確保排序與實際名單一致，清除非預期異常
                 Object.keys(window.config.classes).forEach(c => {
                     if(!window.config.classOrder.includes(c)) window.config.classOrder.push(c);
                 });
@@ -643,9 +657,12 @@
                 window.quickItems = quickItemsDoc.data().data || [];
             } else {
                 window.quickItems = [
-                    { name: "國小數學", price: 2000 }, { name: "國一數學", price: 2500 }, 
-                    { name: "國二理化", price: 2500 }, { name: "餐費", price: 1500 }, 
-                    { name: "優惠折扣", price: -300 }
+                    { name: "國小數學", price: 2000 }, 
+                    { name: "國一數學", price: 2500 }, 
+                    { name: "國二理化", price: 2500 }, 
+                    { name: "(餐費)", price: 1500 }, 
+                    { name: "(車費)", price: 800 },
+                    { name: "(優惠折扣)", price: -300 }
                 ];
                 await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
             }
@@ -1228,7 +1245,7 @@
         alert(`🔤 已成功將【${window.editingClass}】學生依筆畫排序！`);
     }
 
-    // === 區塊 3：快捷收費項目設定 ===
+    // === 區塊 3：快捷收費項目設定 (分 國小 / 國中 / 其它 三區塊) ===
     window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
         window.config.handler = handler;
@@ -1243,17 +1260,23 @@
     window.renderQuickItemConfigList = function() {
         const pList = document.getElementById('primaryQuickItemConfigList');
         const jList = document.getElementById('juniorQuickItemConfigList');
+        const oList = document.getElementById('otherQuickItemConfigList');
 
         let pHtml = '';
         let jHtml = '';
+        let oHtml = '';
 
         window.quickItems.forEach((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
             let itemStyle = '';
+            
+            const isOther = isOtherItem(item.name);
             const isJr = isJuniorHigh(item.name);
             
             if (item.price !== null && item.price < 0) {
                 itemStyle = 'background:#FEF3C7; border-color:#FDE68A; color:#B45309;';
+            } else if (isOther) {
+                itemStyle = 'background:#FFFBEB; border-color:#FCD34D; color:#B45309;';
             } else if (isJr) {
                 itemStyle = 'background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;';
             }
@@ -1264,16 +1287,22 @@
                 </button>
             `;
 
-            if (isJr) jHtml += btnHtml;
-            else pHtml += btnHtml;
+            if (isOther) {
+                oHtml += btnHtml;
+            } else if (isJr) {
+                jHtml += btnHtml;
+            } else {
+                pHtml += btnHtml;
+            }
         });
 
-        pList.innerHTML = pHtml || '<div style="color:#94A3B8; padding: 5px;">尚無項目</div>';
-        jList.innerHTML = jHtml || '<div style="color:#94A3B8; padding: 5px;">尚無項目</div>';
+        pList.innerHTML = pHtml || '<div style="color:#94A3B8; padding: 5px;">尚無國小項目</div>';
+        jList.innerHTML = jHtml || '<div style="color:#94A3B8; padding: 5px;">尚無國中項目</div>';
+        oList.innerHTML = oHtml || '<div style="color:#94A3B8; padding: 5px;">尚無其它項目 (名稱帶有括號者)</div>';
 
         const onSortEnd = async function () {
             const newOrderedIndices = [];
-            document.querySelectorAll('#primaryQuickItemConfigList .quick-drag-item, #juniorQuickItemConfigList .quick-drag-item').forEach(el => {
+            document.querySelectorAll('#primaryQuickItemConfigList .quick-drag-item, #juniorQuickItemConfigList .quick-drag-item, #otherQuickItemConfigList .quick-drag-item').forEach(el => {
                 newOrderedIndices.push(parseInt(el.getAttribute('data-index')));
             });
             const newQuickItems = newOrderedIndices.map(i => window.quickItems[i]);
@@ -1292,6 +1321,14 @@
 
         if (jQuickSortable) jQuickSortable.destroy();
         jQuickSortable = new Sortable(jList, {
+            group: 'quickItems',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: onSortEnd
+        });
+
+        if (oQuickSortable) oQuickSortable.destroy();
+        oQuickSortable = new Sortable(oList, {
             group: 'quickItems',
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -1455,19 +1492,24 @@
     window.renderQuickButtonsForBilling = function() {
         const primaryGrid = document.getElementById('primaryQuickItemGrid');
         const juniorGrid = document.getElementById('juniorQuickItemGrid');
+        const otherGrid = document.getElementById('otherQuickItemGrid');
         
         let primaryHtml = '';
         let juniorHtml = '';
+        let otherHtml = '';
 
         window.quickItems.forEach(item => {
             const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '輸入金額';
             const priceArg = item.price !== null ? item.price : "''"; 
             
             let btnClass = 'quick-btn';
+            const isOther = isOtherItem(item.name);
             const isJr = isJuniorHigh(item.name);
 
             if (item.price !== null && item.price < 0) {
                 btnClass += ' discount';
+            } else if (isOther) {
+                btnClass += ' other';
             } else if (isJr) {
                 btnClass += ' junior';
             }
@@ -1477,12 +1519,18 @@
                         <small>${priceText}</small>
                     </button>`;
             
-            if (isJr) juniorHtml += html;
-            else primaryHtml += html;
+            if (isOther) {
+                otherHtml += html;
+            } else if (isJr) {
+                juniorHtml += html;
+            } else {
+                primaryHtml += html;
+            }
         });
 
-        primaryGrid.innerHTML = primaryHtml;
-        juniorGrid.innerHTML = juniorHtml;
+        primaryGrid.innerHTML = primaryHtml || '<span style="color:#94A3B8; font-size:13px;">無</span>';
+        juniorGrid.innerHTML = juniorHtml || '<span style="color:#94A3B8; font-size:13px;">無</span>';
+        otherGrid.innerHTML = otherHtml || '<span style="color:#94A3B8; font-size:13px;">無</span>';
     }
 
     window.clickQuickItem = function(name, defaultPrice) {
