@@ -326,7 +326,7 @@
 
                 <div style="background: #fdf2f2; border: 1px dashed #ef4444; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <h4 style="margin:0; color:#b91c1c;">🏖️ 設定放假日期與原因 (自動避開)</h4>
+                        <h4 style="margin:0; color:#b91c1c;">🏖️ 設定放假日期與原因 (自動顯示在點名表中)</h4>
                         <button class="btn btn-small btn-danger" onclick="addHolidayRow()">＋ 新增放假日期</button>
                     </div>
                     <div id="holiday-rows-container">
@@ -387,7 +387,7 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 -->
+        <!-- ⚙️ 系統與課程設定 (支援一週上兩天以上多選) -->
         <section id="system-settings" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
@@ -406,22 +406,23 @@
                     </div>
                 </div>
 
-                <div class="grid-3">
-                    <div>
-                        <label>上課星期：</label>
-                        <select id="new-course-day">
-                            <option value="星期一">星期一</option>
-                            <option value="星期二">星期二</option>
-                            <option value="星期三">星期三</option>
-                            <option value="星期四">星期四</option>
-                            <option value="星期五">星期五</option>
-                            <option value="星期六">星期六</option>
-                            <option value="星期日">星期日</option>
-                        </select>
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">📅 勾選上課星期 (可複選多天，適合國小部一週上兩天以上)：</label>
+                    <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                        <label><input type="checkbox" name="course-days" value="星期一"> 星期一</label>
+                        <label><input type="checkbox" name="course-days" value="星期二"> 星期二</label>
+                        <label><input type="checkbox" name="course-days" value="星期三"> 星期三</label>
+                        <label><input type="checkbox" name="course-days" value="星期四"> 星期四</label>
+                        <label><input type="checkbox" name="course-days" value="星期五"> 星期五</label>
+                        <label><input type="checkbox" name="course-days" value="星期六"> 星期六</label>
+                        <label><input type="checkbox" name="course-days" value="星期日"> 星期日</label>
                     </div>
+                </div>
+
+                <div class="grid-2">
                     <div>
                         <label>上課時間：</label>
-                        <input type="text" id="new-course-time" placeholder="例如：19:00 - 21:00">
+                        <input type="text" id="new-course-time" placeholder="例如：18:30 - 20:30">
                     </div>
                     <div>
                         <label>授課老師：</label>
@@ -446,9 +447,9 @@
         </section>
     </div>
 
-    <!-- 🔒 整合式課程修改面板彈窗 (輸入 0618 密碼後解鎖編輯與刪除) -->
+    <!-- 🔒 整合式課程修改面板彈窗 -->
     <div class="modal-overlay" id="course-edit-modal">
-        <div class="modal-box" style="width: 500px;">
+        <div class="modal-box" style="width: 550px;">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除課程</h3>
             <input type="hidden" id="edit-course-dept">
             <input type="hidden" id="edit-course-index">
@@ -456,19 +457,20 @@
             <label>課程名稱：</label>
             <input type="text" id="modal-course-name" placeholder="課程名稱">
 
-            <div class="grid-3">
-                <div>
-                    <label style="font-size:13px;">上課星期：</label>
-                    <select id="modal-course-day">
-                        <option value="星期一">星期一</option>
-                        <option value="星期二">星期二</option>
-                        <option value="星期三">星期三</option>
-                        <option value="星期四">星期四</option>
-                        <option value="星期五">星期五</option>
-                        <option value="星期六">星期六</option>
-                        <option value="星期日">星期日</option>
-                    </select>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:6px;">📅 修改上課星期 (可複選多天)：</label>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;" id="modal-course-days-container">
+                    <label><input type="checkbox" name="modal-course-days" value="星期一"> 星期一</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期二"> 星期二</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期三"> 星期三</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期四"> 星期四</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期五"> 星期五</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期六"> 星期六</label>
+                    <label><input type="checkbox" name="modal-course-days" value="星期日"> 星期日</label>
                 </div>
+            </div>
+
+            <div class="grid-2">
                 <div>
                     <label style="font-size:13px;">上課時間：</label>
                     <input type="text" id="modal-course-time" placeholder="19:00 - 21:00">
@@ -819,6 +821,179 @@
             }
         }
 
+        // ================= 📅 自動產生點名表核心邏輯 (支援多天複選與動態放假原因) =================
+        window.updateSheetCourseDropdown = function() {
+            const select = document.getElementById('sheet-course-select');
+            const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
+            select.innerHTML = allCourses.map(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const info = typeof c === 'object' ? `(${c.day} ${c.time} - ${c.teacher})` : '';
+                return `<option value="${cName}">${cName} ${info}</option>`;
+            }).join('');
+        }
+
+        window.toggleSheetMode = function() {
+            const mode = document.getElementById('sheet-mode-select').value;
+            const startInput = document.getElementById('sheet-start-date');
+            const endInput = document.getElementById('sheet-end-date');
+            
+            const startDate = new Date();
+            startInput.valueAsDate = startDate;
+            
+            const endDate = new Date();
+            if (mode === 'junior') {
+                endDate.setMonth(endDate.getMonth() + 3); // 國中部三個月
+            } else {
+                endDate.setMonth(endDate.getMonth() + 1); // 國小部一個月
+            }
+            endInput.valueAsDate = endDate;
+        }
+
+        window.addHolidayRow = function() {
+            const container = document.getElementById('holiday-rows-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'grid-2 holiday-row';
+            newRow.style.marginBottom = '8px';
+            newRow.innerHTML = `
+                <input type="date" class="holiday-date">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" class="holiday-reason" placeholder="請輸入放假原因">
+                    <button class="btn btn-danger btn-small" onclick="this.parentElement.parentElement.remove()" style="height:42px;">X</button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+
+        window.generateAttendanceSheet = function() {
+            const courseName = document.getElementById('sheet-course-select').value;
+            const startDateStr = document.getElementById('sheet-start-date').value;
+            const endDateStr = document.getElementById('sheet-end-date').value;
+
+            if(!startDateStr || !endDateStr) return alert('請完整選擇點名表的起訖日期！');
+
+            // 收集所有放假日期與原因
+            const holidayRows = document.querySelectorAll('.holiday-row');
+            const holidayMap = {};
+            holidayRows.forEach(row => {
+                const dateVal = row.querySelector('.holiday-date').value;
+                const reasonVal = row.querySelector('.holiday-reason').value.trim();
+                if(dateVal) {
+                    holidayMap[dateVal] = reasonVal || '放假';
+                }
+            });
+
+            // 尋找課程對應的上課星期 (支援多天組合字串如 "星期一、星期四" 或舊格式)
+            const allCoursesList = [...window.state.courses.elementary, ...window.state.courses.junior];
+            const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
+            
+            const targetDayStr = foundCourse && typeof foundCourse === 'object' ? foundCourse.day : '星期二';
+            const teacherName = foundCourse && typeof foundCourse === 'object' ? foundCourse.teacher : '老師';
+            const courseTime = foundCourse && typeof foundCourse === 'object' ? foundCourse.time : '';
+
+            const dayMap = { '星期日': 0, '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6 };
+            
+            // 找出所有符合的上課星期數字陣列
+            const targetDaysOfWeek = [];
+            Object.keys(dayMap).forEach(dName => {
+                if(targetDayStr.includes(dName)) {
+                    targetDaysOfWeek.push(dayMap[dName]);
+                }
+            });
+            if(targetDaysOfWeek.length === 0) targetDaysOfWeek.push(2); // 預設星期二
+
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+            let classDates = [];
+
+            let curr = new Date(start);
+            while(curr <= end) {
+                if(targetDaysOfWeek.includes(curr.getDay())) {
+                    const y = curr.getFullYear();
+                    const m = String(curr.getMonth() + 1).padStart(2, '0');
+                    const d = String(curr.getDate()).padStart(2, '0');
+                    const dateStr = `${y}-${m}-${d}`;
+
+                    if(holidayMap[dateStr] !== undefined) {
+                        classDates.push({ date: `${Number(m)}/${Number(d)}`, isHoliday: true, reason: holidayMap[dateStr] });
+                    } else {
+                        classDates.push({ date: `${Number(m)}/${Number(d)}`, isHoliday: false, reason: '' });
+                    }
+                }
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            const studentsInClass = window.state.students.filter(s => s.course === courseName);
+
+            if(classDates.length === 0) {
+                document.getElementById('sheet-render-area').innerHTML = `<p style="text-align:center; color:red; padding:20px;">所選日期區間內沒有符合「${targetDayStr}」的上課日期！</p>`;
+                return;
+            }
+
+            let html = `
+                <div class="attendance-sheet-box">
+                    <div style="text-align:center; margin-bottom:15px;">
+                        <h2 style="margin:0; color:var(--primary);">斗六顧德補習班 - 學生課堂點名表</h2>
+                        <p style="margin:5px 0; font-size:15px; font-weight:bold;">班級名稱：${courseName} | 上課時間：${targetDayStr} ${courseTime} | 授課老師：${teacherName}</p>
+                        <p style="margin:0; font-size:14px; color:#555;">收費點名區間：${startDateStr} ~ ${endDateStr}</p>
+                    </div>
+                    <table class="attendance-sheet-table">
+                        <thead>
+                            <tr>
+                                <th width="5%">座號</th>
+                                <th width="12%">學生姓名</th>
+                                <th width="10%">學校 / 班級</th>
+            `;
+
+            classDates.forEach(item => {
+                const headerStyle = item.isHoliday ? 'background:#fee2e2; color:#b91c1c;' : '';
+                const headerTitle = item.isHoliday ? `<br><small>(${item.reason})</small>` : '';
+                html += `<th style="${headerStyle}">${item.date}${headerTitle}</th>`;
+            });
+
+            html += `
+                                <th width="8%">備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if(studentsInClass.length === 0) {
+                html += `<tr><td colspan="${classDates.length + 4}" style="text-align:center; color:#777; padding:20px;">目前此班級尚無學生資料，請至學生檔案區新增。</td></tr>`;
+            } else {
+                studentsInClass.forEach((s, index) => {
+                    html += `
+                        <tr>
+                            <td><b>${index + 1}</b></td>
+                            <td style="text-align:left; font-weight:bold;">${s.name}</td>
+                            <td style="font-size:11px; color:#555;">${s.school || ''}<br>${s.studentClass || ''}</td>
+                    `;
+                    classDates.forEach(item => {
+                        if (item.isHoliday) {
+                            html += `<td style="background:#f1f5f9; color:#94a3b8; font-size:11px;" title="${item.reason}">休</td>`;
+                        } else {
+                            html += `<td></td>`;
+                        }
+                    });
+                    html += `
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:14px; font-weight:bold;">
+                        <div>主任簽章：___________</div>
+                        <div>授課老師簽章：___________</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('sheet-render-area').innerHTML = html;
+        }
+
         // ================= ✏️ 密碼保護的課程修改與刪除面板 =================
         window.openCourseEditModal = function(dept, index) {
             verifyPasswordAndExecute(() => {
@@ -826,14 +1001,19 @@
                 const courseObj = window.state.courses[dept][index];
                 
                 const cName = typeof courseObj === 'object' ? courseObj.name : courseObj;
-                const cDay = typeof courseObj === 'object' ? courseObj.day : '星期一';
+                const cDayStr = typeof courseObj === 'object' ? courseObj.day : '星期一';
                 const cTime = typeof courseObj === 'object' ? courseObj.time : '';
                 const cTeacher = typeof courseObj === 'object' ? courseObj.teacher : '';
 
                 document.getElementById('modal-course-name').value = cName;
-                document.getElementById('modal-course-day').value = cDay;
                 document.getElementById('modal-course-time').value = cTime;
                 document.getElementById('modal-course-teacher').value = cTeacher;
+
+                // 還原勾選狀態
+                const checkboxes = document.querySelectorAll('input[name="modal-course-days"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = cDayStr.includes(cb.value);
+                });
 
                 document.getElementById('course-edit-modal').style.display = 'flex';
             });
@@ -845,7 +1025,8 @@
             const oldName = typeof oldCourse === 'object' ? oldCourse.name : oldCourse;
 
             const newName = document.getElementById('modal-course-name').value.trim();
-            const newDay = document.getElementById('modal-course-day').value;
+            const checkedDays = Array.from(document.querySelectorAll('input[name="modal-course-days"]:checked')).map(cb => cb.value);
+            const newDayStr = checkedDays.length > 0 ? checkedDays.join('、') : '星期一';
             const newTime = document.getElementById('modal-course-time').value.trim();
             const newTeacher = document.getElementById('modal-course-teacher').value.trim();
 
@@ -853,12 +1034,11 @@
 
             window.state.courses[dept][index] = {
                 name: newName,
-                day: newDay,
+                day: newDayStr,
                 time: newTime || '時間未定',
                 teacher: newTeacher || '老師未定'
             };
 
-            // 同步更新學生所屬課程名稱
             window.state.students.forEach(s => { if(s.course === oldName) s.course = newName; });
             window.state.historyLogs.forEach(l => { if(l.course === oldName) l.course = newName; });
 
@@ -1020,20 +1200,23 @@
         window.addCourse = async function() {
             const dept = document.getElementById('new-course-dept').value;
             const name = document.getElementById('new-course-name').value.trim();
-            const day = document.getElementById('new-course-day').value;
+            const checkedDays = Array.from(document.querySelectorAll('input[name="course-days"]:checked')).map(cb => cb.value);
+            const dayStr = checkedDays.length > 0 ? checkedDays.join('、') : '星期一';
             const time = document.getElementById('new-course-time').value.trim();
             const teacher = document.getElementById('new-course-teacher').value.trim();
 
             if(!name) return alert('請輸入課程名稱！');
             
             window.state.courses[dept].push({
-                name, day, time: time || '時間未定', teacher: teacher || '老師未定'
+                name, day: dayStr, time: time || '時間未定', teacher: teacher || '老師未定'
             });
 
             await saveCoursesToCloud();
             document.getElementById('new-course-name').value = '';
             document.getElementById('new-course-time').value = '';
             document.getElementById('new-course-teacher').value = '';
+            document.querySelectorAll('input[name="course-days"]').forEach(cb => cb.checked = false);
+
             alert(`已成功新增課程並同步至雲端！`);
             initCloudData();
         }
@@ -1050,609 +1233,6 @@
                 const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
                 return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('junior', ${idx})">修改</button></div>`;
             }).join('');
-        }
-
-        window.openNotesManagerModal = function(studentId) {
-            window.currentManagingStudentId = studentId;
-            const s = window.state.students.find(item => item.id === studentId);
-            if(!s) return;
-
-            document.getElementById('notes-modal-subtitle').innerText = `學生姓名：${s.name} （所屬課程：${s.course}）`;
-            document.getElementById('new-note-date').valueAsDate = new Date();
-            document.getElementById('new-note-text').value = '';
-
-            renderNotesHistoryList();
-            document.getElementById('notes-manager-modal').style.display = 'flex';
-        }
-
-        window.renderNotesHistoryList = function() {
-            const s = window.state.students.find(item => item.id === window.currentManagingStudentId);
-            const container = document.getElementById('notes-history-container');
-
-            if(!s.notes || s.notes.length === 0) {
-                container.innerHTML = `<div style="color:#777; text-align:center; padding:10px;">目前尚無任何評語或電聯紀錄</div>`;
-                return;
-            }
-
-            container.innerHTML = s.notes.map((n, idx) => `
-                <div style="border-bottom: 1px solid #eee; padding: 8px 0; display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <span style="font-size:12px; background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:bold; color:#333;">${n.author}</span>
-                        <span style="font-size:12px; color:#666; margin-left:8px;">📅 ${n.date || '未記錄日期'}</span>
-                        <div style="margin-top:5px; font-size:14px; white-space: pre-wrap; color:#111;">${n.text}</div>
-                    </div>
-                    <button class="btn btn-small btn-danger" onclick="requestDeleteNote(${idx})" style="padding:2px 6px;">刪除</button>
-                </div>
-            `).join('');
-        }
-
-        window.requestDeleteNote = function(noteIdx) {
-            verifyPasswordAndExecute(async () => {
-                const s = window.state.students.find(item => item.id === window.currentManagingStudentId);
-                s.notes.splice(noteIdx, 1);
-                
-                try {
-                    await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                        id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
-                        attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                        makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                    });
-                } catch (e) { console.error(e); }
-
-                renderNotesHistoryList();
-                renderProfileStudents();
-                updateGlobalAlertBanner();
-                alert('備註已成功刪除！');
-            });
-        }
-
-        window.addNewNoteFromModal = async function() {
-            const type = document.getElementById('new-note-type').value;
-            const date = document.getElementById('new-note-date').value;
-            const text = document.getElementById('new-note-text').value.trim();
-
-            if(!text) return alert('請輸入記錄內容！');
-            if(!date) return alert('請選擇日期！');
-
-            const s = window.state.students.find(item => item.id === window.currentManagingStudentId);
-            s.notes.push({ date: date, author: type, text: text });
-
-            if (text.includes('已達 80 分') || text.includes('補課完成')) {
-                s.makeupPending = false;
-            }
-
-            try {
-                await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                    id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
-                    attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                    makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                });
-            } catch (e) { console.error(e); }
-
-            document.getElementById('new-note-text').value = '';
-            renderNotesHistoryList();
-            renderProfileStudents();
-            updateGlobalAlertBanner();
-            alert('新記錄已成功儲存至雲端！');
-        }
-
-        window.generateParentMessage = function(dept, studentId, studentName, logIndex = null) {
-            const s = window.state.students.find(item => item.id === studentId);
-            if (!s) return;
-
-            let date, course, progress, homework, attendance, score, hwStatus, noteText, passScore;
-
-            if (logIndex !== null && s.attendanceLogs[logIndex]) {
-                const log = s.attendanceLogs[logIndex];
-                date = log.date;
-                course = s.course;
-                progress = log.progress || '依當日進度進行授課';
-                homework = log.homeworkContent || '依老師指定為主';
-                attendance = log.status;
-                score = log.score;
-                hwStatus = log.homework;
-                noteText = log.detail || '學習狀況良好！';
-                passScore = log.passScore || 80;
-            } else {
-                date = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary').value;
-                course = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary').value;
-                progress = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary').value || '今日正常授課';
-                homework = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary').value || '無指定作業';
-                passScore = Number(document.getElementById(dept === 'junior' ? 'log-pass-score-junior' : 'log-pass-score-elementary').value) || 80;
-                
-                attendance = document.getElementById(`log-att-${dept}-${studentId}`).value;
-                score = document.getElementById(`log-score-${dept}-${studentId}`).value;
-                hwStatus = document.getElementById(`log-hw-${dept}-${studentId}`).value;
-                noteText = document.getElementById(`temp-note-${dept}-${studentId}`)?.value || '無特別交代，學習狀況良好！';
-            }
-
-            let teacherName = '本班老師';
-            const allCoursesList = [...window.state.courses.elementary, ...window.state.courses.junior];
-            const foundCourse = allCoursesList.find(c => (typeof c === 'object' ? c.name : c) === course);
-            if (foundCourse && typeof foundCourse === 'object' && foundCourse.teacher) {
-                teacherName = foundCourse.teacher;
-            }
-
-            let isNeedRetest = score !== '' && score !== '今日無測驗' && Number(score) < passScore;
-            let attText = attendance === '請假' ? '<span style="color:red; font-weight:bold;">⚠️ 今日請假 (需要補課)</span>' : '✔️ 出席正常';
-            let scoreText = score !== '' && score !== '今日無測驗' ? 
-                (isNeedRetest ? `<span style="color:red; font-weight:bold;">${score} 分 (未達及格標準 ${passScore}分，需要補考)</span>` : `${score} 分 (已及格)`) 
-                : '今日無測驗';
-            let hwText = hwStatus === '完成' ? '✅ 已完成' : '<span style="color:red; font-weight:bold;">❌ 未完成</span>';
-
-            document.getElementById('rep-date').innerText = date;
-            document.getElementById('rep-course').innerText = course;
-            document.getElementById('rep-teacher').innerText = teacherName;
-            document.getElementById('rep-name').innerText = studentName;
-            document.getElementById('rep-attendance').innerHTML = attText;
-            document.getElementById('rep-progress-content').innerText = progress;
-            document.getElementById('rep-score').innerHTML = scoreText;
-            document.getElementById('rep-homework-content').innerText = homework;
-            document.getElementById('rep-homework').innerHTML = hwText;
-            document.getElementById('rep-note').innerText = noteText;
-
-            let plainAttText = attendance === '請假' ? '⚠️ 今日請假 (需要補課)' : '✔️ 出席正常';
-            let plainScoreText = score !== '' && score !== '今日無測驗' ? 
-                (isNeedRetest ? `⚠️ ${score} 分 (未達及格標準 ${passScore}分，需要補考)` : `${score} 分 (已及格)`) 
-                : '今日無測驗';
-
-            const plainText = `【斗六顧德補習班 - 學習日誌報告】
-📅 日期：${date}
-📚 課程：${course}
-👨‍🏫 授課老師：${teacherName}
-學員：${studentName}
-------------------------
-🔹 出缺勤：${plainAttText}
-📘 教學進度：${progress}
-🔹 考試表現：${plainScoreText}
-📝 回家作業：${homework}
-🔹 作業狀態：${hwStatus === '完成' ? '✅ 已完成' : '❌ 未完成'}
-🔹 老師評語：${noteText}
-------------------------
-感謝您的配合與支持，斗六顧德補習班 ${teacherName} 關心您的孩子成長！`;
-
-            document.getElementById('parent-msg-content').value = plainText;
-            document.getElementById('parent-msg-modal').style.display = 'flex';
-        }
-
-        window.openStudentNoteModal = function(dept, studentId, studentName) {
-            window.currentEditingNote = { dept, studentId, studentName };
-            const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
-            document.getElementById('student-daily-note-input').value = textarea ? textarea.value : '';
-            document.getElementById('student-note-modal').style.display = 'flex';
-        }
-
-        window.saveStudentDailyNote = function() {
-            const { dept, studentId } = window.currentEditingNote;
-            const text = document.getElementById('student-daily-note-input').value;
-            const textarea = document.getElementById(`temp-note-${dept}-${studentId}`);
-            if(textarea) textarea.value = text;
-            document.getElementById('student-note-modal').style.display = 'none';
-        }
-
-        window.updateCourseDropdowns = function() {
-            const junNames = window.state.courses.junior.map(c => typeof c === 'object' ? c.name : c);
-            const elemNames = window.state.courses.elementary.map(c => typeof c === 'object' ? c.name : c);
-
-            document.getElementById('log-course-select-junior').innerHTML = junNames.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('log-course-select-elementary').innerHTML = elemNames.map(c => `<option value="${c}">${c}</option>`).join('');
-            
-            const allCourses = [...elemNames, ...junNames];
-            document.getElementById('modal-course').innerHTML = allCourses.map(c => `<option value="${c}">${c}</option>`).join('');
-        }
-
-        window.renderClassButtons = function() {
-            const container = document.getElementById('class-buttons-container');
-            const elemCourses = window.state.courses.elementary.map(c => typeof c === 'object' ? c.name : c);
-            const junCourses = window.state.courses.junior.map(c => typeof c === 'object' ? c.name : c);
-            const allCourses = [...junCourses, ...elemCourses];
-
-            if(allCourses.length === 0) {
-                container.innerHTML = '<span style="color:#777">尚無建立任何課程</span>';
-                return;
-            }
-            if(!window.state.selectedClassForProfile || !allCourses.includes(window.state.selectedClassForProfile)) {
-                window.state.selectedClassForProfile = allCourses[0];
-            }
-
-            let html = '';
-            junCourses.forEach(c => {
-                html += `<button class="btn-junior ${window.state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">國中：${c}</button>`;
-            });
-            elemCourses.forEach(c => {
-                html += `<button class="btn-elementary ${window.state.selectedClassForProfile === c ? 'active' : ''}" onclick="selectClassForProfile('${c}')">國小：${c}</button>`;
-            });
-
-            container.innerHTML = html;
-            renderProfileStudents();
-        }
-
-        window.selectClassForProfile = function(className) {
-            window.state.selectedClassForProfile = className;
-            renderClassButtons();
-        }
-
-        window.renderProfileStudents = function() {
-            const className = window.state.selectedClassForProfile;
-            document.getElementById('current-viewing-class-title').innerText = `目前檢視班級：${className}`;
-            const tbody = document.getElementById('profile-students-tbody');
-            const list = window.state.students.filter(s => s.course === className);
-            const filterMode = document.getElementById('attendance-filter-mode').value;
-
-            if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">此班級目前尚無學生資料</td></tr>`;
-                return;
-            }
-
-            const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-            tbody.innerHTML = list.map(s => {
-                let filteredLogs = s.attendanceLogs || [];
-                if(filterMode === 'month') {
-                    filteredLogs = filteredLogs.filter(log => new Date(log.date) >= oneMonthAgo);
-                }
-                const logsHtml = filteredLogs.length > 0 ? filteredLogs.map((l, lIdx) => `
-                    <div style="font-size:13px; border-bottom:1px dashed #eee; padding-bottom:6px; margin-bottom:6px;">
-                        <b>[${l.date}]</b> ${l.status === '請假' ? '<span class="badge-danger">請假</span>' : '<span class="badge-success">出席</span>'}<br>
-                        分數: ${l.score !== '' ? l.score : '今日無測驗'} | 作業: ${l.homework}<br>
-                        <button class="btn btn-small btn-success" onclick="generateParentMessage('junior', ${s.id}, '${s.name}', ${lIdx})" style="margin-top:3px; padding:2px 6px; font-size:11px;">📋 複製這天家長日誌</button>
-                    </div>
-                `).join('') : '<span style="color:#777; font-size:13px;">尚無紀錄</span>';
-
-                let phonesHtml = '';
-                if(s.phones && s.phones.length > 0) {
-                    phonesHtml = s.phones.map(p => p.number ? `<div style="font-size:12px; color:#555;">📞 ${p.label || '電話'}: ${p.number}</div>` : '').join('');
-                }
-
-                const schoolInfo = s.school || s.studentClass ? `<div style="font-size:12px; color:#0284c7; font-weight:bold;">🏫 ${s.school || ''} ${s.studentClass || ''}</div>` : '';
-
-                let notesToDisplay = s.notes || [];
-                let isMoreNotes = notesToDisplay.length > 5;
-                if (isMoreNotes) notesToDisplay = notesToDisplay.slice(-5);
-
-                let notesPreview = notesToDisplay.length > 0 ? 
-                    notesToDisplay.map(n => `<div><b>[${n.author}]</b> (${n.date || '無日期'}) ${n.text}</div>`).join('') : 
-                    '<span style="color:#999;">點擊此處新增老師建議、主任批示或電聯紀錄...</span>';
-
-                if (isMoreNotes) {
-                    notesPreview += `<div style="color: var(--accent); font-weight: bold; margin-top: 4px; text-align: center;">... 還有更多紀錄，點擊查看全部 ...</div>`;
-                }
-
-                return `
-                    <tr>
-                        <td>
-                            <span class="student-name-link" onclick="openEditStudentModal(${s.id})" title="點擊修改學生資料">${s.name}</span>
-                            <div style="font-size:11px; color:#999; margin-top:2px;">(點擊名字可修改)</div>
-                            ${schoolInfo}
-                            <div style="margin-top: 4px; border-top: 1px dotted #ccc; padding-top: 4px;">
-                                ${phonesHtml || '<span style="font-size:11px; color:#999;">尚未登錄電話</span>'}
-                            </div>
-                        </td>
-                        <td>${logsHtml}</td>
-                        <td>
-                            <div style="font-size:13px; margin-bottom:5px; color:${s.makeupPending ? 'red' : 'green'};">
-                                ${s.makeupPending ? '⚠️ ' + s.makeupDesc : '✅ 狀態正常 (無待補)'}
-                            </div>
-                            ${s.makeupPending && s.makeupType === 'lowScore' ? `
-                                <div style="font-size:12px;">
-                                    補考分數：<input type="number" id="retest-input-${s.id}" value="${s.retestScore !== null ? s.retestScore : ''}" style="width:60px; display:inline-block;" placeholder="分數">
-                                    <button class="btn btn-small btn-success" onclick="submitRetestScore(${s.id})">送出補考</button>
-                                </div>
-                            ` : ''}
-                            ${s.makeupPending && s.makeupType === 'absent' ? `
-                                <button class="btn btn-small btn-success" onclick="promptResolveMakeup(${s.id})">標記補課完成</button>
-                            ` : ''}
-                            ${!s.makeupPending ? `
-                                <div style="margin-top: 8px;">
-                                    <button class="btn btn-small btn-danger" onclick="resetStudentMakeupStatus(${s.id})" title="點擊取消後可重新輸入分數或補課內容">🔄 取消狀態 (重新輸入)</button>
-                                </div>
-                            ` : ''}
-                        </td>
-                        <td>
-                            <div class="note-preview-box" onclick="openNotesManagerModal(${s.id})" title="點擊開啟大畫面管理全部評語">
-                                ${notesPreview}
-                            </div>
-                            <div style="font-size:11px; color:#666; margin-top:3px; text-align:right;">👉 點擊上方區塊開啟大畫面查看全部</div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        window.openAddStudentModal = function() {
-            document.getElementById('modal-title').innerText = '新增學生資料';
-            document.getElementById('edit-student-id').value = '';
-            document.getElementById('modal-name').value = '';
-            document.getElementById('modal-school').value = '';
-            document.getElementById('modal-class').value = '';
-            document.getElementById('modal-label1').value = '爸爸'; document.getElementById('modal-phone1').value = '';
-            document.getElementById('modal-label2').value = '媽媽'; document.getElementById('modal-phone2').value = '';
-            document.getElementById('modal-label3').value = '學生本人'; document.getElementById('modal-phone3').value = '';
-            document.getElementById('delete-student-btn').style.display = 'none';
-            document.getElementById('student-modal').style.display = 'block';
-        }
-
-        window.openEditStudentModal = function(id) {
-            const s = window.state.students.find(item => item.id === id);
-            if(!s) return;
-            document.getElementById('modal-title').innerText = '修改學生資料';
-            document.getElementById('edit-student-id').value = s.id;
-            document.getElementById('modal-name').value = s.name;
-            document.getElementById('modal-school').value = s.school || '';
-            document.getElementById('modal-class').value = s.studentClass || '';
-            document.getElementById('modal-course').value = s.course;
-
-            document.getElementById('modal-label1').value = s.phones?.[0]?.label || '爸爸';
-            document.getElementById('modal-phone1').value = s.phones?.[0]?.number || '';
-            document.getElementById('modal-label2').value = s.phones?.[1]?.label || '媽媽';
-            document.getElementById('modal-phone2').value = s.phones?.[1]?.number || '';
-            document.getElementById('modal-label3').value = s.phones?.[2]?.label || '學生本人';
-            document.getElementById('modal-phone3').value = s.phones?.[2]?.number || '';
-
-            document.getElementById('delete-student-btn').style.display = 'inline-block';
-            document.getElementById('student-modal').style.display = 'block';
-        }
-
-        window.saveStudentModal = async function() {
-            const id = document.getElementById('edit-student-id').value;
-            const name = document.getElementById('modal-name').value.trim();
-            const school = document.getElementById('modal-school').value.trim();
-            const studentClass = document.getElementById('modal-class').value.trim();
-            const course = document.getElementById('modal-course').value;
-            if(!name) return alert('請填寫學生姓名！');
-
-            const phones = [
-                { label: document.getElementById('modal-label1').value, number: document.getElementById('modal-phone1').value },
-                { label: document.getElementById('modal-label2').value, number: document.getElementById('modal-phone2').value },
-                { label: document.getElementById('modal-label3').value, number: document.getElementById('modal-phone3').value }
-            ];
-
-            if(id) {
-                const s = window.state.students.find(item => item.id == id);
-                s.name = name; s.school = school; s.studentClass = studentClass; s.course = course; s.phones = phones;
-                try {
-                    await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                        id: s.id, name: s.name, school: s.school, studentClass: s.studentClass, course: s.course, phones: s.phones,
-                        attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                        makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                    });
-                } catch (e) { console.error(e); }
-            } else {
-                const newStudent = {
-                    id: Date.now(), name, school, studentClass, course, phones, attendanceLogs: [],
-                    makeupPending: false, makeupType: '', makeupDesc: '', retestScore: null,
-                    notes: [{ date: new Date().toISOString().split('T')[0], author: '老師建議', text: '建立學生檔案。' }]
-                };
-                try {
-                    const docRef = await addDoc(collection(db, "classLogStudents"), newStudent);
-                    newStudent.firestoreId = docRef.id;
-                    window.state.students.push(newStudent);
-                } catch (e) { console.error(e); }
-            }
-            document.getElementById('student-modal').style.display = 'none';
-            initCloudData();
-            alert('學生資料與學校班級已成功儲存至雲端！');
-        }
-
-        window.requestDeleteStudent = function() {
-            verifyPasswordAndExecute(async () => {
-                const id = document.getElementById('edit-student-id').value;
-                const s = window.state.students.find(item => item.id == id);
-                if(s && s.firestoreId) {
-                    try {
-                        await deleteDoc(doc(db, "classLogStudents", s.firestoreId));
-                    } catch (e) { console.error(e); }
-                }
-                window.state.students = window.state.students.filter(item => item.id != id);
-                document.getElementById('student-modal').style.display = 'none';
-                initCloudData();
-                alert('學生資料已成功從雲端刪除！');
-            });
-        }
-
-        window.renderLogStudents = function(dept) {
-            const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
-            const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
-            const selectedCourse = document.getElementById(selectId).value;
-            const tbody = document.getElementById(tbodyId);
-            const list = window.state.students.filter(s => s.course === selectedCourse);
-
-            if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程尚無學生，請至學生檔案區新增。</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = list.map((s) => `
-                <tr>
-                    <td>
-                        <button class="btn btn-small btn-success" onclick="generateParentMessage('${dept}', ${s.id}, '${s.name}')" style="width:100%; margin-bottom:5px;">📋 產生給家長日誌</button>
-                        <strong>${s.name}</strong>
-                    </td>
-                    <td>
-                        <select id="log-att-${dept}-${s.id}" onchange="checkLogTriggers('${dept}', ${s.id})">
-                            <option value="出席">出席</option>
-                            <option value="請假">請假</option>
-                        </select>
-                    </td>
-                    <td><input type="number" id="log-score-${dept}-${s.id}" placeholder="分數" oninput="checkLogTriggers('${dept}', ${s.id})" style="width:70px;"></td>
-                    <td>
-                        <select id="log-hw-${dept}-${s.id}" onchange="checkLogTriggers('${dept}', ${s.id})">
-                            <option value="完成">已完成</option>
-                            <option value="未完成">未完成</option>
-                        </select>
-                    </td>
-                    <td>
-                        <div id="dynamic-alerts-${dept}-${s.id}"></div>
-                        <textarea id="temp-note-${dept}-${s.id}" style="display:none;"></textarea>
-                        <button class="btn btn-small btn-warning" onclick="openStudentNoteModal('${dept}', ${s.id}, '${s.name}')" style="margin-top: 5px;">✏️ 編輯當日注意事項</button>
-                    </td>
-                </tr>
-            `).join('');
-            list.forEach(s => checkLogTriggers(dept, s.id));
-        }
-
-        window.checkLogTriggers = function(dept, id) {
-            const att = document.getElementById(`log-att-${dept}-${id}`).value;
-            const scoreVal = document.getElementById(`log-score-${dept}-${id}`).value;
-            const passScore = Number(document.getElementById(dept === 'junior' ? 'log-pass-score-junior' : 'log-pass-score-elementary').value) || 80;
-            const hw = document.getElementById(`log-hw-${dept}-${id}`).value;
-            const alertBox = document.getElementById(`dynamic-alerts-${dept}-${id}`);
-
-            let html = '';
-            if(att === '請假') {
-                html += `<span class="badge-danger">⚠️ 學生請假，需約定時間補課！</span>
-                         <input type="text" id="makeup-desc-${dept}-${id}" placeholder="輸入補課內容與時間" style="font-size:12px; margin-bottom:5px;">`;
-            }
-            if(scoreVal !== '' && Number(scoreVal) < passScore) {
-                html += `<span class="badge-danger">⚠️ 考試分數低於及格標準 (${scoreVal}/${passScore}分)，需安排補考！</span>`;
-            }
-            if(hw === '未完成') {
-                html += `<span class="badge-danger">❌ 作業未完成，請老師關注！</span>`;
-            }
-            alertBox.innerHTML = html;
-        }
-
-        window.saveLog = async function(dept) {
-            const dateInputId = dept === 'junior' ? 'log-date-junior' : 'log-date-elementary';
-            const courseSelectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
-            const contentId = dept === 'junior' ? 'log-content-junior' : 'log-content-elementary';
-            const homeworkId = dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary';
-            const passScoreId = dept === 'junior' ? 'log-pass-score-junior' : 'log-pass-score-elementary';
-            const notesId = dept === 'junior' ? 'log-notes-junior' : 'log-notes-elementary';
-            const examUnitId = dept === 'junior' ? 'log-exam-unit-junior' : 'log-exam-unit-elementary';
-            const examFileId = dept === 'junior' ? 'log-exam-file-junior' : 'log-exam-file-elementary';
-            const answerFileId = dept === 'junior' ? 'log-answer-file-junior' : 'log-answer-file-elementary';
-
-            const date = document.getElementById(dateInputId).value;
-            const course = document.getElementById(courseSelectId).value;
-            const content = document.getElementById(contentId).value;
-            const homework = document.getElementById(homeworkId).value;
-            const passScore = Number(document.getElementById(passScoreId).value) || 80;
-            const notes = document.getElementById(notesId).value;
-            const examUnit = document.getElementById(examUnitId).value;
-            const examFile = document.getElementById(examFileId).value.trim();
-            const answerFile = document.getElementById(answerFileId).value.trim();
-
-            if(!content) return alert('請填寫教學進度日誌！');
-
-            const newLog = { id: Date.now(), dept, date, course, content, homework, passScore, notes, examUnit, examFile, answerFile };
-            try {
-                const docRef = await addDoc(collection(db, "classLogHistory"), newLog);
-                newLog.firestoreId = docRef.id;
-                window.state.historyLogs.unshift(newLog);
-            } catch (e) { console.error(e); }
-
-            const list = window.state.students.filter(s => s.course === course);
-            for (let s of list) {
-                const att = document.getElementById(`log-att-${dept}-${s.id}`).value;
-                const score = document.getElementById(`log-score-${dept}-${s.id}`).value;
-                const hw = document.getElementById(`log-hw-${dept}-${s.id}`).value;
-
-                let detailText = `出席正常`;
-                let isPending = false;
-                let pendingType = '';
-                let pendingDesc = '';
-
-                if(att === '請假') {
-                    const descInput = document.getElementById(`makeup-desc-${dept}-${s.id}`);
-                    pendingDesc = `${date} 請假需補課：${descInput ? descInput.value : '未填寫內容'}`;
-                    detailText = pendingDesc;
-                    isPending = true;
-                    pendingType = 'absent';
-                } else if(score !== '' && Number(score) < passScore) {
-                    pendingDesc = `${date} 考試未達及格標準 (${score}/${passScore}分) 需補考`;
-                    detailText = pendingDesc;
-                    isPending = true;
-                    pendingType = 'lowScore';
-                }
-
-                s.attendanceLogs.unshift({ 
-                    date, status: att, score, homework: hw, progress: content, 
-                    homeworkContent: homework, passScore: passScore, detail: detailText 
-                });
-                
-                if(isPending) {
-                    s.makeupPending = true;
-                    s.makeupType = pendingType;
-                    s.makeupDesc = pendingDesc;
-                    if(pendingType === 'lowScore') s.retestScore = score !== '' ? Number(score) : null;
-                }
-
-                const studentNoteText = document.getElementById(`temp-note-${dept}-${s.id}`)?.value;
-                if(studentNoteText && studentNoteText.trim()) {
-                    s.notes.push({ date: date, author: '當日注意事項', text: studentNoteText.trim() });
-                }
-
-                try {
-                    await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                        id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
-                        attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                        makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                    });
-                } catch (e) { console.error(e); }
-            }
-
-            document.getElementById(contentId).value = '';
-            document.getElementById(homeworkId).value = '';
-            document.getElementById(notesId).value = '';
-            document.getElementById(examUnitId).value = '';
-            document.getElementById(examFileId).value = '';
-            document.getElementById(answerFileId).value = '';
-            alert('日誌與學生狀況已成功儲存並同步至雲端！');
-            initCloudData();
-        }
-
-        window.submitRetestScore = async function(studentId) {
-            const input = document.getElementById(`retest-input-${studentId}`);
-            const score = Number(input.value);
-            if(isNaN(score)) return alert('請輸入有效的補考分數！');
-
-            const s = window.state.students.find(item => item.id === studentId);
-            s.retestScore = score;
-
-            const lastLog = s.attendanceLogs[0];
-            const passStandard = lastLog && lastLog.passScore ? lastLog.passScore : 80;
-
-            if(score >= passStandard) {
-                s.makeupPending = false;
-                s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統自動', text: `補考成績 ${score} 分已達及格標準 (${passStandard}分)，自動解除紅區警示。` });
-                alert(`恭喜！補考分數 ${score} 分已達標，系統已自動將該生自警示區移除。`);
-            } else {
-                alert(`補考分數為 ${score} 分，仍低於及格標準 (${passStandard}分)，需繼續安排補考！`);
-            }
-
-            try {
-                await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                    id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', course: s.course, phones: s.phones,
-                    attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                    makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                });
-            } catch (e) { console.error(e); }
-
-            initCloudData();
-        }
-
-        window.updateGlobalAlertBanner = function() {
-            const container = document.getElementById('alert-list-container');
-            const pendingStudents = window.state.students.filter(s => s.makeupPending);
-
-            if(pendingStudents.length === 0) {
-                container.innerHTML = `<div style="color: green; font-weight: bold; text-align: center; padding: 5px;">🎉 目前全校無待補課或待補考學生，狀況良好！</div>`;
-                return;
-            }
-
-            container.innerHTML = pendingStudents.map(s => `
-                <div class="alert-item">
-                    <div><b>[${s.course}] ${s.name}</b>：<span style="color:var(--danger);">${s.makeupDesc}</span></div>
-                    <div><button class="btn btn-small btn-success" onclick="jumpToStudentProfile(${s.id}, '${s.course}')">前往處理並解除</button></div>
-                </div>
-            `).join('');
-        }
-
-        window.jumpToStudentProfile = function(studentId, courseName) {
-            switchSection('student-profiles', document.querySelectorAll('.main-nav button')[4]);
-            selectClassForProfile(courseName);
         }
 
         initCloudData();
