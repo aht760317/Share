@@ -275,6 +275,7 @@
             <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
             <div class="form-row" style="width: 100%;">
+                
                 <div id="primaryPeriodInput" style="flex: 1;">
                     <label>本張單據收費年月：</label>
                     <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:200px;" onchange="checkAndAutoMergeUnpaidBill()">
@@ -288,6 +289,7 @@
                         <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;" onchange="checkAndAutoMergeUnpaidBill()">
                     </div>
                 </div>
+
             </div>
 
             <!-- 自動合併提示 -->
@@ -541,14 +543,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.config = { classes: {}, handler: "雅鴻" };
+    // 新增 classOrder 以確保留存排序
+    window.config = { classes: {}, classOrder: [], handler: "雅鴻" };
     window.quickItems = [];
     window.studentDetails = {};
     window.bills = [];
     window.currentClass = "";
     window.currentStudent = "";
     window.currentBillItems = [];
-    window.existingUnpaidBill = null;
+    window.existingUnpaidBill = null; 
     
     window.editingClass = "";
     window.deletedClassBackup = null;
@@ -604,14 +607,25 @@
 
             const classesDoc = await getDoc(doc(db, "settings", "classes"));
             if (classesDoc.exists()) {
-                window.config.classes = classesDoc.data().data || {};
+                const docData = classesDoc.data();
+                window.config.classes = docData.data || {};
+                // 從雲端載入自訂排序
+                window.config.classOrder = docData.order || Object.keys(window.config.classes);
+                
+                // 確保排序與實際名單一致，清除非預期異常
+                Object.keys(window.config.classes).forEach(c => {
+                    if(!window.config.classOrder.includes(c)) window.config.classOrder.push(c);
+                });
+                window.config.classOrder = window.config.classOrder.filter(c => window.config.classes[c]);
+
             } else {
                 window.config.classes = {
                     "2026 六年級": ["王小明", "林小華"],
                     "2026 國一班": ["陳大頭", "張美麗"],
                     "2026 國二班": ["黃小琥"]
                 };
-                await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
+                window.config.classOrder = ["2026 六年級", "2026 國一班", "2026 國二班"];
+                await setDoc(doc(db, "settings", "classes"), { data: window.config.classes, order: window.config.classOrder });
             }
 
             const quickItemsDoc = await getDoc(doc(db, "settings", "quickItems"));
@@ -661,7 +675,10 @@
 
     async function saveClassesToCloud() {
         try {
-            await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
+            await setDoc(doc(db, "settings", "classes"), { 
+                data: window.config.classes, 
+                order: window.config.classOrder 
+            });
             updateBatchPrintDropdown();
         } catch (e) { console.error(e); }
     }
@@ -810,7 +827,7 @@
         btnAll.onclick = () => showDirectoryClass('all');
         grid.appendChild(btnAll);
 
-        Object.keys(window.config.classes).forEach(cls => {
+        window.config.classOrder.forEach(cls => {
             const btn = document.createElement('button');
             const classColor = getClassCategoryStyle(cls);
             btn.className = `btn-select ${classColor} ${cls === window.currentDirectoryClass ? 'active' : ''}`;
@@ -837,7 +854,7 @@
         
         let classesToRender = [];
         if (cls === 'all') {
-            classesToRender = Object.keys(window.config.classes);
+            classesToRender = window.config.classOrder;
         } else {
             classesToRender = [cls];
         }
@@ -918,13 +935,18 @@
     // === 區塊 1：班級設定 ===
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
-        const classEntries = Object.entries(window.config.classes);
-        if (classEntries.length === 0) {
+        if (classSortable) {
+            classSortable.destroy();
+            classSortable = null;
+        }
+
+        if (window.config.classOrder.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無班級，請於上方新增</div>';
             return;
         }
         
-        list.innerHTML = classEntries.map(([cls, students]) => {
+        list.innerHTML = window.config.classOrder.map(cls => {
+            const students = window.config.classes[cls] || [];
             const isActive = cls === window.editingClass;
             const studentCount = students.length;
             const classColor = getClassCategoryStyle(cls);
@@ -936,17 +958,12 @@
             `;
         }).join('');
 
-        if (classSortable) classSortable.destroy();
         classSortable = new Sortable(list, {
             animation: 150,
             ghostClass: 'sortable-ghost',
             onEnd: async function () {
                 const newOrderedNames = Array.from(list.querySelectorAll('.class-drag-item')).map(el => el.getAttribute('data-class'));
-                const newClasses = {};
-                newOrderedNames.forEach(name => {
-                    newClasses[name] = window.config.classes[name];
-                });
-                window.config.classes = newClasses;
+                window.config.classOrder = newOrderedNames;
                 await saveClassesToCloud();
             }
         });
@@ -957,6 +974,7 @@
         if (!name) { alert('請輸入班級名稱！'); return; }
         if (window.config.classes[name]) { alert('此班級名稱已存在！'); return; }
         window.config.classes[name] = [];
+        window.config.classOrder.push(name);
         await saveClassesToCloud();
         document.getElementById('newConfigClassName').value = '';
         renderClassConfigList();
@@ -978,14 +996,19 @@
 
         verifyAndDelete(`修改班級名稱「${oldName}」為「${newName}」`, async () => {
             const newClasses = {};
-            for (let key in window.config.classes) {
+            const newOrder = [];
+            
+            for (let key of window.config.classOrder) {
                 if (key === oldName) {
                     newClasses[newName] = window.config.classes[oldName];
+                    newOrder.push(newName);
                 } else {
                     newClasses[key] = window.config.classes[key];
+                    newOrder.push(key);
                 }
             }
             window.config.classes = newClasses;
+            window.config.classOrder = newOrder;
 
             const newStudentDetails = {};
             for (let key in window.studentDetails) {
@@ -1017,8 +1040,14 @@
     window.deleteClassFromModal = function() {
         const cls = document.getElementById('modalOldClassName').value;
         verifyAndDelete(`刪除班級「${cls}」及其所有學生`, async () => {
-            window.deletedClassBackup = { name: cls, students: [...window.config.classes[cls]] };
+            window.deletedClassBackup = { 
+                name: cls, 
+                students: [...window.config.classes[cls]],
+                orderIndex: window.config.classOrder.indexOf(cls)
+            };
             delete window.config.classes[cls];
+            window.config.classOrder = window.config.classOrder.filter(n => n !== cls);
+            
             if (window.editingClass === cls) {
                 window.editingClass = "";
                 document.getElementById('studentConfigSection').style.display = 'none';
@@ -1034,6 +1063,13 @@
     window.undoDeleteClass = async function() {
         if (window.deletedClassBackup) {
             window.config.classes[window.deletedClassBackup.name] = window.deletedClassBackup.students;
+            
+            if (window.deletedClassBackup.orderIndex !== -1) {
+                window.config.classOrder.splice(window.deletedClassBackup.orderIndex, 0, window.deletedClassBackup.name);
+            } else {
+                window.config.classOrder.push(window.deletedClassBackup.name);
+            }
+            
             await saveClassesToCloud();
             renderClassConfigList();
             document.getElementById('undoClassBtn').style.display = 'none';
@@ -1053,6 +1089,11 @@
 
     window.renderStudentConfigList = function() {
         const list = document.getElementById('studentConfigList');
+        if (studentSortable) {
+            studentSortable.destroy();
+            studentSortable = null;
+        }
+
         const students = window.config.classes[window.editingClass];
         if (!students || students.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前班上尚無學生，請於上方新增</div>';
@@ -1071,7 +1112,6 @@
             `;
         }).join('');
 
-        if (studentSortable) studentSortable.destroy();
         studentSortable = new Sortable(list, {
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -1132,25 +1172,27 @@
             return;
         }
 
-        window.config.classes[window.editingClass][index] = newName;
-        
-        const oldKey = window.editingClass + '_' + oldName;
-        const newKey = window.editingClass + '_' + newName;
-        
-        let targetData = window.studentDetails[oldKey] || {};
-        targetData.gender = newGender;
+        verifyAndDelete(`修改學生資料「${oldName}」`, async () => {
+            window.config.classes[window.editingClass][index] = newName;
+            
+            const oldKey = window.editingClass + '_' + oldName;
+            const newKey = window.editingClass + '_' + newName;
+            
+            let targetData = window.studentDetails[oldKey] || {};
+            targetData.gender = newGender;
 
-        if (oldKey !== newKey) {
-            delete window.studentDetails[oldKey];
-        }
-        window.studentDetails[newKey] = targetData;
+            if (oldKey !== newKey) {
+                delete window.studentDetails[oldKey];
+            }
+            window.studentDetails[newKey] = targetData;
 
-        await saveClassesToCloud();
-        await saveStudentDetailsToCloud();
+            await saveClassesToCloud();
+            await saveStudentDetailsToCloud();
 
-        renderStudentConfigList();
-        closeModal('studentModal');
-        alert('✏️ 學生資料修改成功！');
+            renderStudentConfigList();
+            closeModal('studentModal');
+            alert('✏️ 學生資料修改成功！');
+        });
     }
 
     window.deleteStudentFromModal = function() {
@@ -1190,6 +1232,11 @@
 
     window.renderQuickItemConfigList = function() {
         const list = document.getElementById('quickItemConfigList');
+        if (quickItemSortable) {
+            quickItemSortable.destroy();
+            quickItemSortable = null;
+        }
+
         if (window.quickItems.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚未設定任何項目</div>';
             return;
@@ -1211,7 +1258,6 @@
             `;
         }).join('');
 
-        if (quickItemSortable) quickItemSortable.destroy();
         quickItemSortable = new Sortable(list, {
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -1253,11 +1299,13 @@
 
         if (!name) { alert('項目名稱不能為空！'); return; }
 
-        window.quickItems[index] = { name, price };
-        saveQuickItemsToCloud();
-        renderQuickItemConfigList();
-        closeModal('quickItemModal');
-        alert('✏️ 快捷項目修改成功！');
+        verifyAndDelete(`修改快捷項目「${window.quickItems[index].name}」`, async () => {
+            window.quickItems[index] = { name, price };
+            await saveQuickItemsToCloud();
+            renderQuickItemConfigList();
+            closeModal('quickItemModal');
+            alert('✏️ 快捷項目修改成功！');
+        });
     }
 
     window.deleteQuickItemFromModal = function() {
@@ -1275,7 +1323,7 @@
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
-        Object.keys(window.config.classes).forEach(cls => {
+        window.config.classOrder.forEach(cls => {
             const btn = document.createElement('button');
             const classColor = getClassCategoryStyle(cls);
             btn.className = `btn-select ${classColor} ${cls === window.currentClass ? 'active' : ''}`;
@@ -1538,7 +1586,7 @@
 
     window.updateBatchPrintDropdown = function() {
         const select = document.getElementById('batchPrintClassSelect');
-        const classNames = Object.keys(window.config.classes);
+        const classNames = window.config.classOrder;
         select.innerHTML = '<option value="">請選擇班級...</option>' + 
             classNames.map(cls => `<option value="${cls}">${cls}</option>`).join('');
     }
@@ -1658,7 +1706,7 @@
     }
 
     window.cancelPayment = async function(firestoreId, id) {
-        if(confirm('【警告】確定要取消這筆繳費紀錄，將狀態恢復為「未繳費」嗎？\n(這通常用於您不小心按錯結帳的情況)')) {
+        verifyAndDelete(`取消繳費紀錄`, async () => {
             const bill = window.bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = false;
@@ -1677,11 +1725,12 @@
                         paidDate: null
                     });
                     renderRecords();
+                    alert('已成功取消繳費，恢復為「未繳費」狀態！');
                 } catch (e) {
                     console.error(e);
                 }
             }
-        }
+        });
     }
 
     window.promptDeleteBill = function(firestoreId, id, studentName) {
