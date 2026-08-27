@@ -275,7 +275,6 @@
             <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
             <div class="form-row" style="width: 100%;">
-                
                 <div id="primaryPeriodInput" style="flex: 1;">
                     <label>本張單據收費年月：</label>
                     <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:200px;" onchange="checkAndAutoMergeUnpaidBill()">
@@ -289,7 +288,6 @@
                         <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;" onchange="checkAndAutoMergeUnpaidBill()">
                     </div>
                 </div>
-
             </div>
 
             <!-- 自動合併提示 -->
@@ -298,8 +296,14 @@
             </div>
 
             <div class="item-builder">
-                <label style="color:#1E40AF;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
-                <div id="quickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
+                <label style="color:#1E40AF; margin-bottom: 5px;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
+                
+                <!-- 開單區分成兩個區塊 -->
+                <div style="font-size: 14px; font-weight: bold; color: #1E40AF; margin-top: 10px; margin-bottom: 5px;">🔵 國小/其他 項目</div>
+                <div id="primaryQuickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
+                
+                <div style="font-size: 14px; font-weight: bold; color: #7E22CE; margin-top: 10px; margin-bottom: 5px;">🟣 國中部 項目</div>
+                <div id="juniorQuickItemGrid" class="btn-grid" style="margin-bottom: 15px;"></div>
 
                 <label style="color:#1E40AF; margin-top: 15px;">👇 2. 確認金額後加入帳單：</label>
                 <div class="form-row" style="background: #EEF2FF; padding: 15px; border-radius: 8px; border: 1px solid #C7D2FE;">
@@ -389,13 +393,19 @@
                 </div>
             </div>
 
-            <div class="btn-grid" id="quickItemConfigList" style="margin-top: 10px; margin-bottom: 20px; min-height: 40px;"></div>
+            <!-- 國小/其他 區塊 -->
+            <h4 style="margin: 15px 0 5px 0; color: #1E40AF;">🔵 國小/其他 快捷項目</h4>
+            <div class="btn-grid" id="primaryQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white;"></div>
+            
+            <!-- 國中部 區塊 -->
+            <h4 style="margin: 15px 0 5px 0; color: #7E22CE;">🟣 國中部 快捷項目</h4>
+            <div class="btn-grid" id="juniorQuickItemConfigList" style="min-height: 40px; border: 1px dashed #CBD5E1; padding: 10px; border-radius: 8px; background: white; margin-bottom: 20px;"></div>
 
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
                 <label>預設收款經手人 (印在收據上)：</label>
                 <div class="form-row" style="margin-bottom: 0;">
                     <div style="flex: 1;">
-                        <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
+                        <input type="text" id="setHandler" style="width:100%;" placeholder="請輸入預設收款人名稱">
                     </div>
                     <div>
                         <button class="btn-submit" style="margin-top:0; padding: 10px 15px;" onclick="saveHandler()">💾 儲存經手人</button>
@@ -544,7 +554,7 @@
     const db = getFirestore(app);
 
     // 新增 classOrder 以確保留存排序
-    window.config = { classes: {}, classOrder: [], handler: "雅鴻" };
+    window.config = { classes: {}, classOrder: [], handler: "" };
     window.quickItems = [];
     window.studentDetails = {};
     window.bills = [];
@@ -561,7 +571,8 @@
 
     let classSortable = null;
     let studentSortable = null;
-    let quickItemSortable = null;
+    let pQuickSortable = null;
+    let jQuickSortable = null;
 
     // === 判斷班級分類並回傳專屬 CSS class ===
     window.getClassCategoryStyle = function(className) {
@@ -601,7 +612,7 @@
         try {
             const handlerDoc = await getDoc(doc(db, "settings", "handler"));
             if (handlerDoc.exists()) {
-                window.config.handler = handlerDoc.data().name || "雅鴻";
+                window.config.handler = handlerDoc.data().name || "";
             }
             document.getElementById('setHandler').value = window.config.handler;
 
@@ -609,7 +620,6 @@
             if (classesDoc.exists()) {
                 const docData = classesDoc.data();
                 window.config.classes = docData.data || {};
-                // 從雲端載入自訂排序
                 window.config.classOrder = docData.order || Object.keys(window.config.classes);
                 
                 // 確保排序與實際名單一致，清除非預期異常
@@ -1231,43 +1241,61 @@
     }
 
     window.renderQuickItemConfigList = function() {
-        const list = document.getElementById('quickItemConfigList');
-        if (quickItemSortable) {
-            quickItemSortable.destroy();
-            quickItemSortable = null;
-        }
+        const pList = document.getElementById('primaryQuickItemConfigList');
+        const jList = document.getElementById('juniorQuickItemConfigList');
 
-        if (window.quickItems.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚未設定任何項目</div>';
-            return;
-        }
-        list.innerHTML = window.quickItems.map((item, index) => {
+        let pHtml = '';
+        let jHtml = '';
+
+        window.quickItems.forEach((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
             let itemStyle = '';
+            const isJr = isJuniorHigh(item.name);
             
             if (item.price !== null && item.price < 0) {
                 itemStyle = 'background:#FEF3C7; border-color:#FDE68A; color:#B45309;';
-            } else if (isJuniorHigh(item.name)) {
+            } else if (isJr) {
                 itemStyle = 'background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;';
             }
 
-            return `
+            const btnHtml = `
                 <button class="pill-btn quick-drag-item" data-index="${index}" style="${itemStyle}" onclick="openQuickItemModal(${index})">
                     ${item.name} <span style="font-size:13px; font-weight:normal; opacity:0.85;">(${priceText})</span>
                 </button>
             `;
-        }).join('');
 
-        quickItemSortable = new Sortable(list, {
+            if (isJr) jHtml += btnHtml;
+            else pHtml += btnHtml;
+        });
+
+        pList.innerHTML = pHtml || '<div style="color:#94A3B8; padding: 5px;">尚無項目</div>';
+        jList.innerHTML = jHtml || '<div style="color:#94A3B8; padding: 5px;">尚無項目</div>';
+
+        const onSortEnd = async function () {
+            const newOrderedIndices = [];
+            document.querySelectorAll('#primaryQuickItemConfigList .quick-drag-item, #juniorQuickItemConfigList .quick-drag-item').forEach(el => {
+                newOrderedIndices.push(parseInt(el.getAttribute('data-index')));
+            });
+            const newQuickItems = newOrderedIndices.map(i => window.quickItems[i]);
+            window.quickItems = newQuickItems;
+            await saveQuickItemsToCloud();
+            renderQuickItemConfigList();
+        };
+
+        if (pQuickSortable) pQuickSortable.destroy();
+        pQuickSortable = new Sortable(pList, {
+            group: 'quickItems',
             animation: 150,
             ghostClass: 'sortable-ghost',
-            onEnd: async function () {
-                const newOrderedIndices = Array.from(list.querySelectorAll('.quick-drag-item')).map(el => parseInt(el.getAttribute('data-index')));
-                const newQuickItems = newOrderedIndices.map(i => window.quickItems[i]);
-                window.quickItems = newQuickItems;
-                await saveQuickItemsToCloud();
-                renderQuickItemConfigList();
-            }
+            onEnd: onSortEnd
+        });
+
+        if (jQuickSortable) jQuickSortable.destroy();
+        jQuickSortable = new Sortable(jList, {
+            group: 'quickItems',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: onSortEnd
         });
     }
 
@@ -1425,23 +1453,36 @@
     }
 
     window.renderQuickButtonsForBilling = function() {
-        const grid = document.getElementById('quickItemGrid');
-        grid.innerHTML = window.quickItems.map(item => {
+        const primaryGrid = document.getElementById('primaryQuickItemGrid');
+        const juniorGrid = document.getElementById('juniorQuickItemGrid');
+        
+        let primaryHtml = '';
+        let juniorHtml = '';
+
+        window.quickItems.forEach(item => {
             const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '輸入金額';
             const priceArg = item.price !== null ? item.price : "''"; 
             
             let btnClass = 'quick-btn';
+            const isJr = isJuniorHigh(item.name);
+
             if (item.price !== null && item.price < 0) {
                 btnClass += ' discount';
-            } else if (isJuniorHigh(item.name)) {
+            } else if (isJr) {
                 btnClass += ' junior';
             }
 
-            return `<button class="${btnClass}" onclick="clickQuickItem('${item.name}', ${priceArg})">
+            const html = `<button class="${btnClass}" onclick="clickQuickItem('${item.name}', ${priceArg})">
                         <span>${item.name}</span>
                         <small>${priceText}</small>
                     </button>`;
-        }).join('');
+            
+            if (isJr) juniorHtml += html;
+            else primaryHtml += html;
+        });
+
+        primaryGrid.innerHTML = primaryHtml;
+        juniorGrid.innerHTML = juniorHtml;
     }
 
     window.clickQuickItem = function(name, defaultPrice) {
