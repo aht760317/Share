@@ -3,222 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德系統 - 私人內部導航</title>
+    <title>斗六顧德系統 - 核心管理門戶</title>
+    <!-- Google Fonts 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --primary: #1e3c72;
-            --secondary: #2a5298;
-            --light: #f8f9fa;
-            --dark: #333333;
-            --card-bg: #ffffff;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --bg-main: #0b0f19;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-title: #f8fafc;
+            --text-sub: #94a3b8;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--dark);
+            background-color: var(--bg-main);
+            color: var(--text-title);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景氛圍光暈 */
+        .bg-glow-1 {
+            position: fixed;
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -10%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
         }
 
         .container {
             width: 100%;
-            max-width: 1000px;
-            margin: auto;
+            max-width: 1100px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* 頂部標題 */
         header {
             text-align: center;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 30px 20px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
+            margin-bottom: 45px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 999px;
+            color: #60a5fa;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #3b82f6;
         }
 
         header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
+            font-size: 2.5rem;
+            font-weight: 900;
             letter-spacing: 1px;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
         }
 
         header p {
-            font-size: 0.95rem;
-            opacity: 0.85;
+            color: var(--text-sub);
+            font-size: 1rem;
         }
 
+        /* 網格系統 */
         .grid-menu {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
         }
 
+        /* 玻璃擬態卡片 */
         .card {
             background: var(--card-bg);
-            border-radius: 14px;
-            padding: 22px;
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 28px;
             text-decoration: none;
-            color: var(--dark);
-            box-shadow: var(--shadow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            border-left: 6px solid var(--secondary);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 20px 40px -15px var(--glow-color, rgba(0,0,0,0.5));
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* 項目顏色識別 */
-        .card.official { border-left-color: #3498db; }
-        .card.log { border-left-color: #2ecc71; }
-        .card.attendance { border-left-color: #e74c3c; }
-        .card.schedule { border-left-color: #f39c12; }
-        .card.money { border-left-color: #9b59b6; }
-        .card.bonus { border-left-color: #1abc9c; }
+        /* 項目專屬色彩主題 */
+        .card-a { --theme: #38bdf8; --glow-color: rgba(56, 189, 248, 0.3); }
+        .card-b { --theme: #34d399; --glow-color: rgba(52, 211, 153, 0.3); }
+        .card-c { --theme: #f87171; --glow-color: rgba(248, 113, 113, 0.3); }
+        .card-d { --theme: #fbbf24; --glow-color: rgba(251, 191, 36, 0.3); }
+        .card-e { --theme: #c084fc; --glow-color: rgba(192, 132, 252, 0.3); }
+        .card-f { --theme: #2dd4bf; --glow-color: rgba(45, 212, 191, 0.3); }
 
-        .card-header {
+        /* 卡片頂部 */
+        .card-top {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            justify-content: space-between;
+            margin-bottom: 20px;
         }
 
-        .card-icon {
-            font-size: 1.6rem;
-            margin-right: 12px;
+        .icon-wrapper {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--theme);
+            transition: all 0.35s ease;
         }
 
+        .card:hover .icon-wrapper {
+            background: var(--theme);
+            color: #0b0f19;
+            box-shadow: 0 0 20px var(--theme);
+            transform: scale(1.05);
+        }
+
+        .code-tag {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.2);
+            transition: color 0.3s;
+        }
+
+        .card:hover .code-tag {
+            color: var(--theme);
+        }
+
+        /* 卡片文字 */
         .card-title {
-            font-size: 1.15rem;
-            font-weight: bold;
-            color: var(--primary);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
         }
 
         .card-desc {
-            font-size: 0.88rem;
-            color: #666;
-            line-height: 1.4;
-            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 24px;
         }
 
-        .card-action {
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: var(--secondary);
+        /* 卡片底部連結 */
+        .card-footer {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 16px;
         }
 
-        .card-action::after {
-            content: " →";
-            transition: transform 0.2s;
+        .action-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            opacity: 0.8;
+            transition: opacity 0.3s;
         }
 
-        .card:hover .card-action::after {
+        .action-arrow {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .card:hover .action-label {
+            opacity: 1;
+            color: var(--theme);
+        }
+
+        .card:hover .action-arrow {
+            background: var(--theme);
+            color: #0b0f19;
             transform: translateX(4px);
         }
 
         footer {
             text-align: center;
             font-size: 0.8rem;
-            color: #555;
-            margin-top: 10px;
+            color: #475569;
+            margin-top: 50px;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 30px 16px; }
+            header h1 { font-size: 2rem; }
+            .grid-menu { grid-template-columns: 1fr; gap: 16px; }
+            .card { padding: 22px; }
         }
     </style>
 </head>
 <body>
 
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
     <div class="container">
         <header>
-            <h1>斗六顧德系統</h1>
-            <p>內部專用管理與資訊入口導航</p>
+            <div class="badge">
+                <span class="badge-dot"></span>
+                斗六顧德文教機構
+            </div>
+            <h1>統一內部管理系統</h1>
+            <p>快速入口導航門戶</p>
         </header>
 
         <div class="grid-menu">
-            <a href="https://aht760317.github.io/good-school/" target="_blank" class="card official">
+            <!-- A. 官方網站 -->
+            <a href="https://aht760317.github.io/good-school/" target="_blank" class="card card-a">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">🌐</span>
-                        <div class="card-title">A. 官方網站</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-globe"></i></div>
+                        <span class="code-tag">A</span>
                     </div>
-                    <div class="card-desc">對外招生網頁、課程介紹、班系說明與最新消息展示。</div>
+                    <div class="card-title">官方網站</div>
+                    <div class="card-desc">對外形象入口、班級課程介紹與最新公告展示。</div>
                 </div>
-                <div class="card-action">進入官方網站</div>
+                <div class="card-footer">
+                    <span class="action-label">進入官網</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
 
-            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card log">
+            <!-- B. 教學日誌 -->
+            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card card-b">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">📖</span>
-                        <div class="card-title">B. 教學日誌</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
+                        <span class="code-tag">B</span>
                     </div>
-                    <div class="card-desc">老師雲端即時上課日誌、進度填寫與課堂狀況回報。</div>
+                    <div class="card-title">教學日誌</div>
+                    <div class="card-desc">課堂進度回報、教師日誌填寫與學習狀況即時雲端同步。</div>
                 </div>
-                <div class="card-action">開啟教學日誌</div>
+                <div class="card-footer">
+                    <span class="action-label">填寫日誌</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
 
-            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card attendance">
+            <!-- C. 線上點名 -->
+            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card card-c">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">📱</span>
-                        <div class="card-title">C. 線上點名</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-user-check"></i></div>
+                        <span class="code-tag">C</span>
                     </div>
-                    <div class="card-desc">今日課程即時點名、出缺勤狀態紀錄與點名管理。</div>
+                    <div class="card-title">線上點名</div>
+                    <div class="card-desc">即時出缺勤登記、點名紀錄追蹤與名冊報表生成。</div>
                 </div>
-                <div class="card-action">進行線上點名</div>
+                <div class="card-footer">
+                    <span class="action-label">立即點名</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
 
-            <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card schedule">
+            <!-- D. 線上課表 -->
+            <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card card-d">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">🗓️</span>
-                        <div class="card-title">D. 線上課表</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
+                        <span class="code-tag">D</span>
                     </div>
-                    <div class="card-desc">各班級排課總覽、時間對照與課程安排檢視。</div>
+                    <div class="card-title">線上課表</div>
+                    <div class="card-desc">國中及國小各班級時程總覽、排課狀態與教室配置。</div>
                 </div>
-                <div class="card-action">檢視線上課表</div>
+                <div class="card-footer">
+                    <span class="action-label">檢視課表</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
 
-            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card money">
+            <!-- E. 繳費管理 -->
+            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card card-e">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">💳</span>
-                        <div class="card-title">E. 繳費管理</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-wallet"></i></div>
+                        <span class="code-tag">E</span>
                     </div>
-                    <div class="card-desc">學費繳交紀錄、帳務核對與未繳名單追蹤管理。</div>
+                    <div class="card-title">繳費管理</div>
+                    <div class="card-desc">學生學雜費核對、繳納狀態追蹤與帳務管理。</div>
                 </div>
-                <div class="card-action">進入繳費管理</div>
+                <div class="card-footer">
+                    <span class="action-label">管理帳務</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
 
-            <a href="https://aht760317.github.io/Share/" target="_blank" class="card bonus">
+            <!-- F. 家長分潤 -->
+            <a href="https://aht760317.github.io/Share/" target="_blank" class="card card-f">
                 <div>
-                    <div class="card-header">
-                        <span class="card-icon">🤝</span>
-                        <div class="card-title">F. 家長分潤</div>
+                    <div class="card-top">
+                        <div class="icon-wrapper"><i class="fa-solid fa-handshake-angle"></i></div>
+                        <span class="code-tag">F</span>
                     </div>
-                    <div class="card-desc">家長介紹獎金、推薦分潤計算與相關明細管理。</div>
+                    <div class="card-title">家長分潤</div>
+                    <div class="card-desc">家長介紹回饋、推薦獎金計算與分潤紀錄明細。</div>
                 </div>
-                <div class="card-action">查看家長分潤</div>
+                <div class="card-footer">
+                    <span class="action-label">查看分潤</span>
+                    <div class="action-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                </div>
             </a>
         </div>
 
         <footer>
-            &copy; 斗六顧德文教機構 Private Management System
+            &copy; 斗六顧德補習班內部專用門戶 · Confidential System
         </footer>
     </div>
 
