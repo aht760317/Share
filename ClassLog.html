@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (成績單行精簡顯示版)</title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (學生資料密碼防護版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -504,7 +504,7 @@
         </div>
     </div>
 
-    <!-- 💡 互動式處理補考與成績彈窗 (支援單行顯示原成績與補考) -->
+    <!-- 💡 互動式處理補考與成績彈窗 -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width: 450px;">
             <h3 style="margin-top:0; color:var(--primary);">📝 處理學生考試與補考紀錄</h3>
@@ -557,35 +557,6 @@
         </div>
     </div>
 
-    <!-- ⚙️ 課程修改/刪除彈窗 -->
-    <div class="modal-overlay" id="course-edit-modal">
-        <div class="modal-box" style="width: 500px;">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ 修改或刪除課程</h3>
-            <input type="hidden" id="edit-course-dept">
-            <input type="hidden" id="edit-course-original-name">
-
-            <label>課程名稱：</label>
-            <input type="text" id="edit-course-name" placeholder="課程名稱">
-
-            <label>上課星期：</label>
-            <input type="text" id="edit-course-day" placeholder="例如：星期一、星期三">
-
-            <label>上課時間：</label>
-            <input type="text" id="edit-course-time" placeholder="例如：19:00 - 21:00">
-
-            <label>授課老師：</label>
-            <input type="text" id="edit-course-teacher" placeholder="授課老師">
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除此課程</button>
-                <div>
-                    <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 📋 家長日誌彈窗 -->
     <div class="modal-overlay" id="parent-log-modal">
         <div class="modal-box" style="width: 580px; background: #f1f5f9;">
@@ -633,43 +604,7 @@
         </div>
     </div>
 
-    <!-- ✏️ 歷史日誌編輯與刪除彈窗 -->
-    <div class="modal-overlay" id="history-log-edit-modal">
-        <div class="modal-box" style="width: 600px;">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除歷史教學日誌</h3>
-            <input type="hidden" id="edit-history-firestore-id">
-
-            <div class="grid-2">
-                <div>
-                    <label>授課日期：</label>
-                    <input type="date" id="edit-history-date">
-                </div>
-                <div>
-                    <label>課程名稱：</label>
-                    <input type="text" id="edit-history-course">
-                </div>
-            </div>
-
-            <label>教學進度：</label>
-            <textarea id="edit-history-content" rows="3"></textarea>
-
-            <label>回家作業：</label>
-            <textarea id="edit-history-homework" rows="2"></textarea>
-
-            <label>注意事項：</label>
-            <textarea id="edit-history-notes" rows="2"></textarea>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-danger" onclick="requestDeleteHistoryLog()">🗑️ 刪除此歷史日誌</button>
-                <div>
-                    <button class="btn btn-success" onclick="saveHistoryLogEdit()">確認儲存修改</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('history-log-edit-modal').style.display='none'">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 學生檔案新增/修改彈窗 -->
+    <!-- 學生檔案新增/修改彈窗 (需密碼 0618 驗證) -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
             <h3 id="modal-title" style="margin-top:0; color:var(--primary);">新增/修改學生資料</h3>
@@ -1162,7 +1097,7 @@
             } catch (e) { alert('更新失敗'); }
         };
 
-        // 🎯 學生檔案通訊互動式補考與原始成績修改處理 (支援原成績與補考並存)
+        // 🎯 學生檔案通訊互動式補考與原始成績修改處理 (支援單行顯示原成績與補考)
         window.openRetestModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1218,7 +1153,7 @@
             } catch (e) { alert('更新失敗'); }
         };
 
-        // 鎖定密碼驗證核心 (統一 0618 - 僅限刪除或敏感設定)
+        // 鎖定密碼驗證核心 (統一 0618 - 僅限學生資料修改/刪除、歷史日誌、課程設定)
         window.requestSecureAction = function(callback) {
             window.pendingActionCallback = callback;
             document.getElementById('global-verify-pwd').value = "";
@@ -1236,6 +1171,36 @@
                 window.pendingActionCallback();
                 window.pendingActionCallback = null;
             }
+        };
+
+        // 🛡️ 點擊學生姓名 -> 需輸入密碼 0618 才能修改學生資料
+        window.openEditStudentModal = function(firestoreId) {
+            window.requestSecureAction(() => {
+                const s = window.state.students.find(item => item.firestoreId === firestoreId);
+                if(!s) return;
+
+                document.getElementById('modal-title').innerText = "修改學生資料";
+                document.getElementById('edit-student-id').value = firestoreId;
+                document.getElementById('modal-name').value = s.name;
+                document.getElementById('modal-school').value = s.school || '';
+                document.getElementById('modal-class').value = s.studentClass || '';
+                document.getElementById('modal-version').value = s.studentVersion || '';
+
+                const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
+                document.getElementById('modal-course').innerHTML = allCourses.map(c => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    return `<option value="${cName}" ${cName === s.course ? 'selected' : ''}>${cName}</option>`;
+                }).join('');
+
+                if(s.phones) {
+                    if(s.phones[0]) { document.getElementById('modal-label1').value = s.phones[0].label; document.getElementById('modal-phone1').value = s.phones[0].number; }
+                    if(s.phones[1]) { document.getElementById('modal-label2').value = s.phones[1].label; document.getElementById('modal-phone2').value = s.phones[1].number; }
+                    if(s.phones[2]) { document.getElementById('modal-label3').value = s.phones[2].label; document.getElementById('modal-phone3').value = s.phones[2].number; }
+                }
+
+                document.getElementById('delete-student-btn').style.display = "inline-block";
+                document.getElementById('student-modal').style.display = 'flex';
+            });
         };
 
         window.promptEditHistoryLog = function(firestoreId) {
@@ -1545,7 +1510,6 @@
             renderDirectorOverview();
         };
 
-        // 👑 主任全校日誌快速總覽 (各班獨立顯示該班學生的待辦提醒與一鍵直達)
         window.renderDirectorOverview = function() {
             const elemContainer = document.getElementById('director-overview-elementary');
             const juniorContainer = document.getElementById('director-overview-junior');
@@ -1570,7 +1534,6 @@
 
             const renderLogCard = (l) => {
                 let alertsHtml = '';
-                // 嚴格限制：只檢查「當前這筆日誌所屬的課程」底下的學生狀況，做到各班獨立顯示
                 window.state.students.forEach(s => {
                     if(s.course === l.course) {
                         const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
@@ -1703,7 +1666,6 @@
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
                     if(l.score !== null && l.score < passScore) {
                         if(l.retestDone) {
-                            // 修正：補考完成後，將「第一次原始分數」與「補考日期/分數」完整顯示在同一行
                             scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate||''}, ${l.retestScore}分已通過)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
@@ -1723,7 +1685,7 @@
                 return `
                     <tr data-firestore-id="${s.firestoreId}">
                         <td>
-                            <b>${s.name}</b><br>
+                            <span class="student-name-link" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
                             <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small><br>
                             <div style="font-size:11px; margin-top:4px; background:#f8fafc; padding:4px; border-radius:4px;">${phonesStr}</div>
                         </td>
