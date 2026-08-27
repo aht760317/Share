@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斗六顧德補習班 - 智慧線上點名與點名表生成系統</title>
+    <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --accent: #ff9800;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; }
+        body { background: #f0f2f5; color: #333; padding-bottom: 50px; }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .nav-links { margin-top: 10px; }
+        .nav-links a { color: #fff; text-decoration: none; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; margin: 0 5px; font-size: 0.9rem; }
+        .nav-links a:hover { background: rgba(255,255,255,0.35); }
+
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 14px; border: none; border-radius: 10px;
+            background: white; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; color: var(--secondary);
+        }
+        .tab-btn.active { background: var(--secondary); color: white; }
+
+        .card {
+            background: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px;
+        }
+
+        .filter-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px; }
+        .filter-group label { font-weight: bold; }
+        select, input, button {
+            padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;
+        }
+        select, input[type="text"], input[type="date"] { flex: 1; min-width: 180px; }
+        
+        .btn { cursor: pointer; border: none; font-weight: bold; border-radius: 8px; transition: 0.2s; }
+        .btn-primary { background: var(--secondary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--accent); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn:hover { opacity: 0.9; }
+
+        /* 學生點名大按鈕網格 */
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .student-card {
+            background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+            padding: 15px; text-align: center; cursor: pointer; transition: 0.2s;
+            position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .student-card:hover { transform: translateY(-3px); border-color: var(--secondary); }
+        .student-card.checked-in {
+            background: #e8f5e9; border-color: var(--success);
+        }
+        .student-name { font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
+        .student-info { font-size: 0.85rem; color: #666; margin-bottom: 8px; }
+        .status-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 0.8rem; font-weight: bold;
+        }
+        .badge-pending { background: #ffebee; color: #c62828; }
+        .badge-success { background: #c8e6c9; color: #2e7d32; }
+
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+        th { background: #f1f5f9; color: #333; font-weight: bold; }
+        tr:nth-child(even) { background: #fafafa; }
+
+        /* 列印點名表專用樣式 */
+        @media print {
+            body { background: white; padding: 0; }
+            header, .tabs, .filter-group, .no-print, .btn { display: none !important; }
+            .card { box-shadow: none; padding: 0; margin: 0; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 15px; }
+            .print-header h2 { font-size: 1.5rem; margin-bottom: 5px; }
+            table { font-size: 12pt; }
+            th, td { border: 1.5px solid #000 !important; padding: 8px 4px; }
+            .date-col { width: 45px; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>斗六顧德補習班</h2>
+    <h1>線上點名與點名表生成系統</h1>
+    <div class="nav-links">
+        <a href="ClassLog.html">🔙 返回教學日誌 (ClassLog)</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('checkin')">📱 學生線上簽到點名</button>
+        <button class="tab-btn" onclick="switchTab('generator')">🖨️ 生成/列印點名表</button>
+        <button class="tab-btn" onclick="switchTab('data')">⚙️ 資料同步與設定</button>
+    </div>
+
+    <!-- 1. 學生現場點名 -->
+    <div id="tab-checkin" class="tab-content">
+        <div class="card">
+            <div class="filter-group">
+                <label>選擇班級/課程：</label>
+                <select id="checkinClassSelect" onchange="renderCheckinList()"></select>
+                <label>點名日期：</label>
+                <input type="date" id="checkinDate" onchange="renderCheckinList()">
+                <button class="btn btn-warning" onclick="resetTodayCheckin()">🔄 重設今日點名</button>
+            </div>
+            
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="checkinStats" style="font-weight: bold; color: var(--secondary);">出席統計：載入中...</span>
+                <span style="font-size: 0.9rem; color: #666;">💡 學生直接點擊卡片即可完成簽到打卡</span>
+            </div>
+
+            <div class="student-grid" id="studentGrid"></div>
+        </div>
+    </div>
+
+    <!-- 2. 生成紙本/報表點名表 -->
+    <div id="tab-generator" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="filter-group no-print">
+                <label>篩選班級：</label>
+                <select id="genClassSelect" onchange="renderGeneratedSheet()"></select>
+                
+                <label>點名表格模式：</label>
+                <select id="genSheetMode" onchange="renderGeneratedSheet()">
+                    <option value="multi-date">多日期空白簽到表 (印出紙本用)</option>
+                    <option value="today-status">當日點名結果表 (含到班時間)</option>
+                </select>
+                
+                <button class="btn btn-primary" onclick="window.print()">🖨️ 列印點名表</button>
+                <button class="btn btn-success" onclick="exportToCSV()">📥 匯出 CSV/Excel</button>
+            </div>
+
+            <!-- 列印抬頭 -->
+            <div class="print-header">
+                <h2 id="printTitle">斗六顧德補習班 班級點名表</h2>
+                <p id="printSubtitle">列印日期：</p>
+            </div>
+
+            <div id="generatedTableContainer" style="overflow-x: auto;"></div>
+        </div>
+    </div>
+
+    <!-- 3. 資料管理與同步 -->
+    <div id="tab-data" class="tab-content" style="display: none;">
+        <div class="card">
+            <h3>🔄 資料來源與同步說明</h3>
+            <p style="margin-top: 8px; color: #555; line-height: 1.6;">
+                本系統與 <b>ClassLog.html</b> 位於同一網域，系統已為您自動讀取瀏覽器儲存的學生及班級名單！<br>
+                如果您更換電腦或瀏覽器，也可以在下方將資料匯入。
+            </p>
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="reloadFromClassLog()">🔄 重新從系統抓取最新學生</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清除點名紀錄快取</button>
+            </div>
+
+            <h4 style="margin-top: 25px;">目前讀取到的學生名冊：</h4>
+            <div id="rawStudentList" style="margin-top: 10px; max-height: 250px; overflow-y: auto;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 預設與 localStorage key
+    const LOG_STORAGE_KEYS = ['students', 'gude_students', 'classList', 'gude_classes'];
+    const ROLLCALL_RECORD_KEY = 'gude_rollcall_records';
+
+    let allStudents = [];
+    let allClasses = [];
+    let rollCallRecords = JSON.parse(localStorage.getItem(ROLLCALL_RECORD_KEY) || '{}');
+
+    window.onload = function() {
+        document.getElementById('checkinDate').valueAsDate = new Date();
+        loadSystemData();
+    };
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+        if(tabName === 'checkin') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-checkin').style.display = 'block';
+            renderCheckinList();
+        } else if(tabName === 'generator') {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-generator').style.display = 'block';
+            renderGeneratedSheet();
+        } else {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('tab-data').style.display = 'block';
+            renderRawData();
+        }
+    }
+
+    // 載入 ClassLog 網頁的資料
+    function loadSystemData() {
+        allStudents = [];
+        allClasses = [];
+
+        // 嘗試抓取各種可能在 ClassLog 中使用的 Storage 變數名稱
+        for (let k of LOG_STORAGE_KEYS) {
+            let data = localStorage.getItem(k);
+            if (data) {
+                try {
+                    let parsed = JSON.parse(data);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        if (parsed[0].name || parsed[0].studentName) {
+                            allStudents = parsed;
+                        } else if (parsed[0].className || typeof parsed[0] === 'string') {
+                            allClasses = parsed;
+                        }
+                    }
+                } catch(e){}
+            }
+        }
+
+        // 如果讀取不到，提供預設展示資料確保功能即時可用
+        if (allStudents.length === 0) {
+            allStudents = [
+                { id: "1", name: "王小明", school: "斗六國中", grade: "國二", classRoom: "國二數學A班", version: "康軒" },
+                { id: "2", name: "李小華", school: "雲林國中", grade: "國二", classRoom: "國二數學A班", version: "南一" },
+                { id: "3", name: "張大同", school: "鎮南國小", grade: "小六", classRoom: "小六升私中", version: "翰林" },
+                { id: "4", name: "陳雅婷", school: "斗六國小", grade: "小六", classRoom: "小六升私中", version: "康軒" }
+            ];
+        }
+
+        // 提取所有班級
+        let classSet = new Set();
+        allStudents.forEach(s => {
+            let c = s.classRoom || s.className || s.course || s.grade || "一般班級";
+            classSet.add(c);
+        });
+        allClasses = Array.from(classSet);
+
+        populateClassSelects();
+        renderCheckinList();
+        renderGeneratedSheet();
+    }
+
+    function populateClassSelects() {
+        const checkinSelect = document.getElementById('checkinClassSelect');
+        const genSelect = document.getElementById('genClassSelect');
+        
+        checkinSelect.innerHTML = '<option value="ALL">全部班級 / 學生</option>';
+        genSelect.innerHTML = '<option value="ALL">全部班級 / 學生</option>';
+
+        allClasses.forEach(cls => {
+            let name = typeof cls === 'object' ? (cls.name || cls.className) : cls;
+            checkinSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            genSelect.innerHTML += `<option value="${name}">${name}</option>`;
+        });
+    }
+
+    function getFilteredStudents(selectedClass) {
+        if (!selectedClass || selectedClass === 'ALL') return allStudents;
+        return allStudents.filter(s => {
+            let c = s.classRoom || s.className || s.course || s.grade;
+            return c === selectedClass;
+        });
+    }
+
+    // 渲染簽到點名清單
+    function renderCheckinList() {
+        const selectedClass = document.getElementById('checkinClassSelect').value;
+        const date = document.getElementById('checkinDate').value;
+        const students = getFilteredStudents(selectedClass);
+        const grid = document.getElementById('studentGrid');
+        
+        grid.innerHTML = '';
+        let checkedCount = 0;
+
+        students.forEach((stu, idx) => {
+            let stuName = stu.name || stu.studentName;
+            let stuId = stu.id || stuName;
+            let key = `${date}_${stuId}`;
+            let record = rollCallRecords[key];
+            let isChecked = !!record;
+            if (isChecked) checkedCount++;
+
+            let card = document.createElement('div');
+            card.className = `student-card ${isChecked ? 'checked-in' : ''}`;
+            card.onclick = () => toggleCheckin(key, stuName);
+
+            card.innerHTML = `
+                <div class="student-name">${stuName}</div>
+                <div class="student-info">${stu.school || ''} ${stu.grade || ''} | ${stu.version ? '版本:'+stu.version : ''}</div>
+                <div class="status-badge ${isChecked ? 'badge-success' : 'badge-pending'}">
+                    ${isChecked ? `✅ 已點名 (${record.time})` : '🕒 尚未簽到 (點擊點名)'}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        document.getElementById('checkinStats').innerText = 
+            `出席統計：已到 ${checkedCount} 人 / 應到 ${students.length} 人 (出席率: ${students.length > 0 ? Math.round(checkedCount/students.length*100) : 0}%)`;
+    }
+
+    // 切換點名打卡狀態
+    function toggleCheckin(recordKey, studentName) {
+        if (rollCallRecords[recordKey]) {
+            if (confirm(`確定要取消【${studentName}】的今日點名嗎？`)) {
+                delete rollCallRecords[recordKey];
+            }
+        } else {
+            let now = new Date();
+            let timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            rollCallRecords[recordKey] = { status: '出席', time: timeStr, name: studentName };
+        }
+        localStorage.setItem(ROLLCALL_RECORD_KEY, JSON.stringify(rollCallRecords));
+        renderCheckinList();
+    }
+
+    function resetTodayCheckin() {
+        const date = document.getElementById('checkinDate').value;
+        if (confirm(`確定要清空 ${date} 的所有點名打卡紀錄嗎？`)) {
+            Object.keys(rollCallRecords).forEach(k => {
+                if (k.startsWith(date)) delete rollCallRecords[k];
+            });
+            localStorage.setItem(ROLLCALL_RECORD_KEY, JSON.stringify(rollCallRecords));
+            renderCheckinList();
+        }
+    }
+
+    // 渲染生成的點名表
+    function renderGeneratedSheet() {
+        const selectedClass = document.getElementById('genClassSelect').value;
+        const mode = document.getElementById('genSheetMode').value;
+        const students = getFilteredStudents(selectedClass);
+        const container = document.getElementById('generatedTableContainer');
+        const printTitle = document.getElementById('printTitle');
+        const printSubtitle = document.getElementById('printSubtitle');
+
+        let dateStr = new Date().toLocaleDateString('zh-TW');
+        printTitle.innerText = `斗六顧德補習班 - ${selectedClass === 'ALL' ? '全校學員' : selectedClass} 點名表`;
+        printSubtitle.innerText = `製表日期：${dateStr} | 學生總數：${students.length} 人`;
+
+        let html = '';
+
+        if (mode === 'multi-date') {
+            // 多日期簽到表 (適合列印成紙本放教室)
+            html = `<table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">編號</th>
+                        <th style="width: 100px;">姓名</th>
+                        <th style="width: 100px;">學校</th>
+                        <th style="width: 80px;">年級/班級</th>
+                        <th style="width: 70px;">版本</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th class="date-col">/</th>
+                        <th style="width: 100px;">備註</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            students.forEach((s, i) => {
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${s.name || s.studentName}</b></td>
+                    <td>${s.school || '-'}</td>
+                    <td>${s.grade || s.classRoom || '-'}</td>
+                    <td>${s.version || '-'}</td>
+                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                    <td></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else {
+            // 當日點名結果
+            const today = document.getElementById('checkinDate').value;
+            html = `<table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">編號</th>
+                        <th>姓名</th>
+                        <th>學校</th>
+                        <th>年級/班級</th>
+                        <th>版本</th>
+                        <th>日期</th>
+                        <th>出席狀態</th>
+                        <th>到班時間</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            students.forEach((s, i) => {
+                let stuName = s.name || s.studentName;
+                let stuId = s.id || stuName;
+                let key = `${today}_${stuId}`;
+                let rec = rollCallRecords[key];
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${stuName}</b></td>
+                    <td>${s.school || '-'}</td>
+                    <td>${s.grade || s.classRoom || '-'}</td>
+                    <td>${s.version || '-'}</td>
+                    <td>${today}</td>
+                    <td style="color:${rec ? 'green' : 'red'}; font-weight:bold;">${rec ? '✅ 出席' : '❌ 未到'}</td>
+                    <td>${rec ? rec.time : '-'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // 匯出 CSV
+    function exportToCSV() {
+        const selectedClass = document.getElementById('genClassSelect').value;
+        const students = getFilteredStudents(selectedClass);
+        let csv = "\uFEFF編號,姓名,學校,年級班級,版本,備註\n";
+        students.forEach((s, i) => {
+            csv += `"${i+1}","${s.name||s.studentName}","${s.school||''}","${s.grade||s.classRoom||''}","${s.version||''}",""\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `顧德補習班點名表_${selectedClass}_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+    }
+
+    function renderRawData() {
+        const div = document.getElementById('rawStudentList');
+        div.innerHTML = `<table>
+            <tr><th>姓名</th><th>學校</th><th>班級</th><th>版本</th></tr>
+            ${allStudents.map(s => `<tr><td>${s.name||s.studentName}</td><td>${s.school||'-'}</td><td>${s.grade||s.classRoom||'-'}</td><td>${s.version||'-'}</td></tr>`).join('')}
+        </table>`;
+    }
+
+    function reloadFromClassLog() {
+        loadSystemData();
+        alert('已重新同步 ClassLog 學生名單！');
+    }
+
+    function clearAllData() {
+        if(confirm('確定要清除所有已記錄的點名快取嗎？')) {
+            localStorage.removeItem(ROLLCALL_RECORD_KEY);
+            rollCallRecords = {};
+            renderCheckinList();
+            alert('點名紀錄已清除！');
+        }
+    }
+</script>
+</body>
+</html>
