@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧線上點名與點名表系統</title>
+    <title>斗六顧德補習班 - 智慧線上點名與即時日誌連動系統</title>
     <style>
         :root {
             --primary: #1e3c72;
@@ -11,23 +11,34 @@
             --accent: #ff9800;
             --success: #28a745;
             --danger: #dc3545;
-            --warning: #ffc107;
-            --holiday: #ea580c;
+            --warning: #f59e0b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; }
         body { background: #f1f5f9; color: #1e293b; padding-bottom: 60px; }
 
         header {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; padding: 18px 20px; text-align: center;
+            color: white; padding: 14px 24px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.12);
         }
-        header h1 { font-size: 1.6rem; margin-bottom: 6px; }
-        .nav-links a {
-            color: white; text-decoration: none; background: rgba(255,255,255,0.25);
-            padding: 5px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;
+        .header-title h1 { font-size: 1.5rem; }
+        .header-title p { font-size: 0.85rem; color: #cbd5e1; margin-top: 2px; }
+
+        /* 右上角強制同步按鈕區 */
+        .sync-controls {
+            display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15);
+            padding: 6px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3);
         }
-        .nav-links a:hover { background: rgba(255,255,255,0.4); }
+        .sync-status { font-size: 0.85rem; font-weight: bold; color: #a7f3d0; display: flex; align-items: center; gap: 5px; }
+        .sync-dot { width: 8px; height: 8px; background: #34d399; border-radius: 50%; box-shadow: 0 0 8px #34d399; }
+        .btn-sync-now {
+            background: #ff9800; color: white; border: none; padding: 6px 14px;
+            border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.85rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: 0.2s;
+        }
+        .btn-sync-now:hover { background: #f57c00; transform: scale(1.03); }
+        .nav-link { color: white; text-decoration: none; font-size: 0.85rem; margin-left: 5px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; }
 
         .container { max-width: 1380px; margin: 20px auto; padding: 0 15px; }
 
@@ -51,7 +62,7 @@
         }
         .course-card {
             background: #fff; border: 2px solid #e2e8f0; border-radius: 10px;
-            padding: 15px; cursor: pointer; transition: 0.2s; position: relative;
+            padding: 15px; cursor: pointer; transition: 0.2s;
         }
         .course-card:hover { transform: translateY(-2px); border-color: var(--secondary); }
         .course-card.active { border-color: var(--accent); background: #fffaf0; }
@@ -71,12 +82,10 @@
         .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-primary { background: var(--secondary); color: white; }
         .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--holiday); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-gray { background: #64748b; color: white; }
-        .btn:hover { opacity: 0.9; }
 
-        /* 表格與列印排版 */
+        /* 列印格式排版 */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
         th, td { border: 1px solid #cbd5e1; padding: 6px 3px; text-align: center; }
         th { background: #f8fafc; font-weight: bold; }
@@ -97,9 +106,18 @@
 <body>
 
 <header>
-    <h1>斗六顧德補習班 - 智慧線上點名與點名表系統</h1>
-    <div class="nav-links">
-        <a href="ClassLog.html">🔙 返回教學日誌 (ClassLog)</a>
+    <div class="header-title">
+        <h1>斗六顧德補習班 - 智慧線上點名與即時日誌連動系統</h1>
+        <p>連動 ClassLog.html 課程名冊與老師填寫之成績/請假</p>
+    </div>
+    
+    <div class="sync-controls no-print">
+        <div class="sync-status">
+            <span class="sync-dot"></span>
+            <span id="syncStatusLabel">日誌連動正常</span>
+        </div>
+        <button class="btn-sync-now" onclick="forceSyncFromClassLog()">🔄 強制自動同步班級課程與名單</button>
+        <a href="ClassLog.html" class="nav-link">🔙 前往教學日誌</a>
     </div>
 </header>
 
@@ -126,18 +144,18 @@
         <div class="card" id="rollDetailCard" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:10px;">
                 <div>
-                    <h3 id="rollCourseTitle" style="color:var(--secondary);">課程點名</h3>
+                    <h3 id="rollCourseTitle" style="color:var(--secondary);">課程名稱</h3>
                     <p id="rollCourseMeta" style="color:#666; font-size:0.85rem; margin-top:2px;"></p>
                 </div>
                 <div class="no-print" style="display:flex; gap:10px; align-items:center;">
-                    <span id="holidayNotice" style="font-weight:bold; color:var(--holiday); display:none;">⚠️ 本日為設定之放假日</span>
+                    <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none;">⚠️ 本日為設定之放假日</span>
                     <button class="btn btn-primary" onclick="quickMarkAll()">⚡ 全員到齊點名</button>
                 </div>
             </div>
 
             <div style="margin-top:12px; display:flex; justify-content:space-between;">
                 <span id="rollStatsText" style="font-weight:bold; color:var(--secondary);">應到 0 人 / 出席 0 人</span>
-                <span style="font-size:0.85rem; color:#888;">💡 成績與請假狀況皆自動與 ClassLog 同步</span>
+                <span style="font-size:0.85rem; color:#888;">💡 若老師已在日誌填寫請假或成績，系統會自動帶入此處與點名表！</span>
             </div>
 
             <div class="student-grid" id="studentRollGrid"></div>
@@ -154,7 +172,7 @@
                 <span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:5px 10px; border-radius:6px; font-weight:bold;">自動讀取中</span>
 
                 <button class="btn btn-primary" onclick="window.print()">🖨️ 列印此點名表 (A4橫向)</button>
-                <button class="btn btn-warning" onclick="promptEditSheetStart()">✏️ 修改此表起始日 (需密碼)</button>
+                <button class="btn btn-warning" onclick="promptEditSheetStart()">✏️ 修改開課起始日 (密碼0618)</button>
             </div>
 
             <div class="print-header">
@@ -170,7 +188,7 @@
         <div class="card">
             <h3>🔒 國定假日與停課放假設定 (安全管理)</h3>
             <p style="color:#666; font-size:0.9rem; margin-top:4px;">
-                設定放假後（如中秋節、連假、颱風假），所有點名表會自動推算並標記【放假】字樣。
+                設定放假後（如中秋節放假、國慶連假），所有點名表會自動推算並在當日印出【放假】字樣。
             </p>
 
             <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
@@ -188,7 +206,7 @@
         <div class="card">
             <h3>🔒 課程開課日與自動啟動點名表設定</h3>
             <p style="color:#666; font-size:0.9rem; margin-top:4px;">
-                每門課程可設定「開課起始日」。設定後，系統會以此日期自動啟動點名表排程（國中自動算3個月/國小算2個月）。
+                每門課程可設定「開課起始日」。設定後系統會從該日開始自動排程（國中自動算3個月/國小算2個月）。
             </p>
 
             <div id="courseConfigList" style="margin-top:15px;"></div>
@@ -210,18 +228,107 @@
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('rollDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
-        loadFromClassLog();
+        autoSyncAllData();
     };
 
-    // 安全密碼檢查通用函式
     function checkPassword() {
-        const input = prompt("🔒 請輸入管理密碼以執行此修改：");
+        const input = prompt("🔒 請輸入管理密碼 (預設: 0618)：");
         if (input === SECURITY_CODE) {
             return true;
         } else {
-            alert("❌ 密碼錯誤！無法修改設定。");
+            alert("❌ 密碼錯誤！無法執行此操作。");
             return false;
         }
+    }
+
+    // 自動同步：讀取 ClassLog 的所有課程、學生名冊、與教學日誌內容
+    function autoSyncAllData(showNotice = false) {
+        // 讀取 ClassLog 儲存的課程與學生
+        const rawCourses = localStorage.getItem('classList') || localStorage.getItem('gude_classes');
+        const rawStudents = localStorage.getItem('students') || localStorage.getItem('gude_students');
+        const rawLogs = localStorage.getItem('classLogs') || localStorage.getItem('gude_logs');
+
+        if (rawCourses) {
+            try { courses = JSON.parse(rawCourses); } catch(e){}
+        }
+        if (rawStudents) {
+            try { students = JSON.parse(rawStudents); } catch(e){}
+        }
+
+        const defaultStart = new Date().toISOString().slice(0, 8) + '01';
+
+        // 整理課程資料
+        if (!courses || courses.length === 0) {
+            courses = [
+                { id: 'c_j1', name: '國二數學A班', dept: 'junior', dayOfWeek: '4', teacher: '吳老師', startDate: defaultStart },
+                { id: 'c_j2', name: '國三會考理化班', dept: 'junior', dayOfWeek: '4', teacher: '陳老師', startDate: defaultStart },
+                { id: 'c_e1', name: '小五數學培優班', dept: 'elementary', dayOfWeek: '4', teacher: '林老師', startDate: defaultStart }
+            ];
+        } else {
+            courses.forEach((c, idx) => {
+                if (!c.id) c.id = 'c_' + idx;
+                if (!c.startDate) c.startDate = defaultStart;
+                if (!c.dept) c.dept = (c.name && c.name.includes('小')) ? 'elementary' : 'junior';
+            });
+        }
+
+        // 整理學生資料
+        if (!students || students.length === 0) {
+            students = [
+                { id: 's1', name: '陳小明', school: '斗六國中', grade: '國二', classId: 'c_j1', className: '國二數學A班', version: '康軒' },
+                { id: 's2', name: '林子晴', school: '雲林國中', grade: '國二', classId: 'c_j1', className: '國二數學A班', version: '南一' },
+                { id: 's3', name: '張品睿', school: '鎮南國小', grade: '小五', classId: 'c_e1', className: '小五數學培優班', version: '翰林' }
+            ];
+        }
+
+        // 自動同步解析老師打完的教學日誌 (ClassLogs) 內的請假與成績
+        if (rawLogs) {
+            try {
+                const logList = JSON.parse(rawLogs);
+                logList.forEach(log => {
+                    const logDate = log.date;
+                    const logClass = log.className || log.classId;
+                    
+                    // 1. 同步日誌內的請假學生
+                    if (log.absentStudents && Array.isArray(log.absentStudents)) {
+                        log.absentStudents.forEach(stuName => {
+                            const key = `${logDate}_${logClass}_${stuName}`;
+                            if (!attendanceData[key]) attendanceData[key] = {};
+                            attendanceData[key].status = '請假';
+                        });
+                    }
+
+                    // 2. 同步日誌內的測驗成績
+                    if (log.scores && Array.isArray(log.scores)) {
+                        log.scores.forEach(sc => {
+                            const stuName = sc.name || sc.studentName;
+                            const scoreVal = sc.score;
+                            if (stuName && scoreVal !== undefined) {
+                                const key = `${logDate}_${logClass}_${stuName}`;
+                                if (!attendanceData[key]) attendanceData[key] = {};
+                                attendanceData[key].status = '出席';
+                                attendanceData[key].score = scoreVal;
+                            }
+                        });
+                    }
+                });
+                localStorage.setItem('gude_attendance_records', JSON.stringify(attendanceData));
+            } catch(e) {
+                console.error("日誌連動解析異常", e);
+            }
+        }
+
+        renderCourseCards();
+        document.getElementById('syncStatusLabel').innerText = `已同步 (最後更新: ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})})`;
+        
+        if (showNotice) {
+            alert('🎉 已成功自動同步 ClassLog 內的最新課程、學生名冊、請假名單與成績！');
+        }
+    }
+
+    function forceSyncFromClassLog() {
+        autoSyncAllData(true);
+        if (currentCourse) selectCourse(currentCourse.id);
     }
 
     function switchTab(tab) {
@@ -247,50 +354,11 @@
         }
     }
 
-    // 載入資料 (自動同步 ClassLog)
-    function loadFromClassLog() {
-        const rawCourses = localStorage.getItem('classList') || localStorage.getItem('gude_classes');
-        const rawStudents = localStorage.getItem('students') || localStorage.getItem('gude_students');
-
-        if (rawCourses) {
-            try { courses = JSON.parse(rawCourses); } catch(e){}
-        }
-        if (rawStudents) {
-            try { students = JSON.parse(rawStudents); } catch(e){}
-        }
-
-        // 若尚無開課日，預設為當月第一天
-        const defaultStart = new Date().toISOString().slice(0, 8) + '01';
-        if (!courses || courses.length === 0) {
-            courses = [
-                { id: 'c_j1', name: '國二數學A班', dept: 'junior', dayOfWeek: '4', teacher: '吳老師', startDate: defaultStart },
-                { id: 'c_j2', name: '國三會考理化班', dept: 'junior', dayOfWeek: '4', teacher: '陳老師', startDate: defaultStart },
-                { id: 'c_e1', name: '小五數學培優班', dept: 'elementary', dayOfWeek: '4', teacher: '林老師', startDate: defaultStart }
-            ];
-        } else {
-            courses.forEach(c => {
-                if (!c.startDate) c.startDate = defaultStart;
-                if (!c.dept) c.dept = c.name.includes('小') ? 'elementary' : 'junior';
-            });
-        }
-
-        if (!students || students.length === 0) {
-            students = [
-                { id: 's1', name: '陳小明', school: '斗六國中', grade: '國二', classId: 'c_j1', version: '康軒' },
-                { id: 's2', name: '林子晴', school: '雲林國中', grade: '國二', classId: 'c_j1', version: '南一' },
-                { id: 's3', name: '張品睿', school: '鎮南國小', grade: '小五', classId: 'c_e1', version: '翰林' }
-            ];
-        }
-
-        renderCourseCards();
-    }
-
     function onDateChange() {
         renderCourseCards();
         if (currentCourse) selectCourse(currentCourse.id);
     }
 
-    // 渲染今日課程列表
     function renderCourseCards() {
         const curDate = new Date(document.getElementById('rollDateInput').value);
         const dayIdx = curDate.getDay();
@@ -302,8 +370,6 @@
 
         courses.forEach(c => {
             const isToday = c.dayOfWeek == dayIdx || c.day == `週${WEEK_NAMES[dayIdx]}`;
-            const isStarted = !c.startDate || (curDate >= new Date(c.startDate));
-
             const card = document.createElement('div');
             card.className = `course-card ${currentCourse && currentCourse.id === c.id ? 'active' : ''}`;
             card.onclick = () => selectCourse(c.id);
@@ -315,7 +381,6 @@
                 ${isToday ? '<span style="float:right; background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:bold; padding:2px 6px; border-radius:4px;">今日排課</span>' : ''}
                 <div style="font-size:1.15rem; font-weight:bold; margin:6px 0 2px;">${c.name}</div>
                 <div style="font-size:0.85rem; color:#64748b;">開課日：${c.startDate || '未設定'} | 授課：${c.teacher || '任課老師'}</div>
-                ${!isStarted ? '<div style="font-size:0.75rem; color:#d97706; margin-top:4px;">⏳ 尚未到開課日</div>' : ''}
             `;
             grid.appendChild(card);
         });
@@ -347,13 +412,16 @@
         grid.innerHTML = '';
 
         const dateStr = document.getElementById('rollDateInput').value;
-        const courseStudents = students.filter(s => s.classId === currentCourse.id || s.course === currentCourse.name || s.classRoom === currentCourse.name || !s.classId);
+        const courseStudents = students.filter(s => 
+            s.classId === currentCourse.id || s.className === currentCourse.name || s.course === currentCourse.name || !s.classId
+        );
 
         let presentCount = 0;
 
         courseStudents.forEach(stu => {
-            const key = `${dateStr}_${currentCourse.id}_${stu.name}`;
-            const record = attendanceData[key] || { status: '未到', time: '', score: '' };
+            const key1 = `${dateStr}_${currentCourse.id}_${stu.name}`;
+            const key2 = `${dateStr}_${currentCourse.name}_${stu.name}`;
+            const record = attendanceData[key1] || attendanceData[key2] || { status: '未到', time: '', score: '' };
             if (record.status === '出席') presentCount++;
 
             const card = document.createElement('div');
@@ -367,18 +435,24 @@
                     </span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-top:10px;">
-                    <button class="btn ${record.status === '出席' ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:6px;" onclick="setAttendance('${key}', '出席')">
+                    <button class="btn ${record.status === '出席' ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:6px;" onclick="setAttendance('${key1}', '出席')">
                         ${record.status === '出席' ? '✅ 已出席' : '簽到'}
                     </button>
-                    <button class="btn btn-warning" style="padding:6px;" onclick="setAttendance('${key}', '請假')">請假</button>
-                    <input type="number" placeholder="成績" value="${record.score || ''}" style="width:65px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center;" onchange="saveScore('${key}', this.value)">
+                    <button class="btn btn-warning" style="padding:6px;" onclick="setAttendance('${key1}', '請假')">
+                        ${record.status === '請假' ? '⚠️ 已請假' : '請假'}
+                    </button>
+                    <input type="number" placeholder="成績" value="${record.score || ''}" style="width:65px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center;" onchange="saveScore('${key1}', this.value)">
                 </div>
             `;
             grid.appendChild(card);
         });
 
         document.getElementById('rollStatsText').innerText = 
-            `應到：${courseStudents.length} 人 / 出席：${presentCount} 人 / 請假：${courseStudents.length - presentCount} 人`;
+            `應到：${courseStudents.length} 人 / 出席：${presentCount} 人 / 請假：${courseStudents.filter(s => {
+                const k1 = `${dateStr}_${currentCourse.id}_${s.name}`;
+                const k2 = `${dateStr}_${currentCourse.name}_${s.name}`;
+                return (attendanceData[k1] && attendanceData[k1].status === '請假') || (attendanceData[k2] && attendanceData[k2].status === '請假');
+            }).length} 人`;
     }
 
     function setAttendance(key, status) {
@@ -397,7 +471,7 @@
 
     function quickMarkAll() {
         const dateStr = document.getElementById('rollDateInput').value;
-        const courseStudents = students.filter(s => s.classId === currentCourse.id || s.course === currentCourse.name || s.classRoom === currentCourse.name || !s.classId);
+        const courseStudents = students.filter(s => s.classId === currentCourse.id || s.className === currentCourse.name || s.course === currentCourse.name || !s.classId);
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${currentCourse.id}_${stu.name}`;
             attendanceData[key] = { status: '出席', time: '全員到齊', score: (attendanceData[key] ? attendanceData[key].score : '') };
@@ -406,10 +480,9 @@
         renderStudentList();
     }
 
-    // 🔒 放假設定功能（需密碼 0618）
+    // 🔒 放假設定 (密碼: 0618)
     function verifyAndAddHoliday() {
         if (!checkPassword()) return;
-
         const date = document.getElementById('newHolidayDate').value;
         const name = document.getElementById('newHolidayName').value;
         if (!date || !name) return alert('請完整輸入放假日期與事由！');
@@ -447,7 +520,7 @@
         alert('已成功刪除該放假設定！');
     }
 
-    // 🔒 課程開課起始日與排程管理（需密碼 0618）
+    // 🔒 課程開課起始日與排程管理 (密碼: 0618)
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
         let html = `<table>
@@ -483,7 +556,6 @@
 
     function saveCourseConfig(courseId) {
         if (!checkPassword()) return;
-
         const dept = document.getElementById(`cfg_dept_${courseId}`).value;
         const startDate = document.getElementById(`cfg_start_${courseId}`).value;
 
@@ -534,7 +606,9 @@
         document.getElementById('sheetPeriodBadge').innerText = isJunior ? '國中部：3個月 (13週)' : '國小部：2個月 (9週)';
 
         const startDateVal = course.startDate || new Date().toISOString().slice(0, 10);
-        const courseStudents = students.filter(s => s.classId === course.id || s.course === course.name || s.classRoom === course.name || !s.classId);
+        const courseStudents = students.filter(s => 
+            s.classId === course.id || s.className === course.name || s.course === course.name || !s.classId
+        );
 
         let dateList = [];
         let cur = new Date(startDateVal);
@@ -547,7 +621,7 @@
                 shortDate: `${cur.getMonth()+1}/${cur.getDate()}`,
                 holiday: holidayMatch ? holidayMatch.name : null
             });
-            cur.setDate(cur.getDate() + 7); // 每週推算一堂
+            cur.setDate(cur.getDate() + 7);
         }
 
         const endDateStr = dateList[dateList.length - 1].dateStr;
@@ -586,13 +660,14 @@
                 if (d.holiday) {
                     html += `<td class="holiday-col" style="font-size:7.5pt;">放假</td>`;
                 } else {
-                    const key = `${d.dateStr}_${course.id}_${stu.name}`;
-                    const rec = attendanceData[key];
+                    const k1 = `${d.dateStr}_${course.id}_${stu.name}`;
+                    const k2 = `${d.dateStr}_${course.name}_${stu.name}`;
+                    const rec = attendanceData[k1] || attendanceData[k2];
                     let mark = '';
                     let score = '';
                     if (rec) {
-                        mark = rec.status === '請假' ? '<span style="color:#ea580c;font-weight:bold;">假</span>' : (rec.status === '出席' ? '✔' : '');
-                        score = rec.score ? `<span style="font-size:7pt;color:#0284c7;">${rec.score}分</span>` : '';
+                        mark = rec.status === '請假' ? '<span style="color:#f59e0b;font-weight:bold;">假</span>' : (rec.status === '出席' ? '✔' : '');
+                        score = rec.score ? `<span style="font-size:7pt;color:#0284c7;font-weight:bold;">${rec.score}分</span>` : '';
                     }
 
                     html += `<td>
