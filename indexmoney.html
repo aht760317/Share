@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>顧德補習班 - 專業繳費管理系統</title>
+    <!-- 引入 SortableJS 支援拖曳排序 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
@@ -98,6 +100,11 @@
         .note-toggle.expanded { white-space: pre-wrap; overflow: visible; max-width: 350px; background: #FEF3C7; color: #92400E; border-color: #FCD34D; position: relative; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
+
+        /* 拖曳專用樣式 */
+        .sortable-ghost { opacity: 0.4; background-color: #CBD5E1 !important; }
+        .drag-handle { cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
 
         /* 列印樣式 */
         @media screen { .print-only { display: none; } }
@@ -297,72 +304,72 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：系統設定 -->
+    <!-- 頁籤 3：系統設定 (上下區塊佈局) -->
     <div id="settings" class="content-area">
-        <div style="display: flex; gap: 30px;">
-            <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <h3 style="margin-top: 0; color: var(--primary);">🏫 班級與學生名單設定</h3>
-                
-                <label>1. 新增班級 (如「2026 六年級」)：</label>
-                <div class="form-row" style="margin-bottom: 15px;">
-                    <div style="flex: 1;">
-                        <input type="text" id="newConfigClassName" placeholder="輸入班級名稱" style="width:100%;">
-                    </div>
-                    <div>
-                        <button class="btn-add" style="padding: 10px 15px;" onclick="addClassConfig()">➕ 新增班級</button>
-                        <button id="undoClassBtn" class="btn-undo" onclick="undoDeleteClass()">↩️ 復原</button>
-                    </div>
+        <!-- 區塊 1：班級設定 -->
+        <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
+            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定 (點擊選取／修改名稱，可直接拖曳調整前後順序)</h3>
+            
+            <div class="form-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <input type="text" id="newConfigClassName" placeholder="輸入新增班級名稱 (如: 2026 六年級)" style="width:100%;">
                 </div>
-                
-                <label>現有班級列表 (點擊按鈕選取編輯，支援改名/排序)：</label>
-                <div class="btn-grid" id="classConfigList" style="margin-top: 10px; margin-bottom: 20px;"></div>
-
-                <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1; margin-top: 20px;">
-                    <label style="color: var(--accent);">2. 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</label>
-                    <div class="form-row" style="margin-bottom: 15px;">
-                        <div style="flex: 1;">
-                            <input type="text" id="newConfigStudentName" placeholder="輸入學生姓名" style="width:100%;">
-                        </div>
-                        <div>
-                            <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
-                        </div>
-                    </div>
-                    <div class="config-list-box" id="studentConfigList" style="height: 220px;"></div>
+                <div>
+                    <button class="btn-add" style="padding: 10px 15px;" onclick="addClassConfig()">➕ 新增班級</button>
+                    <button id="undoClassBtn" class="btn-undo" onclick="undoDeleteClass()">↩️ 復原</button>
                 </div>
             </div>
             
-            <div style="flex: 1;">
-                <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
-                    <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
-                    <p style="font-size:13px; color:#64748B; margin-top:0;">* 點擊項目名稱可直接修改，金額可輸入負數（例如：-300）。</p>
-                    
-                    <div class="form-row">
-                        <div style="flex: 2;">
-                            <label>項目名稱</label>
-                            <input type="text" id="newConfigName" placeholder="例如：全科優惠" style="width:100%;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label>預設金額</label>
-                            <input type="number" id="newConfigPrice" placeholder="如: -300" style="width:100%;">
-                        </div>
-                        <div>
-                            <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
-                        </div>
-                    </div>
+            <div class="btn-grid drag-handle" id="classConfigList" style="margin-top: 10px; margin-bottom: 0;"></div>
+        </div>
 
-                    <label style="margin-top: 15px;">已設定的快捷項目 (可調整順序)：</label>
-                    <div class="config-list-box" id="quickItemConfigList" style="height: 290px;"></div>
+        <!-- 區塊 2：學生名單編輯 -->
+        <div id="studentConfigSection" style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; margin-bottom: 25px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: var(--accent);">🧑‍🎓 編輯 <span id="editingClassName" style="font-weight:bold; color: #1E40AF;"></span> 的學生：</h3>
+                <button class="btn-select" style="background: #E0E7FF; color: #3730A3; font-weight: bold; border-color: #A5B4FC; padding: 6px 14px; font-size: 14px;" onclick="sortCurrentStudentsByStroke()">🔤 依姓氏筆畫排序</button>
+            </div>
+            
+            <div class="form-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <input type="text" id="newConfigStudentName" placeholder="輸入學生姓名" style="width:100%;">
                 </div>
+                <div>
+                    <button class="btn-add" style="padding: 10px 15px;" onclick="addStudentConfig()">➕ 加入學生</button>
+                </div>
+            </div>
+            <div class="config-list-box" id="studentConfigList" style="max-height: 260px;"></div>
+        </div>
 
-                <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                    <label>預設收款經手人 (印在收據上)：</label>
-                    <div class="form-row" style="margin-bottom: 0;">
-                        <div style="flex: 1;">
-                            <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
-                        </div>
-                        <div>
-                            <button class="btn-submit" style="margin-top:0; padding: 10px 15px;" onclick="saveHandler()">💾 儲存</button>
-                        </div>
+        <!-- 區塊 3：快捷收費按鈕與經手人設定 -->
+        <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
+            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定 (點擊名稱修改，可直接拖曳調整順序)</h3>
+            <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300 折扣優惠）。</p>
+            
+            <div class="form-row">
+                <div style="flex: 2;">
+                    <label>項目名稱</label>
+                    <input type="text" id="newConfigName" placeholder="例如：全科優惠" style="width:100%;">
+                </div>
+                <div style="flex: 1;">
+                    <label>預設金額</label>
+                    <input type="number" id="newConfigPrice" placeholder="如: -300" style="width:100%;">
+                </div>
+                <div>
+                    <button class="btn-add" style="margin-top: 27px; padding: 10px 15px;" onclick="addQuickItemConfig()">➕ 新增</button>
+                </div>
+            </div>
+
+            <div class="config-list-box drag-handle" id="quickItemConfigList" style="max-height: 260px; margin-bottom: 20px;"></div>
+
+            <div style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
+                <label>預設收款經手人 (印在收據上)：</label>
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div style="flex: 1;">
+                        <input type="text" id="setHandler" style="width:100%;" placeholder="例如：雅鴻">
+                    </div>
+                    <div>
+                        <button class="btn-submit" style="margin-top:0; padding: 10px 15px;" onclick="saveHandler()">💾 儲存經手人</button>
                     </div>
                 </div>
             </div>
@@ -454,6 +461,9 @@
     window.currentDirectoryClass = 'all';
     window.editingProfileClass = "";
     window.editingProfileStudent = "";
+
+    let classSortable = null;
+    let quickItemSortable = null;
 
     // === 登入系統邏輯 ===
     window.checkLogin = function() {
@@ -609,6 +619,10 @@
         if(tabId === 'manage') renderRecords();
         if(tabId === 'create') renderClassGrid();
         if(tabId === 'directory') renderDirectoryInit();
+        if(tabId === 'settings') {
+            renderClassConfigList();
+            renderQuickItemConfigList();
+        }
     }
 
     window.switchDeptRecord = function(dept) {
@@ -783,19 +797,7 @@
         window.print();
     }
 
-    window.moveClassConfig = async function(index, direction) {
-        const classEntries = Object.entries(window.config.classes);
-        if (index + direction < 0 || index + direction >= classEntries.length) return;
-        
-        const temp = classEntries[index];
-        classEntries[index] = classEntries[index + direction];
-        classEntries[index + direction] = temp;
-        
-        window.config.classes = Object.fromEntries(classEntries);
-        await saveClassesToCloud();
-        renderClassConfigList();
-    }
-
+    // === 設定區：班級管理 (支援拖曳排序) ===
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
         const classEntries = Object.entries(window.config.classes);
@@ -804,26 +806,34 @@
             return;
         }
         
-        list.innerHTML = classEntries.map(([cls, students], index) => {
+        list.innerHTML = classEntries.map(([cls, students]) => {
             const isActive = cls === window.editingClass;
             const studentCount = students.length;
-            const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
-            const disableDown = index === classEntries.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
 
             return `
-                <div style="display: inline-flex; align-items: center; background: ${isActive ? '#EFF6FF' : '#F8FAFC'}; border: 2px solid ${isActive ? 'var(--accent)' : '#CBD5E1'}; border-radius: 8px; padding: 4px 8px; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <button class="btn-select ${isActive ? 'active' : ''}" style="border:none; padding: 6px 10px; font-weight: bold; background: transparent; cursor: pointer;" onclick="editClassStudents('${cls}')">
-                        ${cls} <span style="font-size: 12px; color: #64748B; font-weight: normal;">(${studentCount}人)</span>
-                    </button>
-                    <div style="display: flex; gap: 3px; border-left: 1px solid #CBD5E1; padding-left: 6px;">
-                        <button class="btn-edit-item" style="padding: 2px 6px; font-size: 11px; margin: 0;" title="修改名稱" onclick="promptRenameClass('${cls}')">✏️</button>
-                        <button class="btn-edit-item" style="padding: 2px 6px; font-size: 11px; margin: 0;" title="往前移" onclick="moveClassConfig(${index}, -1)" ${disableUp}>◀</button>
-                        <button class="btn-edit-item" style="padding: 2px 6px; font-size: 11px; margin: 0;" title="往後移" onclick="moveClassConfig(${index}, 1)" ${disableDown}>▶</button>
-                        <button class="btn-delete-item" style="padding: 2px 6px; font-size: 11px;" title="刪除班級" onclick="promptDeleteClass('${cls}')">✕</button>
-                    </div>
+                <div class="class-drag-item" data-class="${cls}" style="display: inline-flex; align-items: center; background: ${isActive ? '#EFF6FF' : '#F8FAFC'}; border: 2px solid ${isActive ? 'var(--accent)' : '#CBD5E1'}; border-radius: 8px; padding: 4px 8px; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); user-select: none;">
+                    <span style="font-size: 16px; font-weight: bold; color: ${isActive ? 'var(--accent)' : '#334155'}; cursor: pointer; padding: 4px;" title="點擊編輯學生名單 (雙擊修改班級名稱)" onclick="editClassStudents('${cls}')" ondblclick="promptRenameClass('${cls}')">
+                        ${cls} <span style="font-size: 13px; color: #64748B; font-weight: normal;">(${studentCount}人)</span>
+                    </span>
+                    <button class="btn-delete-item" style="padding: 2px 7px; font-size: 12px; margin-left: 2px;" title="刪除班級" onclick="event.stopPropagation(); promptDeleteClass('${cls}')">✕</button>
                 </div>
             `;
         }).join('');
+
+        if (classSortable) classSortable.destroy();
+        classSortable = new Sortable(list, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function () {
+                const newOrderedNames = Array.from(list.querySelectorAll('.class-drag-item')).map(el => el.getAttribute('data-class'));
+                const newClasses = {};
+                newOrderedNames.forEach(name => {
+                    newClasses[name] = window.config.classes[name];
+                });
+                window.config.classes = newClasses;
+                await saveClassesToCloud();
+            }
+        });
     }
 
     window.addClassConfig = async function() {
@@ -908,6 +918,7 @@
         }
     }
 
+    // === 設定區：學生名單管理 ===
     window.editClassStudents = function(cls) {
         window.editingClass = cls;
         renderClassConfigList();
@@ -954,6 +965,19 @@
         });
     }
 
+    // 依繁體中文姓氏筆畫排序
+    window.sortCurrentStudentsByStroke = async function() {
+        if (!window.editingClass) return;
+        const students = window.config.classes[window.editingClass];
+        if (!students || students.length === 0) return;
+
+        students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { collation: 'stroke' }));
+        await saveClassesToCloud();
+        renderStudentConfigList();
+        alert(`🔤 已成功將【${window.editingClass}】學生依筆畫排序！`);
+    }
+
+    // === 設定區：快捷收費項目設定 (支援拖曳排序) ===
     window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
         window.config.handler = handler;
@@ -984,23 +1008,31 @@
                 priceStyle = 'color:#7E22CE;';
             }
 
-            const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
-            const disableDown = index === window.quickItems.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
-
             return `
-                <div class="item-row" style="${rowStyle}">
+                <div class="item-row quick-drag-item" data-index="${index}" style="${rowStyle} user-select: none;">
                     <div>
                         <strong title="點擊修改項目名稱" onclick="promptRenameQuickItem(${index})">${item.name}</strong>
                         <span style="font-size:14px; ${priceStyle} margin-left:10px;">(${priceText})</span>
                     </div>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, -1)" ${disableUp}>▲</button>
-                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="moveQuickItemConfig(${index}, 1)" ${disableDown}>▼</button>
-                        <button class="btn-delete-item" onclick="promptDeleteQuickItem(${index}, '${item.name}')" style="margin-left:5px;">刪除</button>
+                    <div>
+                        <button class="btn-delete-item" onclick="promptDeleteQuickItem(${index}, '${item.name}')">刪除</button>
                     </div>
                 </div>
             `;
         }).join('');
+
+        if (quickItemSortable) quickItemSortable.destroy();
+        quickItemSortable = new Sortable(list, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function () {
+                const newOrderedIndices = Array.from(list.querySelectorAll('.quick-drag-item')).map(el => parseInt(el.getAttribute('data-index')));
+                const newQuickItems = newOrderedIndices.map(i => window.quickItems[i]);
+                window.quickItems = newQuickItems;
+                await saveQuickItemsToCloud();
+                renderQuickItemConfigList();
+            }
+        });
     }
 
     window.addQuickItemConfig = async function() {
@@ -1036,18 +1068,6 @@
             await saveQuickItemsToCloud();
             renderQuickItemConfigList();
         });
-    }
-
-    window.moveQuickItemConfig = async function(index, direction) {
-        if (index + direction < 0 || index + direction >= window.quickItems.length) return;
-        const temp = window.quickItems[index];
-        window.quickItems[index] = window.quickItems[index + direction];
-        window.quickItems[index + direction] = temp;
-        await saveQuickItemsToCloud();
-        renderQuickItemConfigList();
-        if (document.getElementById('billingSection').style.display === 'block') {
-            renderQuickButtonsForBilling();
-        }
     }
 
     // === 開單作業區 ===
