@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (主任總覽與日誌修正完整版)</title>
+    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (歷史日誌密碼防護版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -89,8 +89,8 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: white; width: 650px; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
 
-        .student-name-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
-        .student-name-link:hover { color: var(--primary); }
+        .student-name-link, .history-log-title-link { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .student-name-link:hover, .history-log-title-link:hover { color: var(--primary); }
         
         @media print {
             header, .no-print { display: none !important; }
@@ -170,15 +170,15 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可隨時修改或預覽該生今日日誌)</small></h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌，點擊「產生給家長日誌」可一鍵複製傳送)</small></h3>
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名 (可修改日誌)</th>
+                            <th width="22%">姓名 (可修改日誌)</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
-                            <th width="15%">作業狀態</th>
-                            <th width="43%">狀態提醒與補課安排 / 個別注意事項</th>
+                            <th width="14%">作業狀態</th>
+                            <th width="40%">狀態提醒與補課安排 / 個別注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-junior"></tbody>
@@ -186,7 +186,7 @@
                 <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('junior')">儲存國中部今日日誌並同步至雲端</button>
             </div>
             <div class="card">
-                <h3>歷史教學日誌 (國中部)</h3>
+                <h3>歷史教學日誌 (國中部) <small style="font-size:13px; color:#666; font-weight:normal;">(💡 點擊下方日誌標題可進行密碼驗證與修改/刪除)</small></h3>
                 <div id="logs-container-junior"></div>
             </div>
         </section>
@@ -247,15 +247,15 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可隨時修改或預覽該生今日日誌)</small></h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可修改當日日誌，點擊「產生給家長日誌」可一鍵複製傳送)</small></h3>
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名 (可修改日誌)</th>
+                            <th width="22%">姓名 (可修改日誌)</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
-                            <th width="15%">作業狀態</th>
-                            <th width="43%">狀態提醒與補課安排 / 個別注意事項</th>
+                            <th width="14%">作業狀態</th>
+                            <th width="40%">狀態提醒與補課安排 / 個別注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-elementary"></tbody>
@@ -263,7 +263,7 @@
                 <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('elementary')">儲存國小部今日日誌並同步至雲端</button>
             </div>
             <div class="card">
-                <h3>歷史教學日誌 (國小部)</h3>
+                <h3>歷史教學日誌 (國小部) <small style="font-size:13px; color:#666; font-weight:normal;">(💡 點擊下方日誌標題可進行密碼驗證與修改/刪除)</small></h3>
                 <div id="logs-container-elementary"></div>
             </div>
         </section>
@@ -383,6 +383,68 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- 🔒 安全密碼驗證彈窗 -->
+    <div class="modal-overlay" id="password-verify-modal">
+        <div class="modal-box" style="width: 400px;">
+            <h3 style="margin-top:0; color:var(--danger);">🔒 歷史日誌安全驗證</h3>
+            <p style="font-size: 14px; color: #555;">修改或刪除歷史日誌需要輸入管理密碼 (0618)：</p>
+            <input type="password" id="global-verify-pwd" placeholder="請輸入密碼 0618">
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-danger" onclick="confirmPasswordAction()">確認通過</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✏️ 歷史日誌編輯與刪除彈窗 -->
+    <div class="modal-overlay" id="history-log-edit-modal">
+        <div class="modal-box" style="width: 600px;">
+            <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除歷史教學日誌</h3>
+            <input type="hidden" id="edit-history-firestore-id">
+
+            <div class="grid-2">
+                <div>
+                    <label>授課日期：</label>
+                    <input type="date" id="edit-history-date">
+                </div>
+                <div>
+                    <label>課程名稱：</label>
+                    <input type="text" id="edit-history-course">
+                </div>
+            </div>
+
+            <label>教學進度：</label>
+            <textarea id="edit-history-content" rows="3"></textarea>
+
+            <label>回家作業：</label>
+            <textarea id="edit-history-homework" rows="2"></textarea>
+
+            <label>注意事項：</label>
+            <textarea id="edit-history-notes" rows="2"></textarea>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="requestDeleteHistoryLog()">🗑️ 刪除此歷史日誌</button>
+                <div>
+                    <button class="btn btn-success" onclick="saveHistoryLogEdit()">確認儲存修改</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('history-log-edit-modal').style.display='none'">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💡 給家長的日誌預覽與複製彈窗 -->
+    <div class="modal-overlay" id="parent-log-modal">
+        <div class="modal-box" style="width: 600px;">
+            <h3 style="margin-top:0; color:var(--primary);">📋 產生給家長日誌</h3>
+            <p style="font-size:13px; color:#666;">您可以直接點擊下方按鈕複製內容，透過 LINE 傳送給家長：</p>
+            <textarea id="parent-log-text" rows="12" style="font-family: monospace; font-size: 14px; background: #f8fafc;"></textarea>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn btn-success" onclick="copyParentLog()">📋 複製給家長日誌內容</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉視窗</button>
+            </div>
+        </div>
     </div>
 
     <!-- 💡 當日學生個人日誌快速修改彈窗 -->
@@ -522,6 +584,8 @@
             currentViewMode: 'single'
         };
 
+        window.pendingHistoryEditId = null;
+
         async function initCloudData() {
             try {
                 const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
@@ -629,7 +693,8 @@
             tbody.innerHTML = students.map(s => `
                 <tr data-firestore-id="${s.firestoreId}">
                     <td>
-                        <span class="student-name-link" onclick="openDailyStudentEdit('${s.firestoreId}', '${dept}')">${s.name}</span>
+                        <span class="student-name-link" onclick="openDailyStudentEdit('${s.firestoreId}', '${dept}')">${s.name}</span><br>
+                        <button class="btn btn-small btn-warning" style="margin-top:4px;" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 產生給家長日誌</button>
                     </td>
                     <td>
                         <select class="log-att-status">
@@ -651,6 +716,173 @@
             `).join('');
         };
 
+        // 🔒 點擊歷史日誌標題 -> 彈出密碼驗證 (0618)
+        window.promptEditHistoryLog = function(firestoreId) {
+            window.pendingHistoryEditId = firestoreId;
+            document.getElementById('global-verify-pwd').value = "";
+            document.getElementById('password-verify-modal').style.display = 'flex';
+        };
+
+        // 🔒 確認密碼通過後開啟歷史日誌編輯視窗
+        window.confirmPasswordAction = function() {
+            const pwd = document.getElementById('global-verify-pwd').value;
+            if(pwd !== "0618") {
+                alert('❌ 密碼錯誤！請輸入正確的管理密碼 (0618)。');
+                return;
+            }
+            document.getElementById('password-verify-modal').style.display = 'none';
+
+            const firestoreId = window.pendingHistoryEditId;
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if(!log) return;
+
+            document.getElementById('edit-history-firestore-id').value = firestoreId;
+            document.getElementById('edit-history-date').value = log.date;
+            document.getElementById('edit-history-course').value = log.course;
+            document.getElementById('edit-history-content').value = log.content;
+            document.getElementById('edit-history-homework').value = log.homework || '';
+            document.getElementById('edit-history-notes').value = log.notes || '';
+
+            document.getElementById('history-log-edit-modal').style.display = 'flex';
+        };
+
+        // 💾 儲存歷史日誌修改
+        window.saveHistoryLogEdit = async function() {
+            const firestoreId = document.getElementById('edit-history-firestore-id').value;
+            const date = document.getElementById('edit-history-date').value;
+            const course = document.getElementById('edit-history-course').value.trim();
+            const content = document.getElementById('edit-history-content').value.trim();
+            const homework = document.getElementById('edit-history-homework').value.trim();
+            const notes = document.getElementById('edit-history-notes').value.trim();
+
+            if(!date || !course || !content) return alert('日期、課程與教學進度不得為空白！');
+
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if(!log) return;
+
+            log.date = date;
+            log.course = course;
+            log.content = content;
+            log.homework = homework;
+            log.notes = notes;
+
+            try {
+                await setDoc(doc(db, "classLogHistory", firestoreId), {
+                    id: log.id, dept: log.dept, date, course, content, homework, notes,
+                    examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || ''
+                });
+
+                document.getElementById('history-log-edit-modal').style.display = 'none';
+                alert('✅ 歷史教學日誌已成功修改並同步至雲端！');
+                window.renderHistoryLogs();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+            } catch (e) {
+                console.error("更新歷史日誌失敗：", e);
+                alert('更新失敗，請檢查網路連線。');
+            }
+        };
+
+        // 🗑️ 刪除歷史日誌
+        window.requestDeleteHistoryLog = async function() {
+            if(!confirm('⚠️ 確定要永久刪除這筆歷史教學日誌嗎？')) return;
+            const firestoreId = document.getElementById('edit-history-firestore-id').value;
+            if(!firestoreId) return;
+
+            try {
+                await deleteDoc(doc(db, "classLogHistory", firestoreId));
+                window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
+
+                document.getElementById('history-log-edit-modal').style.display = 'none';
+                alert('✅ 歷史教學日誌已成功刪除！');
+                window.renderHistoryLogs();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+            } catch (e) {
+                console.error("刪除失敗：", e);
+                alert('刪除失敗，請檢查網路連線。');
+            }
+        };
+
+        // 渲染歷史日誌列表 (標題加上點擊修改超連結)
+        window.renderHistoryLogs = function() {
+            ['junior', 'elementary'].forEach(dept => {
+                const container = document.getElementById(`logs-container-${dept}`);
+                if(!container) return;
+
+                const logs = window.state.historyLogs.filter(l => l.dept === dept);
+                if(logs.length === 0) {
+                    container.innerHTML = `<p style="color:#777; text-align:center;">尚無歷史教學日誌紀錄。</p>`;
+                    return;
+                }
+
+                container.innerHTML = logs.map(l => `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                            <h4 style="margin:0; color:var(--primary);">
+                                <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] 日期：${l.date} (點擊修改/刪除)</span>
+                            </h4>
+                        </div>
+                        <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
+                        <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
+                        <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
+                    </div>
+                `).join('');
+            });
+        };
+
+        // 📋 產生給家長日誌功能
+        window.generateParentLog = function(firestoreId, dept) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
+            const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
+            const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
+
+            const date = dateInput ? dateInput.value : '';
+            const course = courseSelect ? courseSelect.value : '';
+            const progress = contentInput ? contentInput.value.trim() : '';
+            const homework = homeworkInput ? homeworkInput.value.trim() : '';
+
+            const row = document.querySelector(`tr[data-firestore-id="${firestoreId}"]`);
+            let att = '出席', score = '無', hwStatus = '完成', note = '無';
+            if(row) {
+                att = row.querySelector('.log-att-status').value;
+                const scoreVal = row.querySelector('.log-score').value;
+                score = scoreVal !== '' ? scoreVal + '分' : '無';
+                hwStatus = row.querySelector('.log-homework-status').value;
+                note = row.querySelector('.log-student-note').value.trim() || '無';
+            }
+
+            const parentMsg = `【斗六顧德補習班】學習日誌\n` +
+                `📅 日期：${date}\n` +
+                `📚 課程：${course}\n` +
+                `👨‍🎓 學生：${student.name}\n` +
+                `--------------------\n` +
+                `📌 今日教學進度：\n${progress || '（請參考上課內容）'}\n\n` +
+                `📝 回家作業範圍：\n${homework || '無'}\n` +
+                `--------------------\n` +
+                `📊 學生今日表現：\n` +
+                `• 出席狀況：${att}\n` +
+                `• 考試成績：${score}\n` +
+                `• 作業狀態：${hwStatus}\n` +
+                `• 老師叮嚀 / 注意事項：${note}\n` +
+                `--------------------\n` +
+                `感謝家長您的配合與支持！若有任何學習相關問題，歡迎隨時與我們聯繫。`;
+
+            document.getElementById('parent-log-text').value = parentMsg;
+            document.getElementById('parent-log-modal').style.display = 'flex';
+        };
+
+        window.copyParentLog = function() {
+            const textarea = document.getElementById('parent-log-text');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ 已成功複製給家長日誌內容！可直接貼上至 LINE 傳送給家長。');
+        };
+
         // 💡 點擊學生名字彈出快速修改當日狀況視窗
         window.openDailyStudentEdit = function(firestoreId, dept) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
@@ -659,7 +891,6 @@
             const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
             const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
 
-            // 尋找該學生在該日期的填寫紀錄
             const existingLog = (student.attendanceLogs || []).find(l => l.date === targetDate);
 
             document.getElementById('daily-modal-title').innerText = `✏️ 修改 ${student.name} (${targetDate}) 當日日誌`;
@@ -694,13 +925,11 @@
             const logIndex = student.attendanceLogs.findIndex(l => l.date === targetDate);
 
             if(logIndex >= 0) {
-                // 覆寫該日現有紀錄
                 student.attendanceLogs[logIndex].status = status;
                 student.attendanceLogs[logIndex].score = score;
                 student.attendanceLogs[logIndex].homework = homework;
                 student.attendanceLogs[logIndex].detail = detail;
             } else {
-                // 若當天尚未有紀錄則新增
                 student.attendanceLogs.unshift({
                     date: targetDate, status, score, homework, progress: '', homeworkContent: '', passScore: 80, detail
                 });
@@ -776,7 +1005,6 @@
                     if (student) {
                         if (!student.attendanceLogs) student.attendanceLogs = [];
                         
-                        // 檢查當天是否已有紀錄，若有則更新，無則新增
                         const existingIdx = student.attendanceLogs.findIndex(l => l.date === date);
                         if (existingIdx >= 0) {
                             student.attendanceLogs[existingIdx] = {
@@ -808,30 +1036,6 @@
                 console.error("儲存日誌失敗：", e);
                 alert('儲存失敗，請檢查網路連線後再試一次。');
             }
-        };
-
-        window.renderHistoryLogs = function() {
-            ['junior', 'elementary'].forEach(dept => {
-                const container = document.getElementById(`logs-container-${dept}`);
-                if(!container) return;
-
-                const logs = window.state.historyLogs.filter(l => l.dept === dept);
-                if(logs.length === 0) {
-                    container.innerHTML = `<p style="color:#777; text-align:center;">尚無歷史教學日誌紀錄。</p>`;
-                    return;
-                }
-
-                container.innerHTML = logs.map(l => `
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                            <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 日期：${l.date}</h4>
-                        </div>
-                        <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
-                        <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
-                        <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
-                    </div>
-                `).join('');
-            });
         };
 
         // 主任全校教學日誌快速總覽
