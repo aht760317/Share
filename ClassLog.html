@@ -385,63 +385,6 @@
         </section>
     </div>
 
-    <!-- 🔒 整合式課程修改面板彈窗 -->
-    <div class="modal-overlay" id="course-edit-modal">
-        <div class="modal-box" style="width: 550px;">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除課程</h3>
-            <input type="hidden" id="edit-course-dept">
-            <input type="hidden" id="edit-course-index">
-
-            <label>課程名稱：</label>
-            <input type="text" id="modal-course-name" placeholder="課程名稱">
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:6px;">📅 修改上課星期 (可複選多天)：</label>
-                <div style="display:flex; gap:12px; flex-wrap:wrap;" id="modal-course-days-container">
-                    <label><input type="checkbox" name="modal-course-days" value="星期一"> 星期一</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期二"> 星期二</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期三"> 星期三</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期四"> 星期四</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期五"> 星期五</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期六"> 星期六</label>
-                    <label><input type="checkbox" name="modal-course-days" value="星期日"> 星期日</label>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div>
-                    <label style="font-size:13px;">上課時間：</label>
-                    <input type="text" id="modal-course-time" placeholder="19:00 - 21:00">
-                </div>
-                <div>
-                    <label style="font-size:13px;">授課老師：</label>
-                    <input type="text" id="modal-course-teacher" placeholder="授課老師">
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除此課程</button>
-                <div>
-                    <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 密碼驗證彈窗 -->
-    <div class="modal-overlay" id="password-verify-modal">
-        <div class="modal-box" style="width: 400px;">
-            <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
-            <p style="font-size: 14px; color: #555;">請輸入管理密碼以繼續 (預設 0618)：</p>
-            <input type="password" id="global-verify-pwd" placeholder="請輸入密碼 0618">
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-danger" onclick="confirmPasswordAction()">確認通過</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 學生新增/修改彈窗 -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
@@ -505,7 +448,7 @@
         </div>
     </div>
 
-    <!-- 引入 Firebase 程式碼與完整雲端同步邏輯 -->
+    <!-- Firebase 整合與系統邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -539,9 +482,6 @@
             currentSelectedDate: new Date().toISOString().split('T')[0],
             currentViewMode: 'single'
         };
-
-        window.pendingDeleteAction = null;
-        window.pendingCourseEdit = { dept: '', index: 0 };
 
         async function initCloudData() {
             try {
@@ -631,7 +571,6 @@
             }
         };
 
-        // ================= 📝 教學日誌儲存與歷史紀錄 =================
         window.renderLogStudents = function(dept) {
             const selectId = dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary';
             const tbodyId = dept === 'junior' ? 'log-students-tbody-junior' : 'log-students-tbody-elementary';
@@ -770,7 +709,7 @@
             });
         };
 
-        // ================= 👑 主任全校教學日誌快速總覽核心 =================
+        // 👑 主任全校教學日誌快速總覽
         window.generateMonthDaysGrid = function() {
             const monthInput = document.getElementById('overview-target-month').value;
             const container = document.getElementById('month-days-container');
@@ -856,7 +795,7 @@
             `).join('');
         };
 
-        // ================= 👥 學生檔案管理 =================
+        // 學生檔案管理
         window.renderClassButtons = function() {
             const container = document.getElementById('class-buttons-container');
             if(!container) return;
@@ -941,7 +880,7 @@
                 return `<option value="${cName}">${cName}</option>`;
             }).join('');
 
-            document.getElementById('student-modal').style.display = 'block';
+            document.getElementById('student-modal').style.display = 'flex';
         };
 
         window.openEditStudentModal = function(firestoreId) {
@@ -968,7 +907,7 @@
             }
 
             document.getElementById('delete-student-btn').style.display = "inline-block";
-            document.getElementById('student-modal').style.display = 'block';
+            document.getElementById('student-modal').style.display = 'flex';
         };
 
         window.saveStudentModal = async function() {
@@ -1046,13 +985,13 @@
             const junList = document.getElementById('junior-courses-list');
             
             if(elemList) {
-                elemList.innerHTML = window.state.courses.elementary.map((c, idx) => {
+                elemList.innerHTML = window.state.courses.elementary.map((c) => {
                     const cName = typeof c === 'object' ? c.name : c;
                     return `<div class="course-item"><span><b>${cName}</b></span></div>`;
                 }).join('');
             }
             if(junList) {
-                junList.innerHTML = window.state.courses.junior.map((c, idx) => {
+                junList.innerHTML = window.state.courses.junior.map((c) => {
                     const cName = typeof c === 'object' ? c.name : c;
                     return `<div class="course-item"><span><b>${cName}</b></span></div>`;
                 }).join('');
