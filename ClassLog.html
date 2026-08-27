@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (免密碼修改與主任一鍵直達版)</title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (各班獨立待辦與完整成績追蹤版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -317,7 +317,7 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 (左右分流與一鍵直達) -->
+        <!-- 👑 主任全校日誌快速總覽 (各班獨立待辦提醒與一鍵直達) -->
         <section id="director-overview" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽 (分流與文字批示)</h3>
@@ -478,7 +478,7 @@
         </div>
     </div>
 
-    <!-- 💡 互動式處理補課彈窗 (免密碼隨時修改) -->
+    <!-- 💡 互動式處理補課彈窗 -->
     <div class="modal-overlay" id="makeup-modal">
         <div class="modal-box" style="width: 450px;">
             <h3 style="margin-top:0; color:var(--primary);">📅 處理學生補課紀錄</h3>
@@ -504,7 +504,7 @@
         </div>
     </div>
 
-    <!-- 💡 互動式處理補考與成績彈窗 (免密碼隨時修改) -->
+    <!-- 💡 互動式處理補考與成績彈窗 (支援原始分數與補考完整紀錄) -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width: 450px;">
             <h3 style="margin-top:0; color:var(--primary);">📝 處理學生考試與補考紀錄</h3>
@@ -512,15 +512,15 @@
             <input type="hidden" id="retest-log-index">
             <p id="retest-student-info" style="font-size:14px; color:#555;"></p>
 
-            <label>修改出席/請假狀態 (防呆修正)：</label>
+            <label>修改出席/請假狀態：</label>
             <select id="edit-att-status">
                 <option value="出席">出席</option>
                 <option value="請假">請假</option>
                 <option value="曠課">曠課</option>
             </select>
 
-            <label>考試分數 / 原考分數：</label>
-            <input type="number" id="retest-score-input" placeholder="請輸入分數">
+            <label>第一次原始考試分數：</label>
+            <input type="number" id="retest-score-input" placeholder="請輸入原考分數">
 
             <label>補考狀態：</label>
             <select id="retest-status-select" onchange="toggleRetestInputs()">
@@ -528,7 +528,7 @@
                 <option value="done">✅ 已完成補考</option>
             </select>
 
-            <div id="retest-inputs-wrapper" style="display:none;">
+            <div id="retest-date-wrapper" style="display:none;">
                 <label>補考日期：</label>
                 <input type="date" id="retest-date-input">
 
@@ -557,7 +557,7 @@
         </div>
     </div>
 
-    <!-- ⚙️ 課程修改/刪除彈窗 (密碼 0618) -->
+    <!-- ⚙️ 課程修改/刪除彈窗 -->
     <div class="modal-overlay" id="course-edit-modal">
         <div class="modal-box" style="width: 500px;">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 修改或刪除課程</h3>
@@ -633,7 +633,7 @@
         </div>
     </div>
 
-    <!-- ✏️ 歷史日誌編輯與刪除彈窗 (密碼 0618) -->
+    <!-- ✏️ 歷史日誌編輯與刪除彈窗 -->
     <div class="modal-overlay" id="history-log-edit-modal">
         <div class="modal-box" style="width: 600px;">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除歷史教學日誌</h3>
@@ -669,7 +669,7 @@
         </div>
     </div>
 
-    <!-- 學生檔案新增/修改彈窗 (密碼 0618) -->
+    <!-- 學生檔案新增/修改彈窗 -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
             <h3 id="modal-title" style="margin-top:0; color:var(--primary);">新增/修改學生資料</h3>
@@ -856,7 +856,7 @@
             container.style.display = hasExamVal === 'yes' ? 'block' : 'none';
         };
 
-        // 📌 渲染獨立待辦追蹤面板 (支援主任一鍵直達跳轉學生檔案)
+        // 📌 渲染獨立待辦追蹤面板
         window.renderPendingTodoPanels = function() {
             ['junior', 'elementary'].forEach(dept => {
                 const container = document.getElementById(`${dept}-pending-todo-list`);
@@ -907,9 +907,9 @@
             });
         };
 
-        // 👑 主任待辦一鍵直達切換至學生檔案與通訊
+        // 👑 主任待辦一鍵直達切換至學生檔案
         window.jumpToStudentProfile = function(courseName, studentId) {
-            const profileBtn = document.querySelector('nav button:nth-child(4)'); // 學生檔案按鈕
+            const profileBtn = document.querySelector('nav button:nth-child(4)');
             switchSection('student-profiles', profileBtn);
             selectProfileClass(courseName);
             setTimeout(() => {
@@ -1162,7 +1162,7 @@
             } catch (e) { alert('更新失敗'); }
         };
 
-        // 🎯 學生檔案通訊互動式補考與分數/狀態修改處理 (免密碼隨時修改)
+        // 🎯 學生檔案通訊互動式補考與原始成績修改處理 (支援原成績與補考並存)
         window.openRetestModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1184,7 +1184,7 @@
 
         window.toggleRetestInputs = function() {
             const status = document.getElementById('retest-status-select').value;
-            document.getElementById('retest-inputs-wrapper').style.display = status === 'done' ? 'block' : 'none';
+            document.getElementById('retest-date-wrapper').style.display = status === 'done' ? 'block' : 'none';
         };
 
         window.saveRetestAction = async function() {
@@ -1238,7 +1238,6 @@
             }
         };
 
-        // 歷史日誌編輯與刪除安全保護
         window.promptEditHistoryLog = function(firestoreId) {
             window.requestSecureAction(() => {
                 const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
@@ -1303,7 +1302,6 @@
             });
         };
 
-        // 課程修改安全保護
         window.openCourseEditModal = function(dept, index) {
             window.requestSecureAction(() => {
                 const course = window.state.courses[dept][index];
@@ -1352,7 +1350,6 @@
             });
         };
 
-        // 學生刪除安全保護
         window.requestDeleteStudent = function() {
             window.requestSecureAction(async () => {
                 const firestoreId = document.getElementById('edit-student-id').value;
@@ -1548,6 +1545,7 @@
             renderDirectorOverview();
         };
 
+        // 👑 主任全校日誌快速總覽 (各班獨立顯示該班學生的待辦提醒與一鍵直達)
         window.renderDirectorOverview = function() {
             const elemContainer = document.getElementById('director-overview-elementary');
             const juniorContainer = document.getElementById('director-overview-junior');
@@ -1572,22 +1570,25 @@
 
             const renderLogCard = (l) => {
                 let alertsHtml = '';
+                // 只檢查「當前這筆日誌課程」底下的學生狀況，做到各班獨立顯示
                 window.state.students.forEach(s => {
-                    const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
-                    if(logMatch) {
-                        if((logMatch.status === '請假' || logMatch.status === '曠課') && !logMatch.makeupDone) {
-                            alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須約補課 (點擊處理)</div> `;
+                    if(s.course === l.course) {
+                        const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
+                        if(logMatch) {
+                            if((logMatch.status === '請假' || logMatch.status === '曠課') && !logMatch.makeupDone) {
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須約補課 (點擊處理)</div> `;
+                            }
+                            const passScore = logMatch.passScore || 80;
+                            if(logMatch.score !== null && logMatch.score < passScore && !logMatch.retestDone) {
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須安排補考 (${logMatch.score}分) (點擊處理)</div> `;
+                            }
                         }
-                        const passScore = logMatch.passScore || 80;
-                        if(logMatch.score !== null && logMatch.score < passScore && !logMatch.retestDone) {
-                            alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須安排補考 (${logMatch.score}分) (點擊處理)</div> `;
-                        }
+                        (s.callQAs || []).forEach(qa => {
+                            if(qa.status === 'unresolved') {
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 有未處理電聯QA (點擊處理)</div> `;
+                            }
+                        });
                     }
-                    (s.callQAs || []).forEach(qa => {
-                        if(qa.status === 'unresolved') {
-                            alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 有未處理電聯QA (點擊處理)</div> `;
-                        }
-                    });
                 });
 
                 const hasApproval = !!l.directorApprovalText;
@@ -1669,7 +1670,7 @@
             const selectedClass = window.state.selectedClassForProfile;
 
             if(!selectedClass) {
-                titleEl.innerText = "請先點選上方班級按鈕";
+                titleEl.innerText = "請先選取上方班級按鈕";
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">尚未選擇班級</td></tr>`;
                 return;
             }
@@ -1702,7 +1703,7 @@
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
                     if(l.score !== null && l.score < passScore) {
                         if(l.retestDone) {
-                            scoreStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(補考: ${l.retestDate||''}, ${l.retestScore}分)</span>`;
+                            scoreStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(原:${l.score}分 ➔ 補考: ${l.retestDate||''}, <b>${l.retestScore}分</b>)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
                         }
