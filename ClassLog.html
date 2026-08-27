@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (親師電聯QA追蹤版)</title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (出缺勤與成績隨時修改版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -504,26 +504,33 @@
         </div>
     </div>
 
-    <!-- 💡 互動式處理補考彈窗 -->
+    <!-- 💡 互動式處理補考與成績彈窗 -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width: 450px;">
-            <h3 style="margin-top:0; color:var(--primary);">📝 處理學生補考與成績紀錄</h3>
+            <h3 style="margin-top:0; color:var(--primary);">📝 處理學生考試與補考紀錄</h3>
             <input type="hidden" id="retest-student-id">
             <input type="hidden" id="retest-log-index">
             <p id="retest-student-info" style="font-size:14px; color:#555;"></p>
 
+            <label>修改出席/請假狀態 (防呆修正)：</label>
+            <select id="edit-att-status">
+                <option value="出席">出席</option>
+                <option value="請假">請假</option>
+                <option value="曠課">曠課</option>
+            </select>
+
+            <label>考試分數 / 補考分數：</label>
+            <input type="number" id="retest-score-input" placeholder="請輸入分數">
+
             <label>補考狀態：</label>
             <select id="retest-status-select" onchange="toggleRetestInputs()">
-                <option value="pending">❌ 尚未補考</option>
+                <option value="pending">❌ 尚未補考 / 未達及格</option>
                 <option value="done">✅ 已完成補考</option>
             </select>
 
-            <div id="retest-inputs-wrapper" style="display:none;">
+            <div id="retest-date-wrapper" style="display:none;">
                 <label>補考日期：</label>
                 <input type="date" id="retest-date-input">
-
-                <label>補考分數：</label>
-                <input type="number" id="retest-score-input" placeholder="請輸入分數">
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
@@ -547,7 +554,7 @@
         </div>
     </div>
 
-    <!-- ⚙️ 課程修改/刪除彈窗 -->
+    <!-- ⚙️ 課程修改/刪除彈窗 (密碼 0618) -->
     <div class="modal-overlay" id="course-edit-modal">
         <div class="modal-box" style="width: 500px;">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 修改或刪除課程</h3>
@@ -610,52 +617,7 @@
         </div>
     </div>
 
-    <!-- ✏️ 當日學生個人日誌快速修改 -->
-    <div class="modal-overlay" id="daily-student-edit-modal">
-        <div class="modal-box" style="width: 520px;">
-            <h3 id="daily-modal-title" style="margin-top:0; color:var(--primary);">✏️ 修正學生當日狀況與追蹤提醒</h3>
-            <input type="hidden" id="daily-modal-firestore-id">
-            <input type="hidden" id="daily-modal-dept">
-
-            <div class="grid-2">
-                <div>
-                    <label>出席狀況：</label>
-                    <select id="daily-modal-att">
-                        <option value="出席">出席</option>
-                        <option value="請假">請假</option>
-                        <option value="曠課">曠課</option>
-                    </select>
-                </div>
-                <div>
-                    <label>考試分數：</label>
-                    <input type="number" id="daily-modal-score" placeholder="分數">
-                </div>
-            </div>
-
-            <label>作業狀態：</label>
-            <select id="daily-modal-hw-status">
-                <option value="完成">完成</option>
-                <option value="未交">未交</option>
-                <option value="部分完成">部分完成</option>
-            </select>
-
-            <div style="background: #fdf2f2; border: 1px solid #f5c6cb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <label style="color: #721c24; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ 待辦追蹤處理：</label>
-                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-makeup-done"> <b>已完成補課約定</b></label><br>
-                <label style="font-weight:normal; font-size:14px;"><input type="checkbox" id="daily-modal-retest-done" style="margin-top:8px;"> <b>已完成補考與訂正</b></label>
-            </div>
-
-            <label>狀態提醒與個別注意事項：</label>
-            <textarea id="daily-modal-note" rows="2" placeholder="請輸入個別注意事項..."></textarea>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button class="btn btn-success" onclick="saveDailyStudentEdit()">確認修改並更新狀態</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('daily-student-edit-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔒 安全密碼驗證彈窗 (0618) -->
+    <!-- 🔒 安全密碼驗證彈窗 (全面 0618 防護) -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 400px;">
             <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
@@ -668,7 +630,7 @@
         </div>
     </div>
 
-    <!-- ✏️ 歷史日誌編輯與刪除彈窗 -->
+    <!-- ✏️ 歷史日誌編輯與刪除彈窗 (密碼 0618) -->
     <div class="modal-overlay" id="history-log-edit-modal">
         <div class="modal-box" style="width: 600px;">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除歷史教學日誌</h3>
@@ -704,7 +666,7 @@
         </div>
     </div>
 
-    <!-- 學生檔案新增/修改彈窗 -->
+    <!-- 學生檔案新增/修改彈窗 (密碼 0618) -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
             <h3 id="modal-title" style="margin-top:0; color:var(--primary);">新增/修改學生資料</h3>
@@ -891,7 +853,7 @@
             container.style.display = hasExamVal === 'yes' ? 'block' : 'none';
         };
 
-        // 📌 渲染國小部與國中部待辦追蹤面板 (含電聯QA未處理提醒)
+        // 📌 渲染獨立待辦追蹤面板
         window.renderPendingTodoPanels = function() {
             ['junior', 'elementary'].forEach(dept => {
                 const container = document.getElementById(`${dept}-pending-todo-list`);
@@ -925,7 +887,6 @@
                             }
                         });
 
-                        // 檢查未處理的電聯 QA
                         (s.callQAs || []).forEach((qa, qaIdx) => {
                             if(qa.status === 'unresolved') {
                                 pendingItems.push(`
@@ -962,7 +923,7 @@
             tbody.innerHTML = students.map(s => `
                 <tr data-firestore-id="${s.firestoreId}">
                     <td>
-                        <span class="student-name-link" onclick="openDailyStudentEdit('${s.firestoreId}', '${dept}')">${s.name}</span><br>
+                        <b>${s.name}</b><br>
                         <button class="btn btn-small btn-warning" style="margin-top:4px;" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 產生家長日誌</button>
                     </td>
                     <td>
@@ -1067,9 +1028,7 @@
                 alert('✅ 電聯 QA 紀錄已儲存！');
                 window.renderProfileStudents();
                 window.renderPendingTodoPanels();
-            } catch (e) {
-                alert('儲存失敗');
-            }
+            } catch (e) { alert('儲存失敗'); }
         };
 
         // 📋 家長日誌
@@ -1139,20 +1098,22 @@
             alert('✅ 已成功複製學習日誌內容！');
         };
 
-        // 🎯 學生檔案通訊互動式補課/補考處理
+        // 🎯 學生檔案通訊互動式補課處理 (需密碼保護)
         window.openMakeupModal = function(firestoreId, logIndex) {
-            const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student || !student.attendanceLogs[logIndex]) return;
+            window.requestSecureAction(() => {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
 
-            const log = student.attendanceLogs[logIndex];
-            document.getElementById('makeup-student-id').value = firestoreId;
-            document.getElementById('makeup-log-index').value = logIndex;
-            document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 狀況：${log.status}`;
-            document.getElementById('makeup-status-select').value = log.makeupDone ? 'done' : 'pending';
-            document.getElementById('makeup-date-input').value = log.makeupDate || new Date().toISOString().split('T')[0];
-            toggleMakeupDateInput();
+                const log = student.attendanceLogs[logIndex];
+                document.getElementById('makeup-student-id').value = firestoreId;
+                document.getElementById('makeup-log-index').value = logIndex;
+                document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 目前狀況：${log.status}`;
+                document.getElementById('makeup-status-select').value = log.makeupDone ? 'done' : 'pending';
+                document.getElementById('makeup-date-input').value = log.makeupDate || new Date().toISOString().split('T')[0];
+                toggleMakeupDateInput();
 
-            document.getElementById('makeup-modal').style.display = 'flex';
+                document.getElementById('makeup-modal').style.display = 'flex';
+            });
         };
 
         window.toggleMakeupDateInput = function() {
@@ -1185,44 +1146,47 @@
             } catch (e) { alert('更新失敗'); }
         };
 
+        // 🎯 學生檔案通訊互動式補考與分數/狀態修改處理 (需密碼保護)
         window.openRetestModal = function(firestoreId, logIndex) {
-            const student = window.state.students.find(s => s.firestoreId === firestoreId);
-            if(!student || !student.attendanceLogs[logIndex]) return;
+            window.requestSecureAction(() => {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
 
-            const log = student.attendanceLogs[logIndex];
-            document.getElementById('retest-student-id').value = firestoreId;
-            document.getElementById('retest-log-index').value = logIndex;
-            document.getElementById('retest-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 原考成績：${log.score}分`;
-            document.getElementById('retest-status-select').value = log.retestDone ? 'done' : 'pending';
-            document.getElementById('retest-date-input').value = log.retestDate || new Date().toISOString().split('T')[0];
-            document.getElementById('retest-score-input').value = log.retestScore !== undefined ? log.retestScore : '';
-            toggleRetestInputs();
+                const log = student.attendanceLogs[logIndex];
+                document.getElementById('retest-student-id').value = firestoreId;
+                document.getElementById('retest-log-index').value = logIndex;
+                document.getElementById('retest-student-info').innerText = `學生：${student.name} | 日期：${log.date}`;
+                
+                document.getElementById('edit-att-status').value = log.status || '出席';
+                document.getElementById('retest-score-input').value = log.score !== null ? log.score : '';
+                document.getElementById('retest-status-select').value = log.retestDone ? 'done' : 'pending';
+                document.getElementById('retest-date-input').value = log.retestDate || new Date().toISOString().split('T')[0];
+                toggleRetestInputs();
 
-            document.getElementById('retest-modal').style.display = 'flex';
+                document.getElementById('retest-modal').style.display = 'flex';
+            });
         };
 
         window.toggleRetestInputs = function() {
             const status = document.getElementById('retest-status-select').value;
-            document.getElementById('retest-inputs-wrapper').style.display = status === 'done' ? 'block' : 'none';
+            document.getElementById('retest-date-wrapper').style.display = status === 'done' ? 'block' : 'none';
         };
 
         window.saveRetestAction = async function() {
             const firestoreId = document.getElementById('retest-student-id').value;
             const logIndex = Number(document.getElementById('retest-log-index').value);
+            const newAttStatus = document.getElementById('edit-att-status').value;
+            const newScoreVal = document.getElementById('retest-score-input').value;
             const status = document.getElementById('retest-status-select').value;
             const retestDate = document.getElementById('retest-date-input').value;
-            const retestScore = Number(document.getElementById('retest-score-input').value);
 
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
 
+            student.attendanceLogs[logIndex].status = newAttStatus;
+            student.attendanceLogs[logIndex].score = newScoreVal !== '' ? Number(newScoreVal) : null;
             student.attendanceLogs[logIndex].retestDone = status === 'done';
             student.attendanceLogs[logIndex].retestDate = status === 'done' ? retestDate : '';
-            student.attendanceLogs[logIndex].retestScore = status === 'done' ? retestScore : null;
-
-            if(status === 'done' && retestScore >= (student.attendanceLogs[logIndex].passScore || 80)) {
-                student.attendanceLogs[logIndex].score = retestScore;
-            }
 
             try {
                 await setDoc(doc(db, "classLogStudents", firestoreId), {
@@ -1231,7 +1195,7 @@
                 });
 
                 document.getElementById('retest-modal').style.display = 'none';
-                alert('✅ 補考紀錄已更新！');
+                alert('✅ 學生出席與考試成績已成功修正！');
                 window.renderProfileStudents();
                 window.renderPendingTodoPanels();
             } catch (e) { alert('更新失敗'); }
@@ -1705,10 +1669,10 @@
                 let phonesStr = (s.phones || []).map(p => `${p.label}: ${p.number}`).join('<br>');
                 
                 let attHtml = (s.attendanceLogs || []).map((l, logIdx) => {
-                    let attStatusStr = `<span class="${l.status==='出席'?'badge-success':'badge-danger'}">${l.status}</span>`;
+                    let attStatusStr = `<span class="${l.status==='出席'?'badge-success':'badge-danger'} interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.status}</span>`;
                     if(l.status !== '出席') {
                         if(l.makeupDone) {
-                            attStatusStr += ` <span style="color:#28a745; font-size:11px;">(已補課: ${l.makeupDate||''})</span>`;
+                            attStatusStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">(已補課: ${l.makeupDate||''})</span>`;
                         } else {
                             attStatusStr += ` <span class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">[須補課]</span>`;
                         }
@@ -1718,10 +1682,10 @@
 
                 let scoreHtml = (s.attendanceLogs || []).map((l, logIdx) => {
                     const passScore = l.passScore || 80;
-                    let scoreStr = `<b>${l.score !== null ? l.score : '無'}分</b>`;
+                    let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
                     if(l.score !== null && l.score < passScore) {
                         if(l.retestDone) {
-                            scoreStr += ` <span style="color:#28a745; font-size:11px;">(補考已過)</span>`;
+                            scoreStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(補考: ${l.retestDate||''}, ${l.retestScore}分)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
                         }
@@ -1740,7 +1704,7 @@
                 return `
                     <tr>
                         <td>
-                            <span class="student-name-link" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
+                            <b>${s.name}</b><br>
                             <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small><br>
                             <div style="font-size:11px; margin-top:4px; background:#f8fafc; padding:4px; border-radius:4px;">${phonesStr}</div>
                         </td>
@@ -1773,33 +1737,6 @@
                 return `<option value="${cName}">${cName}</option>`;
             }).join('');
 
-            document.getElementById('student-modal').style.display = 'flex';
-        };
-
-        window.openEditStudentModal = function(firestoreId) {
-            const s = window.state.students.find(item => item.firestoreId === firestoreId);
-            if(!s) return;
-
-            document.getElementById('modal-title').innerText = "修改學生資料";
-            document.getElementById('edit-student-id').value = firestoreId;
-            document.getElementById('modal-name').value = s.name;
-            document.getElementById('modal-school').value = s.school || '';
-            document.getElementById('modal-class').value = s.studentClass || '';
-            document.getElementById('modal-version').value = s.studentVersion || '';
-
-            const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
-            document.getElementById('modal-course').innerHTML = allCourses.map(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                return `<option value="${cName}" ${cName === s.course ? 'selected' : ''}>${cName}</option>`;
-            }).join('');
-
-            if(s.phones) {
-                if(s.phones[0]) { document.getElementById('modal-label1').value = s.phones[0].label; document.getElementById('modal-phone1').value = s.phones[0].number; }
-                if(s.phones[1]) { document.getElementById('modal-label2').value = s.phones[1].label; document.getElementById('modal-phone2').value = s.phones[1].number; }
-                if(s.phones[2]) { document.getElementById('modal-label3').value = s.phones[2].label; document.getElementById('modal-phone3').value = s.phones[2].number; }
-            }
-
-            document.getElementById('delete-student-btn').style.display = "inline-block";
             document.getElementById('student-modal').style.display = 'flex';
         };
 
