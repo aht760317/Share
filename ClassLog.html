@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (主任總覽完整復原版)</title>
+    <title>斗六顧德補習班 - 教室教學日誌與學生管理系統 (主任總覽與日誌修正完整版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -170,15 +170,15 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫</h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可隨時修改或預覽該生今日日誌)</small></h3>
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名</th>
+                            <th width="18%">姓名 (可修改日誌)</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="15%">作業狀態</th>
-                            <th width="43%">個別注意事項 / 補充說明</th>
+                            <th width="43%">狀態提醒與補課安排 / 個別注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-junior"></tbody>
@@ -247,15 +247,15 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫</h3>
+                <h3>今日學生狀況填寫 <small style="font-size:12px; color:#666; font-weight:normal;">(💡 提示：點擊學生名字可隨時修改或預覽該生今日日誌)</small></h3>
                 <table>
                     <thead>
                         <tr>
-                            <th width="18%">姓名</th>
+                            <th width="18%">姓名 (可修改日誌)</th>
                             <th width="12%">出席狀況</th>
                             <th width="12%">考試分數</th>
                             <th width="15%">作業狀態</th>
-                            <th width="43%">個別注意事項 / 補充說明</th>
+                            <th width="43%">狀態提醒與補課安排 / 個別注意事項</th>
                         </tr>
                     </thead>
                     <tbody id="log-students-tbody-elementary"></tbody>
@@ -268,7 +268,7 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 (已完整復原) -->
+        <!-- 👑 主任全校日誌快速總覽 -->
         <section id="director-overview" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽</h3>
@@ -385,7 +385,46 @@
         </section>
     </div>
 
-    <!-- 學生新增/修改彈窗 -->
+    <!-- 💡 當日學生個人日誌快速修改彈窗 -->
+    <div class="modal-overlay" id="daily-student-edit-modal">
+        <div class="modal-box" style="width: 500px;">
+            <h3 id="daily-modal-title" style="margin-top:0; color:var(--primary);">✏️ 修正學生當日學習狀況</h3>
+            <input type="hidden" id="daily-modal-firestore-id">
+            <input type="hidden" id="daily-modal-dept">
+
+            <div class="grid-2">
+                <div>
+                    <label>出席狀況：</label>
+                    <select id="daily-modal-att">
+                        <option value="出席">出席</option>
+                        <option value="請假">請假</option>
+                        <option value="曠課">曠課</option>
+                    </select>
+                </div>
+                <div>
+                    <label>考試分數：</label>
+                    <input type="number" id="daily-modal-score" placeholder="分數">
+                </div>
+            </div>
+
+            <label>作業狀態：</label>
+            <select id="daily-modal-hw-status">
+                <option value="完成">完成</option>
+                <option value="未交">未交</option>
+                <option value="部分完成">部分完成</option>
+            </select>
+
+            <label>狀態提醒與補課安排 / 個別注意事項：</label>
+            <textarea id="daily-modal-note" rows="3" placeholder="請輸入個別注意事項..."></textarea>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-success" onclick="saveDailyStudentEdit()">確認修改並更新</button>
+                <button class="btn" style="background:#999;" onclick="document.getElementById('daily-student-edit-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 學生檔案新增/修改彈窗 -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
             <h3 id="modal-title" style="margin-top:0; color:var(--primary);">新增/修改學生資料</h3>
@@ -589,7 +628,9 @@
 
             tbody.innerHTML = students.map(s => `
                 <tr data-firestore-id="${s.firestoreId}">
-                    <td><b>${s.name}</b></td>
+                    <td>
+                        <span class="student-name-link" onclick="openDailyStudentEdit('${s.firestoreId}', '${dept}')">${s.name}</span>
+                    </td>
                     <td>
                         <select class="log-att-status">
                             <option value="出席">出席</option>
@@ -608,6 +649,81 @@
                     <td><input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;"></td>
                 </tr>
             `).join('');
+        };
+
+        // 💡 點擊學生名字彈出快速修改當日狀況視窗
+        window.openDailyStudentEdit = function(firestoreId, dept) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+            // 尋找該學生在該日期的填寫紀錄
+            const existingLog = (student.attendanceLogs || []).find(l => l.date === targetDate);
+
+            document.getElementById('daily-modal-title').innerText = `✏️ 修改 ${student.name} (${targetDate}) 當日日誌`;
+            document.getElementById('daily-modal-firestore-id').value = firestoreId;
+            document.getElementById('daily-modal-dept').value = dept;
+
+            document.getElementById('daily-modal-att').value = existingLog ? existingLog.status : '出席';
+            document.getElementById('daily-modal-score').value = (existingLog && existingLog.score !== null) ? existingLog.score : '';
+            document.getElementById('daily-modal-hw-status').value = existingLog ? (existingLog.homework || '完成') : '完成';
+            document.getElementById('daily-modal-note').value = existingLog ? (existingLog.detail || '') : '';
+
+            document.getElementById('daily-student-edit-modal').style.display = 'flex';
+        };
+
+        // 💡 儲存當日個人日誌修改
+        window.saveDailyStudentEdit = async function() {
+            const firestoreId = document.getElementById('daily-modal-firestore-id').value;
+            const dept = document.getElementById('daily-modal-dept').value;
+            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
+            const targetDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+            const status = document.getElementById('daily-modal-att').value;
+            const scoreVal = document.getElementById('daily-modal-score').value;
+            const score = scoreVal !== '' ? Number(scoreVal) : null;
+            const homework = document.getElementById('daily-modal-hw-status').value;
+            const detail = document.getElementById('daily-modal-note').value.trim();
+
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            if(!student.attendanceLogs) student.attendanceLogs = [];
+            const logIndex = student.attendanceLogs.findIndex(l => l.date === targetDate);
+
+            if(logIndex >= 0) {
+                // 覆寫該日現有紀錄
+                student.attendanceLogs[logIndex].status = status;
+                student.attendanceLogs[logIndex].score = score;
+                student.attendanceLogs[logIndex].homework = homework;
+                student.attendanceLogs[logIndex].detail = detail;
+            } else {
+                // 若當天尚未有紀錄則新增
+                student.attendanceLogs.unshift({
+                    date: targetDate, status, score, homework, progress: '', homeworkContent: '', passScore: 80, detail
+                });
+            }
+
+            if(detail) {
+                if(!student.notes) student.notes = [];
+                student.notes.unshift({ date: targetDate, author: '日誌修正', text: detail });
+            }
+
+            try {
+                await setDoc(doc(db, "classLogStudents", firestoreId), {
+                    id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                    attendanceLogs: student.attendanceLogs, notes: student.notes || []
+                });
+
+                document.getElementById('daily-student-edit-modal').style.display = 'none';
+                alert(`✅ ${student.name} 的當日日誌已成功修正並同步至雲端！`);
+                window.renderProfileStudents();
+            } catch (e) {
+                console.error("更新失敗：", e);
+                alert('更新失敗，請檢查網路連線。');
+            }
         };
 
         window.saveLog = async function(dept) {
@@ -659,9 +775,18 @@
                     const student = window.state.students.find(s => s.firestoreId === firestoreId);
                     if (student) {
                         if (!student.attendanceLogs) student.attendanceLogs = [];
-                        student.attendanceLogs.unshift({
-                            date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
-                        });
+                        
+                        // 檢查當天是否已有紀錄，若有則更新，無則新增
+                        const existingIdx = student.attendanceLogs.findIndex(l => l.date === date);
+                        if (existingIdx >= 0) {
+                            student.attendanceLogs[existingIdx] = {
+                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
+                            };
+                        } else {
+                            student.attendanceLogs.unshift({
+                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote
+                            });
+                        }
 
                         if (studentNote) {
                             if (!student.notes) student.notes = [];
@@ -709,7 +834,7 @@
             });
         };
 
-        // 👑 主任全校教學日誌快速總覽
+        // 主任全校教學日誌快速總覽
         window.generateMonthDaysGrid = function() {
             const monthInput = document.getElementById('overview-target-month').value;
             const container = document.getElementById('month-days-container');
