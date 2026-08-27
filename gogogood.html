@@ -3,486 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德系統 - 核心控制終端</title>
-    <!-- 引入高科技等寬字體與中文字體 -->
+    <title>斗六顧德補習班 - 溫馨工作站</title>
+    <!-- Google 圓潤字體 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --bg-base: #030712;
-            --neon-blue: #00f0ff;
-            --neon-purple: #bc13fe;
-            --neon-green: #00ff66;
-            --neon-gold: #ffd200;
-            --neon-red: #ff0055;
-            --text-glow: 0 0 10px rgba(0, 240, 255, 0.7);
+            --bg-page: #FFF9F2;
+            --text-main: #4A3E3D;
+            --text-sub: #7A6E6D;
+            --border-color: #4A3E3D;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            user-select: none;
         }
 
         body {
-            background-color: var(--bg-base);
-            color: #ffffff;
-            font-family: 'Rajdhani', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-page);
+            /* 柔和點點背景 */
+            background-image: radial-gradient(#F5DDC4 15%, transparent 16%);
+            background-size: 24px 24px;
+            color: var(--text-main);
+            font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* 3D 空間網格地面 */
-        .cyber-grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(to right, rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            transform: perspective(500px) rotateX(25deg);
-            transform-origin: center top;
-            opacity: 0.6;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* 全螢幕掃描線 */
-        .scanline {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 3px, 6px 100%;
-            z-index: 99;
-            pointer-events: none;
+            padding: 40px 20px;
         }
 
         .container {
             width: 100%;
-            max-width: 1180px;
-            position: relative;
-            z-index: 10;
+            max-width: 1000px;
         }
 
-        /* 頂部 HUD 狀態列 */
-        .hud-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.8rem;
-            color: var(--neon-blue);
-            text-shadow: 0 0 8px var(--neon-blue);
-            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
-            padding-bottom: 10px;
-            margin-bottom: 25px;
-            letter-spacing: 1.5px;
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--neon-green);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--neon-green);
-            margin-right: 6px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.85); }
-        }
-
-        /* 主標題 */
+        /* 頂部標題 */
         header {
             text-align: center;
-            margin-bottom: 40px;
-            position: relative;
+            margin-bottom: 35px;
+        }
+
+        .mascot-tag {
+            display: inline-block;
+            background: #FFE8A3;
+            color: #7A5200;
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            border: 2px solid var(--border-color);
+            box-shadow: 2px 2px 0 var(--border-color);
         }
 
         header h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.8rem;
+            font-size: 2.3rem;
             font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: #fff;
-            text-shadow: 0 0 15px rgba(0, 240, 255, 0.8), 0 0 30px rgba(188, 19, 254, 0.6);
-            margin-bottom: 8px;
-        }
-
-        header h1 span {
-            color: var(--neon-blue);
+            color: #FF6B6B;
+            text-shadow: 2px 2px 0 #4A3E3D;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
 
         header p {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #94a3b8;
-            letter-spacing: 2px;
+            font-size: 1rem;
+            color: var(--text-sub);
+            font-weight: 700;
         }
 
         /* 網格系統 */
         .grid-menu {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 26px;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 22px;
         }
 
-        /* 賽博龐克微切角卡片 */
+        /* 可愛立體卡片 */
         .card {
-            position: relative;
-            background: rgba(13, 20, 37, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            padding: 28px;
+            background: #FFFFFF;
+            border: 3px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
             text-decoration: none;
             color: inherit;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
-        }
-
-        /* 切角邊框發光 */
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 30px;
-            height: 30px;
-            border-top: 2px solid var(--neon-color, var(--neon-blue));
-            border-right: 2px solid var(--neon-color, var(--neon-blue));
-            pointer-events: none;
-            transition: all 0.3s;
-        }
-
-        .card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 30px;
-            height: 30px;
-            border-bottom: 2px solid var(--neon-color, var(--neon-blue));
-            border-left: 2px solid var(--neon-color, var(--neon-blue));
-            pointer-events: none;
-            transition: all 0.3s;
-        }
-
-        /* 動態能量掃描線條 (Hover) */
-        .card .energy-bar {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--neon-color, var(--neon-blue)), transparent);
-            transition: all 0.5s;
+            position: relative;
+            /* 經典立體厚度陰影 */
+            box-shadow: 0 6px 0 var(--border-color);
+            transition: all 0.15s ease-in-out;
         }
 
         .card:hover {
-            transform: translateY(-8px) scale(1.02);
-            background: rgba(17, 28, 54, 0.85);
-            border-color: var(--neon-color, var(--neon-blue));
-            box-shadow: 0 10px 35px -5px var(--glow-color, rgba(0, 240, 255, 0.4));
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 var(--border-color);
         }
 
-        .card:hover .energy-bar {
-            left: 100%;
-        }
+        /* 卡片主題色系 */
+        .card-a { background: #E8F4FD; --card-accent: #4FA8ED; }
+        .card-b { background: #EAF8E6; --card-accent: #6BCB77; }
+        .card-c { background: #FFEAEA; --card-accent: #FF6B6B; }
+        .card-d { background: #FFF6E5; --card-accent: #FFB236; }
+        .card-e { background: #F3EAFD; --card-accent: #9D65C9; }
+        .card-f { background: #E6FAF8; --card-accent: #38D9A9; }
 
-        .card:hover::before, .card:hover::after {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* 主題顏色 */
-        .card-a { --neon-color: var(--neon-blue); --glow-color: rgba(0, 240, 255, 0.35); }
-        .card-b { --neon-color: var(--neon-green); --glow-color: rgba(0, 255, 102, 0.35); }
-        .card-c { --neon-color: var(--neon-red); --glow-color: rgba(255, 0, 85, 0.35); }
-        .card-d { --neon-color: var(--neon-gold); --glow-color: rgba(255, 210, 0, 0.35); }
-        .card-e { --neon-color: var(--neon-purple); --glow-color: rgba(188, 19, 254, 0.35); }
-        .card-f { --neon-color: #00e5ff; --glow-color: rgba(0, 229, 255, 0.35); }
-
-        /* 卡片頭部 */
         .card-top {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 22px;
+            margin-bottom: 15px;
         }
 
-        .icon-box {
-            width: 58px;
-            height: 58px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--neon-color);
+        .icon-circle {
+            width: 52px;
+            height: 52px;
+            background: #FFFFFF;
+            border: 2.5px solid var(--border-color);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
-            color: var(--neon-color);
-            text-shadow: 0 0 10px var(--neon-color);
-            clip-path: polygon(0 0, 80% 0, 100% 20%, 100% 100%, 20% 100%, 0 80%);
-            transition: all 0.3s;
-        }
-
-        .card:hover .icon-box {
-            background: var(--neon-color);
-            color: #000;
-            box-shadow: 0 0 20px var(--neon-color);
-            transform: rotate(5deg);
-        }
-
-        .code-index {
-            font-family: 'Orbitron', monospace;
             font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--neon-color);
-            opacity: 0.4;
-            letter-spacing: 2px;
-            transition: all 0.3s;
+            color: var(--card-accent);
+            box-shadow: 2px 2px 0 var(--border-color);
         }
 
-        .card:hover .code-index {
-            opacity: 1;
-            text-shadow: 0 0 10px var(--neon-color);
+        .tag-pill {
+            background: #FFFFFF;
+            border: 2px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-main);
         }
 
-        /* 標題與說明文字 */
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             font-weight: 900;
-            color: #ffffff;
-            letter-spacing: 1.5px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: var(--text-main);
+            margin-bottom: 8px;
         }
 
         .card-desc {
-            font-size: 0.95rem;
-            color: #94a3b8;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            line-height: 1.5;
+            font-weight: 700;
+            margin-bottom: 20px;
         }
 
-        /* 底部 HUD 互動鈕 */
+        /* 卡片底部點擊按鈕 */
         .card-footer {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-top: 1px dashed rgba(255, 255, 255, 0.1);
-            padding-top: 16px;
+            justify-content: space-between;
+            background: #FFFFFF;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 10px 14px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            box-shadow: 2px 2px 0 var(--border-color);
         }
 
-        .access-btn {
-            font-family: 'Orbitron', monospace;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--neon-color);
+        .arrow-bubble {
+            width: 26px;
+            height: 26px;
+            background: var(--card-accent);
+            color: #FFFFFF;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .access-btn i {
-            transition: transform 0.3s;
-        }
-
-        .card:hover .access-btn i {
-            transform: translateX(6px);
-        }
-
-        .sys-tag {
-            font-family: 'Orbitron', monospace;
-            font-size: 0.7rem;
-            color: #64748b;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 3px 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            justify-content: center;
+            font-size: 0.75rem;
+            border: 1.5px solid var(--border-color);
         }
 
         footer {
-            margin-top: 50px;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.8rem;
-            color: #475569;
             text-align: center;
-            letter-spacing: 2px;
+            margin-top: 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #9C8E8D;
         }
 
-        @media (max-width: 768px) {
-            header h1 { font-size: 2.1rem; }
-            .grid-menu { grid-template-columns: 1fr; }
-            .hud-status { flex-direction: column; gap: 8px; text-align: center; }
+        @media (max-width: 640px) {
+            body { padding: 25px 16px; }
+            header h1 { font-size: 1.9rem; }
+            .grid-menu { grid-template-columns: 1fr; gap: 16px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="cyber-grid"></div>
-    <div class="scanline"></div>
-
     <div class="container">
-        <!-- 頂部即時數據欄位 -->
-        <div class="hud-status">
-            <div><span class="status-dot"></span>CORE ENGINE: ONLINE (2026 ACTIVE)</div>
-            <div id="liveClock">UTC+8 --:--:--</div>
-            <div>SECURITY CLEARANCE: MASTER</div>
-        </div>
-
         <header>
-            <h1>鬥六顧德 <span>SYSTEM</span></h1>
-            <p>ADVANCED COMMAND INTERFACE</p>
+            <div class="mascot-tag">✨ 斗六顧德小幫手 ✨</div>
+            <h1>統一管理小天地</h1>
+            <p>點選下方按鈕，快速前往管理頁面！</p>
         </header>
 
         <div class="grid-menu">
             <!-- A. 官方網站 -->
             <a href="https://aht760317.github.io/good-school/" target="_blank" class="card card-a">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-network-wired"></i></div>
-                        <span class="code-index">PORTAL_01</span>
+                        <div class="icon-circle"><i class="fa-solid fa-house"></i></div>
+                        <span class="tag-pill">A. 招生入口</span>
                     </div>
-                    <div class="card-title">A. 官方網站</div>
-                    <div class="card-desc">對外形象樞紐、全班系課程資訊及前瞻教育公告發布。</div>
+                    <div class="card-title">官方網站</div>
+                    <div class="card-desc">查看補習班門面網頁、各班級介紹與最新公告消息。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">INITIALIZE LINK <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">GATEWAY</span>
+                    <span>前往官網逛逛</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
 
             <!-- B. 教學日誌 -->
             <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card card-b">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-terminal"></i></div>
-                        <span class="code-index">LOG_02</span>
+                        <div class="icon-circle"><i class="fa-solid fa-pen"></i></div>
+                        <span class="tag-pill">B. 老師專區</span>
                     </div>
-                    <div class="card-title">B. 教學日誌</div>
-                    <div class="card-desc">即時課堂日誌輸入終端、進度掌控與雲端資料庫雙向同步。</div>
+                    <div class="card-title">教學日誌</div>
+                    <div class="card-desc">老師填寫今日進度、課堂學習狀況與雲端即時同步。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">ACCESS LOGS <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">DATABASE</span>
+                    <span>填寫今日日誌</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
 
             <!-- C. 線上點名 -->
             <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card card-c">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-fingerprint"></i></div>
-                        <span class="code-index">ROLL_03</span>
+                        <div class="icon-circle"><i class="fa-solid fa-user-group"></i></div>
+                        <span class="tag-pill">C. 出缺勤</span>
                     </div>
-                    <div class="card-title">C. 線上點名</div>
-                    <div class="card-desc">即時學員動態驗證、智慧缺勤監控與動態點名清單生成。</div>
+                    <div class="card-title">線上點名</div>
+                    <div class="card-desc">快速登記今天上課學生出勤、請假狀態與名單確認。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">VERIFY ATTENDANCE <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">REALTIME</span>
+                    <span>開始線上點名</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
 
             <!-- D. 線上課表 -->
             <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card card-d">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-microchip"></i></div>
-                        <span class="code-index">SCHED_04</span>
+                        <div class="icon-circle"><i class="fa-solid fa-calendar-star"></i></div>
+                        <span class="tag-pill">D. 排課總覽</span>
                     </div>
-                    <div class="card-title">D. 線上課表</div>
-                    <div class="card-desc">國中部/國小部全時程矩陣圖譜，動態教室與師資配置排程。</div>
+                    <div class="card-title">線上課表</div>
+                    <div class="card-desc">國中與國小班級開課時間表、教室安排與時程對照。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">RENDER SCHEDULE <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">MATRIX</span>
+                    <span>查看完整課表</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
 
             <!-- E. 繳費管理 -->
             <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card card-e">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-vault"></i></div>
-                        <span class="code-index">PAY_05</span>
+                        <div class="icon-circle"><i class="fa-solid fa-coins"></i></div>
+                        <span class="tag-pill">E. 財務紀錄</span>
                     </div>
-                    <div class="card-title">E. 繳費管理</div>
-                    <div class="card-desc">金流資料鏈監控、學雜費智能對帳與財務狀態分析模組。</div>
+                    <div class="card-title">繳費管理</div>
+                    <div class="card-desc">學生學雜費收取紀錄、未繳名單追蹤與收支管理。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">LAUNCH VAULT <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">ENCRYPTED</span>
+                    <span>進入收費系統</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
 
             <!-- F. 家長分潤 -->
             <a href="https://aht760317.github.io/Share/" target="_blank" class="card card-f">
-                <div class="energy-bar"></div>
                 <div>
                     <div class="card-top">
-                        <div class="icon-wrapper"><i class="fa-solid fa-cubes-stacked"></i></div>
-                        <span class="code-index">SHARE_06</span>
+                        <div class="icon-circle"><i class="fa-solid fa-gift"></i></div>
+                        <span class="tag-pill">F. 推薦獎勵</span>
                     </div>
-                    <div class="card-title">F. 家長分潤</div>
-                    <div class="card-desc">智慧推薦激勵節點、紅利回饋精準核算與分潤鏈路報表。</div>
+                    <div class="card-title">家長分潤</div>
+                    <div class="card-desc">介紹獎金計算與發放明細、推薦分潤記錄隨時查。</div>
                 </div>
                 <div class="card-footer">
-                    <span class="access-btn">QUERY REWARDS <i class="fa-solid fa-angles-right"></i></span>
-                    <span class="sys-tag">ANALYTICS</span>
+                    <span>查看分潤明細</span>
+                    <div class="arrow-bubble"><i class="fa-solid fa-arrow-right"></i></div>
                 </div>
             </a>
         </div>
 
         <footer>
-            GOUDE COMMAND CENTER · SYSTEM ACTIVE 2026 · ALL RIGHTS RESERVED
+            斗六顧德文教機構 · 內部專用小工具
         </footer>
     </div>
 
-    <!-- 即時電子鐘微腳本 -->
-    <script>
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('zh-TW', { hour12: false });
-            document.getElementById('liveClock').textContent = 'LOCAL_TIME: ' + timeString;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
 </body>
 </html>
