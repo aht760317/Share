@@ -62,7 +62,7 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; }
 
-        /* 設定區的純按鈕樣式 */
+        /* 設定區純按鈕樣式 */
         .pill-btn { padding: 8px 16px; background: #F1F5F9; border: 2px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: bold; color: #334155; cursor: pointer; transition: 0.2s; user-select: none; }
         .pill-btn:hover { background: #E2E8F0; border-color: #94A3B8; }
         .pill-btn.active { box-shadow: 0 0 0 3px rgba(37,99,235,0.4); }
@@ -275,7 +275,6 @@
             <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
             <div class="form-row" style="width: 100%;">
-                
                 <div id="primaryPeriodInput" style="flex: 1;">
                     <label>本張單據收費年月：</label>
                     <input type="month" id="billMonth" style="font-weight:bold; color:var(--accent); width:200px;" onchange="checkAndAutoMergeUnpaidBill()">
@@ -289,7 +288,6 @@
                         <input type="date" id="billEndDate" style="font-weight:bold; color:#7E22CE; width:160px; border-color:#D8B4FE;" onchange="checkAndAutoMergeUnpaidBill()">
                     </div>
                 </div>
-
             </div>
 
             <!-- 自動合併提示 -->
@@ -331,13 +329,6 @@
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
             <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定</h3>
             
-            <div style="display:flex; gap:15px; font-size:13px; margin-bottom:15px; flex-wrap:wrap;">
-                <span>🟣 國中部 (紫色)</span>
-                <span>🔵 國小安親班/年級 (藍色)</span>
-                <span>🟢 數學班 (綠色)</span>
-                <span>🟡 作文班 (黃色)</span>
-            </div>
-
             <div class="form-row" style="margin-bottom: 15px;">
                 <div style="flex: 1;">
                     <input type="text" id="newConfigClassName" placeholder="輸入新增班級名稱 (如: 2026 六年級、三年級作文班)" style="width:100%;">
@@ -381,7 +372,6 @@
         <!-- 區塊 3：快捷收費按鈕與經手人設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
             <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
-            <p style="font-size:13px; color:#64748B; margin-top:0;">* 金額可輸入負數（例如：-300 折扣優惠）。</p>
             
             <div class="form-row">
                 <div style="flex: 2;">
@@ -558,7 +548,7 @@
     window.currentClass = "";
     window.currentStudent = "";
     window.currentBillItems = [];
-    window.existingUnpaidBill = null; // 紀錄比對到的同期間未繳費帳單
+    window.existingUnpaidBill = null;
     
     window.editingClass = "";
     window.deletedClassBackup = null;
@@ -573,15 +563,15 @@
     // === 判斷班級分類並回傳專屬 CSS class ===
     window.getClassCategoryStyle = function(className) {
         if (className.includes('國中') || className.includes('國一') || className.includes('國二') || className.includes('國三') || className.includes('會考') || className.includes('理化')) {
-            return 'class-junior'; // 國中 (紫色)
+            return 'class-junior';
         }
         if (className.includes('數學') || className.includes('奧數') || className.includes('資優')) {
-            return 'class-math'; // 國小數學班 (綠色)
+            return 'class-math';
         }
         if (className.includes('作文') || className.includes('語文') || className.includes('閱讀')) {
-            return 'class-writing'; // 作文班 (黃色)
+            return 'class-writing';
         }
-        return 'class-daycare'; // 國小安親班 / 各年級 (藍色)
+        return 'class-daycare';
     }
 
     // === 登入系統邏輯 ===
@@ -1144,7 +1134,6 @@
 
         window.config.classes[window.editingClass][index] = newName;
         
-        // 同步修改通訊錄 key 及 性別
         const oldKey = window.editingClass + '_' + oldName;
         const newKey = window.editingClass + '_' + newName;
         
@@ -1342,7 +1331,6 @@
         document.getElementById('itemAmt').value = '';
         renderQuickButtonsForBilling();
         
-        // 觸發自動比對與載入同期間未繳費項目
         checkAndAutoMergeUnpaidBill();
     }
 
@@ -1377,7 +1365,7 @@
         const noticeBox = document.getElementById('autoMergeNotice');
         if (matched) {
             window.existingUnpaidBill = matched;
-            window.currentBillItems = JSON.parse(JSON.stringify(matched.items)); // 深度複製既有項目
+            window.currentBillItems = JSON.parse(JSON.stringify(matched.items));
             if (noticeBox) noticeBox.style.display = 'block';
         } else {
             window.existingUnpaidBill = null;
@@ -1477,7 +1465,6 @@
         let total = window.currentBillItems.reduce((sum, item) => sum + item.amount, 0);
         
         try {
-            // 確認最新資料庫中是否已有符合條件的未繳費單據，避免重疊
             const targetBill = window.bills.find(b => 
                 !b.isPaid && 
                 b.studentName === window.currentStudent && 
@@ -1485,7 +1472,6 @@
                 (b.periodStr === displayPeriod || b.yearMonth === yMonth)
             );
 
-            // 如果已存在同期間未繳費帳單，直接更新覆蓋原帳單（實現自動合併）
             if (targetBill && targetBill.firestoreId) {
                 targetBill.items = [...window.currentBillItems];
                 targetBill.total = total;
@@ -1537,7 +1523,6 @@
             document.querySelectorAll('#studentGrid .btn-select').forEach(b => b.classList.remove('active'));
             window.currentStudent = "";
 
-            // 更新管理列表畫面
             renderRecords();
         } catch (e) {
             console.error("儲存帳單失敗：", e);
