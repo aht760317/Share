@@ -11,6 +11,7 @@
             --danger: #e74c3c;
             --success: #2ecc71;
             --warning: #f39c12;
+            --purple: #8e44ad;
             --bg: #f4f6f9;
             --border: #ccd1d9;
         }
@@ -86,6 +87,7 @@
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-purple { background: var(--purple); color: white; }
         .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
         .btn:hover { opacity: 0.9; }
 
@@ -159,9 +161,9 @@
 <div class="container">
     <div class="tabs no-print">
         <button class="tab-btn active" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
-        <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表 (國中3個月/國小2個月)</button>
+        <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表 (常態/特殊課程自訂)</button>
         <button class="tab-btn" onclick="switchTab('holiday')">⚙️ 國定假日與放假設定</button>
-        <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程開課起始日排程</button>
+        <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程開課起始日與週期排程</button>
     </div>
 
     <div id="tab-rollcall">
@@ -228,10 +230,16 @@
         <div class="card">
             <div class="no-print" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:15px; background:#f8fafc; padding:12px; border-radius:8px;">
                 <label><b>選擇課程：</b></label>
-                <select id="sheetCourseSelect" onchange="generateCustomSheet()" style="padding:6px; border-radius:6px;"></select>
+                <select id="sheetCourseSelect" onchange="onSheetCourseSelected()" style="padding:6px; border-radius:6px; font-weight:bold;"></select>
 
                 <label><b>表單週期：</b></label>
                 <span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:5px 10px; border-radius:6px; font-weight:bold;">自動推算中</span>
+
+                <div id="customWeeksControl" style="display:none; align-items:center; gap:6px;">
+                    <label style="color:var(--purple); font-weight:bold;">自訂週數：</label>
+                    <input type="number" id="customWeeksInput" min="1" max="52" style="width:65px; padding:5px; border-radius:4px; border:1px solid #ccc; text-align:center;">
+                    <button class="btn btn-purple" style="padding:5px 10px; font-size:12px;" onclick="updateCustomWeeks()">套用週數</button>
+                </div>
 
                 <button class="btn btn-primary" onclick="window.print()">🖨️ 列印點名表 (A4橫向)</button>
                 <button class="btn btn-warning" onclick="promptEditSheetStart()">✏️ 調整此表起始開課日</button>
@@ -268,7 +276,8 @@
         <div class="card">
             <h3 style="color:var(--primary);">⚙️ 課程開課日與點名表週期排程</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
-                每門課程設定開課起始日後，系統會自動生成對應週期的點名表（國中3個月13週 / 國小2個月9週）。
+                國中部常態排程預設 3 個月 (13週)；國小部預設 2 個月 (9週)。<br>
+                <b>名稱包含括號 ( ) 的特殊課程（如暑輔、衝刺班等），可在此自訂開課日與週期週數。</b>
             </p>
 
             <div id="courseConfigList" style="margin-top:15px;"></div>
@@ -303,7 +312,7 @@
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        showAllCourses: false // 預設只顯示今日有課班級
+        showAllCourses: false
     };
 
     window.onload = function() {
@@ -318,6 +327,11 @@
         if (input === SECURITY_CODE) return true;
         alert("❌ 密碼不正確！");
         return false;
+    }
+
+    // 判斷是否為含括號的特殊自訂課程
+    function isSpecialCourse(name) {
+        return name.includes('(') || name.includes(')') || name.includes('（') || name.includes('）');
     }
 
     async function initCloudData(showNotice = false) {
@@ -389,7 +403,7 @@
         } else if (tab === 'sheet') {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             populateSheetCourses();
-            generateCustomSheet();
+            onSheetCourseSelected();
         } else if (tab === 'holiday') {
             document.querySelectorAll('.tab-btn')[2].classList.add('active');
             renderHolidayList();
@@ -417,32 +431,38 @@
         return stu.parentPhone || stu.phone || stu.motherPhone || stu.fatherPhone || stu.contactPhone || stu.tel || '-';
     }
 
-    // 取得所有課程清單
+    // 取得所有課程清單 (包含特殊課程週期與自訂週數)
     function getAllCoursesList() {
         let list = [];
         const defaultStart = new Date().toISOString().slice(0, 8) + '01';
 
         (window.state.courses.elementary || []).forEach((c) => {
             const name = typeof c === 'object' ? c.name : c;
+            const special = isSpecialCourse(name);
             list.push({
                 dept: 'elementary',
                 name: name,
                 day: typeof c === 'object' ? (c.day || '') : '',
                 time: typeof c === 'object' ? (c.time || '') : '',
                 teacher: typeof c === 'object' ? (c.teacher || '') : '',
-                startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart
+                startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart,
+                isSpecial: special,
+                customWeeks: (typeof c === 'object' && c.customWeeks) ? Number(c.customWeeks) : (special ? 4 : 9)
             });
         });
 
         (window.state.courses.junior || []).forEach((c) => {
             const name = typeof c === 'object' ? c.name : c;
+            const special = isSpecialCourse(name);
             list.push({
                 dept: 'junior',
                 name: name,
                 day: typeof c === 'object' ? (c.day || '') : '',
                 time: typeof c === 'object' ? (c.time || '') : '',
                 teacher: typeof c === 'object' ? (c.teacher || '') : '',
-                startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart
+                startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart,
+                isSpecial: special,
+                customWeeks: (typeof c === 'object' && c.customWeeks) ? Number(c.customWeeks) : (special ? 4 : 13)
             });
         });
 
@@ -462,7 +482,6 @@
 
         const allCourses = getAllCoursesList();
 
-        // 依據開關過濾：只顯示今日有排課的班級 或 顯示全部
         const filteredCourses = window.state.showAllCourses 
             ? allCourses 
             : allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
@@ -480,10 +499,17 @@
             card.className = `course-card ${window.state.currentCourse && window.state.currentCourse.name === c.name ? 'active' : ''}`;
             card.onclick = () => selectCourse(c.name);
 
+            let typeBadge = '';
+            if (c.isSpecial) {
+                typeBadge = `<span style="font-size:12px; font-weight:bold; background:#f3e8ff; color:#7e22ce; padding:3px 8px; border-radius:4px;">⚡ 特殊課程 (${c.customWeeks}週)</span>`;
+            } else if (c.dept === 'junior') {
+                typeBadge = `<span style="font-size:12px; font-weight:bold; background:#fef3c7; color:#b45309; padding:3px 8px; border-radius:4px;">國中部 (3個月表)</span>`;
+            } else {
+                typeBadge = `<span style="font-size:12px; font-weight:bold; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px;">國小部 (2個月表)</span>`;
+            }
+
             card.innerHTML = `
-                <span style="font-size:12px; font-weight:bold; background:${c.dept==='junior'?'#fef3c7':'#e0f2fe'}; color:${c.dept==='junior'?'#b45309':'#0369a1'}; padding:3px 8px; border-radius:4px;">
-                    ${c.dept==='junior'?'國中部 (3個月表)':'國小部 (2個月表)'}
-                </span>
+                ${typeBadge}
                 ${isToday ? '<span style="float:right; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:bold; padding:2px 8px; border-radius:4px;">今日排課</span>' : ''}
                 <div style="font-size:17px; font-weight:bold; margin:8px 0 3px; color:var(--primary);">${c.name}</div>
                 <div style="font-size:13px; color:#64748b;">開課日：${c.startDate} | 授課：${c.teacher || '任課老師'} (${c.day || '未設時間'})</div>
@@ -500,7 +526,9 @@
         const c = window.state.currentCourse;
         document.getElementById('rollDetailCard').style.display = 'block';
         document.getElementById('rollCourseTitle').innerText = `📖 ${c.name}`;
-        document.getElementById('rollCourseMeta').innerText = `學制：${c.dept==='junior'?'國中部 (3個月)':'國小部 (2個月)'} | 開課日：${c.startDate} | 授課老師：${c.teacher || '本班老師'}`;
+        
+        let deptText = c.isSpecial ? `特殊自訂課程 (${c.customWeeks}週)` : (c.dept==='junior'?'國中部 (3個月)':'國小部 (2個月)');
+        document.getElementById('rollCourseMeta').innerText = `學制/類型：${deptText} | 開課日：${c.startDate} | 授課老師：${c.teacher || '本班老師'}`;
 
         const curDateStr = document.getElementById('rollDateInput').value;
         const holiday = window.state.holidays.find(h => h.date === curDateStr);
@@ -563,7 +591,7 @@
             `;
             grid.appendChild(card);
 
-            // 2. 仿紙本點名單 Row (欄位順序：學生姓名 -> 學校 -> 家長聯絡電話 -> 版本 -> 點名狀況 -> 成績 -> 備註)
+            // 2. 仿紙本點名單 Row
             let statusText = `<span style="color:#999;">未到</span>`;
             if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold;">✔ 出席</span>`;
             if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold;">假 (請假)</span>`;
@@ -663,7 +691,7 @@
         alert('已成功刪除該放假設定！');
     };
 
-    // 課程開課起始日排程管理
+    // 課程開課起始日與排程管理
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
         const allCourses = getAllCoursesList();
@@ -671,25 +699,35 @@
             <thead>
                 <tr>
                     <th>課程名稱</th>
-                    <th>所屬學制 (表單週期)</th>
-                    <th>開課起始日 (自動排程)</th>
+                    <th>課程類型 / 週期</th>
+                    <th>開課起始日</th>
+                    <th>自訂週期週數 (特殊課)</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody>`;
         allCourses.forEach(c => {
+            let typeTag = '';
+            let weeksInputHtml = '-';
+
+            if (c.isSpecial) {
+                typeTag = `<span style="font-weight:bold; color:var(--purple);">⚡ 特殊自訂課程</span>`;
+                weeksInputHtml = `<input type="number" id="cfg_weeks_${c.name}" value="${c.customWeeks || 4}" min="1" max="52" style="width:65px; padding:4px; text-align:center; border:1px solid #ccc; border-radius:4px;"> 週`;
+            } else if (c.dept === 'junior') {
+                typeTag = `<span style="font-weight:bold; color:#b45309;">國中部 (3個月/13週)</span>`;
+            } else {
+                typeTag = `<span style="font-weight:bold; color:#0369a1;">國小部 (2個月/9週)</span>`;
+            }
+
             html += `<tr>
                 <td><b>${c.name}</b></td>
-                <td>
-                    <span style="font-weight:bold; color:${c.dept==='junior'?'#b45309':'#0369a1'};">
-                        ${c.dept==='junior'?'國中部 (3個月 / 13週)':'國小部 (2個月 / 9週)'}
-                    </span>
-                </td>
+                <td>${typeTag}</td>
                 <td>
                     <input type="date" id="cfg_start_${c.name}" value="${c.startDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc;">
                 </td>
+                <td>${weeksInputHtml}</td>
                 <td>
-                    <button class="btn btn-primary" style="padding:4px 12px; font-size:13px;" onclick="saveCourseConfig('${c.dept}', '${c.name}')">💾 儲存修改</button>
+                    <button class="btn btn-primary" style="padding:4px 12px; font-size:13px;" onclick="saveCourseConfig('${c.dept}', '${c.name}', ${c.isSpecial})">💾 儲存設定</button>
                 </td>
             </tr>`;
         });
@@ -697,7 +735,7 @@
         container.innerHTML = html;
     }
 
-    window.saveCourseConfig = async function(dept, courseName) {
+    window.saveCourseConfig = async function(dept, courseName, isSpecial) {
         if (!checkPassword()) return;
         const startDate = document.getElementById(`cfg_start_${courseName}`).value;
         const targetList = window.state.courses[dept];
@@ -705,12 +743,17 @@
         const target = targetList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
         if (target && typeof target === 'object') {
             target.startDate = startDate;
+            if (isSpecial) {
+                const customWeeks = document.getElementById(`cfg_weeks_${courseName}`).value;
+                target.customWeeks = Number(customWeeks) || 4;
+            }
         }
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            alert(`【${courseName}】開課起始日已成功同步至 Firebase 雲端！`);
+            alert(`【${courseName}】開課日與週期設定已成功同步至 Firebase 雲端！`);
             renderCourseCards();
+            renderCourseConfigList();
         } catch (e) {
             alert('儲存至雲端失敗！');
         }
@@ -722,9 +765,46 @@
         sel.innerHTML = '';
         const allCourses = getAllCoursesList();
         allCourses.forEach(c => {
-            sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            const extraTag = c.isSpecial ? ` [特殊自訂]` : (c.dept==='junior'?' [國中3月]':' [國小2月]');
+            sel.innerHTML += `<option value="${c.name}">${c.name}${extraTag}</option>`;
         });
     }
+
+    window.onSheetCourseSelected = function() {
+        const courseName = document.getElementById('sheetCourseSelect').value;
+        const allCourses = getAllCoursesList();
+        const course = allCourses.find(c => c.name === courseName) || allCourses[0];
+        if (!course) return;
+
+        const customBox = document.getElementById('customWeeksControl');
+        if (course.isSpecial) {
+            customBox.style.display = 'inline-flex';
+            document.getElementById('customWeeksInput').value = course.customWeeks || 4;
+        } else {
+            customBox.style.display = 'none';
+        }
+        generateCustomSheet();
+    };
+
+    window.updateCustomWeeks = async function() {
+        if (!checkPassword()) return;
+        const courseName = document.getElementById('sheetCourseSelect').value;
+        const weeksVal = Number(document.getElementById('customWeeksInput').value);
+        if (!weeksVal || weeksVal < 1 || weeksVal > 52) return alert('請輸入合理的週數 (1~52)！');
+
+        const allCourses = getAllCoursesList();
+        const target = allCourses.find(c => c.name === courseName);
+        if (!target) return;
+
+        const targetObj = window.state.courses[target.dept].find(c => (typeof c === 'object' ? c.name : c) === courseName);
+        if (targetObj && typeof targetObj === 'object') {
+            targetObj.customWeeks = weeksVal;
+        }
+
+        await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+        generateCustomSheet();
+        alert(`已將【${courseName}】點名表週期更新為 ${weeksVal} 週！`);
+    };
 
     window.promptEditSheetStart = async function() {
         if (!checkPassword()) return;
@@ -746,17 +826,34 @@
         }
     };
 
-    // 2. 自動生成點名表 (欄位：序 -> 學生姓名 -> 學校 -> 家長電話 -> 版本 -> 各週點名格 -> 備註)
+    // 自動生成點名表 (包含常態 9/13 週與特殊自訂週數)
     window.generateCustomSheet = function() {
         const courseName = document.getElementById('sheetCourseSelect').value;
         const allCourses = getAllCoursesList();
         const course = allCourses.find(c => c.name === courseName) || allCourses[0];
         if (!course) return;
 
-        const isJunior = course.dept === 'junior';
-        const totalWeeks = isJunior ? 13 : 9; // 國中13週(3個月) / 國小9週(2個月)
+        let totalWeeks = 9;
+        let badgeText = '';
+
+        if (course.isSpecial) {
+            totalWeeks = course.customWeeks || 4;
+            badgeText = `⚡ 特殊自訂課程：${totalWeeks} 週`;
+            document.getElementById('sheetPeriodBadge').style.background = '#f3e8ff';
+            document.getElementById('sheetPeriodBadge').style.color = '#7e22ce';
+        } else if (course.dept === 'junior') {
+            totalWeeks = 13;
+            badgeText = '國中部：3個月 (13週)';
+            document.getElementById('sheetPeriodBadge').style.background = '#fef3c7';
+            document.getElementById('sheetPeriodBadge').style.color = '#b45309';
+        } else {
+            totalWeeks = 9;
+            badgeText = '國小部：2個月 (9週)';
+            document.getElementById('sheetPeriodBadge').style.background = '#e0f2fe';
+            document.getElementById('sheetPeriodBadge').style.color = '#0369a1';
+        }
         
-        document.getElementById('sheetPeriodBadge').innerText = isJunior ? '國中部：3個月 (13週)' : '國小部：2個月 (9週)';
+        document.getElementById('sheetPeriodBadge').innerText = badgeText;
 
         const startDateVal = course.startDate || new Date().toISOString().slice(0, 10);
         const courseStudents = window.state.students.filter(s => s.course === course.name);
@@ -779,7 +876,7 @@
 
         document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
         document.getElementById('sheetPrintSub').innerText = 
-            `學制：${isJunior ? '國中部 (三個月期表)' : '國小部 (二個月期表)'} | 課期區間：${startDateVal} 至 ${endDateStr} | 授課師：${course.teacher || '任課老師'}`;
+            `類型/學制：${badgeText} | 課期區間：${startDateVal} 至 ${endDateStr} | 授課師：${course.teacher || '任課老師'}`;
 
         let html = `<table>
             <thead>
