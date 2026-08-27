@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 </title>
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (成績單行精簡顯示版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -317,7 +317,7 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 (各班獨立待辦提醒與一鍵直達) -->
+        <!-- 👑 主任全校日誌快速總覽 -->
         <section id="director-overview" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽 (分流與文字批示)</h3>
@@ -504,7 +504,7 @@
         </div>
     </div>
 
-    <!-- 💡 互動式處理補考與成績彈窗 (支援原始分數與補考完整紀錄) -->
+    <!-- 💡 互動式處理補考與成績彈窗 (支援單行顯示原成績與補考) -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width: 450px;">
             <h3 style="margin-top:0; color:var(--primary);">📝 處理學生考試與補考紀錄</h3>
@@ -1570,7 +1570,7 @@
 
             const renderLogCard = (l) => {
                 let alertsHtml = '';
-                // 只檢查「當前這筆日誌課程」底下的學生狀況，做到各班獨立顯示
+                // 嚴格限制：只檢查「當前這筆日誌所屬的課程」底下的學生狀況，做到各班獨立顯示
                 window.state.students.forEach(s => {
                     if(s.course === l.course) {
                         const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
@@ -1703,7 +1703,8 @@
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
                     if(l.score !== null && l.score < passScore) {
                         if(l.retestDone) {
-                            scoreStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(原:${l.score}分 ➔ 補考: ${l.retestDate||''}, <b>${l.retestScore}分</b>)</span>`;
+                            // 修正：補考完成後，將「第一次原始分數」與「補考日期/分數」完整顯示在同一行
+                            scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate||''}, ${l.retestScore}分已通過)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
                         }
