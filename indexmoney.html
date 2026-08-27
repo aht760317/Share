@@ -299,6 +299,8 @@
                     </div>
                 </div>
                 
+                <!-- 升級後的按鈕式班級清單與排序 -->
+                <label>現有班級列表 (點擊可編輯學生，可調整順序)：</label>
                 <div class="config-list-box" id="classConfigList" style="height: 160px; margin-bottom: 20px;"></div>
 
                 <div id="studentConfigSection" style="display: none; padding-top: 15px; border-top: 2px dashed #CBD5E1;">
@@ -334,7 +336,7 @@
                         </div>
                     </div>
 
-                    <label style="margin-top: 15px;">已設定的快捷項目 (可調整順序)：</label>
+                    <label style="margin-top: 15px;">已設定的快捷項目 (可拖拉排序)：</label>
                     <div class="config-list-box" id="quickItemConfigList" style="height: 320px;"></div>
                 </div>
 
@@ -413,7 +415,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 填入正確的 Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
         authDomain: "my-project-9999-479215.firebaseapp.com",
@@ -426,7 +427,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 系統變數
     window.config = { classes: {}, handler: "雅鴻" };
     window.quickItems = [];
     window.studentDetails = {};
@@ -441,22 +441,18 @@
     window.editingProfileClass = "";
     window.editingProfileStudent = "";
 
-    // 從雲端讀取所有資料
     async function initCloudData() {
         try {
-            // 1. 讀取經手人
             const handlerDoc = await getDoc(doc(db, "settings", "handler"));
             if (handlerDoc.exists()) {
                 window.config.handler = handlerDoc.data().name || "雅鴻";
             }
             document.getElementById('setHandler').value = window.config.handler;
 
-            // 2. 讀取班級與學生設定
             const classesDoc = await getDoc(doc(db, "settings", "classes"));
             if (classesDoc.exists()) {
                 window.config.classes = classesDoc.data().data || {};
             } else {
-                // 預設資料
                 window.config.classes = {
                     "2026 六年級": ["王小明", "林小華"],
                     "2026 國一班": ["陳大頭", "張美麗"],
@@ -465,7 +461,6 @@
                 await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
             }
 
-            // 3. 讀取快捷收費項目
             const quickItemsDoc = await getDoc(doc(db, "settings", "quickItems"));
             if (quickItemsDoc.exists()) {
                 window.quickItems = quickItemsDoc.data().data || [];
@@ -478,22 +473,18 @@
                 await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
             }
 
-            // 4. 讀取學生詳細資料與備註
             const studentDetailsDoc = await getDoc(doc(db, "settings", "studentDetails"));
             if (studentDetailsDoc.exists()) {
                 window.studentDetails = studentDetailsDoc.data().data || {};
             }
 
-            // 5. 讀取繳費帳單紀錄
             const billsSnapshot = await getDocs(collection(db, "bills"));
             window.bills = [];
             billsSnapshot.forEach((document) => {
                 window.bills.push({ firestoreId: document.id, ...document.data() });
             });
-            // 依照 id 排序最新的在前面
             window.bills.sort((a, b) => b.id - a.id);
 
-            // 初始化畫面
             document.getElementById('billMonth').value = getCurrentMonthStr();
             document.getElementById('filterMonth').value = getCurrentMonthStr();
             document.getElementById('dailyReportDate').value = getCurrentDateStr();
@@ -511,11 +502,10 @@
             renderRecords();
         } catch (e) {
             console.error("載入雲端資料失敗：", e);
-            alert("載入雲端資料失敗，請檢查網路連線或 Firebase 設定。");
+            alert("載入雲端資料失敗，請檢查網路連線。");
         }
     }
 
-    // 儲存班級到雲端
     async function saveClassesToCloud() {
         try {
             await setDoc(doc(db, "settings", "classes"), { data: window.config.classes });
@@ -523,21 +513,18 @@
         } catch (e) { console.error(e); }
     }
 
-    // 儲存學生詳細資料到雲端
     async function saveStudentDetailsToCloud() {
         try {
             await setDoc(doc(db, "settings", "studentDetails"), { data: window.studentDetails });
         } catch (e) { console.error(e); }
     }
 
-    // 儲存快捷項目到雲端
     async function saveQuickItemsToCloud() {
         try {
             await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
         } catch (e) { console.error(e); }
     }
 
-    // 刪除密碼驗證核心函式
     window.verifyAndDelete = function(actionDescription, callback) {
         const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入刪除密碼以繼續：`);
         if (pwd === null) return;
@@ -762,23 +749,44 @@
         window.print();
     }
 
+    // === 班級排序功能 (上移 / 下移) ===
+    window.moveClassConfig = async function(index, direction) {
+        const classEntries = Object.entries(window.config.classes);
+        if (index + direction < 0 || index + direction >= classEntries.length) return;
+        
+        const temp = classEntries[index];
+        classEntries[index] = classEntries[index + direction];
+        classEntries[index + direction] = temp;
+        
+        window.config.classes = Object.fromEntries(classEntries);
+        await saveClassesToCloud();
+        renderClassConfigList();
+    }
+
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
-        const classNames = Object.keys(window.config.classes);
-        if (classNames.length === 0) {
+        const classEntries = Object.entries(window.config.classes);
+        if (classEntries.length === 0) {
             list.innerHTML = '<div style="color:#94A3B8; text-align:center; padding: 20px;">目前尚無班級，請於上方新增</div>';
             return;
         }
-        list.innerHTML = classNames.map(cls => {
-            const studentCount = window.config.classes[cls].length;
+        
+        list.innerHTML = classEntries.map(([cls, students], index) => {
+            const studentCount = students.length;
             const isActive = cls === window.editingClass;
+            
+            const disableUp = index === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+            const disableDown = index === classEntries.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+
             return `
                 <div class="item-row" style="background:${isActive ? '#DBEAFE' : '#F1F5F9'}; border-color:${isActive ? '#3B82F6' : '#E2E8F0'}; cursor: pointer;" onclick="editClassStudents('${cls}')">
                     <div>
                         <strong>${cls}</strong>
                         <span style="font-size:13px; color:#64748B; margin-left:10px;">(${studentCount} 位學生)</span>
                     </div>
-                    <div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="event.stopPropagation(); moveClassConfig(${index}, -1)" ${disableUp}>▲</button>
+                        <button class="btn-edit-item" style="padding: 6px 10px;" onclick="event.stopPropagation(); moveClassConfig(${index}, 1)" ${disableDown}>▼</button>
                         <button class="btn-edit-item" style="padding: 6px 10px;" title="修改班級名稱" onclick="event.stopPropagation(); renameClassConfig('${cls}')">✏️</button>
                         <button class="btn-delete-item" onclick="event.stopPropagation(); promptDeleteClass('${cls}')">刪除</button>
                     </div>
@@ -806,8 +814,15 @@
         if (trimmedName === oldName) return; 
         if (window.config.classes[trimmedName]) { alert('此班級名稱已經存在囉！'); return; }
 
-        window.config.classes[trimmedName] = window.config.classes[oldName];
-        delete window.config.classes[oldName];
+        const newClasses = {};
+        for (let key in window.config.classes) {
+            if (key === oldName) {
+                newClasses[trimmedName] = window.config.classes[oldName];
+            } else {
+                newClasses[key] = window.config.classes[key];
+            }
+        }
+        window.config.classes = newClasses;
 
         const newStudentDetails = {};
         for (let key in window.studentDetails) {
@@ -910,7 +925,7 @@
         window.config.handler = handler;
         try {
             await setDoc(doc(db, "settings", "handler"), { name: handler });
-            alert('經手人名稱已成功儲存至雲端！');
+            alert('經手人名稱已成功同步至雲端！');
         } catch (e) {
             console.error(e);
         }
@@ -1144,7 +1159,6 @@
         };
         
         try {
-            // 寫入 Firebase 雲端資料庫
             const docRef = await addDoc(collection(db, "bills"), newBill);
             newBill.firestoreId = docRef.id;
             
@@ -1542,7 +1556,6 @@
         window.print();
     }
 
-    // 啟動載入雲端資料
     initCloudData();
 </script>
 </body>
