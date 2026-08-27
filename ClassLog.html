@@ -770,15 +770,16 @@
                 endDate.setMonth(endDate.getMonth() + 1);
                 document.getElementById('sheet-end-date').valueAsDate = endDate;
 
-                updateCourseDropdowns();
-                renderLogStudents('junior');
-                renderLogStudents('elementary');
-                renderSettingsCourseList();
-                renderClassButtons();
-                updateGlobalAlertBanner();
-                generateMonthDaysGrid();
-                renderDirectorOverview();
-                updateSheetCourseDropdown();
+                // 💡 強制重新整理所有選單與畫面
+                window.updateCourseDropdowns();
+                window.renderLogStudents('junior');
+                window.renderLogStudents('elementary');
+                window.renderSettingsCourseList();
+                window.renderClassButtons();
+                window.updateGlobalAlertBanner();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+                window.updateSheetCourseDropdown();
             } catch (e) {
                 console.error("載入教室日誌雲端資料失敗：", e);
             }
@@ -803,23 +804,19 @@
                 banner.style.display = 'block';
             }
 
+            // 💡 每次切換分頁時立即刷新資料，確保下拉選單與按鈕絕對同步
+            window.updateCourseDropdowns();
+            window.renderSettingsCourseList();
+            window.renderClassButtons();
+
             if(sectionId === 'director-overview') {
-                generateMonthDaysGrid();
-                renderDirectorOverview();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
             }
-            if(sectionId === 'system-settings') renderSettingsCourseList();
-            if(sectionId === 'attendance-sheet-section') updateSheetCourseDropdown();
-            if(sectionId === 'student-profiles') renderClassButtons();
-            
-            // 💡 確保切換到教學日誌時立即更新下拉選單與學生名單
-            if(sectionId === 'teaching-logs-junior') {
-                updateCourseDropdowns();
-                renderLogStudents('junior');
-            }
-            if(sectionId === 'teaching-logs-elementary') {
-                updateCourseDropdowns();
-                renderLogStudents('elementary');
-            }
+            if(sectionId === 'attendance-sheet-section') window.updateSheetCourseDropdown();
+            if(sectionId === 'teaching-logs-junior') window.renderLogStudents('junior');
+            if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
+            if(sectionId === 'student-profiles') window.renderProfileStudents();
         }
 
         window.copyParentReportText = function() {
@@ -846,181 +843,6 @@
                 window.pendingDeleteAction();
                 window.pendingDeleteAction = null;
             }
-        }
-
-        window.promptResolveMakeup = function(studentId) {
-            window.pendingResolveStudentId = studentId;
-            document.getElementById('actual-makeup-date').valueAsDate = new Date();
-            document.getElementById('makeup-date-modal').style.display = 'flex';
-        }
-
-        window.confirmResolveMakeup = async function() {
-            const dateVal = document.getElementById('actual-makeup-date').value;
-            if(!dateVal) return alert('請選擇補課日期！');
-
-            const s = window.state.students.find(item => item.id === window.pendingResolveStudentId);
-            if(s) {
-                s.makeupPending = false;
-                s.makeupDesc = '';
-                s.notes.push({ date: dateVal, author: '系統自動', text: `已於 ${dateVal} 確認補課完成，自動解除警示。` });
-                try {
-                    await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                        id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', studentVersion: s.studentVersion || '', course: s.course, phones: s.phones,
-                        attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                        makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                    });
-                } catch (e) { console.error(e); }
-            }
-            document.getElementById('makeup-date-modal').style.display = 'none';
-            initCloudData();
-            alert(`已成功標記於 ${dateVal} 補課完成並同步至雲端！`);
-        }
-
-        window.resetStudentMakeupStatus = async function(studentId) {
-            if(!confirm('確定要取消目前的補課/補考完成狀態，重新回到待補狀態嗎？')) return;
-            const s = window.state.students.find(item => item.id === studentId);
-            if(!s) return;
-
-            s.makeupPending = true;
-            if (s.makeupType === 'lowScore') s.retestScore = null;
-            s.notes.push({ date: new Date().toISOString().split('T')[0], author: '系統操作', text: '已手動取消補課/補考完成狀態，需重新評估。' });
-            
-            try {
-                await setDoc(doc(db, "classLogStudents", s.firestoreId), {
-                    id: s.id, name: s.name, school: s.school || '', studentClass: s.studentClass || '', studentVersion: s.studentVersion || '', course: s.course, phones: s.phones,
-                    attendanceLogs: s.attendanceLogs, makeupPending: s.makeupPending,
-                    makeupType: s.makeupType, makeupDesc: s.makeupDesc, retestScore: s.retestScore, notes: s.notes
-                });
-            } catch (e) { console.error(e); }
-
-            initCloudData();
-            alert('已成功取消完成狀態，該生已重新回到待補名單中！');
-        }
-
-        window.generateMonthDaysGrid = function() {
-            const monthInput = document.getElementById('overview-target-month').value;
-            const container = document.getElementById('month-days-container');
-            if(!monthInput) return;
-
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
-
-            let html = '';
-            for(let day = 1; day <= daysInMonth; day++) {
-                const dayStr = String(day).padStart(2, '0');
-                const dateStr = `${year}-${String(month).padStart(2, '0')}-${dayStr}`;
-                const hasLog = window.state.historyLogs.some(l => l.date === dateStr);
-                const badge = hasLog ? ' 🟢' : '';
-
-                html += `<button class="day-block-btn ${window.state.currentSelectedDate === dateStr && window.state.currentViewMode === 'single' ? 'active' : ''}" onclick="selectDate('${dateStr}')">${day}日${badge}</button>`;
-            }
-            container.innerHTML = html;
-        }
-
-        window.selectDate = function(dateStr) {
-            window.state.currentSelectedDate = dateStr;
-            window.state.currentViewMode = 'single';
-            generateMonthDaysGrid();
-            renderDirectorOverview();
-        }
-
-        window.setOverviewToday = function() {
-            const today = new Date().toISOString().split('T')[0];
-            window.state.currentSelectedDate = today;
-            window.state.currentViewMode = 'single';
-            document.getElementById('overview-target-month').value = today.slice(0, 7);
-            generateMonthDaysGrid();
-            renderDirectorOverview();
-        }
-
-        window.setOverviewThisWeek = function() {
-            window.state.currentViewMode = 'week';
-            renderDirectorOverview();
-        }
-
-        window.setOverviewThisMonth = function() {
-            window.state.currentViewMode = 'month';
-            renderDirectorOverview();
-        }
-
-        window.renderDirectorOverview = function() {
-            const container = document.getElementById('director-overview-container');
-            const titleEl = document.getElementById('overview-current-title');
-            
-            let targetLogs = [];
-            const monthInput = document.getElementById('overview-target-month').value;
-
-            if(window.state.currentViewMode === 'week') {
-                titleEl.innerText = `檢視結果：最近一個禮拜 (7天內) 的所有教學日誌`;
-                const oneWeekAgo = new Date();
-                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                targetLogs = window.state.historyLogs.filter(l => new Date(l.date) >= oneWeekAgo);
-            } else if(window.state.currentViewMode === 'month') {
-                titleEl.innerText = `檢視結果：當月 (${monthInput}) 的所有教學日誌`;
-                targetLogs = window.state.historyLogs.filter(l => l.date.startsWith(monthInput));
-            } else {
-                titleEl.innerText = `檢視結果：指定日期 ${window.state.currentSelectedDate} 的教學日誌`;
-                targetLogs = window.state.historyLogs.filter(l => l.date === window.state.currentSelectedDate);
-            }
-
-            if(targetLogs.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">📅 該區間尚無任何教學日誌紀錄。</div>`;
-                return;
-            }
-
-            container.innerHTML = targetLogs.map(l => `
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                        <h4 style="margin:0; color:var(--primary);">📚 [${l.course}] 授課日期：${l.date}</h4>
-                        <span style="font-size:13px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px;">${l.dept === 'junior' ? '國中部' : '國小部'}</span>
-                    </div>
-                    <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
-                    <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無指定作業'}</p>
-                    <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
-                    <p style="margin:5px 0; font-size:13px; color:#475569;"><b>考試單元：</b>${l.examUnit || '無考試'} 
-                        ${l.examFile ? `| <a href="${l.examFile}" target="_blank">📥 檢視考卷連結</a>` : ''}
-                        ${l.answerFile ? `| <a href="${l.answerFile}" target="_blank">📥 檢視答案卷連結</a>` : ''}
-                    </p>
-                </div>
-            `).join('');
-        }
-
-        window.addCourse = async function() {
-            const dept = document.getElementById('new-course-dept').value;
-            const name = document.getElementById('new-course-name').value.trim();
-            const checkedDays = Array.from(document.querySelectorAll('input[name="course-days"]:checked')).map(cb => cb.value);
-            const dayStr = checkedDays.length > 0 ? checkedDays.join('、') : '星期一';
-            const time = document.getElementById('new-course-time').value.trim();
-            const teacher = document.getElementById('new-course-teacher').value.trim();
-
-            if(!name) return alert('請輸入課程名稱！');
-            
-            window.state.courses[dept].push({
-                name, day: dayStr, time: time || '時間未定', teacher: teacher || '老師未定'
-            });
-
-            await saveCoursesToCloud();
-            document.getElementById('new-course-name').value = '';
-            document.getElementById('new-course-time').value = '';
-            document.getElementById('new-course-teacher').value = '';
-            document.querySelectorAll('input[name="course-days"]').forEach(cb => cb.checked = false);
-
-            alert(`已成功新增課程並同步至雲端！`);
-            initCloudData();
-        }
-
-        window.renderSettingsCourseList = function() {
-            document.getElementById('elementary-courses-list').innerHTML = window.state.courses.elementary.map((c, idx) => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('elementary', ${idx})">修改</button></div>`;
-            }).join('');
-
-            document.getElementById('junior-courses-list').innerHTML = window.state.courses.junior.map((c, idx) => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('junior', ${idx})">修改</button></div>`;
-            }).join('');
         }
 
         // ================= 📅 自動產生班級點名表核心邏輯 =================
@@ -1309,8 +1131,8 @@
 
         window.generateMonthDaysGrid = function() {
             const monthInput = document.getElementById('overview-target-month').value;
-            const container = document.getElementById('month-days-container');
-            if(!monthInput) return;
+            const container = document.getElementById('overview-month-days-container') || document.getElementById('month-days-container');
+            if(!container || !monthInput) return;
 
             const [year, month] = monthInput.split('-').map(Number);
             const daysInMonth = new Date(year, month, 0).getDate();
@@ -1420,17 +1242,24 @@
         }
 
         window.renderSettingsCourseList = function() {
-            document.getElementById('elementary-courses-list').innerHTML = window.state.courses.elementary.map((c, idx) => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('elementary', ${idx})">修改</button></div>`;
-            }).join('');
+            const elemList = document.getElementById('elementary-courses-list');
+            const junList = document.getElementById('junior-courses-list');
+            
+            if(elemList) {
+                elemList.innerHTML = window.state.courses.elementary.map((c, idx) => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
+                    return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('elementary', ${idx})">修改</button></div>`;
+                }).join('');
+            }
 
-            document.getElementById('junior-courses-list').innerHTML = window.state.courses.junior.map((c, idx) => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
-                return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('junior', ${idx})">修改</button></div>`;
-            }).join('');
+            if(junList) {
+                junList.innerHTML = window.state.courses.junior.map((c, idx) => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    const cInfo = typeof c === 'object' ? `[${c.day} ${c.time} | 授課: ${c.teacher}]` : '';
+                    return `<div class="course-item"><span><b>${cName}</b> <br><small style="color:#666;">${cInfo}</small></span><button class="btn btn-warning btn-small" onclick="openCourseEditModal('junior', ${idx})">修改</button></div>`;
+                }).join('');
+            }
         }
 
         initCloudData();
