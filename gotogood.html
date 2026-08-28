@@ -37,7 +37,6 @@
         .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
@@ -49,8 +48,16 @@
         .badge-fb { background: #dbeafe; color: #1e40af; }
         .badge-ig { background: #fce7f3; color: #9d174d; }
         .badge-other { background: #f3f4f6; color: #374151; }
+        
+        .status-not-enrolled { background: #fee2e2; color: #991b1b; }
+        .status-enrolled { background: #dbeafe; color: #1e40af; }
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+        /* 彈跳視窗 Modal 樣式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -58,7 +65,7 @@
     <div class="container">
         <div class="page-header">
             <h1>招生與進班管理系統</h1>
-            <p>安全權控修改與防呆進班機制</p>
+            <p>新增詢問者欄位，並將來源移至底部，提供彈窗完整修改與進班狀態切換</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
@@ -82,13 +89,8 @@
                         <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
                     </div>
                     <div class="form-group">
-                        <label>招生來源管道</label>
-                        <select id="leadSource">
-                            <option value="LINE">LINE 官方帳號</option>
-                            <option value="FB">FB 粉絲專頁</option>
-                            <option value="IG">IG 小盒子</option>
-                            <option value="PHONE">電話詢問 / 現場來訪</option>
-                        </select>
+                        <label>詢問者 (誰來詢問)</label>
+                        <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
                     </div>
                     <div class="form-group">
                         <label>有意願課程</label>
@@ -105,6 +107,15 @@
                             <option value="預約試聽中">預約試聽中</option>
                             <option value="準備進班">準備進班</option>
                             <option value="已正式進班">已正式進班</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>招生來源管道</label>
+                        <select id="leadSource">
+                            <option value="LINE">LINE 官方帳號</option>
+                            <option value="FB">FB 粉絲專頁</option>
+                            <option value="IG">IG 小盒子</option>
+                            <option value="PHONE">電話詢問 / 現場來訪</option>
                         </select>
                     </div>
                 </div>
@@ -126,6 +137,7 @@
                     <tr>
                         <th>來源 / 姓名</th>
                         <th>聯絡電話 / 課程</th>
+                        <th>詢問者</th>
                         <th>試聽日期</th>
                         <th>目前進度</th>
                         <th>老師追蹤紀錄歷程</th>
@@ -142,14 +154,15 @@
                             <span class="s-phone">0923-456789</span><br>
                             <small style="color:var(--text-muted)" class="s-course">全科暑期班</small>
                         </td>
+                        <td><span class="s-inquirer">林媽媽</span></td>
                         <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
                         <td><span class="badge badge-line s-status">預約試聽中</span></td>
                         <td><div class="s-log">08/28 老師：已約定週二試聽，待提醒。</div></td>
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                                <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                                <button class="btn btn-sm btn-danger" onclick="convertToClass(this)">確定進班</button>
+                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">修改</button>
+                                <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
                             </div>
                         </td>
                     </tr>
@@ -158,7 +171,66 @@
         </div>
     </div>
 
+    <!-- 修改資料的彈跳表格視窗 (Modal) -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✏️ 修改學生招生資料</div>
+            <form id="editForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>學生姓名</label>
+                        <input type="text" id="editName">
+                    </div>
+                    <div class="form-group">
+                        <label>聯絡電話</label>
+                        <input type="text" id="editPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>詢問者 (誰來詢問)</label>
+                        <input type="text" id="editInquirer">
+                    </div>
+                    <div class="form-group">
+                        <label>有意願課程</label>
+                        <input type="text" id="editCourse">
+                    </div>
+                    <div class="form-group">
+                        <label>預定試聽日期</label>
+                        <input type="date" id="editDate">
+                    </div>
+                    <div class="form-group">
+                        <label>目前招生狀態</label>
+                        <select id="editStatusSelect">
+                            <option value="初次諮詢">初次諮詢</option>
+                            <option value="預約試聽中">預約試聽中</option>
+                            <option value="準備進班">準備進班</option>
+                            <option value="已正式進班">已正式進班</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>招生來源管道</label>
+                        <select id="editSource">
+                            <option value="LINE">LINE 官方帳號</option>
+                            <option value="FB">FB 粉絲專頁</option>
+                            <option value="IG">IG 小盒子</option>
+                            <option value="PHONE">電話詢問 / 現場來訪</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>老師追蹤紀錄歷程</label>
+                    <textarea id="editLog" style="width: 100%; height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;"></textarea>
+                </div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeEditModal()">取消</button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="saveEditModal()">儲存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        let currentEditingRow = null;
+
         function parseChatText() {
             const text = document.getElementById('chatInput').value.trim();
             if(!text) { alert('請先將對話貼到文字框中！'); return; }
@@ -184,10 +256,11 @@
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
             const phone = document.getElementById('studentPhone').value;
-            const source = document.getElementById('leadSource').value;
+            const inquirer = document.getElementById('inquirer').value || '未填寫';
             const course = document.getElementById('studentCourse').value;
             const tDate = document.getElementById('trialDate').value || '未定';
             const status = document.getElementById('studentStatus').value;
+            const source = document.getElementById('leadSource').value;
             const note = document.getElementById('trackNote').value;
 
             if(!name) { alert('請填寫學生姓名！'); return; }
@@ -209,14 +282,15 @@
                     <span class="s-phone">${phone}</span><br>
                     <small style="color:var(--text-muted)" class="s-course">${course}</small>
                 </td>
+                <td><span class="s-inquirer">${inquirer}</span></td>
                 <td><span class="s-date" style="font-weight:600;">${tDate}</span></td>
                 <td><span class="badge badge-line s-status">${status}</span></td>
                 <td><div class="s-log">老師追蹤：${note}</div></td>
                 <td>
                     <div class="action-btns">
                         <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                        <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                        <button class="btn btn-sm btn-danger" onclick="convertToClass(this)">確定進班</button>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">修改</button>
+                        <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
                     </div>
                 </td>
             `;
@@ -234,64 +308,82 @@
             alert('已記錄：已完成試聽提醒通知！');
         }
 
-        // 修改資料（需輸入密碼防呆）
-        function editRow(btn) {
-            // 預設修改密碼為 1234 (您可以自行更改下方引號內的數字)
-            const password = prompt("【安全防護】修改資料需要輸入管理密碼：");
-            if (password === null) return; // 按取消
-            if (password !== "1234") {
-                alert("密碼錯誤，無法修改！");
-                return;
-            }
+        // 開啟修改表單彈窗
+        function openEditModal(btn) {
+            currentEditingRow = btn.closest('tr');
+            
+            const name = currentEditingRow.querySelector('.s-name').innerText;
+            const phone = currentEditingRow.querySelector('.s-phone').innerText;
+            const inquirer = currentEditingRow.querySelector('.s-inquirer').innerText;
+            const source = currentEditingRow.querySelector('.s-source').innerText;
+            const course = currentEditingRow.querySelector('.s-course').innerText;
+            const date = currentEditingRow.querySelector('.s-date').innerText;
+            const status = currentEditingRow.querySelector('.s-status').innerText;
+            const log = currentEditingRow.querySelector('.s-log').innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
 
-            const row = btn.closest('tr');
-            const nameEl = row.querySelector('.s-name');
-            const phoneEl = row.querySelector('.s-phone');
-            const courseEl = row.querySelector('.s-course');
-            const dateEl = row.querySelector('.s-date');
-            const logEl = row.querySelector('.s-log');
+            document.getElementById('editName').value = name;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editInquirer').value = inquirer;
+            document.getElementById('editSource').value = source;
+            document.getElementById('editCourse').value = course;
+            document.getElementById('editDate').value = date !== '未定' ? date : '';
+            document.getElementById('editStatusSelect').value = status;
+            document.getElementById('editLog').value = log;
 
-            const newName = prompt("修改學生姓名：", nameEl.innerText);
-            if (newName === null) return;
-            const newPhone = prompt("修改聯絡電話：", phoneEl.innerText);
-            if (newPhone === null) return;
-            const newCourse = prompt("修改有意願課程：", courseEl.innerText);
-            if (newCourse === null) return;
-            const newDate = prompt("修改試聽日期 (YYYY-MM-DD)：", dateEl.innerText);
-            if (newDate === null) return;
-            const newLog = prompt("追加或修改追蹤紀錄：", logEl.innerText);
-            if (newLog === null) return;
-
-            nameEl.innerText = newName;
-            phoneEl.innerText = newPhone;
-            courseEl.innerText = newCourse;
-            dateEl.innerText = newDate;
-            logEl.innerHTML = newLog.replace(/\n/g, '<br>');
-
-            alert('資料修改成功！');
+            document.getElementById('editModal').style.display = 'flex';
         }
 
-        // 確定進班（加入二次防呆確認，避免手殘按錯）
-        function convertToClass(btn) {
-            const row = btn.closest('tr');
-            const studentName = row.querySelector('.s-name').innerText;
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingRow = null;
+        }
+
+        function saveEditModal() {
+            if (!currentEditingRow) return;
+
+            const name = document.getElementById('editName').value;
+            const phone = document.getElementById('editPhone').value;
+            const inquirer = document.getElementById('editInquirer').value;
+            const source = document.getElementById('editSource').value;
+            const course = document.getElementById('editCourse').value;
+            const date = document.getElementById('editDate').value || '未定';
+            const status = document.getElementById('editStatusSelect').value;
+            const log = document.getElementById('editLog').value;
+
+            if(!name) { alert('學生姓名不能為空！'); return; }
+
+            currentEditingRow.querySelector('.s-name').innerText = name;
+            currentEditingRow.querySelector('.s-phone').innerText = phone;
+            currentEditingRow.querySelector('.s-inquirer').innerText = inquirer;
             
-            // 二次確認彈窗
-            const isConfirmed = confirm(`【確認進班提示】\n\n您即將將「${studentName}」轉入正式班級。轉入後將鎖定正式進班狀態。\n\n請問是否確定要執行？`);
+            const sourceBadge = currentEditingRow.querySelector('.s-source');
+            sourceBadge.innerText = source;
+            sourceBadge.className = `badge s-source ${source === 'FB' ? 'badge-fb' : source === 'IG' ? 'badge-ig' : source === 'LINE' ? 'badge-line' : 'badge-other'}`;
+
+            currentEditingRow.querySelector('.s-course').innerText = course;
+            currentEditingRow.querySelector('.s-date').innerText = date;
+            currentEditingRow.querySelector('.s-status').innerText = status;
+            currentEditingRow.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
+
+            closeEditModal();
+            alert('修改成功！');
+        }
+
+        function toggleEnrollStatus(btn) {
+            const isCurrentlyEnrolled = btn.classList.contains('status-enrolled');
             
-            if (isConfirmed) {
-                const statusEl = row.querySelector('.s-status');
-                statusEl.innerText = '已正式進班';
-                statusEl.className = 'badge badge-line s-status';
-                
-                // 把確定進班按鈕改為已完成狀態，避免重複點擊
-                const actionDiv = btn.closest('.action-btns');
-                btn.remove(); // 移除進班按鈕
-                
-                alert(`成功！${studentName} 的資料已正式匯入班級系統。`);
+            if (!isCurrentlyEnrolled) {
+                if (confirm("確定要將此學生設為【確定進班】嗎？")) {
+                    btn.classList.remove('status-not-enrolled');
+                    btn.classList.add('status-enrolled');
+                    btn.innerText = '確定進班';
+                }
             } else {
-                // 使用者按了取消
-                console.log("已取消進班操作");
+                if (confirm("是否要取消進班狀態，改回【尚未進班】？")) {
+                    btn.classList.remove('status-enrolled');
+                    btn.classList.add('status-not-enrolled');
+                    btn.innerText = '尚未進班';
+                }
             }
         }
     </script>
