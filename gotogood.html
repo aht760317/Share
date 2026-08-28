@@ -38,11 +38,12 @@
         .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; }
         .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success-color); }
+        .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
 
         /* 表格樣式 */
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
-        th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+        th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
         th { background-color: #f9fafb; color: var(--text-muted); font-weight: 600; }
         
         .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; }
@@ -50,8 +51,7 @@
         .badge-trial { background: #ede9fe; color: #6d28d9; }
         .badge-enrolled { background: #d1fae5; color: #065f46; }
 
-        /* 追蹤歷程小區塊 */
-        .track-history { background: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.85rem; margin-top: 0.5rem; border-left: 3px solid var(--warning-color); }
+        .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -59,7 +59,7 @@
     <div class="container">
         <div class="page-header">
             <h1>招生詢問與智慧轉班系統</h1>
-            <p>貼上對話自動轉為問班單，支援主任追蹤與一鍵直接進班</p>
+            <p>貼上對話自動轉為問班單，支援主任追蹤與隨時修改進班資料</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
@@ -108,7 +108,7 @@
 
         <!-- 3. 追蹤清單與一鍵進班 -->
         <div class="card">
-            <h3>📊 步驟三：招生追蹤總表與一鍵進班</h3>
+            <h3>📊 步驟三：招生追蹤總表與修改管理</h3>
             <table>
                 <thead>
                     <tr>
@@ -121,15 +121,20 @@
                 </thead>
                 <tbody id="trackingTableBody">
                     <tr>
-                        <td><strong>林美華</strong></td>
-                        <td>0923-456789<br><small style="color:var(--text-muted)">全科暑期班</small></td>
-                        <td><span class="badge badge-trial">預約試聽中</span></td>
+                        <td><strong class="s-name">林美華</strong></td>
+                        <td><span class="s-phone">0923-456789</span><br><small style="color:var(--text-muted)" class="s-course">全科暑期班</small></td>
+                        <td><span class="badge badge-enrolled">已正式進班</span></td>
                         <td>
-                            08/28 老師：已確認參加週一試聽。<br>
-                            08/29 主任：試聽後反應良好，家長在問學費折扣。
+                            <div class="s-log">
+                                08/28 老師：已確認參加週一試聽。<br>
+                                08/29 主任：試聽後反應良好，家長在問學費折扣。
+                            </div>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="convertToClass(this)">確定進班</button>
+                            <div class="action-btns">
+                                <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
+                                <button class="btn btn-sm btn-success" onclick="convertToClass(this)">重新確認進班</button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -138,22 +143,16 @@
     </div>
 
     <script>
-        // 模擬智慧貼上解析邏輯 (未來可以串接更強的字串解析)
         function parseChatText() {
             const text = document.getElementById('chatInput').value;
-            if(!text) {
-                alert('請先貼上對話內容！');
-                return;
-            }
-            
-            // 簡單示範：自動抓取並填入欄位
+            if(!text) { alert('請先貼上對話內容！'); return; }
             document.getElementById('studentName').value = "陳大同";
+            document.getElementById('studentPhone').value = "0988-555666";
             document.getElementById('studentCourse').value = "國中理化先修班";
             document.getElementById('trackNote').value = "從 LINE 貼上自動建立詢問紀錄";
             alert('已成功將對話內容解析並帶入下方表單！');
         }
 
-        // 儲存進追蹤清單
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
             const phone = document.getElementById('studentPhone').value;
@@ -161,10 +160,7 @@
             const status = document.getElementById('studentStatus').value;
             const note = document.getElementById('trackNote').value;
 
-            if(!name) {
-                alert('請填寫或解析學生姓名');
-                return;
-            }
+            if(!name) { alert('請填寫或解析學生姓名'); return; }
 
             const tbody = document.getElementById('trackingTableBody');
             const newRow = document.createElement('tr');
@@ -174,40 +170,61 @@
             if(status === 'enrolled') badgeHtml = '<span class="badge badge-enrolled">準備進班</span>';
 
             newRow.innerHTML = `
-                <td><strong>${name}</strong></td>
-                <td>${phone}<br><small style="color:var(--text-muted)">${course}</small></td>
+                <td><strong class="s-name">${name}</strong></td>
+                <td><span class="s-phone">${phone}</span><br><small style="color:var(--text-muted)" class="s-course">${course}</small></td>
                 <td>${badgeHtml}</td>
-                <td>老師追蹤：${note}</td>
+                <td><div class="s-log">老師追蹤：${note}</div></td>
                 <td>
-                    <button class="btn btn-sm btn-success" onclick="convertToClass(this)">確定進班</button>
+                    <div class="action-btns">
+                        <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
+                        <button class="btn btn-sm btn-success" onclick="convertToClass(this)">確定進班</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(newRow);
-            alert('已成功新增至追蹤列表！主任隨時可見。');
+            alert('已成功新增至追蹤列表！');
             
-            // 清空輸入
-            document.getElementById('chatInput').value = '';
-            document.getElementById('studentName').value = '';
-            document.getElementById('studentPhone').value = '';
-            document.getElementById('studentCourse').value = '';
-            document.getElementById('trackNote').value = '';
+            document.getElementById('inquiryForm').reset();
+        }
+
+        // 修改資料功能
+        function editRow(btn) {
+            const row = btn.closest('tr');
+            const nameEl = row.querySelector('.s-name');
+            const phoneEl = row.querySelector('.s-phone');
+            const courseEl = row.querySelector('.s-course');
+            const logEl = row.querySelector('.s-log');
+
+            const newName = prompt("修改學生姓名：", nameEl.innerText);
+            if (newName === null) return; // 取消
+
+            const newPhone = prompt("修改聯絡電話：", phoneEl.innerText);
+            if (newPhone === null) return;
+
+            const newCourse = prompt("修改有意願課程：", courseEl.innerText);
+            if (newCourse === null) return;
+
+            const newLog = prompt("追加或修改追蹤紀錄：", logEl.innerText);
+            if (newLog === null) return;
+
+            // 更新畫面
+            nameEl.innerText = newName;
+            phoneEl.innerText = newPhone;
+            courseEl.innerText = newCourse;
+            logEl.innerHTML = newLog.replace(/\n/g, '<br>');
+
+            alert('資料修改成功！');
         }
 
         // 一鍵導入班級
         function convertToClass(btn) {
             const row = btn.closest('tr');
-            const studentName = row.querySelector('strong').innerText;
+            const studentName = row.querySelector('.s-name').innerText;
             
-            if(confirm(`確定要將「${studentName}」轉入正式班級名單嗎？`)) {
-                // 改變狀態標籤
+            if(confirm(`確定要將「${studentName}`}」正式設定為【已正式進班】嗎？`)) {
                 const badgeTd = row.querySelectorAll('td')[2];
                 badgeTd.innerHTML = '<span class="badge badge-enrolled">已正式進班</span>';
-                
-                // 移除或替換按鈕
-                const actionTd = row.querySelectorAll('td')[4];
-                actionTd.innerHTML = '<span style="color: var(--success-color); font-weight:600;">✓ 已完成入班</span>';
-                
-                alert(`成功！${studentName} 的資料已正式匯入班級系統。`);
+                alert(`成功！${studentName} 已更新為正式進班狀態。`);
             }
         }
     </script>
