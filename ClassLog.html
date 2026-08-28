@@ -144,6 +144,23 @@
         .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: block; margin-top: 6px; line-height: 1.4; border-left: 3px solid #64748b; }
         .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; border-left: 4px solid var(--danger); }
         
+        /* 互動式可點選項目樣式 */
+        .interactive-log-item {
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 6px;
+            transition: background 0.15s;
+            margin-bottom: 5px;
+            border: 1px solid transparent;
+        }
+        .interactive-log-item:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+        .interactive-log-item b {
+            color: var(--primary);
+        }
+
         .student-class-note { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 13.5px; color: #1e40af; line-height: 1.4; cursor: pointer; transition: 0.15s; }
         .student-class-note:hover { background: #dbeafe; }
 
@@ -534,9 +551,9 @@
                         <thead>
                             <tr>
                                 <th width="22%">學生姓名</th>
-                                <th width="20%">該科出席與請假狀況</th>
-                                <th width="25%">該科考試成績紀錄</th>
-                                <th width="33%">該科備註與親師電聯 QA</th>
+                                <th width="22%">該科出席與請假狀況 (點擊可修改)</th>
+                                <th width="25%">該科考試成績紀錄 (點擊可修改)</th>
+                                <th width="31%">該科備註與親師電聯 QA</th>
                             </tr>
                         </thead>
                         <tbody id="profile-students-tbody">
@@ -698,68 +715,85 @@
         </div>
     </div>
 
-    <!-- 補課狀態設定彈窗 -->
+    <!-- 出缺勤修改彈窗 (點擊出缺勤紀錄觸發) -->
     <div class="modal-overlay" id="makeup-modal">
-        <div class="modal-box" style="width:420px;">
-            <h3 style="margin-top:0; color:var(--primary);">📌 補課追蹤處理</h3>
+        <div class="modal-box" style="width:450px;">
+            <h3 style="margin-top:0; color:var(--primary);">📌 修改出缺勤與補課狀態</h3>
             <input type="hidden" id="makeup-student-id">
             <input type="hidden" id="makeup-log-index">
             <p id="makeup-student-info" style="font-size:14px; color:#555;"></p>
-            <label>補課狀態：</label>
-            <select id="makeup-status-select" onchange="toggleMakeupDateInput()">
-                <option value="pending">❌ 尚未補課</option>
-                <option value="done">✅ 已完成補課</option>
+            
+            <label>出缺勤狀態：</label>
+            <select id="makeup-att-status-select" onchange="checkAttendanceModalStatus()">
+                <option value="出席">出席</option>
+                <option value="請假">請假</option>
+                <option value="曠課">曠課</option>
             </select>
-            <div id="makeup-date-wrapper" style="display:none;">
-                <label>補課完成日期：</label>
-                <input type="date" id="makeup-date-input">
+
+            <div id="makeup-tracking-section">
+                <label>補課狀態：</label>
+                <select id="makeup-status-select" onchange="toggleMakeupDateInput()">
+                    <option value="pending">❌ 尚未補課</option>
+                    <option value="done">✅ 已完成補課</option>
+                </select>
+                <div id="makeup-date-wrapper" style="display:none; margin-top:8px;">
+                    <label>補課完成日期：</label>
+                    <input type="date" id="makeup-date-input">
+                </div>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-                <button class="btn btn-success" onclick="saveMakeupAction()">確認儲存</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-modal').style.display='none'">取消</button>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px;">
+                <button class="btn btn-danger" onclick="deleteAttendanceLogEntry()">🗑️ 刪除此紀錄</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" onclick="saveMakeupAction()">確認儲存</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-modal').style.display='none'">取消</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 補考/成績修改彈窗 -->
+    <!-- 測驗成績與補考修改彈窗 (點擊成績紀錄觸發) -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width:450px;">
-            <h3 style="margin-top:0; color:var(--primary);">📝 補考與出缺勤成績修正</h3>
+            <h3 style="margin-top:0; color:var(--primary);">📝 修改測驗成績與補考</h3>
             <input type="hidden" id="retest-student-id">
             <input type="hidden" id="retest-log-index">
             <p id="retest-student-info" style="font-size:14px; color:#555;"></p>
+            
             <div class="grid-2">
                 <div>
-                    <label>出缺勤修正：</label>
-                    <select id="edit-att-status">
-                        <option value="出席">出席</option>
-                        <option value="請假">請假</option>
-                        <option value="曠課">曠課</option>
-                    </select>
-                </div>
-                <div>
-                    <label>原始分數：</label>
+                    <label>考試原始分數：</label>
                     <input type="text" id="retest-score-input" placeholder="例如: 75">
                 </div>
+                <div>
+                    <label>及格分數標準：</label>
+                    <input type="number" id="retest-pass-score-input" value="80">
+                </div>
             </div>
-            <label>補考狀態：</label>
+
+            <label>補考處理情形：</label>
             <select id="retest-status-select" onchange="toggleRetestInputs()">
                 <option value="pending">❌ 尚未補考</option>
                 <option value="done">✅ 已完成補考</option>
             </select>
-            <div id="retest-date-wrapper" style="display:none;" class="grid-2">
+            
+            <div id="retest-date-wrapper" style="display:none; margin-top:8px;" class="grid-2">
                 <div>
                     <label>補考日期：</label>
                     <input type="date" id="retest-date-input">
                 </div>
                 <div>
-                    <label>補考後分數：</label>
+                    <label>補考後成績：</label>
                     <input type="text" id="retest-score-val-input" placeholder="例如: 85">
                 </div>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-                <button class="btn btn-success" onclick="saveRetestAction()">確認儲存</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('retest-modal').style.display='none'">取消</button>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px;">
+                <button class="btn btn-danger" onclick="clearScoreLogEntry()">🗑️ 清除此成績</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" onclick="saveRetestAction()">確認儲存</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('retest-modal').style.display='none'">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -884,7 +918,6 @@
                 if (stu.attendanceLogs && Array.isArray(stu.attendanceLogs)) {
                     stu.attendanceLogs.forEach(log => {
                         if (!log.course) {
-                            // 比對同日期的班級日誌
                             const matchedHistory = window.state.historyLogs.find(h => h.date === log.date && stuCourses.includes(h.course));
                             if (matchedHistory) {
                                 log.course = matchedHistory.course;
@@ -954,7 +987,6 @@
                 });
                 window.state.historyLogs.sort((a, b) => b.id - a.id);
 
-                // 自動進行資料修復
                 await window.autoRepairStudentLogs(false);
 
                 const todayStr = new Date().toISOString().slice(0, 10);
@@ -1109,25 +1141,35 @@
                     const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
                     const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
                     const isAlert = l.status === '請假' || l.status === '曠課';
-                    const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger" style="cursor:pointer;" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})"> (未補課-點擊設定)</span>` : '');
+                    const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger"> (未補課)</span>` : '');
                     
-                    attHtml += `<div style="font-size:13px; margin-bottom:5px; line-height:1.4;">${courseTag}<b>${l.date}</b>: ${l.status}${makeupText}</div>`;
+                    // 出缺勤點擊直接開啟修改彈窗
+                    attHtml += `
+                        <div class="interactive-log-item" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆出缺勤紀錄">
+                            ${courseTag}<b>${l.date}</b>: <u>${l.status}</u> ${makeupText}
+                        </div>
+                    `;
 
+                    // 成績點擊直接開啟修改彈窗
                     if (l.score !== null && l.score !== undefined && l.score !== '') {
                         const pass = l.passScore || 80;
                         const isFail = Number(l.score) < pass;
-                        const retestText = l.retestDone ? `<span class="badge-success"> (已補考: ${l.retestScore || '及格'})</span>` : (isFail ? `<span class="badge-danger" style="cursor:pointer;" onclick="openRetestModal('${s.firestoreId}', ${originalLogIndex})"> (須補考-點擊設定)</span>` : '');
-                        scoreHtml += `<div style="font-size:13px; margin-bottom:5px; line-height:1.4;">${courseTag}<b>${l.date}</b>: <b>${l.score} 分</b>${retestText}</div>`;
+                        const retestText = l.retestDone ? `<span class="badge-success"> (已補考: ${l.retestScore || '及格'})</span>` : (isFail ? `<span class="badge-danger"> (須補考)</span>` : '');
+                        scoreHtml += `
+                            <div class="interactive-log-item" onclick="openRetestModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆考試成績">
+                                ${courseTag}<b>${l.date}</b>: <u><b>${l.score} 分</b></u> ${retestText}
+                            </div>
+                        `;
                     }
 
                     if (l.detail) {
-                        noteHtml += `<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`;
+                        noteHtml += `<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆備註">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`;
                     }
                 });
 
                 (s.callQAs || []).forEach((qa, qaIdx) => {
                     noteHtml += `
-                        <div class="call-qa-badge ${qa.status === 'unresolved' ? 'unresolved' : ''}" onclick="openCallQAModal('${s.firestoreId}', ${qaIdx})">
+                        <div class="call-qa-badge ${qa.status === 'unresolved' ? 'unresolved' : ''}" onclick="openCallQAModal('${s.firestoreId}', ${qaIdx})" title="點擊編輯此電聯紀錄">
                             📞 [${qa.date || '電聯'}] ${qa.author}問: ${qa.question} ｜ <b>答: ${qa.reply || '處理中'}</b> (${qa.status === 'unresolved' ? '⚠️ 追蹤中' : '✅ 已完成'})
                         </div>
                     `;
@@ -1141,8 +1183,8 @@
                             <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${phone}</div>
                             <button class="btn btn-small btn-primary" style="margin-top:6px;" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                         </td>
-                        <td data-label="該科出缺勤紀錄">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無出席紀錄</span>'}</td>
-                        <td data-label="該科成績與補考">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無測驗紀錄</span>'}</td>
+                        <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無出席紀錄</span>'}</td>
+                        <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無測驗紀錄</span>'}</td>
                         <td data-label="該科備註與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">本科尚無備註紀錄</span>'}</td>
                     </tr>
                 `;
@@ -1525,6 +1567,7 @@
             alert('✅ 已成功複製學習日誌內容！可直接貼至 LINE 給家長。');
         };
 
+        // 點擊出缺勤紀錄時開啟的修改彈窗
         window.openMakeupModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1532,12 +1575,24 @@
             const log = student.attendanceLogs[logIndex];
             document.getElementById('makeup-student-id').value = firestoreId;
             document.getElementById('makeup-log-index').value = logIndex;
-            document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 課程：${log.course || '未分類'} | 日期：${log.date} | 狀況：${log.status}`;
+            document.getElementById('makeup-student-info').innerText = `學生：${student.name} ｜ 課程：${log.course || '未分類'} ｜ 日期：${log.date}`;
+            document.getElementById('makeup-att-status-select').value = log.status || '出席';
             document.getElementById('makeup-status-select').value = log.makeupDone ? 'done' : 'pending';
             document.getElementById('makeup-date-input').value = log.makeupDate || new Date().toISOString().split('T')[0];
-            toggleMakeupDateInput();
-
+            
+            checkAttendanceModalStatus();
             document.getElementById('makeup-modal').style.display = 'flex';
+        };
+
+        window.checkAttendanceModalStatus = function() {
+            const attStatus = document.getElementById('makeup-att-status-select').value;
+            const trackingSec = document.getElementById('makeup-tracking-section');
+            if (attStatus === '出席') {
+                trackingSec.style.display = 'none';
+            } else {
+                trackingSec.style.display = 'block';
+                toggleMakeupDateInput();
+            }
         };
 
         window.toggleMakeupDateInput = function() {
@@ -1548,14 +1603,16 @@
         window.saveMakeupAction = async function() {
             const firestoreId = document.getElementById('makeup-student-id').value;
             const logIndex = Number(document.getElementById('makeup-log-index').value);
+            const newAtt = document.getElementById('makeup-att-status-select').value;
             const status = document.getElementById('makeup-status-select').value;
             const makeupDate = document.getElementById('makeup-date-input').value;
 
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
 
-            student.attendanceLogs[logIndex].makeupDone = status === 'done';
-            student.attendanceLogs[logIndex].makeupDate = status === 'done' ? makeupDate : '';
+            student.attendanceLogs[logIndex].status = newAtt;
+            student.attendanceLogs[logIndex].makeupDone = (newAtt !== '出席') && (status === 'done');
+            student.attendanceLogs[logIndex].makeupDate = (newAtt !== '出席' && status === 'done') ? makeupDate : '';
 
             try {
                 await setDoc(doc(db, "classLogStudents", firestoreId), {
@@ -1564,12 +1621,37 @@
                 });
 
                 document.getElementById('makeup-modal').style.display = 'none';
-                alert('✅ 補課狀態已更新！');
+                alert('✅ 出缺勤與補課狀態已更新！');
                 window.renderProfileStudents();
                 window.renderPendingTodoPanels();
             } catch (e) { alert('更新失敗'); }
         };
 
+        window.deleteAttendanceLogEntry = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('makeup-student-id').value;
+                const logIndex = Number(document.getElementById('makeup-log-index').value);
+
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
+
+                student.attendanceLogs.splice(logIndex, 1);
+
+                try {
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        ...student,
+                        attendanceLogs: student.attendanceLogs
+                    });
+
+                    document.getElementById('makeup-modal').style.display = 'none';
+                    alert('✅ 該筆出缺勤紀錄已刪除！');
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
+                } catch (e) { alert('刪除失敗'); }
+            });
+        };
+
+        // 點擊成績紀錄時開啟的修改彈窗
         window.openRetestModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1577,10 +1659,10 @@
             const log = student.attendanceLogs[logIndex];
             document.getElementById('retest-student-id').value = firestoreId;
             document.getElementById('retest-log-index').value = logIndex;
-            document.getElementById('retest-student-info').innerText = `學生：${student.name} | 課程：${log.course || '未分類'} | 日期：${log.date}`;
+            document.getElementById('retest-student-info').innerText = `學生：${student.name} ｜ 課程：${log.course || '未分類'} ｜ 日期：${log.date}`;
             
-            document.getElementById('edit-att-status').value = log.status || '出席';
             document.getElementById('retest-score-input').value = log.score !== null ? log.score : '';
+            document.getElementById('retest-pass-score-input').value = log.passScore || 80;
             document.getElementById('retest-status-select').value = log.retestDone ? 'done' : 'pending';
             document.getElementById('retest-date-input').value = log.retestDate || new Date().toISOString().split('T')[0];
             document.getElementById('retest-score-val-input').value = log.retestScore !== undefined ? log.retestScore : '';
@@ -1591,23 +1673,23 @@
 
         window.toggleRetestInputs = function() {
             const status = document.getElementById('retest-status-select').value;
-            document.getElementById('retest-date-wrapper').style.display = status === 'done' ? 'block' : 'none';
+            document.getElementById('retest-date-wrapper').style.display = status === 'done' ? 'grid' : 'none';
         };
 
         window.saveRetestAction = async function() {
             const firestoreId = document.getElementById('retest-student-id').value;
             const logIndex = Number(document.getElementById('retest-log-index').value);
-            const newAttStatus = document.getElementById('edit-att-status').value;
-            const newScoreVal = document.getElementById('retest-score-input').value;
+            const newScoreVal = document.getElementById('retest-score-input').value.trim();
+            const newPassScore = Number(document.getElementById('retest-pass-score-input').value) || 80;
             const status = document.getElementById('retest-status-select').value;
             const retestDate = document.getElementById('retest-date-input').value;
-            const retestScore = document.getElementById('retest-score-val-input').value;
+            const retestScore = document.getElementById('retest-score-val-input').value.trim();
 
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
 
-            student.attendanceLogs[logIndex].status = newAttStatus;
             student.attendanceLogs[logIndex].score = isNaN(newScoreVal) ? newScoreVal : (newScoreVal !== '' ? Number(newScoreVal) : null);
+            student.attendanceLogs[logIndex].passScore = newPassScore;
             student.attendanceLogs[logIndex].retestDone = status === 'done';
             student.attendanceLogs[logIndex].retestDate = status === 'done' ? retestDate : '';
             student.attendanceLogs[logIndex].retestScore = (status === 'done' && retestScore !== '') ? (isNaN(retestScore) ? retestScore : Number(retestScore)) : null;
@@ -1619,10 +1701,37 @@
                 });
 
                 document.getElementById('retest-modal').style.display = 'none';
-                alert('✅ 學生出席與成績紀錄已成功修正！');
+                alert('✅ 學生考試成績與補考紀錄已成功修正！');
                 window.renderProfileStudents();
                 window.renderPendingTodoPanels();
             } catch (e) { alert('更新失敗'); }
+        };
+
+        window.clearScoreLogEntry = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('retest-student-id').value;
+                const logIndex = Number(document.getElementById('retest-log-index').value);
+
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
+
+                student.attendanceLogs[logIndex].score = null;
+                student.attendanceLogs[logIndex].retestDone = false;
+                student.attendanceLogs[logIndex].retestDate = '';
+                student.attendanceLogs[logIndex].retestScore = null;
+
+                try {
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        ...student,
+                        attendanceLogs: student.attendanceLogs
+                    });
+
+                    document.getElementById('retest-modal').style.display = 'none';
+                    alert('✅ 該筆測驗成績已清除！');
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
+                } catch (e) { alert('清除失敗'); }
+            });
         };
 
         window.requestSecureAction = function(callback) {
@@ -1813,7 +1922,6 @@
                     if (student) {
                         if (!student.attendanceLogs) student.attendanceLogs = [];
                         
-                        // 依日期與科目雙重比對，避免同天不同科目互相覆蓋
                         const existingIdx = student.attendanceLogs.findIndex(l => l.date === date && l.course === course);
                         if (existingIdx >= 0) {
                             student.attendanceLogs[existingIdx] = {
