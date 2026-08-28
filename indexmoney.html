@@ -14,6 +14,8 @@
         /* 導覽列 */
         .header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .header h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+        .btn-sync { background: #059669; color: white; border: 1px solid #34D399; padding: 9px 18px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-sync:hover { background: #047857; transform: translateY(-1px); }
 
         .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; }
         .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
@@ -285,7 +287,6 @@
         <div id="billingSection" style="display: none;">
             <h3 class="section-title">第二步：選擇收費項目與設定金額 <span style="font-size:16px; color:#64748B; font-weight:normal;">(正在為 <strong id="billingTargetName" style="color:var(--danger)"></strong> 開單)</span></h3>
             
-            <!-- 多科修課提醒提示框 -->
             <div id="studentOtherCoursesNotice" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; padding: 12px 18px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"></div>
 
             <div class="form-row" style="width: 100%;">
@@ -344,7 +345,8 @@
     <div id="settings" class="content-area">
         <div style="background: #F8FAFC; padding: 25px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px; text-align: center;">
             <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 10px;">🏫 學生與班級來源狀態</h3>
-            <p style="color: #64748B; margin-bottom: 0;">所有班級與學生名冊皆已自動與點名系統連動同步，無須手動維護。</p>
+            <p style="color: #64748B; margin-bottom: 15px;">所有班級與學生名冊皆已自動與點名系統連動同步。</p>
+            <button class="btn-sync" onclick="syncAllFromRollbook()">🔄 立即從點名系統同步最新資料</button>
         </div>
 
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
@@ -392,6 +394,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
             <h3 style="margin: 0; color: #065F46; font-size: 24px;">📖 學生通訊錄查詢與編輯</h3>
             <div>
+                <button class="btn-sync" style="margin-right:10px;" onclick="syncAllFromRollbook()">🔄 同步最新學籍</button>
                 <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印畫面上通訊錄</button>
             </div>
         </div>
@@ -501,7 +504,7 @@
     window.currentClass = "";
     window.currentStudent = "";
     window.currentBillItems = [];
-    window.rawStudentsData = []; // 儲存點名系統的原始學生資料以供多科檢索
+    window.rawStudentsData = [];
     
     window.currentDirectoryClass = 'all';
     window.editingProfileClass = "";
@@ -589,7 +592,6 @@
             });
             window.bills.sort((a, b) => b.id - a.id);
 
-            // 自動從點名系統讀取最新資料
             await autoSyncFromRollbookQuietly();
 
             document.getElementById('billMonth').value = getCurrentMonthStr();
@@ -611,7 +613,12 @@
         }
     }
 
-    // === 背景自動靜默同步 (包含點名系統原始學生資料備份) ===
+    // === 同步按鈕對應邏輯 ===
+    window.syncAllFromRollbook = async function() {
+        await autoSyncFromRollbookQuietly();
+        alert('🎉 雲端最新班級與學生資料已同步完成！');
+    };
+
     async function autoSyncFromRollbookQuietly() {
         try {
             const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
@@ -632,7 +639,7 @@
             }
 
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
-            window.rawStudentsData = []; // 儲存原始資料供跨科目比對
+            window.rawStudentsData = [];
             const syncedDetails = { ...window.studentDetails };
 
             studentsSnapshot.forEach(d => {
@@ -688,7 +695,7 @@
                 renderDirectoryInit();
             }
         } catch (e) {
-            console.error("自動同步失敗：", e);
+            console.error("同步失敗：", e);
         }
     };
 
@@ -1159,7 +1166,6 @@
         document.getElementById('billingSection').style.display = 'block';
         document.getElementById('billingTargetName').innerText = window.currentStudent;
         
-        // 檢查並顯示該學生修習的其他科目提醒
         checkStudentOtherCourses(stu, window.currentClass);
 
         window.currentBillItems = [];
@@ -1169,13 +1175,11 @@
         renderQuickButtonsForBilling();
     }
 
-    // === 多科修課提醒偵測函式 ===
     function checkStudentOtherCourses(studentName, currentClassName) {
         const noticeBox = document.getElementById('studentOtherCoursesNotice');
         if (!noticeBox) return;
 
         let otherCourses = [];
-        // 從點名系統原始學生資料庫中找出此學生的所有修課紀錄
         window.rawStudentsData.forEach(s => {
             if ((s.name || '').trim() === studentName.trim()) {
                 let courses = [];
