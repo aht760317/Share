@@ -454,7 +454,7 @@
             </div>
         </section>
 
-        <!-- 🏢 課輔班教學日誌 (一週一次，附帶主任審核框框：已確認 / 退回重寫) -->
+        <!-- 🏢 課輔班教學日誌 (提交後自動跳轉至日誌查詢並清空，歷史區直接顯示無日誌) -->
         <section id="teaching-logs-care" class="section-content">
             <div class="card no-print">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">🏢 課輔班每週教學日誌 (一週填寫一次)</h3>
@@ -503,7 +503,7 @@
             </div>
             <div class="card">
                 <h3 style="margin-top:0;">歷史教學日誌與主任審核 (課輔部)</h3>
-                <div id="logs-container-care"></div>
+                <div id="logs-container-care"><p style="color:#777; text-align:center;">目前無課輔班日誌 (請至日誌查詢統一檢視與審核)</p></div>
             </div>
         </section>
 
@@ -594,10 +594,10 @@
             </div>
         </section>
 
-        <!-- 📚 日誌查詢 -->
+        <!-- 📚 日誌查詢 (主任專屬審核與退回重寫彈窗控制) -->
         <section id="all-logs-query" class="section-content">
             <div class="card">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">📚 教學日誌查詢與審核</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">📚 教學日誌查詢與主任審核</h3>
                 
                 <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                     <div class="grid-3" style="align-items: center; margin-bottom: 12px;">
@@ -722,98 +722,33 @@
         </div>
     </div>
 
-    <!-- 📚 歷史日誌編輯/刪除彈窗 -->
-    <div class="modal-overlay" id="history-log-edit-modal">
+    <!-- 👑 主任專屬日誌審核/修改彈窗 (查詢頁面點擊觸發) -->
+    <div class="modal-overlay" id="director-audit-modal">
         <div class="modal-box" style="width: 550px;">
-            <h3 style="margin-top:0; color:var(--primary);">📚 修改或刪除歷史教學日誌</h3>
-            <input type="hidden" id="edit-history-firestore-id">
+            <h3 style="margin-top:0; color:var(--primary);">👑 主任日誌審核與修改</h3>
+            <input type="hidden" id="audit-firestore-id">
 
             <label>授課日期：</label>
-            <input type="date" id="edit-history-date">
+            <input type="date" id="audit-date">
 
             <label>課程名稱：</label>
-            <input type="text" id="edit-history-course" placeholder="課程名稱">
+            <input type="text" id="audit-course">
 
-            <label>教學進度：</label>
-            <textarea id="edit-history-content" rows="3" placeholder="教學進度"></textarea>
+            <label>教學進度 / 課輔重點：</label>
+            <textarea id="audit-content" rows="3"></textarea>
 
-            <label>回家作業：</label>
-            <textarea id="edit-history-homework" rows="2" placeholder="回家作業"></textarea>
+            <label>回家作業 / 狀況：</label>
+            <textarea id="audit-homework" rows="2"></textarea>
 
             <label>注意事項：</label>
-            <textarea id="edit-history-notes" rows="2" placeholder="注意事項"></textarea>
+            <textarea id="audit-notes" rows="2"></textarea>
 
             <div style="display: flex; justify-content: space-between; margin-top: 18px; flex-wrap:wrap; gap:10px;">
-                <button class="btn btn-danger" onclick="requestDeleteHistoryLog()">🗑️ 刪除此日誌</button>
+                <button class="btn btn-danger" onclick="requestDirectorRecallLog()">🔄 退回重寫 (需密碼)</button>
                 <div style="display: flex; gap: 8px; margin-left: auto;">
-                    <button class="btn btn-success" onclick="saveHistoryLogEdit()">確認修改</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('history-log-edit-modal').style.display='none'">取消</button>
+                    <button class="btn btn-success" onclick="saveDirectorAuditEdit()">✅ 確認儲存/確認</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('director-audit-modal').style.display='none'">關閉</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💡 補課彈窗 -->
-    <div class="modal-overlay" id="makeup-modal">
-        <div class="modal-box" style="width: 450px;">
-            <h3 style="margin-top:0; color:var(--primary);">📅 處理學生補課紀錄</h3>
-            <input type="hidden" id="makeup-student-id">
-            <input type="hidden" id="makeup-log-index">
-            <p id="makeup-student-info" style="font-size:14px; color:#555;"></p>
-
-            <label>補課狀態：</label>
-            <select id="makeup-status-select" onchange="toggleMakeupDateInput()">
-                <option value="pending">❌ 尚未補課</option>
-                <option value="done">✅ 已完成補課</option>
-            </select>
-
-            <div id="makeup-date-wrapper" style="display:none;">
-                <label>實際補課日期：</label>
-                <input type="date" id="makeup-date-input">
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
-                <button class="btn btn-success" style="flex:1;" onclick="saveMakeupAction()">確認儲存</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💡 補考彈窗 -->
-    <div class="modal-overlay" id="retest-modal">
-        <div class="modal-box" style="width: 450px;">
-            <h3 style="margin-top:0; color:var(--primary);">📝 處理學生考試與補考紀錄</h3>
-            <input type="hidden" id="retest-student-id">
-            <input type="hidden" id="retest-log-index">
-            <p id="retest-student-info" style="font-size:14px; color:#555;"></p>
-
-            <label>修改出席/請假狀態：</label>
-            <select id="edit-att-status">
-                <option value="出席">出席</option>
-                <option value="請假">請假</option>
-                <option value="曠課">曠課</option>
-            </select>
-
-            <label>第一次原始考試分數：</label>
-            <input type="number" id="retest-score-input" placeholder="請輸入原考分數">
-
-            <label>補考狀態：</label>
-            <select id="retest-status-select" onchange="toggleRetestInputs()">
-                <option value="pending">❌ 尚未補考 / 未達及格</option>
-                <option value="done">✅ 已完成補考</option>
-            </select>
-
-            <div id="retest-date-wrapper" style="display:none;">
-                <label>補考日期：</label>
-                <input type="date" id="retest-date-input">
-
-                <label>補考分數：</label>
-                <input type="number" id="retest-score-val-input" placeholder="請輸入補考分數">
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
-                <button class="btn btn-success" style="flex:1;" onclick="saveRetestAction()">確認儲存</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('retest-modal').style.display='none'">取消</button>
             </div>
         </div>
     </div>
@@ -841,67 +776,6 @@
             <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:10px;">
                 <button class="btn btn-danger" style="flex:1;" onclick="confirmPasswordAction()">確認通過</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 學生檔案修改彈窗 (無新增功能) -->
-    <div class="modal-overlay" id="student-modal">
-        <div class="modal-box">
-            <h3 id="modal-title" style="margin-top:0; color:var(--primary);">修改學生資料</h3>
-            <input type="hidden" id="edit-student-id">
-            
-            <div class="grid-3">
-                <div>
-                    <label>學生姓名：</label>
-                    <input type="text" id="modal-name" placeholder="例如：王小明">
-                </div>
-                <div>
-                    <label>就讀學校：</label>
-                    <input type="text" id="modal-school" placeholder="例如：斗六國中">
-                </div>
-                <div>
-                    <label>班級座號/年班：</label>
-                    <input type="text" id="modal-class" placeholder="例如：國一忠班">
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div>
-                    <label>選擇主要修習課程：</label>
-                    <select id="modal-course"></select>
-                </div>
-                <div>
-                    <label>學生版本 (教材版本)：</label>
-                    <input type="text" id="modal-version" placeholder="例如：康軒版 / 翰林版">
-                </div>
-            </div>
-
-            <h4 style="margin: 12px 0 6px 0; color: var(--primary); border-bottom: 1px solid #ddd; padding-bottom: 4px;">📞 設定三支聯絡電話 (手機可直撥)</h4>
-            <div class="grid-3">
-                <div>
-                    <label style="font-size:14px;">電話 1 稱謂：</label>
-                    <input type="text" id="modal-label1" value="爸爸" style="margin-bottom:6px;">
-                    <input type="text" id="modal-phone1" placeholder="電話號碼">
-                </div>
-                <div>
-                    <label style="font-size:14px;">電話 2 稱謂：</label>
-                    <input type="text" id="modal-label2" value="媽媽" style="margin-bottom:6px;">
-                    <input type="text" id="modal-phone2" placeholder="電話號碼">
-                </div>
-                <div>
-                    <label style="font-size:14px;">電話 3 稱謂：</label>
-                    <input type="text" id="modal-label3" value="學生本人" style="margin-bottom:6px;">
-                    <input type="text" id="modal-phone3" placeholder="電話號碼">
-                </div>
-            </div>
-
-            <div style="margin-top: 18px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <button class="btn btn-danger" id="delete-student-btn" onclick="requestDeleteStudent()" style="display:none;">刪除學生</button>
-                <div style="display: flex; gap: 8px; margin-left: auto;">
-                    <button class="btn btn-success" onclick="saveStudentModal()">儲存資料</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('student-modal').style.display='none'">取消</button>
-                </div>
             </div>
         </div>
     </div>
@@ -1716,6 +1590,7 @@
                     await deleteDoc(doc(db, "classLogHistory", firestoreId));
                     window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
 
+                    document.getElementById('director-audit-modal').style.display = 'none';
                     alert('✅ 已成功將此日誌退回重寫！');
                     window.renderHistoryLogs();
                     window.generateMonthDaysGrid();
@@ -1723,6 +1598,52 @@
                     window.renderAllLogsQuery();
                 } catch (e) { alert('退回失敗'); }
             });
+        };
+
+        // 查詢頁面點擊卡片彈出主任審核視窗
+        window.openDirectorAuditModal = function(firestoreId) {
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if (!log) return;
+
+            document.getElementById('audit-firestore-id').value = firestoreId;
+            document.getElementById('audit-date').value = log.date;
+            document.getElementById('audit-course').value = log.course;
+            document.getElementById('audit-content').value = log.content;
+            document.getElementById('audit-homework').value = log.homework || '';
+            document.getElementById('audit-notes').value = log.notes || '';
+
+            document.getElementById('director-audit-modal').style.display = 'flex';
+        };
+
+        window.saveDirectorAuditEdit = async function() {
+            const firestoreId = document.getElementById('audit-firestore-id').value;
+            const date = document.getElementById('audit-date').value;
+            const course = document.getElementById('audit-course').value.trim();
+            const content = document.getElementById('audit-content').value.trim();
+            const homework = document.getElementById('audit-homework').value.trim();
+            const notes = document.getElementById('audit-notes').value.trim();
+
+            if (!date || !course || !content) return alert('內容不得為空白！');
+
+            const log = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+            if (!log) return;
+
+            log.date = date; log.course = course; log.content = content; log.homework = homework; log.notes = notes;
+
+            try {
+                await setDoc(doc(db, "classLogHistory", firestoreId), {
+                    id: log.id, dept: log.dept, date, course, content, homework, notes,
+                    examUnit: log.examUnit || '', passScore: log.passScore || 80, examFile: log.examFile || '', answerFile: log.answerFile || '',
+                    directorApprovalText: log.directorApprovalText || ''
+                });
+
+                document.getElementById('director-audit-modal').style.display = 'none';
+                alert('✅ 主任已確認並儲存該筆日誌！');
+                window.renderHistoryLogs();
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+                window.renderAllLogsQuery();
+            } catch (e) { alert('儲存失敗'); }
         };
 
         window.saveLog = async function(dept) {
@@ -1796,7 +1717,15 @@
                 }
 
                 alert('✅ 教學日誌已成功儲存與同步！');
-                window.renderHistoryLogs();
+                
+                // 如果是課輔班日誌，儲存後直接自動切換到「日誌查詢」分頁，且課輔班歷史區顯示無日誌
+                if (dept === 'care') {
+                    const queryNavBtn = document.querySelector('nav button:nth-child(6)');
+                    switchSection('all-logs-query', queryNavBtn);
+                } else {
+                    window.renderHistoryLogs();
+                }
+
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
                 window.renderPendingTodoPanels();
@@ -1837,7 +1766,7 @@
         };
 
         window.renderHistoryLogs = function() {
-            // 國中部與國小部歷史日誌 (無退回重寫)
+            // 國中部與國小部歷史日誌
             ['junior', 'elementary'].forEach(dept => {
                 const container = document.getElementById(`logs-container-${dept}`);
                 if(!container) return;
@@ -1863,37 +1792,10 @@
                 `).join('');
             });
 
-            // 課輔班歷史日誌 (附帶主任審核框：已確認 / 退回重寫)
+            // 課輔班歷史區要求直接顯示無日誌 (統一在日誌查詢審核)
             const careContainer = document.getElementById('logs-container-care');
             if (careContainer) {
-                const careLogs = window.state.historyLogs.filter(l => l.dept === 'care');
-                if (careLogs.length === 0) {
-                    careContainer.innerHTML = `<p style="color:#777; text-align:center;">尚無課輔班歷史日誌紀錄。</p>`;
-                } else {
-                    careContainer.innerHTML = careLogs.map(l => `
-                        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:14px; border-radius:8px; margin-bottom:14px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                                <h4 style="margin:0; color:var(--primary); font-size:16px;">
-                                    <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">🏢 [${l.course}] 日期：${l.date}</span>
-                                </h4>
-                            </div>
-                            <p style="margin:6px 0; font-size:14px;"><b>生活重點：</b>${l.content}</p>
-                            <p style="margin:6px 0; font-size:14px;"><b>作業狀況：</b>${l.homework || '無'}</p>
-                            <p style="margin:6px 0; font-size:14px;"><b>注意事項：</b>${l.notes || '無'}</p>
-                            
-                            <!-- 主任審核專屬框框 -->
-                            <div style="margin-top:12px; background:#eff6ff; border:2px solid #3b82f6; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                                <div>
-                                    <span style="font-size:14px; color:#1e40af; font-weight:bold;">👑 主任審核狀態：</span>
-                                    <span style="background:#22c55e; color:white; padding:4px 10px; border-radius:4px; font-size:13px; font-weight:bold;">✅ 已確認</span>
-                                </div>
-                                <div style="display:flex; gap:8px;">
-                                    <button class="btn btn-small btn-danger" onclick="requestDirectorRecallLog('${l.firestoreId}')">🔄 退回重寫</button>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
+                careContainer.innerHTML = `<p style="color:#777; text-align:center;">目前無課輔班日誌 (請至日誌查詢統一檢視與審核)</p>`;
             }
         };
 
@@ -1919,10 +1821,10 @@
             const filteredLogs = window.state.historyLogs.filter(l => l.date >= startStr && l.date <= endStr);
 
             const renderCard = (l) => `
-                <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:12px; border-radius:8px; margin-bottom:12px; font-size:14px;">
+                <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:14px; border-radius:8px; margin-bottom:12px; font-size:14px; cursor:pointer;" onclick="openDirectorAuditModal('${l.firestoreId}')" title="點擊進行主任審核與修改">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <b style="color:var(--primary); font-size:15px;">[${l.course}] ${l.date}</b>
-                        <button class="btn btn-small btn-danger" style="padding:4px 8px; font-size:12px;" onclick="requestDirectorRecallLog('${l.firestoreId}')">🔄 退回重寫</button>
+                        <b style="color:var(--primary); font-size:15.5px;">[${l.course}] ${l.date}</b>
+                        <span style="background:#3b82f6; color:white; padding:4px 10px; border-radius:4px; font-size:12px; font-weight:bold;">🔍 主任審核/修改</span>
                     </div>
                     <p style="margin:4px 0;"><b>進度/重點：</b>${l.content}</p>
                     <p style="margin:4px 0;"><b>作業/狀況：</b>${l.homework || '無'}</p>
