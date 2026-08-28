@@ -170,8 +170,8 @@
             background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; margin: 2px;
         }
 
-        .phone-badge {
-            font-size: 12px; text-align: left; background: #fff; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0;
+        .phone-plain-cell {
+            font-size: 12px; line-height: 1.3; text-align: center; color: #333;
         }
 
         @media print {
@@ -372,14 +372,16 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:40px;">序</th>
-                                <th style="width:110px;">學生姓名</th>
-                                <th style="width:140px;">就讀學校 / 年班</th>
-                                <th style="width:180px;">修習班級課程</th>
-                                <th style="width:140px;" id="th_phone1">電話 1</th>
-                                <th style="width:140px;" id="th_phone2">電話 2</th>
-                                <th style="width:140px;" id="th_phone3">電話 3</th>
-                                <th style="width:150px;">詳細與操作</th>
+                                <th style="width:35px;">序</th>
+                                <th style="width:100px;">學生姓名</th>
+                                <th style="width:90px;">生日</th>
+                                <th style="width:110px;">學校</th>
+                                <th style="width:100px;">班級</th>
+                                <th style="width:125px;">電話 1</th>
+                                <th style="width:125px;">電話 2</th>
+                                <th style="width:125px;">電話 3</th>
+                                <th style="width:160px;">補習課程</th>
+                                <th style="width:130px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="masterStudentTableBody"></tbody>
@@ -590,7 +592,6 @@
         return false;
     }
 
-    // 輔助函式：確保學生班級資料轉為陣列
     function getStudentCoursesArray(stu) {
         if (!stu) return [];
         if (Array.isArray(stu.courses) && stu.courses.length > 0) return stu.courses;
@@ -602,7 +603,6 @@
 
     async function initCloudData() {
         try {
-            // 1. 讀取課程
             const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
             if (coursesDoc.exists()) {
                 const data = coursesDoc.data().data || {};
@@ -616,7 +616,6 @@
                 };
             }
 
-            // 2. 讀取中央學生總冊
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
             window.state.students = [];
             studentsSnapshot.forEach(d => {
@@ -713,12 +712,7 @@
         studentTableSection.style.display = 'block';
         manageBox.style.display = 'none';
 
-        if (deptKey === 'all') {
-            box.style.display = 'none';
-            return;
-        }
-
-        if (deptKey === 'graduated') {
+        if (deptKey === 'all' || deptKey === 'graduated') {
             box.style.display = 'none';
             return;
         }
@@ -815,7 +809,7 @@
         renderMasterStudentsTable();
     };
 
-    // 學生清單表格 (電話分三格、移除版本項目、依姓名排列)
+    // 學生清單表格 (全新順序：序、學生姓名、生日、學校、班級、電話1、電話2、電話3、補習課程、操作)
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const deptKey = window.state.currentDeptView;
@@ -841,7 +835,7 @@
             }
         });
 
-        // 依學生姓名排列 (LocaleCompare)
+        // 依學生姓名排列
         filtered.sort((a, b) => {
             const nameA = a.name || '';
             const nameB = b.name || '';
@@ -852,9 +846,11 @@
             filtered = filtered.filter(s => {
                 const name = (s.name || '').toLowerCase();
                 const school = (s.school || '').toLowerCase();
+                const stuClass = (s.studentClass || '').toLowerCase();
                 const course = (s.course || '').toLowerCase();
+                const bday = (s.birthday || '').toLowerCase();
                 const phones = (s.phones || []).map(p => p.number).join(' ');
-                return name.includes(keyword) || school.includes(keyword) || course.includes(keyword) || phones.includes(keyword);
+                return name.includes(keyword) || school.includes(keyword) || stuClass.includes(keyword) || course.includes(keyword) || bday.includes(keyword) || phones.includes(keyword);
             });
         }
 
@@ -870,7 +866,7 @@
         document.getElementById('studentListTitle').innerText = `${titleDesc} - 共 ${filtered.length} 人`;
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="padding:25px; color:#888; text-align:center;">目前查無學生資料。可點擊上方按鈕新增學生！</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="padding:25px; color:#888; text-align:center;">目前查無學生資料。可點擊上方按鈕新增學生！</td></tr>`;
             return;
         }
 
@@ -879,37 +875,34 @@
             const stuCourses = getStudentCoursesArray(stu);
             const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
 
-            // 取得 3 支電話資料
             const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
             const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
             const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
 
-            const renderPhoneCell = (p) => {
-                if (!p || !p.number) return `<span style="color:#bbb;">-</span>`;
-                return `<div class="phone-badge"><b>${p.label || '電話'}:</b> <a href="tel:${p.number}" style="color:#0284c7; text-decoration:none; font-weight:bold;">${p.number}</a></div>`;
+            // 純文字呈現電話，不加任何超連結
+            const formatPlainPhone = (p) => {
+                if (!p || !p.number || p.number.trim() === '') return `<span style="color:#bbb;">-</span>`;
+                return `<div class="phone-plain-cell"><b>${p.label || '電話'}:</b> ${p.number}</div>`;
             };
 
             html += `
                 <tr>
                     <td>${idx + 1}</td>
                     <td>
-                        <b style="font-size:15px; color:var(--primary);">${stu.name}</b>
-                        <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 5px; border-radius:4px; margin-left:2px;">${stu.gender || '男'}</span>
+                        <b style="font-size:14px; color:var(--primary);">${stu.name}</b>
+                        <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px; margin-left:2px;">${stu.gender || '男'}</span>
                     </td>
-                    <td>
-                        <b>${stu.school || '-'}</b>
-                        <div style="font-size:12px; color:#666; margin-top:2px;">${stu.studentClass || '-'}</div>
-                    </td>
-                    <td style="text-align:left;">
-                        <div>${coursesTags}</div>
-                    </td>
-                    <td>${renderPhoneCell(p1)}</td>
-                    <td>${renderPhoneCell(p2)}</td>
-                    <td>${renderPhoneCell(p3)}</td>
+                    <td style="font-size:12px; color:#555;">${stu.birthday || '-'}</td>
+                    <td><b>${stu.school || '-'}</b></td>
+                    <td style="font-size:12px;">${stu.studentClass || '-'}</td>
+                    <td>${formatPlainPhone(p1)}</td>
+                    <td>${formatPlainPhone(p2)}</td>
+                    <td>${formatPlainPhone(p3)}</td>
+                    <td style="text-align:left;"><div>${coursesTags}</div></td>
                     <td>
                         <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-                            <button class="btn btn-warning" style="padding:4px 7px; font-size:11px;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
-                            <button class="btn btn-primary" style="padding:4px 7px; font-size:11px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
+                            <button class="btn btn-warning" style="padding:3px 7px; font-size:11px;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
+                            <button class="btn btn-primary" style="padding:3px 7px; font-size:11px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
                         </div>
                     </td>
                 </tr>
@@ -919,7 +912,6 @@
         tbody.innerHTML = html;
     };
 
-    // 渲染多選班級勾選清單
     function renderMultiClassCheckboxes(containerId, selectedCourses = []) {
         const container = document.getElementById(containerId);
         if (!container) return;
