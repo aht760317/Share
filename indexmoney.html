@@ -134,7 +134,8 @@
         .unpaid-reminder { margin-top: 15px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
         .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #FECACA; }
         .unpaid-list { padding: 12px; background: white; max-height: 250px; overflow-y: auto; }
-        .unpaid-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB; font-size: 13px; }
+        .unpaid-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 6px; border-bottom: 1px dashed #E5E7EB; font-size: 13px; cursor: pointer; transition: 0.2s; border-radius: 4px; }
+        .unpaid-item:hover { background: #FEF2F2; }
         .unpaid-item:last-child { border-bottom: none; }
 
         .action-btn { padding: 5px 8px; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 2px; color: white; cursor: pointer; display: inline-block; margin-top: 2px; }
@@ -151,6 +152,17 @@
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-top: 20px; font-size: 18px; }
 
+        /* 螢幕預覽收據框樣式 */
+        .receipt-box { border: 2px solid #000; padding: 15px 25px; width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; position: relative; background: white; color: #000; }
+        .receipt-title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
+        .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 10px; line-height: 1.4; color: #555; }
+        .receipt-header { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #000; flex-wrap: wrap; gap: 5px; }
+        .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 6px 10px; font-size: 14px; }
+        .receipt-table th { background: #f0f0f0 !important; }
+        .receipt-total { text-align: right; font-size: 18px; font-weight: bold; padding-top: 6px; }
+        .stamp-area { display: flex; justify-content: space-between; margin-top: 20px; font-size: 15px; align-items: flex-end; }
+
         @media screen and (max-width: 768px) {
             body { padding: 5px; }
             .app-container { border-radius: 8px; }
@@ -163,7 +175,7 @@
 
         /* 彈出視窗 Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 15px; box-sizing: border-box; }
-        .modal-box { background: white; padding: 20px; border-radius: 10px; width: 100%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .modal-box { background: white; padding: 20px; border-radius: 10px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
         /* 列印樣式 */
         @media screen { .print-only { display: none; } }
@@ -172,9 +184,9 @@
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
             
-            .receipt-box { border: 2px solid #000; padding: 15px 25px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; position: relative; page-break-inside: avoid; }
+            .receipt-box { border: 2px solid #000; padding: 15px 25px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; position: relative; page-break-inside: avoid; background: white !important; }
             .receipt-title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
-            .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 10px; line-height: 1.4; }
+            .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 10px; line-height: 1.4; color: #555 !important; }
             .receipt-header { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #000; }
             .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
             .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 6px 10px; font-size: 14px; }
@@ -331,7 +343,7 @@
     <!-- 頁籤 2：未繳費查詢 -->
     <div id="unpaid" class="content-area">
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
-        <p style="color: #64748B; font-size: 14px; margin-bottom: 15px;">此處專門彙整所有尚未結帳繳費的學生清單，方便您隨時掌握欠費狀況。</p>
+        <p style="color: #64748B; font-size: 14px; margin-bottom: 15px;">💡 點擊下方任一學生欠費項目，即可直接在畫面上檢視、截圖或列印學費單！</p>
         
         <div class="unpaid-reminder" style="margin-top:0;">
             <div class="unpaid-header" style="background:#FEF2F2; color:#991B1B;">📘 國小部 - 未繳費總覽</div>
@@ -556,6 +568,22 @@
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
             <button class="btn-select" onclick="closeModal('editBillModal')">取消</button>
             <button class="btn-add" style="width: auto; padding: 8px 15px;" onclick="saveEditedBill()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 彈出視窗：學費單即時預覽（供直接檢視、截圖、列印） -->
+<div id="billPreviewModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 520px; max-height: 90vh; overflow-y: auto;">
+        <h3 style="margin-top:0; color: var(--primary); font-size: 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:8px;">
+            <span>📄 學費單預覽 (可截圖或列印)</span>
+            <button type="button" class="btn-select" style="padding: 4px 8px; font-size: 12px;" onclick="closeModal('billPreviewModal')">✕</button>
+        </h3>
+        <input type="hidden" id="billPreviewId">
+        <div id="billPreviewContent" style="margin: 10px 0;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:10px;">
+            <button class="btn-select" onclick="closeModal('billPreviewModal')">關閉</button>
+            <button class="btn-add" style="width: auto; padding: 8px 16px; background: var(--accent);" onclick="printFromPreview()">🖨️ 直接列印</button>
         </div>
     </div>
 </div>
@@ -1569,7 +1597,7 @@
         renderUnpaidTabLists();
     }
 
-    // === 渲染「未繳費查詢」分頁清單 ===
+    // === 渲染「未繳費查詢」分頁清單 (點擊可即時預覽學費單) ===
     window.renderUnpaidTabLists = function() {
         const primaryContainer = document.getElementById('tabPrimaryUnpaidListBody');
         const juniorContainer = document.getElementById('tabJuniorUnpaidListBody');
@@ -1584,10 +1612,11 @@
             return list.map(bill => {
                 const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
                 return `
-                    <div class="unpaid-item">
+                    <div class="unpaid-item" onclick="openBillPreviewModal(${bill.id})" title="點擊檢視學費單">
                         <div>
                             <span style="color:#991B1B; font-weight:bold; margin-right:8px;">[${displayMonth}]</span>
                             <span>${bill.className} - <strong>${bill.studentName}</strong></span>
+                            <span style="font-size:11px; color:#2563EB; margin-left:6px;">(點擊預覽)</span>
                         </div>
                         <div style="font-weight:bold; color:var(--danger);">
                             欠款 $${bill.total.toLocaleString()}
@@ -1598,6 +1627,22 @@
 
         primaryContainer.innerHTML = buildHtml(primaryUnpaid);
         juniorContainer.innerHTML = buildHtml(juniorUnpaid);
+    };
+
+    // === 開啟學費單即時預覽 Modal ===
+    window.openBillPreviewModal = function(id) {
+        const bill = window.bills.find(b => b.id === id);
+        if (!bill) return;
+
+        const html = getSingleReceiptHtml(bill, false, '繳費通知單');
+        document.getElementById('billPreviewContent').innerHTML = html;
+        document.getElementById('billPreviewId').value = bill.id;
+        document.getElementById('billPreviewModal').style.display = 'flex';
+    };
+
+    window.printFromPreview = function() {
+        const id = parseInt(document.getElementById('billPreviewId').value);
+        printDocument(id, 'notice');
     };
 
     window.printSelectedCheckedNotices = function() {
