@@ -23,14 +23,11 @@
         .page-header h1 { font-size: 1.75rem; font-weight: 700; }
         .page-header p { color: var(--text-muted); margin-top: 0.5rem; }
 
-        /* 卡片區塊 */
         .card { background: var(--bg-card); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
         .card h3 { font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
 
-        /* 貼上解析區 */
         .smart-paste-box textarea { width: 100%; height: 90px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; resize: vertical; margin-bottom: 0.75rem; }
         
-        /* 表單排版 */
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
         .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; }
@@ -41,15 +38,15 @@
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
 
-        /* 表格樣式 */
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
         th { background-color: #f9fafb; color: var(--text-muted); font-weight: 600; }
         
         .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; }
-        .badge-inquiry { background: #e0f2fe; color: #0369a1; }
-        .badge-trial { background: #ede9fe; color: #6d28d9; }
-        .badge-enrolled { background: #d1fae5; color: #065f46; }
+        .badge-line { background: #d1fae5; color: #065f46; }
+        .badge-fb { background: #dbeafe; color: #1e40af; }
+        .badge-ig { background: #fce7f3; color: #9d174d; }
+        .badge-other { background: #f3f4f6; color: #374151; }
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     </style>
@@ -59,7 +56,7 @@
     <div class="container">
         <div class="page-header">
             <h1>招生詢問與智慧轉班系統</h1>
-            <p>貼上對話自動轉為問班單，支援主任追蹤與隨時修改進班資料</p>
+            <p>掌握詢問來源、試聽日期提醒與主任追蹤紀錄</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
@@ -69,7 +66,7 @@
             <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
         </div>
 
-        <!-- 2. 自動產生的問班與老師追蹤表單 -->
+        <!-- 2. 問班與老師追蹤管理 (優化欄位) -->
         <div class="card">
             <h3>📝 步驟二：問班與老師追蹤管理</h3>
             <form id="inquiryForm">
@@ -83,20 +80,33 @@
                         <input type="text" id="studentPhone" placeholder="例如：0912-345678">
                     </div>
                     <div class="form-group">
+                        <label>招生來源管道</label>
+                        <select id="leadSource">
+                            <option value="LINE">LINE 官方帳號</option>
+                            <option value="FB">FB 粉絲專頁</option>
+                            <option value="IG">IG 小盒子</option>
+                            <option value="PHONE">電話詢問 / 現場來訪</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>有意願課程</label>
                         <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
                     </div>
                     <div class="form-group">
+                        <label>預定試聽日期</label>
+                        <input type="date" id="trialDate">
+                    </div>
+                    <div class="form-group">
                         <label>目前招生狀態</label>
                         <select id="studentStatus">
-                            <option value="inquiry">初次諮詢</option>
-                            <option value="trial">預約試聽中</option>
-                            <option value="enrolled">準備進班</option>
+                            <option value="初次諮詢">初次諮詢</option>
+                            <option value="預約試聽中">預約試聽中</option>
+                            <option value="準備進班">準備進班</option>
+                            <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- 老師每次追蹤輸入區 -->
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label>老師追蹤紀錄（主任可隨時檢視過程）</label>
                     <input type="text" id="trackNote" placeholder="例如：08/29 電訪家長，說明上課教材，家長表示考慮中。">
@@ -106,14 +116,15 @@
             </form>
         </div>
 
-        <!-- 3. 追蹤清單與一鍵進班 -->
+        <!-- 3. 追蹤清單總表 -->
         <div class="card">
-            <h3>📊 步驟三：招生追蹤總表與修改管理</h3>
+            <h3>📊 步驟三：招生追蹤總表與提醒管理</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>學生姓名</th>
-                        <th>電話 / 課程</th>
+                        <th>來源 / 姓名</th>
+                        <th>聯絡電話 / 課程</th>
+                        <th>試聽日期</th>
                         <th>目前進度</th>
                         <th>老師追蹤紀錄歷程</th>
                         <th>操作動作</th>
@@ -121,19 +132,22 @@
                 </thead>
                 <tbody id="trackingTableBody">
                     <tr>
-                        <td><strong class="s-name">林美華</strong></td>
-                        <td><span class="s-phone">0923-456789</span><br><small style="color:var(--text-muted)" class="s-course">全科暑期班</small></td>
-                        <td><span class="badge badge-enrolled">已正式進班</span></td>
                         <td>
-                            <div class="s-log">
-                                08/28 老師：已確認參加週一試聽。<br>
-                                08/29 主任：試聽後反應良好，家長在問學費折扣。
-                            </div>
+                            <span class="badge badge-line">LINE</span><br>
+                            <strong class="s-name">林美華</strong>
                         </td>
                         <td>
+                            <span class="s-phone">0923-456789</span><br>
+                            <small style="color:var(--text-muted)" class="s-course">全科暑期班</small>
+                        </td>
+                        <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
+                        <td><span class="badge badge-line s-status">預約試聽中</span></td>
+                        <td><div class="s-log">08/28 老師：已約定週二試聽，待提醒。</div></td>
+                        <td>
                             <div class="action-btns">
+                                <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
                                 <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                                <button class="btn btn-sm btn-success" onclick="convertToClass(this)">重新確認進班</button>
+                                <button class="btn btn-sm" onclick="convertToClass(this)">確定進班</button>
                             </div>
                         </td>
                     </tr>
@@ -156,7 +170,9 @@
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
             const phone = document.getElementById('studentPhone').value;
+            const source = document.getElementById('leadSource').value;
             const course = document.getElementById('studentCourse').value;
+            const tDate = document.getElementById('trialDate').value || '未定';
             const status = document.getElementById('studentStatus').value;
             const note = document.getElementById('trackNote').value;
 
@@ -165,66 +181,84 @@
             const tbody = document.getElementById('trackingTableBody');
             const newRow = document.createElement('tr');
             
-            let badgeHtml = '<span class="badge badge-inquiry">初次諮詢</span>';
-            if(status === 'trial') badgeHtml = '<span class="badge badge-trial">預約試聽中</span>';
-            if(status === 'enrolled') badgeHtml = '<span class="badge badge-enrolled">準備進班</span>';
+            let sourceBadge = 'badge-line';
+            if(source === 'FB') sourceBadge = 'badge-fb';
+            if(source === 'IG') sourceBadge = 'badge-ig';
+            if(source === 'PHONE') sourceBadge = 'badge-other';
 
             newRow.innerHTML = `
-                <td><strong class="s-name">${name}</strong></td>
-                <td><span class="s-phone">${phone}</span><br><small style="color:var(--text-muted)" class="s-course">${course}</small></td>
-                <td>${badgeHtml}</td>
+                <td>
+                    <span class="badge ${sourceBadge} s-source">${source}</span><br>
+                    <strong class="s-name">${name}</strong>
+                </td>
+                <td>
+                    <span class="s-phone">${phone}</span><br>
+                    <small style="color:var(--text-muted)" class="s-course">${course}</small>
+                </td>
+                <td><span class="s-date" style="font-weight:600;">${tDate}</span></td>
+                <td><span class="badge badge-line s-status">${status}</span></td>
                 <td><div class="s-log">老師追蹤：${note}</div></td>
                 <td>
                     <div class="action-btns">
+                        <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
                         <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                        <button class="btn btn-sm btn-success" onclick="convertToClass(this)">確定進班</button>
+                        <button class="btn btn-sm" onclick="convertToClass(this)">確定進班</button>
                     </div>
                 </td>
             `;
             tbody.appendChild(newRow);
             alert('已成功新增至追蹤列表！');
-            
             document.getElementById('inquiryForm').reset();
         }
 
-        // 修改資料功能
+        // 標記已通知家長
+        function markNotified(btn) {
+            const row = btn.closest('tr');
+            const logEl = row.querySelector('.s-log');
+            const currentDate = new Date().toLocaleDateString();
+            logEl.innerHTML += `<br><span style="color: var(--success-color);">[${currentDate} 老師已打電話/發LINE提醒試聽]</span>`;
+            alert('已記錄：已完成試聽提醒通知！');
+        }
+
+        // 修改資料
         function editRow(btn) {
             const row = btn.closest('tr');
             const nameEl = row.querySelector('.s-name');
             const phoneEl = row.querySelector('.s-phone');
             const courseEl = row.querySelector('.s-course');
+            const dateEl = row.querySelector('.s-date');
             const logEl = row.querySelector('.s-log');
 
             const newName = prompt("修改學生姓名：", nameEl.innerText);
-            if (newName === null) return; // 取消
-
+            if (newName === null) return;
             const newPhone = prompt("修改聯絡電話：", phoneEl.innerText);
             if (newPhone === null) return;
-
             const newCourse = prompt("修改有意願課程：", courseEl.innerText);
             if (newCourse === null) return;
-
+            const newDate = prompt("修改試聽日期 (YYYY-MM-DD)：", dateEl.innerText);
+            if (newDate === null) return;
             const newLog = prompt("追加或修改追蹤紀錄：", logEl.innerText);
             if (newLog === null) return;
 
-            // 更新畫面
             nameEl.innerText = newName;
             phoneEl.innerText = newPhone;
             courseEl.innerText = newCourse;
+            dateEl.innerText = newDate;
             logEl.innerHTML = newLog.replace(/\n/g, '<br>');
 
             alert('資料修改成功！');
         }
 
-        // 一鍵導入班級
+        // 確定進班
         function convertToClass(btn) {
             const row = btn.closest('tr');
             const studentName = row.querySelector('.s-name').innerText;
             
-            if(confirm(`確定要將「${studentName}`}」正式設定為【已正式進班】嗎？`)) {
-                const badgeTd = row.querySelectorAll('td')[2];
-                badgeTd.innerHTML = '<span class="badge badge-enrolled">已正式進班</span>';
-                alert(`成功！${studentName} 已更新為正式進班狀態。`);
+            if(confirm(`確定要將「${studentName}」轉入正式班級嗎？`)) {
+                const statusEl = row.querySelector('.s-status');
+                statusEl.innerText = '已正式進班';
+                statusEl.className = 'badge badge-line s-status';
+                alert(`成功！${studentName} 的資料已正式匯入班級系統。`);
             }
         }
     </script>
