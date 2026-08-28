@@ -48,8 +48,12 @@
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
         
+        /* 名字旁邊的藍色修改筆按鈕 */
+        .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
+        .edit-icon-btn:hover { background: #e0e7ff; }
+
         /* 追蹤清單區塊化卡片 */
         #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
         .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
@@ -58,9 +62,12 @@
         
         .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
         .block-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+        
+        /* 右上方按鈕群組 */
+        .block-top-actions { display: flex; gap: 0.4rem; align-items: center; }
+
         .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.9rem; margin-bottom: 0.75rem; }
         .block-footer { background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.85rem; }
-        .block-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
@@ -109,7 +116,6 @@
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">💡 提示：按住任一輸入方塊即可左右上下拖曳，調整你習慣的填寫順序。</p>
                 
                 <form id="inquiryForm">
-                    <!-- 支援拖曳排序的表單方塊網格 -->
                     <div class="form-blocks-grid" id="formBlocksContainer">
                         <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📌 學生姓名</label>
@@ -167,11 +173,15 @@
                     <div class="tracking-block" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
                         <div class="block-header">
                             <div class="block-title">
-                                <span>📌</span> <strong class="s-name">林美華</strong>
+                                <span>📌</span> 
+                                <strong class="s-name">林美華</strong>
+                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                                 <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">預約試聽中</span>
                             </div>
-                            <div>
-                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
+                            <!-- 已通知家長與確定進班移至右上角 -->
+                            <div class="block-top-actions">
+                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
+                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                                 <input type="hidden" class="s-inquirer" value="林媽媽">
                                 <input type="hidden" class="s-referrer" value="李大同">
                                 <input type="hidden" class="s-source" value="LINE">
@@ -184,10 +194,6 @@
                         </div>
                         <div class="block-footer">
                             <div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽，待提醒。</div>
-                        </div>
-                        <div class="block-actions">
-                            <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
-                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         </div>
                     </div>
                 </div>
@@ -384,7 +390,6 @@
             }
         }
 
-        // 步驟二表單方塊的拖曳排序功能
         let draggedFormBlock = null;
 
         function handleFormBlockDragStart(e) {
@@ -470,11 +475,14 @@
             newBlock.innerHTML = `
                 <div class="block-header">
                     <div class="block-title">
-                        <span>📌</span> <strong class="s-name">${name}</strong>
+                        <span>📌</span> 
+                        <strong class="s-name">${name}</strong>
+                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                         <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                     </div>
-                    <div>
-                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
+                    <div class="block-top-actions">
+                        <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
+                        <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         <input type="hidden" class="s-inquirer" value="${inquirer}">
                         <input type="hidden" class="s-referrer" value="${referrer}">
                         <input type="hidden" class="s-source" value="${source}">
@@ -487,10 +495,6 @@
                 </div>
                 <div class="block-footer">
                     <div class="s-log">${initialLog}</div>
-                </div>
-                <div class="block-actions">
-                    <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
-                    <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                 </div>
             `;
             container.appendChild(newBlock);
@@ -673,11 +677,14 @@
                     newBlock.innerHTML = `
                         <div class="block-header">
                             <div class="block-title">
-                                <span>📌</span> <strong class="s-name">${name}</strong>
+                                <span>📌</span> 
+                                <strong class="s-name">${name}</strong>
+                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                                 <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                             </div>
-                            <div>
-                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
+                            <div class="block-top-actions">
+                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
+                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                                 <input type="hidden" class="s-inquirer" value="${inquirer}">
                                 <input type="hidden" class="s-referrer" value="${referrer}">
                                 <input type="hidden" class="s-source" value="${source}">
@@ -690,10 +697,6 @@
                         </div>
                         <div class="block-footer">
                             <div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span></div>
-                        </div>
-                        <div class="block-actions">
-                            <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
-                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         </div>
                     `;
                     container.appendChild(newBlock);
@@ -778,7 +781,7 @@
             if(inputEl) {
                 inputEl.value = value;
             } else {
-                let targetContainer = element.querySelector('.block-header div:nth-child(2)') || element.querySelector('td:nth-child(1)');
+                let targetContainer = element.querySelector('.block-top-actions') || element.querySelector('td:nth-child(1)');
                 let hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.className = className;
@@ -792,7 +795,7 @@
             const studentName = block.querySelector('.s-name').innerText;
 
             if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
-                const headerDivHtml = block.querySelector('.block-header div:nth-child(2)').innerHTML;
+                const topActionsHtml = block.querySelector('.block-top-actions').innerHTML;
                 const courseText = block.querySelector('.s-course').innerText;
                 const phoneText = block.querySelector('.s-phone').innerText;
                 const logHtml = block.querySelector('.s-log').innerHTML; 
@@ -803,11 +806,14 @@
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
+                // 過濾掉原本的按鈕，保留隱藏欄位
+                let cleanTopActions = topActionsHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
+
                 newEnrolledRow.innerHTML = `
                     <td>
                         <strong class="s-name">${studentName}</strong>
                         <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
-                        ${headerDivHtml.replace(/<button[\s\S]*?<\/button>/gi, '')}
+                        ${cleanTopActions}
                     </td>
                     <td><span class="s-course">${courseText}</span></td>
                     <td><span class="s-phone">${phoneText}</span></td>
