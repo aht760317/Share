@@ -144,7 +144,6 @@
         .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: block; margin-top: 6px; line-height: 1.4; border-left: 3px solid #64748b; }
         .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; border-left: 4px solid var(--danger); }
         
-        /* 互動式可點選項目樣式 */
         .interactive-log-item {
             cursor: pointer;
             padding: 5px 8px;
@@ -322,7 +321,7 @@
                                 <option value="yes">✅ 是 (有安排測驗)</option>
                             </select>
                         </div>
-                        <div>
+                        <div id="pass-score-wrapper-junior" style="display:none;">
                             <label>自訂及格分數標準：</label>
                             <input type="number" id="log-pass-score-junior" value="80" placeholder="及格分數">
                         </div>
@@ -355,11 +354,11 @@
                     <table class="mobile-card-table">
                         <thead>
                             <tr>
-                                <th width="22%">姓名</th>
-                                <th width="12%">出席狀況</th>
-                                <th width="12%">考試分數</th>
+                                <th width="26%">姓名</th>
+                                <th width="15%">出席狀況</th>
+                                <th width="15%" id="th-exam-score-junior" style="display:none;">考試分數</th>
                                 <th width="14%">作業狀態</th>
-                                <th width="40%">狀態提醒與注意事項 / 電聯QA紀錄</th>
+                                <th width="30%">狀態提醒與注意事項 / 電聯QA紀錄</th>
                             </tr>
                         </thead>
                         <tbody id="log-students-tbody-junior"></tbody>
@@ -418,7 +417,7 @@
                                 <option value="yes">✅ 是 (有安排測驗)</option>
                             </select>
                         </div>
-                        <div>
+                        <div id="pass-score-wrapper-elementary" style="display:none;">
                             <label>自訂及格分數標準：</label>
                             <input type="number" id="log-pass-score-elementary" value="80" placeholder="及格分數">
                         </div>
@@ -451,11 +450,11 @@
                     <table class="mobile-card-table">
                         <thead>
                             <tr>
-                                <th width="22%">姓名</th>
-                                <th width="12%">出席狀況</th>
-                                <th width="12%">考試分數</th>
+                                <th width="26%">姓名</th>
+                                <th width="15%">出席狀況</th>
+                                <th width="15%" id="th-exam-score-elementary" style="display:none;">考試分數</th>
                                 <th width="14%">作業狀態</th>
-                                <th width="40%">狀態提醒與注意事項 / 電聯QA紀錄</th>
+                                <th width="30%">狀態提醒與注意事項 / 電聯QA紀錄</th>
                             </tr>
                         </thead>
                         <tbody id="log-students-tbody-elementary"></tbody>
@@ -701,7 +700,7 @@
                     <tr><th>👨‍🏫 授課老師</th><td id="card-teacher">-</td></tr>
                     <tr><th>📌 出席狀況</th><td id="card-att">-</td></tr>
                     <tr><th>📘 今日進度</th><td id="card-progress">-</td></tr>
-                    <tr><th>📝 測驗表現</th><td id="card-score">-</td></tr>
+                    <tr id="card-score-row"><th>📝 測驗表現</th><td id="card-score">-</td></tr>
                     <tr><th>📖 作業範圍</th><td id="card-homework">-</td></tr>
                     <tr><th>✅ 作業狀態</th><td id="card-hwstatus">-</td></tr>
                     <tr><th>💬 老師評語</th><td id="card-note">-</td></tr>
@@ -715,7 +714,7 @@
         </div>
     </div>
 
-    <!-- 出缺勤修改彈窗 (點擊出缺勤紀錄觸發) -->
+    <!-- 出缺勤修改彈窗 -->
     <div class="modal-overlay" id="makeup-modal">
         <div class="modal-box" style="width:450px;">
             <h3 style="margin-top:0; color:var(--primary);">📌 修改出缺勤與補課狀態</h3>
@@ -752,7 +751,7 @@
         </div>
     </div>
 
-    <!-- 測驗成績與補考修改彈窗 (點擊成績紀錄觸發) -->
+    <!-- 測驗成績與補考修改彈窗 -->
     <div class="modal-overlay" id="retest-modal">
         <div class="modal-box" style="width:450px;">
             <h3 style="margin-top:0; color:var(--primary);">📝 修改測驗成績與補考</h3>
@@ -854,7 +853,7 @@
         </div>
     </div>
 
-    <!-- 安全密碼驗證彈窗 (0618) -->
+    <!-- 安全密碼驗證彈窗 -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 380px;">
             <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
@@ -906,7 +905,6 @@
             return [];
         }
 
-        // 自動修復歷史舊資料（將舊日誌與學生出缺勤進行科目比對與綁定）
         window.autoRepairStudentLogs = async function(showAlert = false) {
             let repairedCount = 0;
             const updatePromises = [];
@@ -1132,7 +1130,6 @@
                 let scoreHtml = '';
                 let noteHtml = '';
 
-                // 嚴格精確分流：只篩選屬於當前班級 (className) 的出席與成績紀錄
                 const classLogs = (s.attendanceLogs || []).filter(l => {
                     return l.course === className || (!l.course && getStudentCoursesArray(s).length === 1);
                 });
@@ -1143,14 +1140,12 @@
                     const isAlert = l.status === '請假' || l.status === '曠課';
                     const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger"> (未補課)</span>` : '');
                     
-                    // 出缺勤點擊直接開啟修改彈窗
                     attHtml += `
                         <div class="interactive-log-item" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆出缺勤紀錄">
                             ${courseTag}<b>${l.date}</b>: <u>${l.status}</u> ${makeupText}
                         </div>
                     `;
 
-                    // 成績點擊直接開啟修改彈窗
                     if (l.score !== null && l.score !== undefined && l.score !== '') {
                         const pass = l.passScore || 80;
                         const isFail = Number(l.score) < pass;
@@ -1196,7 +1191,16 @@
         window.toggleExamSection = function(dept) {
             const hasExamVal = document.getElementById(`has-exam-${dept}`).value;
             const container = document.getElementById(`exam-details-container-${dept}`);
-            if (container) container.style.display = hasExamVal === 'yes' ? 'block' : 'none';
+            const passScoreWrapper = document.getElementById(`pass-score-wrapper-${dept}`);
+            const thExamScore = document.getElementById(`th-exam-score-${dept}`);
+            
+            const isYes = (hasExamVal === 'yes');
+            if (container) container.style.display = isYes ? 'block' : 'none';
+            if (passScoreWrapper) passScoreWrapper.style.display = isYes ? 'block' : 'none';
+            if (thExamScore) thExamScore.style.display = isYes ? 'table-cell' : 'none';
+
+            // 即時更新學生填寫清單中的考試分數欄位顯示
+            window.renderLogStudents(dept);
         };
 
         window.renderPendingTodoPanels = function() {
@@ -1291,6 +1295,8 @@
                 return;
             }
 
+            const hasExam = dept !== 'care' && document.getElementById(`has-exam-${dept}`)?.value === 'yes';
+
             tbody.innerHTML = students.map(s => `
                 <tr data-firestore-id="${s.firestoreId}">
                     <td data-label="學生姓名">
@@ -1306,9 +1312,19 @@
                             <option value="曠課">曠課</option>
                         </select>
                     </td>
-                    <td data-label="${dept === 'care' ? '表現評量' : '考試分數'}">
-                        <input type="${dept === 'care' ? 'text' : 'number'}" class="log-score" placeholder="${dept === 'care' ? '例如: 表現優良' : '輸入分數'}" oninput="checkRowAlerts(this)">
-                    </td>
+                    ${dept === 'care' ? `
+                        <td data-label="表現評量">
+                            <input type="text" class="log-score" placeholder="例如: 表現優良">
+                        </td>
+                    ` : (hasExam ? `
+                        <td data-label="考試分數">
+                            <input type="number" class="log-score" placeholder="輸入分數" oninput="checkRowAlerts(this)">
+                        </td>
+                    ` : `
+                        <td data-label="考試分數" style="display:none;">
+                            <input type="number" class="log-score" value="" style="display:none;">
+                        </td>
+                    `)}
                     <td data-label="回家作業">
                         <select class="log-homework-status">
                             <option value="完成">完成</option>
@@ -1333,9 +1349,13 @@
             const dept = section.id.includes('junior') ? 'junior' : (section.id.includes('elementary') ? 'elementary' : 'care');
             if (dept === 'care') return;
 
+            const hasExam = document.getElementById(`has-exam-${dept}`).value === 'yes';
+            if (!hasExam) return;
+
             const passScore = Number(document.getElementById(`log-pass-score-${dept}`).value) || 80;
             const attStatus = row.querySelector('.log-att-status').value;
-            const scoreVal = row.querySelector('.log-score').value;
+            const scoreInput = row.querySelector('.log-score');
+            const scoreVal = scoreInput ? scoreInput.value : '';
             const alertBox = row.querySelector('.alert-badge-box');
 
             let alertsHtml = '';
@@ -1508,6 +1528,7 @@
             const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
             const contentInput = document.getElementById(dept === 'junior' ? 'log-content-junior' : 'log-content-elementary');
             const homeworkInput = document.getElementById(dept === 'junior' ? 'log-homework-junior' : 'log-homework-elementary');
+            const hasExam = document.getElementById(`has-exam-${dept}`).value === 'yes';
 
             const date = dateInput ? dateInput.value : '';
             const course = courseSelect ? courseSelect.value : '';
@@ -1523,7 +1544,8 @@
             if(row) {
                 const attVal = row.querySelector('.log-att-status').value;
                 att = attVal === '出席' ? '✔ 出席正常' : `✖ ${attVal}`;
-                const scoreVal = row.querySelector('.log-score').value;
+                const scoreInput = row.querySelector('.log-score');
+                const scoreVal = scoreInput ? scoreInput.value : '';
                 score = scoreVal !== '' ? scoreVal : '無';
                 const hwVal = row.querySelector('.log-homework-status').value;
                 hwStatus = hwVal === '完成' ? '✔ 已完成' : hwVal;
@@ -1536,21 +1558,33 @@
             document.getElementById('card-student').innerText = student.name;
             document.getElementById('card-att').innerText = att;
             document.getElementById('card-progress').innerText = progress || '講解指定進度範圍';
-            document.getElementById('card-score').innerText = score;
+            
+            const scoreRow = document.getElementById('card-score-row');
+            if (hasExam) {
+                scoreRow.style.display = '';
+                document.getElementById('card-score').innerText = score;
+            } else {
+                scoreRow.style.display = 'none';
+            }
+
             document.getElementById('card-homework').innerText = homework || '無';
             document.getElementById('card-hwstatus').innerText = hwStatus;
             document.getElementById('card-note').innerText = note;
 
-            const parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
+            let parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
                 `------------------------\n` +
                 `📅 日期：${date}\n` +
                 `📚 課程名稱：${course}\n` +
                 `👨‍🏫 授課老師：${teacherName}\n` +
                 `👨‍🎓 學生姓名：${student.name}\n` +
                 `📌 出缺勤狀況：${att}\n` +
-                `📘 教學進度：${progress}\n` +
-                `📝 表現評量：${score}\n` +
-                `📖 作業內容：${homework}\n` +
+                `📘 教學進度：${progress}\n`;
+            
+            if (hasExam) {
+                parentMsg += `📝 測驗表現：${score}\n`;
+            }
+
+            parentMsg += `📖 作業內容：${homework}\n` +
                 `✅ 作業完成度：${hwStatus}\n` +
                 `💬 老師評語與叮嚀：${note}\n` +
                 `------------------------\n` +
@@ -1567,7 +1601,6 @@
             alert('✅ 已成功複製學習日誌內容！可直接貼至 LINE 給家長。');
         };
 
-        // 點擊出缺勤紀錄時開啟的修改彈窗
         window.openMakeupModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1651,7 +1684,6 @@
             });
         };
 
-        // 點擊成績紀錄時開啟的修改彈窗
         window.openRetestModal = function(firestoreId, logIndex) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student || !student.attendanceLogs[logIndex]) return;
@@ -1913,8 +1945,9 @@
                 for (let row of rows) {
                     const firestoreId = row.getAttribute('data-firestore-id');
                     const status = row.querySelector('.log-att-status').value;
-                    const scoreVal = row.querySelector('.log-score').value;
-                    const score = dept === 'care' ? (scoreVal !== '' ? scoreVal : null) : (scoreVal !== '' ? Number(scoreVal) : null);
+                    const scoreInput = row.querySelector('.log-score');
+                    const scoreVal = scoreInput ? scoreInput.value : '';
+                    const score = dept === 'care' ? (scoreVal !== '' ? scoreVal : null) : (hasExam && scoreVal !== '' ? Number(scoreVal) : null);
                     const homeworkStatus = row.querySelector('.log-homework-status').value;
                     const studentNote = row.querySelector('.log-student-note').value.trim();
 
