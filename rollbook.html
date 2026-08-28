@@ -358,7 +358,7 @@
         <div class="card">
             <h3 style="color:var(--primary);">⚙️ 課程開課起訖日與點名表週期排程 (支援寒暑假調整)</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
-                您可以自由為各個班級設定不同的開課起始日與結束日期，以適應寒假、暑假或短期特殊班期的日期變動。
+                您可以自由為各個班級設定不同的開課起始日與結束日期，或使用右側快速選單一鍵套用 1 個月、2 個月或 3 個月期效，以適應寒假、暑假或短期特殊班期的日期變動。
             </p>
 
             <div id="courseConfigList" style="margin-top:15px;"></div>
@@ -1897,7 +1897,7 @@
                     <th>所屬部門</th>
                     <th>表單週期排程</th>
                     <th>開課起始日</th>
-                    <th>結束日期 (寒暑假調整)</th>
+                    <th>結束日期 (支援快速設定)</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -1917,7 +1917,15 @@
                     <input type="date" id="cfg_start_${c.name}" value="${c.startDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:auto; margin:0;">
                 </td>
                 <td>
-                    <input type="date" id="cfg_end_${c.name}" value="${c.endDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:auto; margin:0;" placeholder="可選填結束日">
+                    <div style="display:flex; gap:6px; align-items:center; justify-content:center;">
+                        <input type="date" id="cfg_end_${c.name}" value="${c.endDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:130px; margin:0;">
+                        <select onchange="applyQuickDuration('${c.name}', this.value)" style="width:auto; padding:4px; margin:0; font-size:12px;">
+                            <option value="">快速設定...</option>
+                            <option value="1">1個月</option>
+                            <option value="2">2個月</option>
+                            <option value="3">3個月</option>
+                        </select>
+                    </div>
                 </td>
                 <td>
                     <button class="btn btn-primary" style="padding:4px 12px; font-size:13px;" onclick="saveCourseConfig('${c.dept}', '${c.name}')">💾 儲存修改</button>
@@ -1927,6 +1935,21 @@
         html += `</tbody></table>`;
         container.innerHTML = html;
     }
+
+    window.applyQuickDuration = function(courseName, months) {
+        if (!months) return;
+        const startInput = document.getElementById(`cfg_start_${courseName}`);
+        const endInput = document.getElementById(`cfg_end_${courseName}`);
+        if (!startInput || !startInput.value) {
+            alert("請先選擇「開課起始日」！");
+            return;
+        }
+        const sDate = new Date(startInput.value);
+        const m = parseInt(months);
+        sDate.setMonth(sDate.getMonth() + m);
+        sDate.setDate(sDate.getDate() - 1);
+        endInput.value = sDate.toISOString().slice(0, 10);
+    };
 
     window.saveCourseConfig = async function(dept, courseName) {
         const startDate = document.getElementById(`cfg_start_${courseName}`).value;
