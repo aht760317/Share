@@ -136,17 +136,29 @@
 
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: middle; font-size: 14.5px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; font-size: 14.5px; }
         th { background: #f1f3f5; text-align: center; color: var(--primary); font-weight: bold; }
         
         .badge-danger { color: var(--danger); font-weight: bold; }
         .badge-success { color: var(--success); font-weight: bold; }
         .text-alert { color: var(--danger); font-weight: bold; font-size: 13px; background: #fde8e8; padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 3px 0; cursor: pointer; border: 1px solid #fca5a5; }
-        .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 4px; line-height: 1.4; }
-        .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; }
+        .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: block; margin-top: 6px; line-height: 1.4; border-left: 3px solid #64748b; }
+        .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; border-left: 4px solid var(--danger); }
         
         .student-class-note { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 13.5px; color: #1e40af; line-height: 1.4; cursor: pointer; transition: 0.15s; }
         .student-class-note:hover { background: #dbeafe; }
+
+        .course-tag-badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 1px 6px;
+            border-radius: 4px;
+            border: 1px solid #bae6fd;
+            margin-right: 4px;
+        }
 
         .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .pending-todo-panel h4 { margin: 0 0 10px 0; color: #c53030; display: flex; align-items: center; gap: 6px; font-size: 15px; }
@@ -498,7 +510,7 @@
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 14px;">
-                    <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (點擊下方班級按鈕查詢)</h3></div>
+                    <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (點擊下方班級按鈕精準分流查詢)</h3></div>
                     <div>
                         <button class="btn btn-primary" onclick="syncWithMasterDatabase()">🔄 重新整理學籍</button>
                     </div>
@@ -521,10 +533,10 @@
                     <table class="mobile-card-table" id="profile-table">
                         <thead>
                             <tr>
-                                <th width="20%">學生姓名</th>
-                                <th width="18%">出席與請假狀況</th>
-                                <th width="25%">考試成績紀錄</th>
-                                <th width="37%">備註與親師電聯 QA 紀錄</th>
+                                <th width="22%">學生姓名</th>
+                                <th width="20%">該科出席與請假狀況</th>
+                                <th width="25%">該科考試成績紀錄</th>
+                                <th width="33%">該科備註與親師電聯 QA</th>
                             </tr>
                         </thead>
                         <tbody id="profile-students-tbody">
@@ -1035,20 +1047,26 @@
                 let scoreHtml = '';
                 let noteHtml = '';
 
-                (s.attendanceLogs || []).slice(0, 10).forEach((l, lIdx) => {
+                // 精準過濾：只篩選出屬於當前選擇班級 (className) 的出席與成績紀錄
+                const classLogs = (s.attendanceLogs || []).filter(l => !l.course || l.course === className);
+
+                classLogs.slice(0, 15).forEach((l) => {
+                    const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
+                    const courseTag = l.course ? `<span class="course-tag-badge">${l.course}</span>` : '';
                     const isAlert = l.status === '請假' || l.status === '曠課';
-                    const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger" style="cursor:pointer;" onclick="openMakeupModal('${s.firestoreId}', ${lIdx})"> (未補課-點擊設定)</span>` : '');
-                    attHtml += `<div style="font-size:13px; margin-bottom:4px;"><b>${l.date}</b>: ${l.status}${makeupText}</div>`;
+                    const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger" style="cursor:pointer;" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})"> (未補課-點擊設定)</span>` : '');
+                    
+                    attHtml += `<div style="font-size:13px; margin-bottom:5px; line-height:1.4;">${courseTag}<b>${l.date}</b>: ${l.status}${makeupText}</div>`;
 
                     if (l.score !== null && l.score !== undefined && l.score !== '') {
                         const pass = l.passScore || 80;
                         const isFail = Number(l.score) < pass;
-                        const retestText = l.retestDone ? `<span class="badge-success"> (已補考: ${l.retestScore || '及格'})</span>` : (isFail ? `<span class="badge-danger" style="cursor:pointer;" onclick="openRetestModal('${s.firestoreId}', ${lIdx})"> (須補考-點擊設定)</span>` : '');
-                        scoreHtml += `<div style="font-size:13px; margin-bottom:4px;"><b>${l.date}</b>: <b>${l.score} 分</b>${retestText}</div>`;
+                        const retestText = l.retestDone ? `<span class="badge-success"> (已補考: ${l.retestScore || '及格'})</span>` : (isFail ? `<span class="badge-danger" style="cursor:pointer;" onclick="openRetestModal('${s.firestoreId}', ${originalLogIndex})"> (須補考-點擊設定)</span>` : '');
+                        scoreHtml += `<div style="font-size:13px; margin-bottom:5px; line-height:1.4;">${courseTag}<b>${l.date}</b>: <b>${l.score} 分</b>${retestText}</div>`;
                     }
 
                     if (l.detail) {
-                        noteHtml += `<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${lIdx})">📌 <b>${l.date}</b>: ${l.detail}</div>`;
+                        noteHtml += `<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`;
                     }
                 });
 
@@ -1068,9 +1086,9 @@
                             <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${phone}</div>
                             <button class="btn btn-small btn-primary" style="margin-top:6px;" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                         </td>
-                        <td data-label="出缺勤紀錄">${attHtml || '<span style="color:#999; font-size:13px;">無出席紀錄</span>'}</td>
-                        <td data-label="成績與補考">${scoreHtml || '<span style="color:#999; font-size:13px;">無測驗紀錄</span>'}</td>
-                        <td data-label="注意事項與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">尚無紀錄</span>'}</td>
+                        <td data-label="該科出缺勤紀錄">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無出席紀錄</span>'}</td>
+                        <td data-label="該科成績與補考">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無測驗紀錄</span>'}</td>
+                        <td data-label="該科備註與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">本科尚無備註紀錄</span>'}</td>
                     </tr>
                 `;
             });
@@ -1101,25 +1119,28 @@
 
                     if(matchCourse && s.status !== 'graduated') {
                         (s.attendanceLogs || []).forEach((l) => {
-                            const needsMakeup = (l.status === '請假' || l.status === '曠課') && !l.makeupDone;
-                            const passScore = l.passScore || 80;
-                            const needsRetest = l.score !== null && l.score !== '' && Number(l.score) < passScore && !l.retestDone;
+                            const currentLogCourse = l.course || matchCourse;
+                            if (targetCourses.includes(currentLogCourse)) {
+                                const needsMakeup = (l.status === '請假' || l.status === '曠課') && !l.makeupDone;
+                                const passScore = l.passScore || 80;
+                                const needsRetest = l.score !== null && l.score !== '' && Number(l.score) < passScore && !l.retestDone;
 
-                            if(needsMakeup) {
-                                pendingItems.push(`
-                                    <div class="todo-badge-item">
-                                        <span><b>${s.name}</b> (${l.date}) - <span style="color:var(--danger); font-weight:bold;">[須補課]</span></span>
-                                        <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${matchCourse}', '${s.firestoreId}')">去處理</button>
-                                    </div>
-                                `);
-                            }
-                            if(needsRetest) {
-                                pendingItems.push(`
-                                    <div class="todo-badge-item">
-                                        <span><b>${s.name}</b> (${l.date}) - <span style="color:var(--danger); font-weight:bold;">[須補考 (${l.score}分)]</span></span>
-                                        <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${matchCourse}', '${s.firestoreId}')">去處理</button>
-                                    </div>
-                                `);
+                                if(needsMakeup) {
+                                    pendingItems.push(`
+                                        <div class="todo-badge-item">
+                                            <span><b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse}</span><span style="color:var(--danger); font-weight:bold;">[須補課]</span></span>
+                                            <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>
+                                        </div>
+                                    `);
+                                }
+                                if(needsRetest) {
+                                    pendingItems.push(`
+                                        <div class="todo-badge-item">
+                                            <span><b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse}</span><span style="color:var(--danger); font-weight:bold;">[須補考 (${l.score}分)]</span></span>
+                                            <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>
+                                        </div>
+                                    `);
+                                }
                             }
                         });
 
@@ -1330,7 +1351,7 @@
                 const log = student.attendanceLogs[logIndex];
                 document.getElementById('edit-note-student-id').value = firestoreId;
                 document.getElementById('edit-note-log-index').value = logIndex;
-                document.getElementById('edit-note-info').innerText = `學生：${student.name} | 日期：${log.date}`;
+                document.getElementById('edit-note-info').innerText = `學生：${student.name} | 課程：${log.course || '未分類'} | 日期：${log.date}`;
                 document.getElementById('edit-note-text').value = log.detail || '';
 
                 document.getElementById('student-note-modal').style.display = 'flex';
@@ -1456,7 +1477,7 @@
             const log = student.attendanceLogs[logIndex];
             document.getElementById('makeup-student-id').value = firestoreId;
             document.getElementById('makeup-log-index').value = logIndex;
-            document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 日期：${log.date} | 目前狀況：${log.status}`;
+            document.getElementById('makeup-student-info').innerText = `學生：${student.name} | 課程：${log.course || '未分類'} | 日期：${log.date} | 狀況：${log.status}`;
             document.getElementById('makeup-status-select').value = log.makeupDone ? 'done' : 'pending';
             document.getElementById('makeup-date-input').value = log.makeupDate || new Date().toISOString().split('T')[0];
             toggleMakeupDateInput();
@@ -1501,7 +1522,7 @@
             const log = student.attendanceLogs[logIndex];
             document.getElementById('retest-student-id').value = firestoreId;
             document.getElementById('retest-log-index').value = logIndex;
-            document.getElementById('retest-student-info').innerText = `學生：${student.name} | 日期：${log.date}`;
+            document.getElementById('retest-student-info').innerText = `學生：${student.name} | 課程：${log.course || '未分類'} | 日期：${log.date}`;
             
             document.getElementById('edit-att-status').value = log.status || '出席';
             document.getElementById('retest-score-input').value = log.score !== null ? log.score : '';
@@ -1737,16 +1758,17 @@
                     if (student) {
                         if (!student.attendanceLogs) student.attendanceLogs = [];
                         
-                        const existingIdx = student.attendanceLogs.findIndex(l => l.date === date);
+                        // 依日期與科目雙重比對，避免同天不同科目互相覆蓋
+                        const existingIdx = student.attendanceLogs.findIndex(l => l.date === date && l.course === course);
                         if (existingIdx >= 0) {
                             student.attendanceLogs[existingIdx] = {
-                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
+                                date, course, dept, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
                                 makeupDone: student.attendanceLogs[existingIdx].makeupDone || false,
                                 retestDone: student.attendanceLogs[existingIdx].retestDone || false
                             };
                         } else {
                             student.attendanceLogs.unshift({
-                                date, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
+                                date, course, dept, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
                                 makeupDone: false, retestDone: false
                             });
                         }
@@ -1758,7 +1780,7 @@
                     }
                 }
 
-                alert('✅ 教學日誌已成功儲存與同步！');
+                alert(`✅【${course}】教學日誌已成功儲存與同步！`);
                 
                 if (dept === 'care') {
                     const queryNavBtn = document.querySelector('nav button:nth-child(5)');
