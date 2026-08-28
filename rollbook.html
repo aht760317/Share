@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教務管理、點名與中央學生資料總覽系統</title>
+    <title>斗六顧德補習班 - 智慧教務管理、多科修課點名與學生資料總庫</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -41,9 +41,8 @@
         .nav-link { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 7px 14px; border-radius: 20px; font-weight: bold; }
         .nav-link:hover { background: rgba(255,255,255,0.35); }
 
-        .container { max-width: 1400px; margin: 25px auto; padding: 0 15px; }
+        .container { max-width: 1420px; margin: 25px auto; padding: 0 15px; }
 
-        /* 導覽列標籤 */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn {
             flex: 1; min-width: 160px; padding: 13px; border: none; border-radius: 8px;
@@ -120,11 +119,10 @@
             background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
         }
         .modal-box {
-            background: white; width: 780px; max-width: 95vw; padding: 25px;
+            background: white; width: 800px; max-width: 95vw; padding: 25px;
             border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
         }
 
-        /* 部門標籤列 */
         .dept-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .dept-btn {
             padding: 10px 18px; border: 2px solid var(--border); background: #f8fafc;
@@ -144,7 +142,6 @@
             background: #d946ef; color: white;
         }
 
-        /* 部門所屬班級一覽區塊 (純淨按鈕，不顯示叉叉) */
         .class-overview-box {
             background: #f8fafc; border: 2px solid #cbd5e1; padding: 16px 20px;
             border-radius: 10px; margin-bottom: 20px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
@@ -160,13 +157,27 @@
             background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 2px 5px rgba(52,152,219,0.3);
         }
 
-        /* 班級全覽管理卡片網格 */
         .all-classes-manage-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;
         }
         .class-manage-card {
             background: white; border: 2px solid #cbd5e1; border-radius: 8px; padding: 15px;
             display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* 班級多選勾選盒容器 */
+        .multi-class-select-box {
+            background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px;
+            max-height: 140px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
+        }
+        .multi-class-label {
+            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; cursor: pointer;
+            background: white; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;
+        }
+
+        .course-tag {
+            display: inline-block; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px;
+            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; margin: 2px;
         }
 
         @media print {
@@ -187,7 +198,7 @@
 <header>
     <div class="header-title">
         <h2>斗六顧德補習班 智慧教務與點名管理系統</h2>
-        <p>全校學生學籍總庫 ｜ 課輔部、國小部、國中部三部連動 ｜ 教學日誌與自動出缺席同步</p>
+        <p>全校學生學籍總庫 ｜ 支援單一生多科跨班選課 ｜ 課輔部、國小部、國中部連動</p>
     </div>
     
     <div class="sync-controls no-print">
@@ -237,7 +248,7 @@
 
             <div style="margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <span id="rollStatsText" style="font-weight:bold; color:var(--primary);">應到 0 人 / 出席 0 人</span>
-                <span style="font-size:13px; color:#888;">💡 點名與成績修改後將即時同步，並在下方產生紙本點名單。</span>
+                <span style="font-size:13px; color:#888;">💡 支援跨班修課學生點名，各班成績與出缺席各自獨立記錄。</span>
             </div>
 
             <div class="student-grid" id="studentRollGrid"></div>
@@ -325,13 +336,13 @@
         </div>
     </div>
 
-    <!-- 5. 全校學生檔案總覽 -->
+    <!-- 5. 全校學生檔案總覽 (支援多科班級管理) -->
     <div id="tab-students-master" style="display:none;">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
                 <div>
                     <h3 style="color:var(--primary); margin-bottom:4px;">👥 全校學籍管理與學生總覽</h3>
-                    <p style="font-size:13px; color:#666;">清單僅呈現主要核心資料，點擊「編輯」即可檢視並維護家長職業、健康狀況與大備註等詳細資料</p>
+                    <p style="font-size:13px; color:#666;">支援單一學生同時修習多門科目，點擊「📋 快速加選」可立即將學生複製/加入其他班級</p>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button class="btn btn-primary" onclick="openAddClassModal()">➕ 新增班級課程</button>
@@ -339,7 +350,7 @@
                 </div>
             </div>
 
-            <!-- 部門導覽列：在國小部前面增加「🏫 班級全覽」按鈕 -->
+            <!-- 部門導覽列 -->
             <div class="dept-nav">
                 <button class="dept-btn" id="deptBtn-allclasses" onclick="switchDept('allclasses')">🏫 班級全覽 (管理與刪除班級)</button>
                 <button class="dept-btn active-care" id="deptBtn-care" onclick="switchDept('care')">🏢 課輔部</button>
@@ -349,19 +360,19 @@
                 <button class="dept-btn-small" id="deptBtn-graduated" onclick="switchDept('graduated')">🎓 畢業班</button>
             </div>
 
-            <!-- 加大的部門所屬班級一覽區塊 (純過濾用，無叉叉) -->
+            <!-- 部門所屬班級過濾一覽 -->
             <div class="class-overview-box" id="classOverviewBox">
                 <div class="class-overview-title">🏫 部門所屬班級一覽 (點擊可快速過濾學生)：</div>
                 <div id="deptClassButtons" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
             </div>
 
-            <!-- 專用班級全覽管理區 (包含刪除班級按鈕) -->
+            <!-- 專用班級全覽管理區 -->
             <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
                 <div class="class-overview-title" style="color:#3730a3;">🏫 全校班級課程管理專區 (可在此刪除畢業班級)：</div>
                 <div id="allClassesCardGrid" class="all-classes-manage-grid"></div>
             </div>
 
-            <!-- 學生名冊清單 (乾淨版面：姓名~學校~班級~三個電話~操作) -->
+            <!-- 學生名冊清單 -->
             <div id="studentTableSection">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h4 id="studentListTitle" style="color:var(--primary);">目前學生名冊</h4>
@@ -374,12 +385,12 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:50px;">序</th>
-                                <th style="width:130px;">學生姓名</th>
-                                <th style="width:140px;">就讀學校</th>
-                                <th style="width:170px;">所屬班級 (年班/版本)</th>
+                                <th style="width:45px;">序</th>
+                                <th style="width:120px;">學生姓名</th>
+                                <th style="width:130px;">就讀學校</th>
+                                <th style="width:220px;">修習班級 (支援多科) / 版本</th>
                                 <th style="width:240px;">三支聯絡電話</th>
-                                <th style="width:110px;">詳細與操作</th>
+                                <th style="width:160px;">詳細與操作</th>
                             </tr>
                         </thead>
                         <tbody id="masterStudentTableBody"></tbody>
@@ -390,7 +401,7 @@
     </div>
 </div>
 
-<!-- 學生新增/編輯彈窗 (含爸爸職業、媽媽職業、超大備註框) -->
+<!-- 學生新增/編輯彈窗 (支援複選多個班級) -->
 <div class="modal-overlay" id="studentModal">
     <div class="modal-box">
         <h3 id="studentModalTitle" style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">新增學生學籍檔案</h3>
@@ -429,11 +440,13 @@
             </div>
         </div>
 
-        <div class="grid-3">
-            <div>
-                <label><b>所屬補習班班級*：</b></label>
-                <select id="m_stu_course"></select>
-            </div>
+        <!-- 所屬班級多選勾選盒 (可同時選 2-3-4 科) -->
+        <div style="margin:8px 0 12px;">
+            <label style="color:var(--primary); font-weight:bold;"><b>修習班級課程* (可同時勾選 2~4 科，該生會同步出現在所選班級中)：</b></label>
+            <div id="multiClassCheckboxes" class="multi-class-select-box"></div>
+        </div>
+
+        <div class="grid-2">
             <div>
                 <label><b>教材版本：</b></label>
                 <input type="text" id="m_stu_version" placeholder="例如：康軒版 / 翰林版 / 南一版">
@@ -468,7 +481,6 @@
             </div>
         </div>
 
-        <!-- 獨立的爸爸職業、媽媽職業與通訊地址 -->
         <div class="grid-3">
             <div>
                 <label><b>爸爸職業：</b></label>
@@ -489,7 +501,6 @@
             <input type="text" id="m_stu_address" placeholder="例如：雲林縣斗六市民生路...">
         </div>
 
-        <!-- 加大的備註輸入框 (Textarea) -->
         <div>
             <label><b>學生詳細備註事項 (可輸入大量備註/學習紀錄/注意事項)：</b></label>
             <textarea id="m_stu_notes" rows="4" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習進度提醒、性格特質、親師溝通重點、交通接送等備註..."></textarea>
@@ -501,6 +512,22 @@
                 <button type="button" class="btn btn-success" onclick="saveStudentMasterData()">💾 儲存學生檔案</button>
                 <button type="button" class="btn btn-outline" onclick="closeStudentModal()">取消</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速加選/複製班級彈窗 -->
+<div class="modal-overlay" id="quickAssignModal">
+    <div class="modal-box" style="width:550px;">
+        <h3 id="quickAssignTitle" style="color:var(--primary); margin-bottom:12px;">📋 快速加選 / 複製學生至其他班級</h3>
+        <input type="hidden" id="quickAssignFirestoreId">
+        <p style="font-size:13px; color:#555; margin-bottom:10px;">請勾選此學生要同時報名或修習的所有班級課程：</p>
+        
+        <div id="quickAssignCheckboxes" class="multi-class-select-box" style="max-height:220px;"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button class="btn btn-success" onclick="saveQuickAssign()">💾 確認加選並儲存</button>
+            <button class="btn btn-outline" onclick="document.getElementById('quickAssignModal').style.display='none'">取消</button>
         </div>
     </div>
 </div>
@@ -539,7 +566,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase 連線設定
+    // Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
         authDomain: "my-project-9999-479215.firebaseapp.com",
@@ -581,6 +608,16 @@
         return false;
     }
 
+    // 輔助函式：確保學生班級資料轉為陣列
+    function getStudentCoursesArray(stu) {
+        if (!stu) return [];
+        if (Array.isArray(stu.courses) && stu.courses.length > 0) return stu.courses;
+        if (stu.course) {
+            return stu.course.split(/[,，、]/).map(c => c.trim()).filter(c => c);
+        }
+        return [];
+    }
+
     async function initCloudData(showNotice = false) {
         try {
             document.getElementById('syncStatusLabel').innerText = "連線更新中...";
@@ -599,11 +636,18 @@
                 };
             }
 
-            // 2. 讀取學生總冊
+            // 2. 讀取學生總冊 (自動相容 courses 多選陣列)
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
             window.state.students = [];
             studentsSnapshot.forEach(d => {
-                window.state.students.push({ firestoreId: d.id, ...d.data() });
+                const stuData = d.data();
+                const coursesArr = getStudentCoursesArray(stuData);
+                window.state.students.push({
+                    firestoreId: d.id,
+                    ...stuData,
+                    courses: coursesArr,
+                    course: coursesArr.join('、')
+                });
             });
 
             // 3. 讀取教學日誌
@@ -616,7 +660,7 @@
             // 4. 解析日誌並自動帶入出席與分數
             window.state.students.forEach(s => {
                 (s.attendanceLogs || []).forEach(l => {
-                    const key = `${l.date}_${s.course}_${s.name}`;
+                    const key = `${l.date}_${l.course || s.course}_${s.name}`;
                     if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
                     window.state.attendanceData[key].status = l.status || '出席';
                     if (l.score !== null && l.score !== undefined) {
@@ -709,7 +753,6 @@
 
         const deptKey = window.state.currentDeptView;
 
-        // 如果是點擊「班級全覽」：顯示全校各部門班級卡片與刪除鈕
         if (deptKey === 'allclasses') {
             box.style.display = 'none';
             studentTableSection.style.display = 'none';
@@ -718,7 +761,6 @@
             return;
         }
 
-        // 其他模式：恢復顯示學生表格
         studentTableSection.style.display = 'block';
         manageBox.style.display = 'none';
 
@@ -741,14 +783,12 @@
         list.forEach(c => {
             const cName = typeof c === 'object' ? c.name : c;
             const isActive = window.state.currentFilterClass === cName;
-            // 乾淨班級按鈕，不再顯示 ✖
             html += `<button class="class-btn-pill ${isActive ? 'active' : ''}" onclick="filterByClass('${cName}')">🏫 ${cName}</button>`;
         });
 
         container.innerHTML = html || `<span style="color:#888; font-size:14px;">該部門目前尚無班級課程，請點擊右上角「➕ 新增班級課程」。</span>`;
     }
 
-    // 渲染「班級全覽」管理專區
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
@@ -763,7 +803,10 @@
                 const cName = typeof c === 'object' ? c.name : c;
                 const cDay = typeof c === 'object' ? (c.day || '未設時間') : '';
                 const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '';
-                const stuCount = window.state.students.filter(s => s.course === cName && s.status !== 'graduated').length;
+                const stuCount = window.state.students.filter(s => {
+                    const arr = getStudentCoursesArray(s);
+                    return arr.includes(cName) && s.status !== 'graduated';
+                }).length;
 
                 html += `
                     <div class="class-manage-card">
@@ -771,7 +814,7 @@
                             <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
                             <div style="font-size:16px; font-weight:bold; color:var(--primary); margin:8px 0 4px;">🏫 ${cName}</div>
                             <div style="font-size:13px; color:#555;">授課：${cTeacher} | ${cDay}</div>
-                            <div style="font-size:13px; color:#666; margin-top:4px;">目前在籍學生：<b>${stuCount}</b> 人</div>
+                            <div style="font-size:13px; color:#666; margin-top:4px;">目前修課學生：<b>${stuCount}</b> 人</div>
                         </div>
                         <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; text-align:right;">
                             <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteClassCourse('${deptKey}', '${cName}')">🗑️ 刪除此班級 (需密碼)</button>
@@ -784,16 +827,19 @@
         grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前全校尚無建立任何班級課程。</p>`;
     }
 
-    // 刪除班級課程 (需密碼 0618)
     window.deleteClassCourse = async function(dept, className) {
         if (!checkPassword(`🔒 刪除班級【${className}】屬於教務管理操作，請輸入管理密碼：`)) {
             return;
         }
 
-        const countInClass = window.state.students.filter(s => s.course === className && s.status !== 'graduated').length;
+        const countInClass = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(className) && s.status !== 'graduated';
+        }).length;
+
         let warningText = `⚠️ 確定要刪除班級【${className}】嗎？\n此動作將會從課表與點名表中移除該班級。`;
         if (countInClass > 0) {
-            warningText += `\n\n📌 提醒：目前該班級仍有 ${countInClass} 位在籍學生，刪除班級不會刪除學生資料，請後續至學生管理將其轉班或設定為畢業。`;
+            warningText += `\n\n📌 提醒：目前有 ${countInClass} 位學生修習此課程，刪除班級不會刪除學生檔案，系統會自動將該科目從學生修課名單中移除。`;
         }
 
         if (confirm(warningText)) {
@@ -822,31 +868,33 @@
         renderMasterStudentsTable();
     };
 
-    // 學生清單表格渲染：姓名~學校~班級~三個電話~操作 (乾淨排版)
+    // 學生清單表格 (支援多科彩色標籤與快速加選按鈕)
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const deptKey = window.state.currentDeptView;
         const filterClass = window.state.currentFilterClass;
         const keyword = (document.getElementById('studentSearchInput').value || '').trim().toLowerCase();
 
-        if (deptKey === 'allclasses') return; // 班級全覽模式不顯示此表
+        if (deptKey === 'allclasses') return;
 
         const deptClasses = (window.state.courses[deptKey] || []).map(c => typeof c === 'object' ? c.name : c);
 
         let filtered = window.state.students.filter(s => {
             const isGraduated = s.status === 'graduated';
+            const stuCourses = getStudentCoursesArray(s);
+
             if (deptKey === 'graduated') {
                 return isGraduated;
             } else if (deptKey === 'all') {
-                return !isGraduated; // 全校在籍學生
+                return !isGraduated;
             } else {
                 if (isGraduated) return false;
-                if (filterClass) return s.course === filterClass;
-                return deptClasses.includes(s.course);
+                if (filterClass) return stuCourses.includes(filterClass);
+                // 只要學生修習的任一班級屬於該部門即可
+                return stuCourses.some(c => deptClasses.includes(c));
             }
         });
 
-        // 若為全校所有學生總覽，依出生日期由大到小排序
         if (deptKey === 'all') {
             filtered.sort((a, b) => {
                 const dateA = a.birthday || '9999-99-99';
@@ -885,6 +933,9 @@
         let html = '';
         filtered.forEach((stu, idx) => {
             const phonesStr = (stu.phones || []).map(p => `<b>${p.label}:</b> ${p.number || '-'}`).join(' ｜ ') || '-';
+            const stuCourses = getStudentCoursesArray(stu);
+            const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
+
             html += `
                 <tr>
                     <td>${idx + 1}</td>
@@ -893,13 +944,16 @@
                         <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 6px; border-radius:4px; margin-left:4px;">${stu.gender || '男'}</span>
                     </td>
                     <td><b>${stu.school || '-'}</b></td>
-                    <td>
-                        <span style="color:var(--primary); font-weight:bold;">${stu.course || '-'}</span><br>
-                        <small style="color:#666;">${stu.studentClass || '-'} ｜ ${stu.studentVersion ? stu.studentVersion : '通用版'}</small>
+                    <td style="text-align:left;">
+                        <div>${coursesTags}</div>
+                        <small style="color:#666; margin-top:2px; display:inline-block;">${stu.studentClass || '-'} ｜ ${stu.studentVersion ? stu.studentVersion : '通用版'}</small>
                     </td>
                     <td style="font-size:12px; text-align:left; line-height:1.4;">${phonesStr}</td>
                     <td>
-                        <button class="btn btn-primary" style="padding:5px 10px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯詳細資料</button>
+                        <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 快速加選班級</button>
+                            <button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯詳細</button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -908,9 +962,33 @@
         tbody.innerHTML = html;
     };
 
+    // 渲染多選班級勾選清單
+    function renderMultiClassCheckboxes(containerId, selectedCourses = []) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        let html = '';
+
+        ['care', 'elementary', 'junior'].forEach(dept => {
+            const deptName = dept === 'care' ? '課輔' : (dept === 'elementary' ? '國小' : '國中');
+            const list = window.state.courses[dept] || [];
+            list.forEach(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const isChecked = selectedCourses.includes(cName);
+                html += `
+                    <label class="multi-class-label">
+                        <input type="checkbox" value="${cName}" ${isChecked ? 'checked' : ''}>
+                        <span>[${deptName}] ${cName}</span>
+                    </label>
+                `;
+            });
+        });
+
+        container.innerHTML = html || `<span style="color:#888; font-size:12px;">尚未建立任何班級，請先新增班級課程。</span>`;
+    }
+
     // 打開新增學生彈窗 (免密碼)
     window.openStudentModal = function() {
-        document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案";
+        document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案 (可複選修習班級)";
         document.getElementById('editStudentFirestoreId').value = "";
         document.getElementById('btnDeleteStudent').style.display = "none";
 
@@ -936,30 +1014,11 @@
         document.getElementById('m_stu_health').value = "";
         document.getElementById('m_stu_notes').value = "";
 
-        populateStudentModalCourses();
+        renderMultiClassCheckboxes('multiClassCheckboxes', []);
         document.getElementById('studentModal').style.display = "flex";
     };
 
-    function populateStudentModalCourses(selectedVal = '') {
-        const sel = document.getElementById('m_stu_course');
-        sel.innerHTML = '';
-        let count = 0;
-        ['care', 'elementary', 'junior'].forEach(dept => {
-            const deptName = dept === 'care' ? '課輔部' : (dept === 'elementary' ? '國小部' : '國中部');
-            const list = window.state.courses[dept] || [];
-            list.forEach(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                sel.innerHTML += `<option value="${cName}" ${selectedVal===cName?'selected':''}>[${deptName}] ${cName}</option>`;
-                count++;
-            });
-        });
-
-        if (count === 0) {
-            sel.innerHTML = `<option value="課後班">[預設] 課後班</option>`;
-        }
-    }
-
-    // 打開編輯學生彈窗 (免密碼，刪除才需密碼)
+    // 打開編輯學生彈窗 (免密碼)
     window.openEditStudentModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
@@ -994,7 +1053,9 @@
         document.getElementById('m_stu_health').value = stu.health || '';
         document.getElementById('m_stu_notes').value = stu.notes || '';
 
-        populateStudentModalCourses(stu.course);
+        const selectedCourses = getStudentCoursesArray(stu);
+        renderMultiClassCheckboxes('multiClassCheckboxes', selectedCourses);
+
         document.getElementById('studentModal').style.display = "flex";
     };
 
@@ -1006,10 +1067,11 @@
     window.saveStudentMasterData = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value.trim();
-        const course = document.getElementById('m_stu_course').value;
+
+        const selectedCourses = Array.from(document.querySelectorAll('#multiClassCheckboxes input[type="checkbox"]:checked')).map(cb => cb.value);
 
         if (!name) return alert('⚠️ 學生姓名不能為空白！');
-        if (!course) return alert('⚠️ 請為學生選擇所屬班級！');
+        if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生勾選一個修習的班級課程！');
 
         const studentData = {
             name: name,
@@ -1018,7 +1080,8 @@
             school: document.getElementById('m_stu_school').value.trim(),
             studentClass: document.getElementById('m_stu_class').value.trim(),
             birthday: document.getElementById('m_stu_birthday').value,
-            course: course,
+            courses: selectedCourses,
+            course: selectedCourses.join('、'),
             studentVersion: document.getElementById('m_stu_version').value.trim(),
             status: document.getElementById('m_stu_status').value,
             phones: [
@@ -1048,11 +1111,55 @@
                 });
             }
             closeStudentModal();
-            alert('✅ 學生學籍資料已成功同步儲存至 Firebase 雲端！');
+            alert(`✅ 學生【${name}】的學籍與多科選課資料已成功同步至雲端！`);
             initCloudData();
         } catch (e) {
             console.error(e);
             alert('儲存失敗，請檢查網路連線！');
+        }
+    };
+
+    // 快速加選/複製班級彈窗
+    window.openQuickAssignModal = function(firestoreId) {
+        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
+        if (!stu) return;
+
+        document.getElementById('quickAssignTitle').innerText = `📋 為【${stu.name}】加選 / 複製至其他班級`;
+        document.getElementById('quickAssignFirestoreId').value = firestoreId;
+
+        const currentCourses = getStudentCoursesArray(stu);
+        renderMultiClassCheckboxes('quickAssignCheckboxes', currentCourses);
+
+        document.getElementById('quickAssignModal').style.display = 'flex';
+    };
+
+    window.saveQuickAssign = async function() {
+        const firestoreId = document.getElementById('quickAssignFirestoreId').value;
+        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
+        if (!stu) return;
+
+        const selectedCourses = Array.from(document.querySelectorAll('#quickAssignCheckboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        if (selectedCourses.length === 0) {
+            return alert('⚠️ 請至少勾選一個修習班級！');
+        }
+
+        try {
+            stu.courses = selectedCourses;
+            stu.course = selectedCourses.join('、');
+
+            await setDoc(doc(db, "classLogStudents", firestoreId), {
+                ...stu,
+                courses: selectedCourses,
+                course: stu.course
+            });
+
+            document.getElementById('quickAssignModal').style.display = 'none';
+            alert(`✅ 已成功更新【${stu.name}】的修課名冊！已同步至各班點名表。`);
+            initCloudData();
+        } catch (e) {
+            console.error(e);
+            alert('加選班級失敗');
         }
     };
 
@@ -1234,7 +1341,12 @@
 
         const dateStr = document.getElementById('rollDateInput').value;
         const c = window.state.currentCourse;
-        const courseStudents = window.state.students.filter(s => s.course === c.name && s.status !== 'graduated');
+        
+        // 篩選修習包含此班級名稱的在籍學生
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(c.name) && s.status !== 'graduated';
+        });
 
         let presentCount = 0;
         let paperRowsHtml = '';
@@ -1299,7 +1411,7 @@
 
         document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名單`;
         document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 授課教師：${c.teacher || '任課老師'} | 應到人數：${courseStudents.length} 人 | 實到：${presentCount} 人`;
-        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="8" style="padding:15px; color:#888;">此班級目前無在籍學生名冊</td></tr>`;
+        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="8" style="padding:15px; color:#888;">此班級目前無在籍修課學生</td></tr>`;
     }
 
     window.setAttendance = function(key, status) {
@@ -1320,7 +1432,10 @@
     window.quickMarkAll = function() {
         const dateStr = document.getElementById('rollDateInput').value;
         const c = window.state.currentCourse;
-        const courseStudents = window.state.students.filter(s => s.course === c.name && s.status !== 'graduated');
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(c.name) && s.status !== 'graduated';
+        });
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : '') };
@@ -1391,7 +1506,10 @@
         document.getElementById('sheetPeriodBadge').innerText = periodDesc;
 
         const startDateVal = course.startDate || new Date().toISOString().slice(0, 10);
-        const courseStudents = window.state.students.filter(s => s.course === course.name && s.status !== 'graduated');
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(course.name) && s.status !== 'graduated';
+        });
 
         let dateList = [];
         let cur = new Date(startDateVal);
