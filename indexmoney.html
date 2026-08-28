@@ -31,7 +31,7 @@
 
         /* 通用按鈕與表單 */
         button { cursor: pointer; font-family: inherit; }
-        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; min-height: 45px; align-items: center; }
+        .btn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .btn-select { padding: 10px 18px; background: #F1F5F9; border: 2px solid transparent; border-radius: 8px; font-size: 16px; color: #334155; font-weight: 500; transition: 0.2s; }
         .btn-select:hover { background: #E2E8F0; }
         .btn-select.active { background: #EFF6FF; border-color: var(--accent); color: var(--accent); font-weight: bold; }
@@ -46,7 +46,7 @@
         .category-filter-btn:hover { background: #F1F5F9; }
         .category-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
 
-        /* 快捷按鈕區 (支援拖曳) */
+        /* 快捷按鈕區 */
         .quick-btn { padding: 10px 15px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; cursor: grab; user-select: none; }
         .quick-btn:active { cursor: grabbing; }
         .quick-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -58,12 +58,7 @@
         .quick-btn.other { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
         .quick-btn.other small { color: #D97706; }
 
-        /* 設定區純按鈕樣式 */
-        .pill-btn { padding: 8px 16px; background: #F1F5F9; border: 2px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: bold; color: #334155; cursor: grab; transition: 0.2s; user-select: none; }
-        .pill-btn:active { cursor: grabbing; }
-        .pill-btn:hover { background: #E2E8F0; border-color: #94A3B8; }
-
-        /* 專案管理與新增區塊 */
+        /* 項目管理與新增區塊 */
         .item-builder { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .item-row strong { font-size: 16px; color: #1E293B; cursor: pointer; transition: 0.2s; }
@@ -115,9 +110,6 @@
         .note-toggle.expanded { white-space: pre-wrap; overflow: visible; max-width: 350px; background: #FEF3C7; color: #92400E; border-color: #FCD34D; position: relative; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-top: 25px; }
-
-        /* 拖曳陰影 */
-        .sortable-ghost { opacity: 0.4; background-color: #CBD5E1 !important; }
 
         /* 彈出視窗 Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; }
@@ -212,10 +204,11 @@
                 <button class="btn-select active" style="margin-left:10px; padding:8px 15px;" onclick="clearFilter()">顯示全部</button>
             </div>
             <div style="border-left: 2px solid #CBD5E1; margin: 0 10px; height: 30px;"></div>
-            <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <label style="margin:0; color: #1E40AF; font-weight: bold;">🏫 批次列印(環保模式)：</label>
-                <select id="batchPrintClassSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #CBD5E1; margin-left: 5px;"></select>
-                <button class="btn-blue action-btn" style="padding: 8px 15px; font-size: 15px; margin-left: 5px;" onclick="batchPrintNotices()">🖨️ 印出該班【未繳費】通知單</button>
+                <select id="batchPrintClassSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #CBD5E1;"></select>
+                <button class="btn-blue action-btn" style="padding: 8px 12px; font-size: 14px; margin:0;" onclick="batchPrintNotices()">🖨️ 印該班【未繳費】</button>
+                <button class="btn-green action-btn" style="padding: 8px 12px; font-size: 14px; margin:0;" onclick="printSelectedCheckedNotices()">🖨️ 印勾選【未繳費】</button>
             </div>
         </div>
 
@@ -229,11 +222,12 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width:15%">單據年月</th>
+                        <th style="width:5%; text-align:center;"><input type="checkbox" id="selectAllPrimary" onclick="toggleSelectAll('primary', this)"></th>
+                        <th style="width:14%">單據年月</th>
                         <th style="width:25%">班級 / 姓名</th>
-                        <th style="width:15%">總金額</th>
-                        <th style="width:15%">狀態</th>
-                        <th style="width:30%">操作與單筆列印</th>
+                        <th style="width:14%">總金額</th>
+                        <th style="width:14%">狀態</th>
+                        <th style="width:28%">操作與單筆列印</th>
                     </tr>
                 </thead>
                 <tbody id="primaryRecordTableBody"></tbody>
@@ -250,11 +244,12 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width:22%">單據區間</th>
+                        <th style="width:5%; text-align:center;"><input type="checkbox" id="selectAllJunior" onclick="toggleSelectAll('junior', this)"></th>
+                        <th style="width:20%">單據區間</th>
                         <th style="width:22%">班級 / 姓名</th>
                         <th style="width:12%">總金額</th>
                         <th style="width:12%">狀態</th>
-                        <th style="width:32%">操作與單筆列印</th>
+                        <th style="width:29%">操作與單筆列印</th>
                     </tr>
                 </thead>
                 <tbody id="juniorRecordTableBody"></tbody>
@@ -346,7 +341,7 @@
         </div>
 
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;">
-            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定 (支援拖曳排序)</h3>
+            <h3 style="margin-top: 0; color: var(--primary);">⚙️ 快捷收費按鈕設定</h3>
             
             <div class="form-row">
                 <div style="flex: 2;">
@@ -1061,8 +1056,7 @@
             document.querySelectorAll('#primaryQuickItemConfigList .quick-drag-item, #juniorQuickItemConfigList .quick-drag-item, #otherQuickItemConfigList .quick-drag-item').forEach(el => {
                 newOrderedIndices.push(parseInt(el.getAttribute('data-index')));
             });
-            const newQuickItems = newOrderedIndices.map(i => window.quickItems[i]);
-            window.quickItems = newQuickItems;
+            window.quickItems = newOrderedIndices.map(i => window.quickItems[i]);
             await saveQuickItemsToCloud();
             renderQuickItemConfigList();
         };
@@ -1272,7 +1266,6 @@
         juniorGrid.innerHTML = juniorHtml || '<span style="color:#94A3B8; font-size:13px;">無</span>';
         otherGrid.innerHTML = otherHtml || '<span style="color:#94A3B8; font-size:13px;">無</span>';
 
-        // 讓開單區的按鈕也能拖曳排序
         const onBillingSortEnd = async function () {
             const newOrderedIndices = [];
             document.querySelectorAll('#primaryQuickItemGrid .billing-drag-item, #juniorQuickItemGrid .billing-drag-item, #otherQuickItemGrid .billing-drag-item').forEach(el => {
@@ -1408,6 +1401,11 @@
             classNames.map(cls => `<option value="${cls}">${cls}</option>`).join('');
     }
 
+    window.toggleSelectAll = function(dept, masterCheckbox) {
+        const checkboxes = document.querySelectorAll(`.row-checkbox-${dept}`);
+        checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+    };
+
     window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         
@@ -1427,6 +1425,14 @@
             const statusHtml = bill.isPaid ? `<span class="status-badge status-paid">✅ 繳費完成</span>` : `<span class="status-badge status-unpaid">⏳ 未繳費</span>`;
             const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
             
+            const isJr = window.isJuniorHigh(bill.className);
+            const deptKey = isJr ? 'junior' : 'primary';
+
+            let checkboxHtml = '';
+            if (!bill.isPaid) {
+                checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bill.id}">`;
+            }
+
             let actionHtml = '';
             if(!bill.isPaid) {
                 actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️ 通知單</button>`;
@@ -1441,6 +1447,7 @@
 
             const trHtml = `
                 <tr>
+                    <td style="text-align:center;">${checkboxHtml}</td>
                     <td style="font-weight:bold; color:var(--primary); font-size:14px;">${displayMonth}</td>
                     <td>${bill.className} - <strong>${bill.studentName}</strong></td>
                     <td style="font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
@@ -1448,7 +1455,7 @@
                     <td>${actionHtml}</td>
                 </tr>`;
                 
-            if (window.isJuniorHigh(bill.className)) {
+            if (isJr) {
                 juniorTbody.innerHTML += trHtml;
                 juniorCount++;
             } else {
@@ -1458,16 +1465,46 @@
         });
 
         if (primaryCount === 0) {
-            primaryTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">目前沒有國小部的繳費紀錄。</td></tr>`;
+            primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8;">目前沒有國小部的繳費紀錄。</td></tr>`;
         }
         if (juniorCount === 0) {
-            juniorTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8;">目前沒有國中部的繳費紀錄。</td></tr>`;
+            juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8;">目前沒有國中部的繳費紀錄。</td></tr>`;
         }
         
         renderUnpaidReminder();
     }
 
-    // === 修改未繳費單據 Modal 相關函式 ===
+    // === 批次列印勾選的未繳費通知單 ===
+    window.printSelectedCheckedNotices = function() {
+        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
+        if (checkedBoxes.length === 0) {
+            alert('⚠️ 請先在左側表格勾選至少一位未繳費的學生！');
+            return;
+        }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+
+        if (targetBills.length === 0) {
+            alert('⚠️ 找不到所選的未繳費單據！');
+            return;
+        }
+
+        let allHtml = '';
+        targetBills.forEach((bill, index) => {
+            allHtml += getSingleReceiptHtml(bill, false, '');
+
+            if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
+                allHtml += '<div class="page-break"></div>';
+            } else if (index !== targetBills.length - 1) {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        });
+
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
+    };
+
     window.openEditBillModal = function(firestoreId, id) {
         const bill = window.bills.find(b => b.id === id);
         if (!bill) return;
