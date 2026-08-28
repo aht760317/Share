@@ -133,9 +133,10 @@
         
         .unpaid-reminder { margin-top: 15px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
         .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #FECACA; }
-        .unpaid-list { padding: 12px; background: white; max-height: 400px; overflow-y: auto; }
+        .unpaid-list { padding: 12px; background: white; max-height: 450px; overflow-y: auto; }
 
-        .action-btn { padding: 5px 8px; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 2px; color: white; cursor: pointer; display: inline-block; margin-top: 2px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
+        .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-blue { background: var(--accent); }
         .btn-green { background: var(--success); }
         .btn-red { background: var(--danger); }
@@ -340,7 +341,7 @@
     <!-- 頁籤 2：未繳費查詢 -->
     <div id="unpaid" class="content-area">
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
-        <p style="color: #64748B; font-size: 14px; margin-bottom: 12px;">💡 可透過下方搜尋與班級下拉選單快速尋找學生；點擊「預覽繳費單」可檢視並截圖給家長，點擊「繳費成功」輸入安全密碼即可快速完成收款並自動顯示收據！</p>
+        <p style="color: #64748B; font-size: 14px; margin-bottom: 12px;">💡 可透過下方搜尋與班級下拉選單快速尋找學生；點擊「預覽繳費單」可檢視並截圖給家長，點擊「預覽收據」將進行密碼驗證完成繳費並顯示收據供截圖！</p>
         
         <div class="filter-bar" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 150px;">
@@ -881,12 +882,9 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    window.formatDisplayMonth = function(periodStr) {
-        if(!periodStr) return "未指定";
-        if(periodStr.includes('~')) return `[${periodStr}]`;
-        const parts = periodStr.split('-');
-        if(parts.length === 2) return `[${parts[0]}年${parts[1]}月]`;
-        return `[${periodStr}]`;
+    window.formatDisplayPeriod = function(periodStr) {
+        if(!periodStr) return "未指定期間";
+        return periodStr;
     }
     
     window.parseLegacyDateToIso = function(dateStr) {
@@ -1566,7 +1564,7 @@
 
         filteredBills.forEach(bill => {
             const statusHtml = bill.isPaid ? `<span class="status-badge status-paid">✅ 已繳</span>` : `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
-            const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+            const displayMonth = bill.periodStr || bill.yearMonth;
             
             const isJr = window.isJuniorHigh(bill.className);
             const deptKey = isJr ? 'junior' : 'primary';
@@ -1642,17 +1640,15 @@
         const buildHtml = (list) => {
             if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:20px 0; font-size:14px; text-align:center;">🎉 符合條件的未繳費名單為空！</div>';
             return list.map(bill => {
-                const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+                const periodText = bill.periodStr || bill.yearMonth || '';
                 return `
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <div style="margin-bottom: 10px; font-size: 14px;">
-                            <span style="color:#991B1B; font-weight:bold; background:#FEF2F2; padding:2px 6px; border-radius:4px; margin-right:6px;">${displayMonth}</span>
-                            <span style="font-weight:bold; color:#1E293B;">${bill.className} - ${bill.studentName}</span>
-                            <span style="color:var(--danger); font-weight:bold; float: right;">欠費 $${bill.total.toLocaleString()}</span>
-                        </div>
-                        <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #F1F5F9; padding-top: 10px;">
-                            <button class="action-btn btn-blue" style="padding: 6px 14px; font-size:13px;" onclick="openBillPreviewModal(${bill.id})">📄 預覽繳費單</button>
-                            <button class="action-btn btn-green" style="padding: 6px 14px; font-size:13px;" onclick="markAsPaidFromUnpaid('${bill.firestoreId}', ${bill.id}, '${bill.studentName}')">💰 繳費成功</button>
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="font-size: 13px; color: #475569; font-weight: bold; margin-bottom: 4px;">${periodText}</div>
+                        <div style="font-size: 15px; font-weight: bold; color: #1E293B; margin-bottom: 6px;">${bill.className} - ${bill.studentName}</div>
+                        <div style="font-size: 14px; color: var(--danger); font-weight: bold; margin-bottom: 12px;">尚未繳費金額：$${bill.total.toLocaleString()}</div>
+                        <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #F1F5F9; padding-top: 10px; flex-wrap: wrap;">
+                            <button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id})">👁️ 預覽繳費單</button>
+                            <button class="action-btn btn-green" onclick="markAsPaidFromUnpaidAndPreviewReceipt('${bill.firestoreId}', ${bill.id}, '${bill.studentName}')">💰 預覽收據</button>
                         </div>
                     </div>`;
             }).join('');
@@ -1662,8 +1658,8 @@
         juniorContainer.innerHTML = buildHtml(juniorUnpaid);
     };
 
-    window.markAsPaidFromUnpaid = function(firestoreId, id, studentName) {
-        verifyAndDelete(`確認學生「${studentName}」繳費完成`, async () => {
+    window.markAsPaidFromUnpaidAndPreviewReceipt = function(firestoreId, id, studentName) {
+        verifyAndDelete(`確認學生「${studentName}」繳費完成並預覽收據`, async () => {
             const bill = window.bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = true;
@@ -1919,7 +1915,7 @@
         let tableRows = targetBills.map((bill, idx) => {
             totalRevenue += bill.total;
             let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-            const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+            const displayMonth = bill.periodStr || bill.yearMonth;
             return `
                 <tr>
                     <td style="text-align:center;">${idx + 1}</td>
@@ -1985,7 +1981,7 @@
             totalRevenue += bill.total;
             const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
             let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-            const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+            const displayMonth = bill.periodStr || bill.yearMonth;
             return `
                 <tr>
                     <td style="text-align:center;">${idx + 1}</td>
@@ -2030,7 +2026,7 @@
     }
 
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
-        const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+        const displayMonth = bill.periodStr || bill.yearMonth;
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
