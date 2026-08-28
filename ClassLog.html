@@ -145,6 +145,8 @@
         .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 3px; line-height: 1.4; }
         .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; }
         
+        .student-class-note { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 4px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 12px; color: #1e40af; line-height: 1.4; }
+
         .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
         .pending-todo-panel h4 { margin: 0 0 8px 0; color: #c53030; display: flex; align-items: center; gap: 6px; font-size: 14px; }
         .todo-badge-item { background: #fff; border: 1px solid #fc8181; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
@@ -2083,14 +2085,26 @@
                     `;
                 }
 
-                // 3. 電聯 QA 紀錄
+                // 3. 備註與親師電聯 QA 紀錄 (包含老師日常日誌備註 + 電聯 QA)
+                const notesList = logs.filter(l => l.detail && l.detail.trim() !== '');
+                let notesHtml = notesList.map(l => `
+                    <div class="student-class-note">
+                        <b>[${l.date}] 課堂備註：</b>${l.detail}
+                    </div>
+                `).join('');
+
                 let qaHtml = (s.callQAs || []).map((qa, qaIdx) => {
                     const badgeClass = qa.status === 'unresolved' ? 'call-qa-badge unresolved' : 'call-qa-badge';
                     const statusText = qa.status === 'unresolved' ? '⚠️ 未處理好' : '✅ 已完成';
                     return `<div style="margin-bottom:4px; border-bottom:1px dashed #e2e8f0; padding-bottom:3px;">
                         <span class="${badgeClass}" onclick="openCallQAModal('${s.firestoreId}', ${qaIdx})">[${qa.date}] ${qa.author}提出: ${qa.question} (${statusText})</span>
                     </div>`;
-                }).join('') || '<span style="color:#777; font-size:12px;">無電聯紀錄</span>';
+                }).join('');
+
+                let combinedNoteHtml = '';
+                if (notesHtml) combinedNoteHtml += `<div style="margin-bottom:6px;">${notesHtml}</div>`;
+                if (qaHtml) combinedNoteHtml += `<div>${qaHtml}</div>`;
+                if (!notesHtml && !qaHtml) combinedNoteHtml = '<span style="color:#777; font-size:12px;">無備註與電聯紀錄</span>';
 
                 return `
                     <tr data-firestore-id="${s.firestoreId}">
@@ -2100,8 +2114,8 @@
                         </td>
                         <td data-label="出缺勤紀錄" style="font-size:13px;">${attHtml}</td>
                         <td data-label="考試成績" style="font-size:13px;">${scoreHtml}</td>
-                        <td data-label="電聯 QA 紀錄" style="font-size:13px;">
-                            ${qaHtml}
+                        <td data-label="備註與電聯 QA 紀錄" style="font-size:13px;">
+                            ${combinedNoteHtml}
                             <button class="btn btn-small btn-warning" style="margin-top:6px;" onclick="openCallQAModal('${s.firestoreId}')">+ 新增電聯QA</button>
                         </td>
                     </tr>
