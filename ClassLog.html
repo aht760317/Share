@@ -511,7 +511,7 @@
                     <table class="mobile-card-table" id="profile-table">
                         <thead>
                             <tr>
-                                <th width="20%">學生姓名與電話</th>
+                                <th width="20%">學生姓名</th>
                                 <th width="18%">出席與請假狀況</th>
                                 <th width="25%">考試成績紀錄</th>
                                 <th width="37%">備註與親師電聯 QA 紀錄</th>
@@ -1044,7 +1044,6 @@
         };
 
         window.updateCourseDropdowns = function() {
-            // 國小日誌下拉選單支援課輔部與國小部
             const elemSelect = document.getElementById('log-course-select-elementary');
             if (elemSelect) {
                 const currentVal = elemSelect.value;
@@ -1056,7 +1055,6 @@
                 if (currentVal) elemSelect.value = currentVal;
             }
 
-            // 國中日誌下拉選單
             const junSelect = document.getElementById('log-course-select-junior');
             if (junSelect) {
                 const currentVal = junSelect.value;
@@ -1154,7 +1152,6 @@
             if(!courseSelect || !tbody) return;
 
             const courseName = courseSelect.value;
-            // 透過多科選課陣列篩選修課學生
             const students = window.state.students.filter(s => {
                 const arr = getStudentCoursesArray(s);
                 return arr.includes(courseName) && s.status !== 'graduated';
@@ -1180,7 +1177,7 @@
                             <option value="曠課">曠課</option>
                         </select>
                     </td>
-                    <td data-label="考試成績">
+                    <td data-label="考試分數">
                         <input type="number" class="log-score" placeholder="輸入分數" oninput="checkRowAlerts(this)">
                     </td>
                     <td data-label="回家作業">
@@ -2038,37 +2035,55 @@
             }
 
             tbody.innerHTML = students.map(s => {
-                let phonesStr = (s.phones || []).map(p => {
-                    const cleanPhone = (p.number || '').replace(/[^\d+]/g, '');
-                    const callLink = cleanPhone ? `<a href="tel:${cleanPhone}" class="btn-call">📞 直撥</a>` : '';
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;"><span>${p.label}: <b>${p.number}</b></span> ${callLink}</div>`;
-                }).join('');
-                
-                let attHtml = (s.attendanceLogs || []).map((l, logIdx) => {
-                    let attStatusStr = `<span class="${l.status==='出席'?'badge-success':'badge-danger'} interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.status}</span>`;
-                    if(l.status !== '出席') {
-                        if(l.makeupDone) {
-                            attStatusStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">(已補課: ${l.makeupDate||''})</span>`;
+                const logs = s.attendanceLogs || [];
+
+                // 1. 出席狀況 (前 5 筆與其餘筆數拆分)
+                const renderAttItem = (l, logIdx) => {
+                    let attStatusStr = `<span class="${l.status === '出席' ? 'badge-success' : 'badge-danger'} interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.status}</span>`;
+                    if (l.status !== '出席') {
+                        if (l.makeupDone) {
+                            attStatusStr += ` <span style="color:#28a745; font-size:11px;" class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">(已補課: ${l.makeupDate || ''})</span>`;
                         } else {
                             attStatusStr += ` <span class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">[須補課]</span>`;
                         }
                     }
                     return `<div>${l.date}: ${attStatusStr}</div>`;
-                }).join('') || '尚無紀錄';
+                };
 
-                let scoreHtml = (s.attendanceLogs || []).map((l, logIdx) => {
+                const attTop5 = logs.slice(0, 5).map(renderAttItem).join('');
+                const attRest = logs.slice(5).map((l, i) => renderAttItem(l, i + 5)).join('');
+                let attHtml = attTop5 || '尚無紀錄';
+                if (logs.length > 5) {
+                    attHtml += `
+                        <div id="att-more-${s.firestoreId}" style="display:none;">${attRest}</div>
+                    `;
+                }
+
+                // 2. 考試成績 (前 5 筆與其餘筆數拆分)
+                const renderScoreItem = (l, logIdx) => {
                     const passScore = l.passScore || 80;
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
-                    if(l.score !== null && l.score < passScore) {
-                        if(l.retestDone) {
-                            scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate||''}, ${l.retestScore}分通過)</span>`;
+                    if (l.score !== null && l.score < passScore) {
+                        if (l.retestDone) {
+                            scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate || ''}, ${l.retestScore}分通過)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
                         }
                     }
                     return `<div>${l.date}: ${scoreStr}</div>`;
-                }).join('') || '尚無紀錄';
+                };
 
+                const scoreTop5 = logs.slice(0, 5).map(renderScoreItem).join('');
+                const scoreRest = logs.slice(5).map((l, i) => renderScoreItem(l, i + 5)).join('');
+                let scoreHtml = scoreTop5 || '尚無紀錄';
+                if (logs.length > 5) {
+                    scoreHtml += `
+                        <div id="score-more-${s.firestoreId}" style="display:none;">${scoreRest}</div>
+                        <a href="javascript:void(0)" onclick="toggleMoreRecords('${s.firestoreId}')" id="btn-toggle-${s.firestoreId}" style="color:var(--accent); font-size:11px; font-weight:bold; display:inline-block; margin-top:4px;">⬇ 展開更多 (共 ${logs.length} 筆)</a>
+                    `;
+                }
+
+                // 3. 電聯 QA 紀錄
                 let qaHtml = (s.callQAs || []).map((qa, qaIdx) => {
                     const badgeClass = qa.status === 'unresolved' ? 'call-qa-badge unresolved' : 'call-qa-badge';
                     const statusText = qa.status === 'unresolved' ? '⚠️ 未處理好' : '✅ 已完成';
@@ -2079,10 +2094,9 @@
 
                 return `
                     <tr data-firestore-id="${s.firestoreId}">
-                        <td data-label="學生姓名與通訊">
+                        <td data-label="學生姓名">
                             <span class="student-name-link" style="font-size:16px;" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
                             <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small>
-                            <div style="font-size:12px; margin-top:5px; background:#f8fafc; padding:6px; border-radius:4px; border:1px solid #e2e8f0;">${phonesStr}</div>
                         </td>
                         <td data-label="出缺勤紀錄" style="font-size:13px;">${attHtml}</td>
                         <td data-label="考試成績" style="font-size:13px;">${scoreHtml}</td>
@@ -2093,6 +2107,25 @@
                     </tr>
                 `;
             }).join('');
+        };
+
+        // 展開 / 收合歷史紀錄的切換函式
+        window.toggleMoreRecords = function(firestoreId) {
+            const attMore = document.getElementById(`att-more-${firestoreId}`);
+            const scoreMore = document.getElementById(`score-more-${firestoreId}`);
+            const toggleBtn = document.getElementById(`btn-toggle-${firestoreId}`);
+            
+            if (!attMore || !scoreMore) return;
+
+            if (attMore.style.display === 'none') {
+                attMore.style.display = 'block';
+                scoreMore.style.display = 'block';
+                toggleBtn.innerText = '⬆ 收合最新 5 筆';
+            } else {
+                attMore.style.display = 'none';
+                scoreMore.style.display = 'none';
+                toggleBtn.innerText = '⬇ 展開更多紀錄';
+            }
         };
 
         window.openAddStudentModal = function() {
