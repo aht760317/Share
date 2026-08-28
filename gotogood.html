@@ -20,9 +20,14 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-body); color: var(--text-main); padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .page-header { margin-bottom: 2rem; }
+        .page-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .page-header h1 { font-size: 1.75rem; font-weight: 700; }
         .page-header p { color: var(--text-muted); margin-top: 0.5rem; }
+
+        /* 分頁切換按鈕群組 */
+        .tab-nav { display: flex; gap: 0.5rem; background: #e5e7eb; padding: 0.25rem; border-radius: 0.5rem; }
+        .tab-btn { background: transparent; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.2s; }
+        .tab-btn.active { background: white; color: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         .card { background: var(--bg-card); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
         .card h3 { font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
@@ -38,7 +43,7 @@
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
-        .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; } /* 特別給修改按鈕用的小尺寸 */
+        .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
@@ -55,6 +60,10 @@
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
 
+        /* 頁面切換控制 */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         /* 彈跳視窗 Modal 樣式 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -65,110 +74,141 @@
 
     <div class="container">
         <div class="page-header">
-            <h1>招生與進班管理系統</h1>
-            <p>修改按鈕已移至名字下方，並加入老師通知署名功能</p>
+            <div>
+                <h1>招生與進班管理系統</h1>
+                <p>未進班追蹤與正式進班名單獨立管理</p>
+            </div>
+            <!-- 頁面切換按鈕 -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤清單</button>
+                <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
+            </div>
         </div>
 
-        <!-- 1. 智慧對話貼上區 -->
-        <div class="card smart-paste-box">
-            <h3>💬 步驟一：社群對話貼上轉表格 (FB / IG / LINE)</h3>
-            <textarea id="chatInput" placeholder="請將家長對話貼到這裡。例如：王小明 0912345678 想問國二數學，預計9月5日來試聽。"></textarea>
-            <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
+        <!-- 頁面一：未進班追蹤清單 -->
+        <div id="trackingTab" class="tab-content active">
+            <!-- 1. 智慧對話貼上區 -->
+            <div class="card smart-paste-box">
+                <h3>💬 步驟一：社群對話貼上轉表格 (FB / IG / LINE)</h3>
+                <textarea id="chatInput" placeholder="請將家長對話貼到這裡。例如：王小明 0912345678 想問國二數學，預計9月5日來試聽。"></textarea>
+                <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
+            </div>
+
+            <!-- 2. 問班與老師追蹤管理 -->
+            <div class="card">
+                <h3>📝 步驟二：問班與老師追蹤管理</h3>
+                <form id="inquiryForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>學生姓名</label>
+                            <input type="text" id="studentName" placeholder="例如：王小明">
+                        </div>
+                        <div class="form-group">
+                            <label>聯絡電話</label>
+                            <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
+                        </div>
+                        <div class="form-group">
+                            <label>詢問者 (誰來詢問)</label>
+                            <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
+                        </div>
+                        <div class="form-group">
+                            <label>有意願課程</label>
+                            <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
+                        </div>
+                        <div class="form-group">
+                            <label>預定試聽日期</label>
+                            <input type="date" id="trialDate">
+                        </div>
+                        <div class="form-group">
+                            <label>目前招生狀態</label>
+                            <select id="studentStatus">
+                                <option value="初次諮詢">初次諮詢</option>
+                                <option value="預約試聽中">預約試聽中</option>
+                                <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>招生來源管道</label>
+                            <select id="leadSource">
+                                <option value="LINE">LINE 官方帳號</option>
+                                <option value="FB">FB 粉絲專頁</option>
+                                <option value="IG">IG 小盒子</option>
+                                <option value="PHONE">電話詢問 / 現場來訪</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label>老師追蹤紀錄（主任可隨時檢視過程）</label>
+                        <input type="text" id="trackNote" placeholder="例如：08/29 記錄對話內容，家長詢問細節。">
+                    </div>
+
+                    <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至追蹤列表</button>
+                </form>
+            </div>
+
+            <!-- 3. 未進班追蹤清單總表 -->
+            <div class="card">
+                <h3>📊 步驟三：招生追蹤總表與提醒管理</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>來源 / 姓名</th>
+                            <th>聯絡電話 / 課程</th>
+                            <th>詢問者</th>
+                            <th>試聽日期</th>
+                            <th>目前進度</th>
+                            <th>老師追蹤紀錄歷程</th>
+                            <th>操作動作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trackingTableBody">
+                        <tr>
+                            <td>
+                                <span class="badge badge-line s-source">LINE</span><br>
+                                <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">林美華</strong><br>
+                                <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
+                            </td>
+                            <td>
+                                <span class="s-phone">0923-456789</span><br>
+                                <small style="color:var(--text-muted)" class="s-course">全科暑期班</small>
+                            </td>
+                            <td><span class="s-inquirer">林媽媽</span></td>
+                            <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
+                            <td><span class="badge badge-line s-status">預約試聽中</span></td>
+                            <td><div class="s-log">08/28 老師：已約定週二試聽，待提醒。</div></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                                    <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- 2. 問班與老師追蹤管理 -->
-        <div class="card">
-            <h3>📝 步驟二：問班與老師追蹤管理</h3>
-            <form id="inquiryForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>學生姓名</label>
-                        <input type="text" id="studentName" placeholder="例如：王小明">
-                    </div>
-                    <div class="form-group">
-                        <label>聯絡電話</label>
-                        <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
-                    </div>
-                    <div class="form-group">
-                        <label>詢問者 (誰來詢問)</label>
-                        <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
-                    </div>
-                    <div class="form-group">
-                        <label>有意願課程</label>
-                        <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
-                    </div>
-                    <div class="form-group">
-                        <label>預定試聽日期</label>
-                        <input type="date" id="trialDate">
-                    </div>
-                    <div class="form-group">
-                        <label>目前招生狀態</label>
-                        <select id="studentStatus">
-                            <option value="初次諮詢">初次諮詢</option>
-                            <option value="預約試聽中">預約試聽中</option>
-                            <option value="準備進班">準備進班</option>
-                            <option value="已正式進班">已正式進班</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>招生來源管道</label>
-                        <select id="leadSource">
-                            <option value="LINE">LINE 官方帳號</option>
-                            <option value="FB">FB 粉絲專頁</option>
-                            <option value="IG">IG 小盒子</option>
-                            <option value="PHONE">電話詢問 / 現場來訪</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label>老師追蹤紀錄（主任可隨時檢視過程）</label>
-                    <input type="text" id="trackNote" placeholder="例如：08/29 記錄對話內容，家長詢問細節。">
-                </div>
-
-                <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至追蹤列表</button>
-            </form>
-        </div>
-
-        <!-- 3. 追蹤清單總表 -->
-        <div class="card">
-            <h3>📊 步驟三：招生追蹤總表與提醒管理</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>來源 / 姓名</th>
-                        <th>聯絡電話 / 課程</th>
-                        <th>詢問者</th>
-                        <th>試聽日期</th>
-                        <th>目前進度</th>
-                        <th>老師追蹤紀錄歷程</th>
-                        <th>操作動作</th>
-                    </tr>
-                </thead>
-                <tbody id="trackingTableBody">
-                    <tr>
-                        <td>
-                            <span class="badge badge-line s-source">LINE</span><br>
-                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">林美華</strong><br>
-                            <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
-                        </td>
-                        <td>
-                            <span class="s-phone">0923-456789</span><br>
-                            <small style="color:var(--text-muted)" class="s-course">全科暑期班</small>
-                        </td>
-                        <td><span class="s-inquirer">林媽媽</span></td>
-                        <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
-                        <td><span class="badge badge-line s-status">預約試聽中</span></td>
-                        <td><div class="s-log">08/28 老師：已約定週二試聽，待提醒。</div></td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                                <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- 頁面二：已正式進班名單 -->
+        <div id="enrolledTab" class="tab-content">
+            <div class="card">
+                <h3>🎓 已正式進班同學名單總表</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>來源 / 姓名</th>
+                            <th>聯絡電話 / 課程</th>
+                            <th>詢問者</th>
+                            <th>正式進班狀態</th>
+                            <th>完整追蹤紀錄歷程</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="enrolledTableBody">
+                        <!-- 這裡會自動接收從第一頁移過來的同學 -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -203,8 +243,7 @@
                         <select id="editStatusSelect">
                             <option value="初次諮詢">初次諮詢</option>
                             <option value="預約試聽中">預約試聽中</option>
-                            <option value="準備進班">準備進班</option>
-                            <option value="已正式進班">已正式進班</option>
+                            <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -231,6 +270,14 @@
 
     <script>
         let currentEditingRow = null;
+
+        // 頁面切換控制
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
 
         function parseChatText() {
             const text = document.getElementById('chatInput').value.trim();
@@ -291,7 +338,7 @@
                 <td>
                     <div class="action-btns">
                         <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                        <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
+                        <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                     </div>
                 </td>
             `;
@@ -302,20 +349,14 @@
         }
 
         function markNotified(btn) {
-            // 跳出視窗詢問老師名稱
             const teacherName = prompt("請輸入通知家長的老師姓名：");
-            
-            // 如果老師按了取消或沒有輸入名字，就中斷執行
             if (!teacherName) return; 
 
             const row = btn.closest('tr');
             const logEl = row.querySelector('.s-log');
-            
-            // 取得目前的日期時間
             const now = new Date();
             const formattedDate = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            // 將老師署名加入追蹤紀錄
             logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">[${formattedDate} ${teacherName}老師 已打電話/發LINE提醒試聽]</span>`;
             alert(`已記錄：${teacherName}老師 已完成試聽提醒通知！`);
         }
@@ -329,7 +370,7 @@
             const inquirer = currentEditingRow.querySelector('.s-inquirer').innerText;
             const source = currentEditingRow.querySelector('.s-source').innerText;
             const course = currentEditingRow.querySelector('.s-course').innerText;
-            const date = currentEditingRow.querySelector('.s-date').innerText;
+            const date = currentEditingRow.querySelector('.s-date') ? currentEditingRow.querySelector('.s-date').innerText : '';
             const status = currentEditingRow.querySelector('.s-status').innerText;
             const log = currentEditingRow.querySelector('.s-log').innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
 
@@ -338,7 +379,7 @@
             document.getElementById('editInquirer').value = inquirer;
             document.getElementById('editSource').value = source;
             document.getElementById('editCourse').value = course;
-            document.getElementById('editDate').value = date !== '未定' ? date : '';
+            document.getElementById('editDate').value = date !== '未定' && date !== '' ? date : '';
             document.getElementById('editStatusSelect').value = status;
             document.getElementById('editLog').value = log;
 
@@ -373,7 +414,11 @@
             sourceBadge.className = `badge s-source ${source === 'FB' ? 'badge-fb' : source === 'IG' ? 'badge-ig' : source === 'LINE' ? 'badge-line' : 'badge-other'}`;
 
             currentEditingRow.querySelector('.s-course').innerText = course;
-            currentEditingRow.querySelector('.s-date').innerText = date;
+            
+            // 判斷目前這列是在第一頁還是第二頁（第二頁沒有日期欄位）
+            const dateEl = currentEditingRow.querySelector('.s-date');
+            if(dateEl) dateEl.innerText = date;
+
             currentEditingRow.querySelector('.s-status').innerText = status;
             currentEditingRow.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
 
@@ -381,21 +426,42 @@
             alert('修改成功！');
         }
 
-        function toggleEnrollStatus(btn) {
-            const isCurrentlyEnrolled = btn.classList.contains('status-enrolled');
-            
-            if (!isCurrentlyEnrolled) {
-                if (confirm("確定要將此學生設為【確定進班】嗎？")) {
-                    btn.classList.remove('status-not-enrolled');
-                    btn.classList.add('status-enrolled');
-                    btn.innerText = '確定進班';
-                }
-            } else {
-                if (confirm("是否要取消進班狀態，改回【尚未進班】？")) {
-                    btn.classList.remove('status-enrolled');
-                    btn.classList.add('status-not-enrolled');
-                    btn.innerText = '尚未進班';
-                }
+        // 點擊「確定進班」自動移到第二個頁面
+        function moveToEnrolled(btn) {
+            const row = btn.closest('tr');
+            const studentName = row.querySelector('.s-name').innerText;
+
+            if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
+                // 抓取原本整列的資料
+                const sourceHtml = row.querySelector('td:nth-child(1)').innerHTML;
+                const phoneCourseHtml = row.querySelector('td:nth-child(2)').innerHTML;
+                const inquirerText = row.querySelector('.s-inquirer').innerText;
+                const logHtml = row.querySelector('.s-log').innerHTML;
+
+                // 移除原本的修改按鈕，改保留乾淨的資訊
+                let cleanSourceHtml = sourceHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
+
+                // 建立要放入第二頁的新行
+                const enrolledTbody = document.getElementById('enrolledTableBody');
+                const newEnrolledRow = document.createElement('tr');
+
+                newEnrolledRow.innerHTML = `
+                    <td>${cleanSourceHtml}</td>
+                    <td>${phoneCourseHtml}</td>
+                    <td><span class="s-inquirer">${inquirerText}</span></td>
+                    <td><span class="badge" style="background: #d1fae5; color: #065f46;">已正式進班</span></td>
+                    <td><div class="s-log">${logHtml}<br><span style="color:var(--primary-color);">[已轉入正式進班名單]</span></div></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
+                    </td>
+                `;
+
+                enrolledTbody.appendChild(newEnrolledRow);
+
+                // 從第一頁的未進班列表移除
+                row.remove();
+
+                alert(`成功！${studentName} 已自動移至「已正式進班名單」頁面。`);
             }
         }
     </script>
