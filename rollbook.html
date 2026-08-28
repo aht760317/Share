@@ -65,6 +65,17 @@
         .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3); }
         .drag-handle { cursor: grab; font-size: 12px; opacity: 0.6; }
 
+        /* 全校班級管理專區分類按鈕列 */
+        .manage-cat-group {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+        }
+        .manage-cat-btn {
+            padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 6px;
+            border: 1.5px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer; transition: 0.15s;
+        }
+        .manage-cat-btn:hover { background: #f1f5f9; }
+        .manage-cat-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+
         .course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; margin-top: 14px;
@@ -390,8 +401,17 @@
                 <div id="deptClassButtons" class="draggable-class-container"></div>
             </div>
 
+            <!-- 全校班級課程管理專區 -->
             <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
-                <div class="class-overview-title" style="color:#3730a3;">🏫 全校班級課程管理專區：</div>
+                <div class="class-overview-title" style="color:#3730a3; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <span>🏫 全校班級課程管理專區：</span>
+                    <div class="manage-cat-group" id="manageCatGroup">
+                        <button class="manage-cat-btn active" data-cat="all" onclick="setManageCategory('all')">全部班級</button>
+                        <button class="manage-cat-btn" data-cat="care" onclick="setManageCategory('care')">課輔班</button>
+                        <button class="manage-cat-btn" data-cat="elementary" onclick="setManageCategory('elementary')">國小部</button>
+                        <button class="manage-cat-btn" data-cat="junior" onclick="setManageCategory('junior')">國中部</button>
+                    </div>
+                </div>
                 <div id="allClassesCardGrid" class="all-classes-manage-grid"></div>
             </div>
 
@@ -670,6 +690,7 @@
         courseFilterMode: 'today', 
         currentDeptView: 'care',
         currentFilterClass: null,
+        manageCategory: 'all', // 全校班級管理專區分類: 'all' | 'care' | 'elementary' | 'junior'
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
         filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER
     };
@@ -699,7 +720,6 @@
         return [];
     }
 
-    // 渲染星期勾選方框
     function renderDayCheckboxes(wrapperId, selectedDaysStr = "") {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
@@ -949,12 +969,30 @@
     }
     function handleDragEnd() { this.classList.remove('dragging'); draggedItem = null; }
 
+    window.setManageCategory = function(cat) {
+        window.state.manageCategory = cat;
+        document.querySelectorAll('#manageCatGroup .manage-cat-btn').forEach(btn => {
+            if (btn.dataset.cat === cat) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        renderAllClassesManagementCards();
+    };
+
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
         let html = '';
 
-        ['care', 'elementary', 'junior'].forEach(deptKey => {
+        const cat = window.state.manageCategory || 'all';
+        let targetDepts = ['care', 'elementary', 'junior'];
+        if (cat === 'care') targetDepts = ['care'];
+        else if (cat === 'elementary') targetDepts = ['elementary'];
+        else if (cat === 'junior') targetDepts = ['junior'];
+
+        targetDepts.forEach(deptKey => {
             const deptName = deptKey === 'care' ? '課輔部' : (deptKey === 'elementary' ? '國小部' : '國中部');
             const deptBadge = deptKey === 'care' ? '#0369a1' : (deptKey === 'elementary' ? '#15803d' : '#b45309');
             const list = window.state.courses[deptKey] || [];
@@ -991,7 +1029,7 @@
             });
         });
 
-        grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前全校尚無建立任何班級課程。</p>`;
+        grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前該分類尚無建立任何班級課程。</p>`;
     }
 
     window.openEditClassModal = function(dept, name, day, time, teacher) {
