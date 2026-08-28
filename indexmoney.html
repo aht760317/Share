@@ -12,8 +12,12 @@
         .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
         /* 導覽列 */
-        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
+        .header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-sync { background: #059669; color: white; border: 1px solid #34D399; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn-sync:hover { background: #047857; }
+
         .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; }
         .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { color: white; border-bottom: 4px solid var(--accent); background: #0F172A; }
@@ -178,6 +182,9 @@
 <div class="app-container no-print">
     <div class="header">
         <h1>顧德補習班 繳費管理系統 (雲端同步版)</h1>
+        <div class="header-actions">
+            <button class="btn-sync" onclick="syncFromRollbookSystem()">🔄 從點名系統同步班級與學籍</button>
+        </div>
     </div>
     
     <div class="tabs">
@@ -301,7 +308,6 @@
             <div class="item-builder">
                 <label style="color:#1E40AF; margin-bottom: 5px;">👇 1. 點擊下方按鈕選擇項目 (包含折扣優惠)：</label>
                 
-                <!-- 開單區分成三個區塊 -->
                 <div style="font-size: 14px; font-weight: bold; color: #1E40AF; margin-top: 10px; margin-bottom: 5px;">🔵 國小 項目</div>
                 <div id="primaryQuickItemGrid" class="btn-grid" style="margin-bottom: 10px;"></div>
                 
@@ -339,7 +345,10 @@
     <div id="settings" class="content-area">
         <!-- 區塊 1：班級設定 -->
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
-            <h3 style="margin-top: 0; color: var(--primary);">🏫 班級設定</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: var(--primary);">🏫 班級設定</h3>
+                <button class="btn-sync" onclick="syncFromRollbookSystem()">🔄 從點名系統一鍵同步更新班級</button>
+            </div>
             
             <div class="form-row" style="margin-bottom: 15px;">
                 <div style="flex: 1;">
@@ -429,7 +438,10 @@
     <div id="directory" class="content-area">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
             <h3 style="margin: 0; color: #065F46; font-size: 24px;">📖 學生通訊錄查詢與編輯</h3>
-            <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印畫面上通訊錄</button>
+            <div>
+                <button class="btn-sync" style="margin-right:10px;" onclick="syncFromRollbookSystem()">🔄 同步最新學籍</button>
+                <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印畫面上通訊錄</button>
+            </div>
         </div>
         
         <div style="margin-bottom: 20px;" class="no-print">
@@ -700,6 +712,104 @@
         }
     }
 
+    // === 從點名系統（中央學籍資料庫）一鍵同步 ===
+    window.syncFromRollbookSystem = async function() {
+        if (!confirm('確認要從【點名與學籍系統】導入最新的所有班級名單與學生資料嗎？\n這將自動建立新班級並同步全校學生名冊。')) return;
+
+        try {
+            // 1. 取得點名系統班級課程
+            const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
+            const newClasses = {};
+            const newClassOrder = [];
+
+            if (coursesDoc.exists()) {
+                const cData = coursesDoc.data().data || {};
+                ['care', 'elementary', 'junior'].forEach(dept => {
+                    (cData[dept] || []).forEach(c => {
+                        const name = typeof c === 'object' ? c.name : c;
+                        if (name && !newClasses[name]) {
+                            newClasses[name] = [];
+                            newClassOrder.push(name);
+                        }
+                    });
+                });
+            }
+
+            // 2. 取得點名系統所有學生資料
+            const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
+            const newStudentDetails = { ...window.studentDetails };
+
+            studentsSnapshot.forEach(d => {
+                const s = d.data();
+                if (s.status === 'graduated') return; // 跳過已離班/畢業
+
+                // 取得選課清單
+                let courses = [];
+                if (Array.isArray(s.courses) && s.courses.length > 0) courses = s.courses;
+                else if (s.course) courses = s.course.split(/[,，、]/).map(x => x.trim()).filter(x => x);
+
+                const stuName = s.name ? s.name.trim() : '';
+                if (!stuName) return;
+
+                // 取得電話
+                const p1 = (s.phones && s.phones[0]) || {};
+                const p2 = (s.phones && s.phones[1]) || {};
+                const p3 = (s.phones && s.phones[2]) || {};
+
+                courses.forEach(clsName => {
+                    if (!newClasses[clsName]) {
+                        newClasses[clsName] = [];
+                        newClassOrder.push(clsName);
+                    }
+                    if (!newClasses[clsName].includes(stuName)) {
+                        newClasses[clsName].push(stuName);
+                    }
+
+                    const detailKey = `${clsName}_${stuName}`;
+                    newStudentDetails[detailKey] = {
+                        school: s.school || '',
+                        gradeClass: s.studentClass || '',
+                        gender: s.gender === '女' ? 'female' : 'male',
+                        contact1Name: p1.label || '聯絡人1',
+                        contact1Phone: p1.number || '',
+                        contact2Name: p2.label || '聯絡人2',
+                        contact2Phone: p2.number || '',
+                        contact3Name: p3.label || '聯絡人3',
+                        contact3Phone: p3.number || '',
+                        note: s.notes || ''
+                    };
+                });
+            });
+
+            // 保留原本存在且未在點名系統中的班級資料
+            Object.keys(window.config.classes).forEach(oldCls => {
+                if (!newClasses[oldCls]) {
+                    newClasses[oldCls] = window.config.classes[oldCls];
+                    if (!newClassOrder.includes(oldCls)) newClassOrder.push(oldCls);
+                }
+            });
+
+            window.config.classes = newClasses;
+            window.config.classOrder = newClassOrder;
+            window.studentDetails = newStudentDetails;
+
+            await saveClassesToCloud();
+            await saveStudentDetailsToCloud();
+
+            renderClassConfigList();
+            renderClassGrid();
+            updateBatchPrintDropdown();
+            if (document.getElementById('directory').classList.contains('active')) {
+                renderDirectoryInit();
+            }
+
+            alert(`🎉 資料同步完成！\n已成功同步 ${newClassOrder.length} 個班級課程與全校學籍資料。`);
+        } catch (e) {
+            console.error("同步點名系統失敗：", e);
+            alert("❌ 同步失敗，請確認點名系統資料庫權限或網路連線。");
+        }
+    };
+
     async function saveClassesToCloud() {
         try {
             await setDoc(doc(db, "settings", "classes"), { 
@@ -954,12 +1064,10 @@
         window.print();
     }
 
-    // === Modal 操作邏輯 ===
     window.closeModal = function(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
 
-    // === 區塊 1：班級設定 ===
     window.renderClassConfigList = function() {
         const list = document.getElementById('classConfigList');
         if (classSortable) {
@@ -968,7 +1076,7 @@
         }
 
         if (window.config.classOrder.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無班級，請於上方新增</div>';
+            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無班級，請於上方新增或點擊同步</div>';
             return;
         }
         
@@ -1105,7 +1213,6 @@
         }
     }
 
-    // === 區塊 2：學生名單管理 ===
     window.editClassStudents = function(cls) {
         window.editingClass = cls;
         renderClassConfigList();
@@ -1245,7 +1352,6 @@
         alert(`🔤 已成功將【${window.editingClass}】學生依筆畫排序！`);
     }
 
-    // === 區塊 3：快捷收費項目設定 (分 國小 / 國中 / 其它 三區塊) ===
     window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
         window.config.handler = handler;
@@ -1384,7 +1490,6 @@
         });
     }
 
-    // === 開單作業區 ===
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -1407,7 +1512,7 @@
         sGrid.style.display = 'flex';
         sGrid.innerHTML = '<span style="padding:10px; font-weight:bold; color:#475569;">選擇學生：</span>';
         
-        window.config.classes[cls].forEach(stu => {
+        (window.config.classes[cls] || []).forEach(stu => {
             const btn = document.createElement('button');
             const key = cls + '_' + stu;
             const gender = (window.studentDetails[key] && window.studentDetails[key].gender) || 'male';
@@ -1447,7 +1552,6 @@
         checkAndAutoMergeUnpaidBill();
     }
 
-    // 自動檢查並合併既有未繳費項目
     window.checkAndAutoMergeUnpaidBill = function() {
         if (!window.currentStudent || !window.currentClass) return;
 
@@ -1467,7 +1571,6 @@
             displayPeriod = yMonth;
         }
 
-        // 搜尋此學生在同班級、同期間且【尚未繳費】的帳單
         const matched = window.bills.find(b => 
             !b.isPaid && 
             b.studentName === window.currentStudent && 
@@ -1667,7 +1770,6 @@
         }
     }
 
-    // === 管理區與列印 ===
     window.clearFilter = function() {
         document.getElementById('filterMonth').value = '';
         renderRecords();
