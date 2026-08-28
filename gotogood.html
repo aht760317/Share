@@ -34,7 +34,7 @@
 
         .smart-paste-box textarea { width: 100%; height: 90px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; resize: vertical; margin-bottom: 0.75rem; }
         
-        /* 區塊化表單排版網格 (讓每個問題獨立成方塊) */
+        /* 區塊化表單排版網格 */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
         .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
         .form-block-item:hover { border-color: var(--primary-color); box-shadow: 0 2px 4px rgba(79, 70, 229, 0.08); }
@@ -48,7 +48,7 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
         
-        /* 追蹤清單區塊化卡片 (支援拖曳移動) */
+        /* 追蹤清單區塊化卡片 */
         #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
         .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
         .tracking-block:active { cursor: grabbing; }
@@ -72,7 +72,7 @@
         .tab-content.active { display: block; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 650px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 750px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
         
         .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; }
@@ -102,7 +102,6 @@
                 <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
             </div>
 
-            <!-- 步驟二：改造成精美方塊化卡片表單 -->
             <div class="card">
                 <h3>📝 步驟二：問班與老師追蹤管理（方塊化填寫表單）</h3>
                 <form id="inquiryForm">
@@ -159,9 +158,7 @@
                 <h3>📊 步驟三：招生追蹤區塊看板（支援上下隨意拖曳排序）</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">💡 提示：按住任一區塊即可上下拖曳調整跟進順序。</p>
                 
-                <!-- 可拖曳的區塊容器 -->
                 <div id="trackingCardContainer">
-                    <!-- 預設範例區塊 -->
                     <div class="tracking-block" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
                         <div class="block-header">
                             <div class="block-title">
@@ -184,7 +181,7 @@
                             <div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽，待提醒。</div>
                         </div>
                         <div class="block-actions">
-                            <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                            <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                             <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         </div>
                     </div>
@@ -218,7 +215,7 @@
         <div id="referrerTab" class="tab-content">
             <div class="card">
                 <h3>🎁 推薦人介紹排行榜與獎金發放管理</h3>
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">點擊「推薦人姓名」或「獎金狀態」，即可開啟詳細聯動管理表格，設定發放日期與核對介紹學員。</p>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">點擊「推薦人姓名」或「獎金狀態」，即可設定獎金發放日期、填寫總金額，並自訂推薦人與老師的獎金分配比率（%）。</p>
                 <table>
                     <thead>
                         <tr>
@@ -231,6 +228,39 @@
                     <tbody id="referrerTableBody">
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已通知家長細節輸入互動視窗 -->
+    <div id="notifyModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">📞 記錄家長通知內容</div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-muted);">通知老師姓名</label>
+                <input type="text" id="notifyTeacherName" placeholder="例如：陳老師" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">通知事項分類</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知試聽" checked style="width: 16px; height: 16px;"> 通知試聽
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知就讀" style="width: 16px; height: 16px;"> 通知就讀
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知其他事情" style="width: 16px; height: 16px;"> 通知其他事情
+                    </label>
+                </div>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-muted);">其他補充事項 (選填)</label>
+                <textarea id="notifyCustomText" rows="3" placeholder="請在此輸入其他具體對話內容..." style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeNotifyModal()">取消</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveNotifyRecord()">確認送出並記錄</button>
             </div>
         </div>
     </div>
@@ -297,17 +327,18 @@
 
     <!-- 推薦人獎金管理細節互動視窗 -->
     <div id="referrerDetailModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header" id="referrerModalTitle">🎁 推薦人獎金管理細節</div>
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header" id="referrerModalTitle">🎁 推薦人獎金與比率分配管理</div>
             <div id="referrerModalBody" style="margin-bottom: 1.5rem;"></div>
             <div style="display: flex; justify-content: flex-end;">
-                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉儲存</button>
+                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉並儲存設定</button>
             </div>
         </div>
     </div>
 
     <script>
         let currentEditingElement = null; 
+        let activeNotifyElement = null;
         let isEditingEnrolled = false; 
 
         function getFormattedTimestamp() {
@@ -392,7 +423,7 @@
                     <div class="s-log">${initialLog}</div>
                 </div>
                 <div class="block-actions">
-                    <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                    <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                     <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                 </div>
             `;
@@ -402,7 +433,6 @@
             document.getElementById('chatInput').value = '';
         }
 
-        // 區塊拖曳排序邏輯
         let draggedItem = null;
 
         function handleDragStart(e) {
@@ -445,16 +475,48 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        function markNotified(btn) {
-            const teacherName = prompt("請輸入通知家長的老師姓名：");
-            if (!teacherName) return; 
-
-            const block = btn.closest('.tracking-block') || btn.closest('tr');
-            const logEl = block.querySelector('.s-log');
-            const timestamp = getFormattedTimestamp();
+        // 開啟「已通知家長」專屬選項與輸入視窗
+        function openNotifyModal(btn) {
+            activeNotifyElement = btn.closest('.tracking-block') || btn.closest('tr');
             
-            logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">[${timestamp} ${teacherName}老師 已打電話/發LINE提醒試聽]</span>`;
-            alert(`已記錄：${teacherName}老師 已完成試聽提醒通知！`);
+            // 自動嘗試抓取現有的負責老師填入
+            const logEl = activeNotifyElement.querySelector('.s-log');
+            let defaultTeacher = '';
+            if (logEl) {
+                const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
+                if (tMatch) defaultTeacher = tMatch[1];
+            }
+            document.getElementById('notifyTeacherName').value = defaultTeacher;
+            document.getElementById('notifyCustomText').value = '';
+            document.querySelector('input[name="notifyType"][value="通知試聽"]').checked = true;
+
+            document.getElementById('notifyModal').style.display = 'flex';
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notifyModal').style.display = 'none';
+            activeNotifyElement = null;
+        }
+
+        function saveNotifyRecord() {
+            if (!activeNotifyElement) return;
+
+            const teacherName = document.getElementById('notifyTeacherName').value.trim() || '未指定';
+            const notifyType = document.querySelector('input[name="notifyType"]:checked').value;
+            const customText = document.getElementById('notifyCustomText').value.trim();
+
+            const logEl = activeNotifyElement.querySelector('.s-log');
+            const timestamp = getFormattedTimestamp();
+
+            let recordText = `[${timestamp} ${teacherName}老師 已${notifyType}`;
+            if (customText) {
+                recordText += `：${customText}`;
+            }
+            recordText += `]`;
+
+            logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">${recordText}</span>`;
+            closeNotifyModal();
+            alert(`已成功記錄：${teacherName}老師 的通知內容！`);
         }
 
         function openEditModal(btn) {
@@ -566,7 +628,7 @@
                             <div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span></div>
                         </div>
                         <div class="block-actions">
-                            <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                            <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                             <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         </div>
                     `;
@@ -585,12 +647,12 @@
                     const enrolledTbody = document.getElementById('enrolledTableBody');
                     const newRow = document.createElement('tr');
                     const timestamp = getFormattedTimestamp();
-                    const enrollDateStr = `轉入: ${timestamp.split(' ')[0]}`;
+                    const enrollDateStr = `${timestamp.split(' ')[0]} 轉入`;
 
                     newRow.innerHTML = `
                         <td>
                             <strong class="s-name">${name}</strong>
-                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
                             <input type="hidden" class="s-inquirer" value="${inquirer}">
                             <input type="hidden" class="s-referrer" value="${referrer}">
                             <input type="hidden" class="s-source" value="${source}">
@@ -660,7 +722,7 @@
                 const logHtml = block.querySelector('.s-log').innerHTML; 
 
                 const timestamp = getFormattedTimestamp();
-                const enrollDateDisplay = `轉入: ${timestamp.split(' ')[0]}`;
+                const enrollDateDisplay = `${timestamp.split(' ')[0]} 轉入`;
 
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
@@ -698,15 +760,15 @@
             allBlocksAndRows.forEach(item => {
                 const nameEl = item.querySelector('.s-name');
                 const referrerEl = item.querySelector('.s-referrer');
-                const courseEl = item.querySelector('.s-course');
                 const statusEl = item.querySelector('.s-status');
                 const logEl = item.querySelector('.s-log');
+                const dateEl = item.querySelector('.s-date');
 
                 if (nameEl && referrerEl) {
                     const studentName = nameEl.innerText.trim();
                     const referrerName = referrerEl.value.trim();
-                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
                     const statusName = statusEl ? statusEl.innerText.trim() : '未填狀態';
+                    const dateText = dateEl ? dateEl.innerText.trim() : '未定';
 
                     let teacherName = '未指定';
                     if (logEl) {
@@ -720,8 +782,8 @@
                         }
                         referrerMap[referrerName].push({
                             student: studentName,
-                            course: courseName,
                             status: statusName,
+                            date: dateText,
                             teacher: teacherName
                         });
                     }
@@ -750,7 +812,13 @@
                 const rank = index + 1;
                 
                 if (!referrerDataStore[item.name]) {
-                    referrerDataStore[item.name] = { paid: false, date: '' };
+                    referrerDataStore[item.name] = { 
+                        paid: false, 
+                        date: '', 
+                        totalAmount: 1000, 
+                        refRatio: 70,   
+                        teacherRatio: 30 
+                    };
                 }
                 const store = referrerDataStore[item.name];
 
@@ -761,7 +829,7 @@
                     <td><span class="badge" style="background:#e0e7ff; color:#3730a3; font-weight:700;">${item.count} 人</span></td>
                     <td>
                         <span class="clickable-cell" onclick="openReferrerDetail('${item.name}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
-                            ${store.paid ? `✓ 已發放 (${store.date || '未記錄日期'})` : '⏳ 未發放 (點擊設定)'}
+                            ${store.paid ? `✓ 已發放 (${store.date || '未記錄日期'})` : '⏳ 未發放 (點擊設定比率與發放)'}
                         </span>
                     </td>
                 `;
@@ -773,30 +841,47 @@
         function openReferrerDetail(referrerName) {
             const map = window.currentReferrerMap || {};
             const students = map[referrerName] || [];
-            const store = referrerDataStore[referrerName] || { paid: false, date: '' };
+            let store = referrerDataStore[referrerName];
 
-            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 的獎金與介紹明細`;
+            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 的獎金與比率分配管理`;
 
             let html = `
                 <div style="margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">獎金發放狀態設定：</label>
-                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+                    <h4 style="margin-bottom: 0.75rem; color: var(--primary-color); font-size: 0.95rem;">💰 獎金發放與比率分配設定：</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
+                        <div>
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">總獎金金額 (NT$)</label>
+                            <input type="number" id="modalTotalAmount" value="${store.totalAmount}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">推薦人分配比例 (%)</label>
+                            <input type="number" id="modalRefRatio" value="${store.refRatio}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">負責老師分配比例 (%)</label>
+                            <input type="number" id="modalTeacherRatio" value="${store.teacherRatio}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                             <input type="checkbox" id="modalPaidCheck" ${store.paid ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
-                            <span>已發放獎金</span>
+                            <span style="font-weight:600;">已發放獎金</span>
                         </label>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <span style="font-size: 0.9rem; color: var(--text-muted);">發放日期：</span>
                             <input type="date" id="modalPaidDate" value="${store.date}" style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 4px;">
                         </div>
                     </div>
+                    <div id="bonusPreviewResult" style="margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; color: var(--success-color);"></div>
                 </div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 介紹學員與負責老師連動清單：</h4>
+
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 推薦介紹學員與追蹤老師清單：</h4>
                 <table style="margin-top: 0;">
                     <thead>
                         <tr>
                             <th>被介紹學生</th>
-                            <th>有意願課程 / 狀態</th>
+                            <th>確定進班 / 試聽日期</th>
+                            <th>目前狀態</th>
                             <th>負責追蹤老師</th>
                         </tr>
                     </thead>
@@ -804,13 +889,14 @@
             `;
 
             if (students.length === 0) {
-                html += `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">無介紹學員資料</td></tr>`;
+                html += `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">無介紹學員資料</td></tr>`;
             } else {
                 students.forEach(s => {
                     html += `
                         <tr>
                             <td><strong>${s.student}</strong></td>
-                            <td>${s.course} (<span style="color:var(--primary-color);">${s.status}</span>)</td>
+                            <td><span style="color:var(--success-color); font-weight:600;">${s.date}</span></td>
+                            <td><span class="badge" style="background:#e0e7ff; color:#3730a3;">${s.status}</span></td>
                             <td><span class="badge" style="background:#f1f5f9; color:#334155;">${s.teacher}</span></td>
                         </tr>
                     `;
@@ -821,6 +907,18 @@
             document.getElementById('referrerModalBody').innerHTML = html;
             document.getElementById('referrerDetailModal').style.display = 'flex';
             window.activeReferrerName = referrerName;
+            calculateBonusPreview();
+        }
+
+        function calculateBonusPreview() {
+            const total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+            const refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+            const teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+
+            const refAmt = (total * refR / 100).toFixed(0);
+            const teacherAmt = (total * teacherR / 100).toFixed(0);
+
+            document.getElementById('bonusPreviewResult').innerHTML = `💡 金額試算結果： 推薦人實領 $${refAmt} 元 (${refR}%) ｜ 負責老師實領 $${teacherAmt} 元 (${teacherR}%)`;
         }
 
         function closeReferrerModal() {
@@ -828,6 +926,9 @@
             if (refName && referrerDataStore[refName]) {
                 referrerDataStore[refName].paid = document.getElementById('modalPaidCheck').checked;
                 referrerDataStore[refName].date = document.getElementById('modalPaidDate').value;
+                referrerDataStore[refName].totalAmount = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+                referrerDataStore[refName].refRatio = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+                referrerDataStore[refName].teacherRatio = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
             }
             document.getElementById('referrerDetailModal').style.display = 'none';
             updateReferrerRanking();
