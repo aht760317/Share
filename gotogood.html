@@ -45,7 +45,6 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
         
-        /* 名字旁邊的藍色修改筆按鈕 */
         .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
         .edit-icon-btn:hover { background: #e0e7ff; }
 
@@ -59,14 +58,15 @@
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
 
-        /* 頁面切換控制 */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 彈跳視窗 Modal 樣式 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 650px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
+        
+        .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; }
+        .clickable-cell:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -77,7 +77,6 @@
                 <h1>招生與進班管理系統</h1>
                 <p>未進班追蹤、正式進班與推薦人獎金獨立管理</p>
             </div>
-            <!-- 頁面切換按鈕 -->
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤清單</button>
                 <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
@@ -87,14 +86,12 @@
 
         <!-- 頁面一：未進班追蹤清單 -->
         <div id="trackingTab" class="tab-content active">
-            <!-- 1. 智慧對話貼上區 -->
             <div class="card smart-paste-box">
                 <h3>💬 步驟一：社群對話貼上轉表格 (FB / IG / LINE)</h3>
                 <textarea id="chatInput" placeholder="請將家長對話貼到這裡。例如：王小明 0912345678 想問國二數學，預計9月5日來試聽。"></textarea>
                 <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
             </div>
 
-            <!-- 2. 問班與老師追蹤管理 -->
             <div class="card">
                 <h3>📝 步驟二：問班與老師追蹤管理</h3>
                 <form id="inquiryForm">
@@ -147,7 +144,6 @@
                 </form>
             </div>
 
-            <!-- 3. 未進班追蹤清單總表 -->
             <div class="card">
                 <h3>📊 步驟三：招生追蹤總表與提醒管理</h3>
                 <table>
@@ -204,7 +200,6 @@
                         </tr>
                     </thead>
                     <tbody id="enrolledTableBody">
-                        <!-- 自動接收從第一頁移過來的同學 -->
                     </tbody>
                 </table>
             </div>
@@ -214,19 +209,17 @@
         <div id="referrerTab" class="tab-content">
             <div class="card">
                 <h3>🎁 推薦人介紹排行榜與獎金發放管理</h3>
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">系統自動統計所有填寫過推薦人的學員（包含未進班與已進班），幫助您追蹤獎金發放狀況。</p>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">點擊「推薦人姓名」或「獎金狀態」，即可開啟詳細聯動管理表格，設定發放日期與核對介紹學員。</p>
                 <table>
                     <thead>
                         <tr>
                             <th>排名</th>
                             <th>推薦人姓名</th>
                             <th>介紹總人數</th>
-                            <th>介紹名單明細</th>
                             <th>獎金發放狀態</th>
                         </tr>
                     </thead>
                     <tbody id="referrerTableBody">
-                        <!-- 動態產生 -->
                     </tbody>
                 </table>
             </div>
@@ -269,7 +262,7 @@
                     </div>
                     <div class="form-group">
                         <label>目前進班 / 追蹤狀態</label>
-                        <select id="editStatusSelect" onchange="checkStatusChangeWarning()">
+                        <select id="editStatusSelect">
                             <option value="初次諮詢">初次諮詢</option>
                             <option value="預約試聽中">預約試聽中</option>
                             <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
@@ -279,7 +272,7 @@
                     <input type="hidden" id="editSource" value="LINE">
                 </div>
                 <div class="form-group" style="margin-bottom: 1rem;">
-                    <label>追蹤紀錄歷程（可直接新增或修改內容）</label>
+                    <label>追蹤紀錄歷程</label>
                     <textarea id="editLog" style="width: 100%; height: 85px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;"></textarea>
                 </div>
                 <div style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
@@ -293,11 +286,23 @@
         </div>
     </div>
 
+    <!-- 推薦人獎金管理細節互動視窗 -->
+    <div id="referrerDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header" id="referrerModalTitle">🎁 推薦人獎金管理細節</div>
+            <div id="referrerModalBody" style="margin-bottom: 1.5rem;">
+                <!-- 動態生成的連動表格 -->
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉儲存</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentEditingRow = null;
         let isEditingEnrolled = false; 
 
-        // 取得格式化時間字串 (MM/DD HH:MM)
         function getFormattedTimestamp() {
             const now = new Date();
             const month = now.getMonth() + 1;
@@ -307,7 +312,6 @@
             return `${month}/${day} ${hours}:${minutes}`;
         }
 
-        // 頁面切換控制
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -391,7 +395,6 @@
             alert(`已記錄：${teacherName}老師 已完成試聽提醒通知！`);
         }
 
-        // 開啟修改表單彈窗
         function openEditModal(btn) {
             currentEditingRow = btn.closest('tr');
             isEditingEnrolled = currentEditingRow.closest('#enrolledTableBody') !== null;
@@ -466,7 +469,6 @@
 
             if(!name) { alert('學生姓名不能為空！'); return; }
 
-            // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁
             if (isEditingEnrolled && status !== '已正式進班') {
                 if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤清單嗎？`)) {
                     const trackingTbody = document.getElementById('trackingTableBody');
@@ -503,7 +505,6 @@
                 }
             }
 
-            // 如果原本在第一頁，但被直接改為「已正式進班」-> 自動移到第二頁
             if (!isEditingEnrolled && status === '已正式進班') {
                 if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
                     const enrolledTbody = document.getElementById('enrolledTableBody');
@@ -538,10 +539,7 @@
                 }
             }
 
-            // 一般原地修改更新
             currentEditingRow.querySelector('.s-name').innerText = name;
-            
-            // 更新隱藏欄位
             updateHiddenInput(currentEditingRow, 's-inquirer', inquirer);
             updateHiddenInput(currentEditingRow, 's-referrer', referrer);
 
@@ -574,7 +572,6 @@
             }
         }
 
-        // 點擊「確定進班」自動移到第二個頁面並記錄轉入日期
         function moveToEnrolled(btn) {
             const row = btn.closest('tr');
             const studentName = row.querySelector('.s-name').innerText;
@@ -610,13 +607,12 @@
             }
         }
 
-        // 推薦人排行榜與獎金發放邏輯
-        let referrerBonusStatus = {}; // 記錄推薦人是否已發放獎金 { "張媽媽": true }
+        // 推薦人與獎金發放管理（含獨立細節互動彈窗）
+        let referrerDataStore = {}; // 儲存發放狀態與日期 { "李大同": { paid: true, date: "2026-08-29" } }
 
         function updateReferrerRanking() {
             const referrerMap = {};
 
-            // 收集未進班與已進班的所有學員
             const allRows = document.querySelectorAll('#trackingTableBody tr, #enrolledTableBody tr');
             
             allRows.forEach(row => {
@@ -624,12 +620,19 @@
                 const referrerEl = row.querySelector('.s-referrer');
                 const courseEl = row.querySelector('.s-course');
                 const statusEl = row.querySelector('.s-status');
+                const logEl = row.querySelector('.s-log');
 
                 if (nameEl && referrerEl) {
                     const studentName = nameEl.innerText.trim();
                     const referrerName = referrerEl.value.trim();
                     const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
                     const statusName = statusEl ? statusEl.innerText.trim() : '未填狀態';
+
+                    let teacherName = '未指定';
+                    if (logEl) {
+                        const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
+                        if (tMatch) teacherName = tMatch[1];
+                    }
 
                     if (referrerName && referrerName !== '') {
                         if (!referrerMap[referrerName]) {
@@ -638,13 +641,13 @@
                         referrerMap[referrerName].push({
                             student: studentName,
                             course: courseName,
-                            status: statusName
+                            status: statusName,
+                            teacher: teacherName
                         });
                     }
                 }
             });
 
-            // 轉成陣列並依介紹人數排序
             let referrerList = Object.keys(referrerMap).map(ref => {
                 return {
                     name: ref,
@@ -659,38 +662,95 @@
             tbody.innerHTML = '';
 
             if (referrerList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">目前尚無任何推薦人紀錄</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">目前尚無任何推薦人紀錄</td></tr>`;
                 return;
             }
 
             referrerList.forEach((item, index) => {
                 const rank = index + 1;
-                const isPaid = referrerBonusStatus[item.name] || false;
-
-                let detailsHtml = item.details.map(d => `${d.student} (${d.course} - <span style="color:var(--primary-color)">${d.status}</span>)`).join('<br>');
+                
+                if (!referrerDataStore[item.name]) {
+                    referrerDataStore[item.name] = { paid: false, date: '' };
+                }
+                const store = referrerDataStore[item.name];
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>#${rank}</strong></td>
-                    <td><strong>${item.name}</strong></td>
+                    <td><span class="clickable-cell" onclick="openReferrerDetail('${item.name}')">${item.name}</span></td>
                     <td><span class="badge" style="background:#e0e7ff; color:#3730a3; font-weight:700;">${item.count} 人</span></td>
-                    <td><div style="font-size:0.85rem; line-height:1.4;">${detailsHtml}</div></td>
                     <td>
-                        <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
-                            <input type="checkbox" ${isPaid ? 'checked' : ''} onchange="toggleBonus('${item.name}', this)" style="width: 18px; height: 18px; cursor: pointer;">
-                            <span style="${isPaid ? 'color: var(--success-color); font-weight: 600;' : 'color: var(--text-muted);'}">
-                                ${isPaid ? '✓ 已發放獎金' : '未發放'}
-                            </span>
-                        </label>
+                        <span class="clickable-cell" onclick="openReferrerDetail('${item.name}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
+                            ${store.paid ? `✓ 已發放 (${store.date || '未記錄日期'})` : '⏳ 未發放 (點擊設定)'}
+                        </span>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+            window.currentReferrerMap = referrerMap; //暫存供彈窗讀取
         }
 
-        function toggleBonus(referrerName, checkbox) {
-            referrerBonusStatus[referrerName] = checkbox.checked;
-            updateReferrerRanking(); // 重新整理排行榜顯示狀態
+        function openReferrerDetail(referrerName) {
+            const map = window.currentReferrerMap || {};
+            const students = map[referrerName] || [];
+            const store = referrerDataStore[referrerName] || { paid: false, date: '' };
+
+            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 的獎金與介紹明細`;
+
+            let html = `
+                <div style="margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">獎金發放狀態設定：</label>
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" id="modalPaidCheck" ${store.paid ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>已發放獎金</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.9rem; color: var(--text-muted);">發放日期：</span>
+                            <input type="date" id="modalPaidDate" value="${store.date}" style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                        </div>
+                    </div>
+                </div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 介紹學員與負責老師連動清單：</h4>
+                <table style="margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th>被介紹學生</th>
+                            <th>有意願課程 / 狀態</th>
+                            <th>負責追蹤老師</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (students.length === 0) {
+                html += `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">無介紹學員資料</td></tr>`;
+            } else {
+                students.forEach(s => {
+                    html += `
+                        <tr>
+                            <td><strong>${s.student}</strong></td>
+                            <td>${s.course} (<span style="color:var(--primary-color);">${s.status}</span>)</td>
+                            <td><span class="badge" style="background:#f1f5f9; color:#334155;">${s.teacher}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `</tbody></table>`;
+            document.getElementById('referrerModalBody').innerHTML = html;
+            document.getElementById('referrerDetailModal').style.display = 'flex';
+            window.activeReferrerName = referrerName;
+        }
+
+        function closeReferrerModal() {
+            const refName = window.activeReferrerName;
+            if (refName && referrerDataStore[refName]) {
+                referrerDataStore[refName].paid = document.getElementById('modalPaidCheck').checked;
+                referrerDataStore[refName].date = document.getElementById('modalPaidDate').value;
+            }
+            document.getElementById('referrerDetailModal').style.display = 'none';
+            updateReferrerRanking();
         }
     </script>
 </body>
