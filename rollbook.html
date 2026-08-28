@@ -140,12 +140,24 @@
         .class-overview-title {
             font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
         }
+
+        /* 可拖曳排序列 */
+        .draggable-class-container {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+        }
         .class-btn-pill {
-            padding: 6px 14px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s;
-            border: 1.5px solid #94a3b8; background: white; color: #334155; margin-right: 6px; margin-bottom: 6px;
+            padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.15s;
+            border: 1.5px solid #94a3b8; background: white; color: #334155; margin-right: 4px; margin-bottom: 6px;
+            display: inline-flex; align-items: center; gap: 5px; user-select: none;
         }
         .class-btn-pill:hover, .class-btn-pill.active {
             background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px);
+        }
+        .class-btn-pill.dragging {
+            opacity: 0.4; border: 2px dashed var(--accent); background: #e0f2fe;
+        }
+        .drag-handle {
+            cursor: grab; font-size: 12px; opacity: 0.6;
         }
 
         .all-classes-manage-grid {
@@ -156,13 +168,8 @@
             display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        .multi-class-select-box {
-            background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px;
-            max-height: 140px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
-        }
-        .multi-class-label {
-            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; cursor: pointer;
-            background: white; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;
+        .dynamic-course-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
         }
 
         .course-tag {
@@ -347,10 +354,12 @@
                 <button class="dept-btn-small" id="deptBtn-graduated" onclick="switchDept('graduated')">🎓 畢業班</button>
             </div>
 
-            <!-- 部門所屬班級過濾一覽 -->
+            <!-- 部門所屬班級過濾一覽 (支援拖曳排序) -->
             <div class="class-overview-box" id="classOverviewBox">
-                <div class="class-overview-title">🏫 部門所屬班級：</div>
-                <div id="deptClassButtons" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                <div class="class-overview-title">
+                    🏫 部門所屬班級：<small style="color:#64748b; font-weight:normal;">(可按住 ⠿ 直接左右拖曳更換班級排列順序)</small>
+                </div>
+                <div id="deptClassButtons" class="draggable-class-container"></div>
             </div>
 
             <!-- 專用班級全覽管理區 -->
@@ -431,18 +440,13 @@
             </div>
         </div>
 
-        <!-- 所屬班級多選勾選盒 -->
-        <div style="margin:8px 0 12px;">
-            <label style="color:var(--primary); font-weight:bold;"><b>修習班級課程* (可同時勾選多科)：</b></label>
-            <div id="multiClassCheckboxes" class="multi-class-select-box"></div>
-        </div>
-
-        <div>
-            <label><b>學籍狀態：</b></label>
-            <select id="m_stu_status">
-                <option value="active">在籍就讀中</option>
-                <option value="graduated">🎓 已畢業 / 離班</option>
-            </select>
+        <!-- 動態加選修習班級課程專區 -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px; border-radius:8px; margin:10px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label style="color:#166534; font-weight:bold; font-size:14px; margin:0;"><b>📖 修習班級課程 (可自由增加多門科目)：</b></label>
+                <button type="button" class="btn btn-success" style="padding:4px 12px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
+            </div>
+            <div id="studentCoursesWrapper"></div>
         </div>
 
         <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin:10px 0;">
@@ -488,7 +492,16 @@
 
         <div>
             <label><b>學生詳細備註事項：</b></label>
-            <textarea id="m_stu_notes" rows="4" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
+            <textarea id="m_stu_notes" rows="3" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
+        </div>
+
+        <!-- 學籍狀態移動到最下面 -->
+        <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:10px;">
+            <label style="color:var(--primary); font-weight:bold;"><b>學籍狀態：</b></label>
+            <select id="m_stu_status">
+                <option value="active">在籍就讀中</option>
+                <option value="graduated">🎓 已畢業 / 離班</option>
+            </select>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
@@ -503,12 +516,15 @@
 
 <!-- 快速加選/複製班級彈窗 -->
 <div class="modal-overlay" id="quickAssignModal">
-    <div class="modal-box" style="width:550px;">
-        <h3 id="quickAssignTitle" style="color:var(--primary); margin-bottom:12px;">📋 快速加選班級</h3>
+    <div class="modal-box" style="width:580px;">
+        <h3 id="quickAssignTitle" style="color:var(--primary); margin-bottom:12px;">📋 快速加選班級課程</h3>
         <input type="hidden" id="quickAssignFirestoreId">
-        <p style="font-size:13px; color:#555; margin-bottom:10px;">請勾選此學生要同時報名或修習的所有班級課程：</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:13px; color:#555; margin:0;">為學生增減所修習的班級課程：</p>
+            <button type="button" class="btn btn-success" style="padding:4px 10px; font-size:12px;" onclick="addCourseSelectRow('quickAssignWrapper')">➕ 增加一科</button>
+        </div>
         
-        <div id="quickAssignCheckboxes" class="multi-class-select-box" style="max-height:220px;"></div>
+        <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; max-height:260px; overflow-y:auto;"></div>
 
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
             <button class="btn btn-success" onclick="saveQuickAssign()">💾 確認加選並儲存</button>
@@ -543,6 +559,39 @@
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
             <button class="btn btn-success" onclick="saveNewClass()">確認新增</button>
             <button class="btn btn-outline" onclick="document.getElementById('addClassModal').style.display='none'">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 編輯班級彈窗 -->
+<div class="modal-overlay" id="editClassModal">
+    <div class="modal-box" style="width:500px;">
+        <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">✏️ 編輯班級課程資料</h3>
+        <input type="hidden" id="edit_original_dept">
+        <input type="hidden" id="edit_original_name">
+
+        <label><b>所屬部門：</b></label>
+        <select id="edit_class_dept">
+            <option value="care">課輔部</option>
+            <option value="elementary">國小部</option>
+            <option value="junior">國中部</option>
+        </select>
+
+        <label><b>班級課程名稱：</b></label>
+        <input type="text" id="edit_class_name" placeholder="例如：小四安親班">
+
+        <label><b>上課星期 (例：星期一、星期三)：</b></label>
+        <input type="text" id="edit_class_day" placeholder="例如：星期一、星期四">
+
+        <label><b>上課時段：</b></label>
+        <input type="text" id="edit_class_time" placeholder="例如：16:30 - 18:30">
+
+        <label><b>授課老師：</b></label>
+        <input type="text" id="edit_class_teacher" placeholder="例如：陳老師">
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+            <button class="btn btn-success" onclick="saveEditedClass()">💾 儲存修改</button>
+            <button class="btn btn-outline" onclick="document.getElementById('editClassModal').style.display='none'">取消</button>
         </div>
     </div>
 </div>
@@ -692,6 +741,7 @@
         renderMasterStudentsTable();
     };
 
+    // 渲染部門所屬班級按鈕（支援滑鼠拖曳排序）
     function renderDeptClassButtons() {
         const container = document.getElementById('deptClassButtons');
         const box = document.getElementById('classOverviewBox');
@@ -719,17 +769,86 @@
 
         box.style.display = 'block';
         const list = window.state.courses[deptKey] || [];
-        let html = `<button class="class-btn-pill ${!window.state.currentFilterClass ? 'active' : ''}" onclick="filterByClass(null)">全部班級</button>`;
+        
+        container.innerHTML = '';
 
-        list.forEach(c => {
+        const allBtn = document.createElement('button');
+        allBtn.className = `class-btn-pill ${!window.state.currentFilterClass ? 'active' : ''}`;
+        allBtn.innerText = '全部班級';
+        allBtn.onclick = () => filterByClass(null);
+        container.appendChild(allBtn);
+
+        list.forEach((c, index) => {
             const cName = typeof c === 'object' ? c.name : c;
             const isActive = window.state.currentFilterClass === cName;
-            html += `<button class="class-btn-pill ${isActive ? 'active' : ''}" onclick="filterByClass('${cName}')">🏫 ${cName}</button>`;
+
+            const btn = document.createElement('div');
+            btn.className = `class-btn-pill ${isActive ? 'active' : ''}`;
+            btn.draggable = true;
+            btn.dataset.index = index;
+            btn.dataset.name = cName;
+
+            btn.innerHTML = `<span class="drag-handle">⠿</span> 🏫 ${cName}`;
+
+            btn.onclick = (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                filterByClass(cName);
+            };
+
+            btn.addEventListener('dragstart', handleDragStart);
+            btn.addEventListener('dragover', handleDragOver);
+            btn.addEventListener('drop', handleDrop);
+            btn.addEventListener('dragend', handleDragEnd);
+
+            container.appendChild(btn);
         });
 
-        container.innerHTML = html || `<span style="color:#888; font-size:13px;">該部門目前尚無班級課程。</span>`;
+        if (list.length === 0) {
+            container.innerHTML += `<span style="color:#888; font-size:13px;">該部門目前尚無班級課程。</span>`;
+        }
     }
 
+    let draggedItem = null;
+
+    function handleDragStart(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    async function handleDrop(e) {
+        e.stopPropagation();
+        if (draggedItem !== this && this.dataset && this.dataset.index !== undefined) {
+            const fromIndex = parseInt(draggedItem.dataset.index);
+            const toIndex = parseInt(this.dataset.index);
+            const deptKey = window.state.currentDeptView;
+
+            const list = window.state.courses[deptKey];
+            const movedItem = list.splice(fromIndex, 1)[0];
+            list.splice(toIndex, 0, movedItem);
+
+            renderDeptClassButtons();
+
+            try {
+                await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+            } catch (err) {
+                console.error("排序儲存失敗", err);
+            }
+        }
+        return false;
+    }
+
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        draggedItem = null;
+    }
+
+    // 渲染全校班級管理卡片（含「編輯」與「刪除」按鈕）
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
@@ -744,21 +863,30 @@
                 const cName = typeof c === 'object' ? c.name : c;
                 const cDay = typeof c === 'object' ? (c.day || '未設時間') : '';
                 const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '';
+                const cTime = typeof c === 'object' ? (c.time || '未設定') : '';
                 const stuCount = window.state.students.filter(s => {
                     const arr = getStudentCoursesArray(s);
                     return arr.includes(cName) && s.status !== 'graduated';
                 }).length;
+
+                // 安全傳遞參數字串
+                const safeName = encodeURIComponent(cName);
+                const safeDay = encodeURIComponent(cDay);
+                const safeTime = encodeURIComponent(cTime);
+                const safeTeacher = encodeURIComponent(cTeacher);
 
                 html += `
                     <div class="class-manage-card">
                         <div>
                             <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
                             <div style="font-size:16px; font-weight:bold; color:var(--primary); margin:8px 0 4px;">🏫 ${cName}</div>
-                            <div style="font-size:13px; color:#555;">授課：${cTeacher} | ${cDay}</div>
-                            <div style="font-size:13px; color:#666; margin-top:4px;">目前修課學生：<b>${stuCount}</b> 人</div>
+                            <div style="font-size:13px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
+                            <div style="font-size:12px; color:#777; margin-top:2px;">時段：${cTime}</div>
+                            <div style="font-size:13px; color:#666; margin-top:6px;">目前修課學生：<b>${stuCount}</b> 人</div>
                         </div>
-                        <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; text-align:right;">
-                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteClassCourse('${deptKey}', '${cName}')">🗑️ 刪除此班級 (需密碼)</button>
+                        <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; display:flex; justify-content:flex-end; gap:6px;">
+                            <button class="btn btn-warning" style="padding:4px 10px; font-size:12px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${safeName}'), decodeURIComponent('${safeDay}'), decodeURIComponent('${safeTime}'), decodeURIComponent('${safeTeacher}'))">✏️ 編輯班級</button>
+                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteClassCourse('${deptKey}', decodeURIComponent('${safeName}'))">🗑️ 刪除班級</button>
                         </div>
                     </div>
                 `;
@@ -767,6 +895,93 @@
 
         grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前全校尚無建立任何班級課程。</p>`;
     }
+
+    // 打開編輯班級彈窗
+    window.openEditClassModal = function(dept, name, day, time, teacher) {
+        document.getElementById('edit_original_dept').value = dept;
+        document.getElementById('edit_original_name').value = name;
+
+        document.getElementById('edit_class_dept').value = dept;
+        document.getElementById('edit_class_name').value = name;
+        document.getElementById('edit_class_day').value = day;
+        document.getElementById('edit_class_time').value = time;
+        document.getElementById('edit_class_teacher').value = teacher;
+
+        document.getElementById('editClassModal').style.display = 'flex';
+    };
+
+    // 儲存修改後的班級資料 (支援改名自動連動學生)
+    window.saveEditedClass = async function() {
+        const origDept = document.getElementById('edit_original_dept').value;
+        const origName = document.getElementById('edit_original_name').value;
+
+        const newDept = document.getElementById('edit_class_dept').value;
+        const newName = document.getElementById('edit_class_name').value.trim();
+        const newDay = document.getElementById('edit_class_day').value.trim() || '星期一';
+        const newTime = document.getElementById('edit_class_time').value.trim() || '未設定';
+        const newTeacher = document.getElementById('edit_class_teacher').value.trim() || '任課老師';
+
+        if (!newName) return alert('請輸入班級課程名稱！');
+
+        try {
+            // 1. 從原部門移除該班級舊資料，獲取原本的 startDate
+            let origStartDate = new Date().toISOString().slice(0, 8) + '01';
+            let foundOld = false;
+
+            if (window.state.courses[origDept]) {
+                const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
+                if (idx !== -1) {
+                    const oldObj = window.state.courses[origDept][idx];
+                    if (typeof oldObj === 'object' && oldObj.startDate) origStartDate = oldObj.startDate;
+                    window.state.courses[origDept].splice(idx, 1);
+                    foundOld = true;
+                }
+            }
+
+            // 2. 加入新資料至新部門
+            if (!window.state.courses[newDept]) window.state.courses[newDept] = [];
+            window.state.courses[newDept].push({
+                name: newName,
+                day: newDay,
+                time: newTime,
+                teacher: newTeacher,
+                startDate: origStartDate
+            });
+
+            // 儲存班級設定至雲端
+            await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+
+            // 3. 如果班級名稱有改，自動連動更新學生資料庫中的課程名稱
+            if (origName !== newName) {
+                const updatePromises = [];
+                window.state.students.forEach(stu => {
+                    const courses = getStudentCoursesArray(stu);
+                    if (courses.includes(origName)) {
+                        const updatedCourses = courses.map(c => c === origName ? newName : c);
+                        stu.courses = updatedCourses;
+                        stu.course = updatedCourses.join('、');
+                        updatePromises.push(
+                            setDoc(doc(db, "classLogStudents", stu.firestoreId), {
+                                ...stu,
+                                courses: updatedCourses,
+                                course: stu.course
+                            })
+                        );
+                    }
+                });
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                }
+            }
+
+            document.getElementById('editClassModal').style.display = 'none';
+            alert(`✅ 班級【${newName}】資料已成功更新並同步！`);
+            initCloudData();
+        } catch (e) {
+            console.error(e);
+            alert('修改班級失敗，請檢查網路連線！');
+        }
+    };
 
     window.deleteClassCourse = async function(dept, className) {
         if (!checkPassword(`🔒 刪除班級【${className}】屬於教務管理操作，請輸入管理密碼：`)) {
@@ -809,7 +1024,7 @@
         renderMasterStudentsTable();
     };
 
-    // 學生清單表格 (全新順序：序、學生姓名、生日、學校、班級、電話1、電話2、電話3、補習課程、操作)
+    // 學生清單表格
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const deptKey = window.state.currentDeptView;
@@ -835,7 +1050,6 @@
             }
         });
 
-        // 依學生姓名排列
         filtered.sort((a, b) => {
             const nameA = a.name || '';
             const nameB = b.name || '';
@@ -879,7 +1093,6 @@
             const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
             const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
 
-            // 純文字呈現電話，不加任何超連結
             const formatPlainPhone = (p) => {
                 if (!p || !p.number || p.number.trim() === '') return `<span style="color:#bbb;">-</span>`;
                 return `<div class="phone-plain-cell"><b>${p.label || '電話'}:</b> ${p.number}</div>`;
@@ -912,27 +1125,77 @@
         tbody.innerHTML = html;
     };
 
-    function renderMultiClassCheckboxes(containerId, selectedCourses = []) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        let html = '';
+    // 動態加選修課科目清單
+    function getCourseOptionsHtml(selectedValue = "") {
+        let html = `<option value="">-- 請選擇班級課程 --</option>`;
+        const deptLabels = { care: '🏢 課輔部', elementary: '📘 國小部', junior: '📙 國中部' };
 
         ['care', 'elementary', 'junior'].forEach(dept => {
-            const deptName = dept === 'care' ? '課輔' : (dept === 'elementary' ? '國小' : '國中');
             const list = window.state.courses[dept] || [];
-            list.forEach(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const isChecked = selectedCourses.includes(cName);
-                html += `
-                    <label class="multi-class-label">
-                        <input type="checkbox" value="${cName}" ${isChecked ? 'checked' : ''}>
-                        <span>[${deptName}] ${cName}</span>
-                    </label>
-                `;
-            });
+            if (list.length > 0) {
+                html += `<optgroup label="${deptLabels[dept]}">`;
+                list.forEach(c => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    html += `<option value="${cName}" ${cName === selectedValue ? 'selected' : ''}>${cName}</option>`;
+                });
+                html += `</optgroup>`;
+            }
         });
+        return html;
+    }
 
-        container.innerHTML = html || `<span style="color:#888; font-size:12px;">尚未建立任何班級，請先新增班級課程。</span>`;
+    window.addCourseSelectRow = function(wrapperId, selectedValue = "") {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+
+        const row = document.createElement('div');
+        row.className = 'dynamic-course-row';
+
+        const select = document.createElement('select');
+        select.style.margin = "0";
+        select.innerHTML = getCourseOptionsHtml(selectedValue);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = "button";
+        removeBtn.className = "btn btn-danger";
+        removeBtn.style.padding = "6px 12px";
+        removeBtn.style.fontSize = "12px";
+        removeBtn.innerText = "✖ 移除";
+        removeBtn.onclick = function() {
+            row.remove();
+        };
+
+        row.appendChild(select);
+        row.appendChild(removeBtn);
+        wrapper.appendChild(row);
+    };
+
+    function populateDynamicCourses(wrapperId, coursesArr = []) {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+        wrapper.innerHTML = '';
+
+        if (!coursesArr || coursesArr.length === 0) {
+            addCourseSelectRow(wrapperId, "");
+        } else {
+            coursesArr.forEach(cName => {
+                addCourseSelectRow(wrapperId, cName);
+            });
+        }
+    }
+
+    function getSelectedCoursesFromWrapper(wrapperId) {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return [];
+        const selects = wrapper.querySelectorAll('select');
+        const list = [];
+        selects.forEach(sel => {
+            const val = sel.value.trim();
+            if (val && !list.includes(val)) {
+                list.push(val);
+            }
+        });
+        return list;
     }
 
     // 打開新增學生彈窗 (免密碼)
@@ -962,7 +1225,7 @@
         document.getElementById('m_stu_health').value = "";
         document.getElementById('m_stu_notes').value = "";
 
-        renderMultiClassCheckboxes('multiClassCheckboxes', []);
+        populateDynamicCourses('studentCoursesWrapper', []);
         document.getElementById('studentModal').style.display = "flex";
     };
 
@@ -1001,7 +1264,7 @@
         document.getElementById('m_stu_notes').value = stu.notes || '';
 
         const selectedCourses = getStudentCoursesArray(stu);
-        renderMultiClassCheckboxes('multiClassCheckboxes', selectedCourses);
+        populateDynamicCourses('studentCoursesWrapper', selectedCourses);
 
         document.getElementById('studentModal').style.display = "flex";
     };
@@ -1014,11 +1277,10 @@
     window.saveStudentMasterData = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value.trim();
-
-        const selectedCourses = Array.from(document.querySelectorAll('#multiClassCheckboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+        const selectedCourses = getSelectedCoursesFromWrapper('studentCoursesWrapper');
 
         if (!name) return alert('⚠️ 學生姓名不能為空白！');
-        if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生勾選一個修習的班級課程！');
+        if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
 
         const studentData = {
             name: name,
@@ -1074,7 +1336,7 @@
         document.getElementById('quickAssignFirestoreId').value = firestoreId;
 
         const currentCourses = getStudentCoursesArray(stu);
-        renderMultiClassCheckboxes('quickAssignCheckboxes', currentCourses);
+        populateDynamicCourses('quickAssignWrapper', currentCourses);
 
         document.getElementById('quickAssignModal').style.display = 'flex';
     };
@@ -1084,10 +1346,10 @@
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
 
-        const selectedCourses = Array.from(document.querySelectorAll('#quickAssignCheckboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+        const selectedCourses = getSelectedCoursesFromWrapper('quickAssignWrapper');
 
         if (selectedCourses.length === 0) {
-            return alert('⚠️ 請至少勾選一個修習班級！');
+            return alert('⚠️ 請至少選擇一個修習班級！');
         }
 
         try {
