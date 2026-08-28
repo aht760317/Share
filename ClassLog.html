@@ -1176,7 +1176,10 @@
                             <b style="font-size:16px; color:var(--primary);">${s.name}</b>
                             <div style="font-size:12.5px; color:#555; margin-top:2px;">${s.school || '-'} ｜ ${s.studentClass || ''}</div>
                             <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${phone}</div>
-                            <button class="btn btn-small btn-primary" style="margin-top:6px;" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                                <button class="btn btn-small btn-warning" onclick="generateParentLogForStudent('${s.firestoreId}', '${className}')">📋 生成LINE家長日誌</button>
+                                <button class="btn btn-small btn-primary" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
+                            </div>
                         </td>
                         <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無出席紀錄</span>'}</td>
                         <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無測驗紀錄</span>'}</td>
@@ -1199,7 +1202,6 @@
             if (passScoreWrapper) passScoreWrapper.style.display = isYes ? 'block' : 'none';
             if (thExamScore) thExamScore.style.display = isYes ? 'table-cell' : 'none';
 
-            // 即時更新學生填寫清單中的考試分數欄位顯示
             window.renderLogStudents(dept);
         };
 
@@ -1568,6 +1570,75 @@
             }
 
             document.getElementById('card-homework').innerText = homework || '無';
+            document.getElementById('card-hwstatus').innerText = hwStatus;
+            document.getElementById('card-note').innerText = note;
+
+            let parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
+                `------------------------\n` +
+                `📅 日期：${date}\n` +
+                `📚 課程名稱：${course}\n` +
+                `👨‍🏫 授課老師：${teacherName}\n` +
+                `👨‍🎓 學生姓名：${student.name}\n` +
+                `📌 出缺勤狀況：${att}\n` +
+                `📘 教學進度：${progress}\n`;
+            
+            if (hasExam) {
+                parentMsg += `📝 測驗表現：${score}\n`;
+            }
+
+            parentMsg += `📖 作業內容：${homework}\n` +
+                `✅ 作業完成度：${hwStatus}\n` +
+                `💬 老師評語與叮嚀：${note}\n` +
+                `------------------------\n` +
+                `感謝您的支持與配合，顧德補習班關心您的孩子每一天！`;
+
+            document.getElementById('parent-log-text').value = parentMsg;
+            document.getElementById('parent-log-modal').style.display = 'flex';
+        };
+
+        // 從「各班學生日誌」直接生成該學生最新一筆該科目的個人 LINE 日誌
+        window.generateParentLogForStudent = function(firestoreId, className) {
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student) return;
+
+            const classLogs = (student.attendanceLogs || []).filter(l => l.course === className || (!l.course && getStudentCoursesArray(student).length === 1));
+            const latestLog = classLogs.length > 0 ? classLogs[0] : null;
+
+            const date = latestLog ? latestLog.date : new Date().toISOString().slice(0, 10);
+            const course = className;
+            const progress = latestLog && latestLog.progress ? latestLog.progress : '指定進度範圍與重點複習';
+            const homework = latestLog && latestLog.homeworkContent ? latestLog.homeworkContent : '無';
+
+            const allDeptCourses = [...(window.state.courses.care || []), ...(window.state.courses.elementary || []), ...(window.state.courses.junior || [])];
+            const courseObj = allDeptCourses.find(c => (typeof c === 'object' ? c.name : c) === course);
+            const teacherName = (courseObj && courseObj.teacher) ? courseObj.teacher : '本班老師';
+
+            let att = '✔ 出席正常', score = '無', hwStatus = '✔ 已完成', note = '出席正常';
+            if(latestLog) {
+                att = latestLog.status === '出席' ? '✔ 出席正常' : `✖ ${latestLog.status}`;
+                score = (latestLog.score !== null && latestLog.score !== undefined && latestLog.score !== '') ? latestLog.score : '無';
+                hwStatus = latestLog.homework === '完成' ? '✔ 已完成' : (latestLog.homework || '已完成');
+                note = latestLog.detail || '出席正常';
+            }
+
+            const hasExam = (score !== '無');
+
+            document.getElementById('card-date').innerText = date;
+            document.getElementById('card-course').innerText = course;
+            document.getElementById('card-teacher').innerText = teacherName;
+            document.getElementById('card-student').innerText = student.name;
+            document.getElementById('card-att').innerText = att;
+            document.getElementById('card-progress').innerText = progress;
+            
+            const scoreRow = document.getElementById('card-score-row');
+            if (hasExam) {
+                scoreRow.style.display = '';
+                document.getElementById('card-score').innerText = score;
+            } else {
+                scoreRow.style.display = 'none';
+            }
+
+            document.getElementById('card-homework').innerText = homework;
             document.getElementById('card-hwstatus').innerText = hwStatus;
             document.getElementById('card-note').innerText = note;
 
