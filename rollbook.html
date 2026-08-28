@@ -218,7 +218,7 @@
     </div>
     
     <div class="sync-controls no-print">
-        <a href="ClassLog.html" class="nav-link">🔙 返回教學日誌</a>
+        <a href="https://aht760317.github.io/Share/gogogood.html" class="nav-link">🔙 返回行政管理系統</a>
     </div>
 </header>
 
@@ -258,14 +258,15 @@
         </div>
 
         <div class="card" id="rollDetailCard" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:10px; flex-wrap:wrap; gap:10px;">
                 <div>
                     <h3 id="rollCourseTitle" style="color:var(--primary);">課程名稱</h3>
                     <p id="rollCourseMeta" style="color:#666; font-size:13px; margin-top:2px;"></p>
                 </div>
-                <div class="no-print" style="display:flex; gap:10px; align-items:center;">
+                <div class="no-print" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none;">⚠️ 本日為設定之放假日</span>
                     <button class="btn btn-primary" onclick="quickMarkAll()">⚡ 全員到齊點名 (✔)</button>
+                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()">🔒 點名確認 (密碼0000)</button>
                 </div>
             </div>
 
@@ -338,7 +339,7 @@
 
                 <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span><b>目前表單學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
-                    <span>💡 您可自由指定<b>任何開始到結束日期</b>，系統將自動計算涵蓋之課堂週數並即時連動出缺席！</span>
+                    <span>💡 點名表符號：出席打勾 <b>✔</b> ｜ 請假三角形 <b style="color:red;">▲</b> ｜ 資料與每日點名即時連動。</span>
                 </div>
             </div>
 
@@ -651,6 +652,7 @@
     const db = getFirestore(app);
 
     const SECURITY_CODE = "0618";
+    const CONFIRM_ROLLCALL_CODE = "0000"; // 點名確認密碼
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
     const DEFAULT_DEPT_ORDER = [
@@ -667,7 +669,7 @@
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        courseFilterMode: 'today', // 'today' | 'care' | 'elementary' | 'junior' | 'all'
+        courseFilterMode: 'today',
         currentDeptView: 'care',
         currentFilterClass: null,
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER
@@ -1552,7 +1554,7 @@
     }
 
     // ==========================================
-    // 1. 今日點名與課堂清單 (多條件篩選)
+    // 1. 今日點名與課堂清單 (多條件篩選 + 點名確認)
     // ==========================================
     window.onDateChange = function() {
         renderCourseCards();
@@ -1758,6 +1760,35 @@
     };
 
     // ==========================================
+    // 點名確認 (密碼 0000) 並自動導入點名表
+    // ==========================================
+    window.confirmRollCallAndSync = function() {
+        if (!window.state.currentCourse) {
+            return alert("請先選擇要確認點名的課程！");
+        }
+
+        const input = prompt("🔒 請輸入點名確認密碼 (預設 0000)：");
+        if (input !== CONFIRM_ROLLCALL_CODE) {
+            return alert("❌ 密碼錯誤，點名確認失敗！");
+        }
+
+        const courseName = window.state.currentCourse.name;
+        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+
+        alert(`✅ 點名確認成功！即將自動跳轉至【${courseName}】自動生成點名總表供主任查核。`);
+
+        // 自動切換到點名表分頁
+        switchTab('sheet');
+
+        // 同步選中該課程
+        const sheetSel = document.getElementById('sheetCourseSelect');
+        if (sheetSel) {
+            sheetSel.value = courseName;
+            onSheetCourseChanged();
+        }
+    };
+
+    // ==========================================
     // 2. 自動生成點名表 (支援自由指定幾號到幾號)
     // ==========================================
     function populateSheetCourses() {
@@ -1768,6 +1799,9 @@
         allCourses.forEach(c => {
             sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
+        if (window.state.currentCourse) {
+            sel.value = window.state.currentCourse.name;
+        }
         onSheetCourseChanged();
     }
 
@@ -1794,12 +1828,10 @@
 
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
-        // 預設設定起始與結束日
         document.getElementById('sheetQueryStartDate').value = baseStart;
         const defaultEnd = new Date(baseDate.getTime() + daysPerPeriod * 86400000);
         document.getElementById('sheetQueryEndDate').value = formatDate(defaultEnd);
 
-        // 快速期數選單
         const quickSel = document.getElementById('sheetPeriodQuickSelect');
         quickSel.innerHTML = '';
 
@@ -1857,7 +1889,6 @@
             return arr.includes(course.name) && s.status !== 'graduated';
         });
 
-        // 依據指定的 起始日 ~ 結束日 推算每週課堂
         let dateList = [];
         let cur = new Date(startVal);
         const endDateObj = new Date(endVal);
