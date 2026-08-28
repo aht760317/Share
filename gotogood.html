@@ -42,6 +42,7 @@
         .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
         
         /* 名字旁邊的藍色修改筆按鈕 */
@@ -102,6 +103,10 @@
                             <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
                         <div class="form-group">
+                            <label>詢問者 (誰來詢問)</label>
+                            <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
+                        </div>
+                        <div class="form-group">
                             <label>有意願課程</label>
                             <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
                         </div>
@@ -158,6 +163,7 @@
                             <td>
                                 <strong class="s-name">林美華</strong>
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                                <input type="hidden" class="s-inquirer" value="林媽媽">
                             </td>
                             <td><span class="s-course">全科暑期班</span></td>
                             <td><span class="s-phone">0923-456789</span></td>
@@ -211,6 +217,10 @@
                         <input type="text" id="editName">
                     </div>
                     <div class="form-group">
+                        <label>詢問者 (誰來詢問)</label>
+                        <input type="text" id="editInquirer">
+                    </div>
+                    <div class="form-group">
                         <label>有意願課程</label>
                         <input type="text" id="editCourse">
                     </div>
@@ -242,9 +252,12 @@
                     <label>追蹤紀錄歷程</label>
                     <textarea id="editLog" style="width: 100%; height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;"></textarea>
                 </div>
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeEditModal()">取消</button>
-                    <button type="button" class="btn btn-sm btn-success" onclick="saveEditModal()">儲存修改</button>
+                <div style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteStudentRecord()">🗑️ 刪除此學生資料</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeEditModal()">取消</button>
+                        <button type="button" class="btn btn-sm btn-success" onclick="saveEditModal()">儲存修改</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -278,6 +291,7 @@
 
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
+            const inquirer = document.getElementById('inquirer').value || '未填寫';
             const course = document.getElementById('studentCourse').value;
             const phone = document.getElementById('studentPhone').value;
             const tDate = document.getElementById('trialDate').value || '未定';
@@ -295,6 +309,7 @@
                 <td>
                     <strong class="s-name">${name}</strong>
                     <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                    <input type="hidden" class="s-inquirer" value="${inquirer}">
                     <input type="hidden" class="s-source" value="${source}">
                 </td>
                 <td><span class="s-course">${course}</span></td>
@@ -334,6 +349,8 @@
             isEditingEnrolled = currentEditingRow.closest('#enrolledTableBody') !== null;
 
             const name = currentEditingRow.querySelector('.s-name').innerText;
+            const inquirerEl = currentEditingRow.querySelector('.s-inquirer');
+            const inquirer = inquirerEl ? inquirerEl.value : '';
             const course = currentEditingRow.querySelector('.s-course').innerText;
             const phone = currentEditingRow.querySelector('.s-phone').innerText;
             
@@ -354,6 +371,7 @@
             const source = sourceEl ? sourceEl.value : 'LINE';
 
             document.getElementById('editName').value = name;
+            document.getElementById('editInquirer').value = inquirer;
             document.getElementById('editCourse').value = course;
             document.getElementById('editPhone').value = phone;
             document.getElementById('editDate').value = date !== '未定' && date !== '' ? date : '';
@@ -371,10 +389,22 @@
             isEditingEnrolled = false;
         }
 
+        function deleteStudentRecord() {
+            if (!currentEditingRow) return;
+            const name = document.getElementById('editName').value;
+
+            if (confirm(`⚠️ 確定要永久刪除「${name}」這筆招生紀錄嗎？此動作無法復原。`)) {
+                currentEditingRow.remove();
+                closeEditModal();
+                alert('已成功刪除該筆學生資料！');
+            }
+        }
+
         function saveEditModal() {
             if (!currentEditingRow) return;
 
             const name = document.getElementById('editName').value;
+            const inquirer = document.getElementById('editInquirer').value;
             const course = document.getElementById('editCourse').value;
             const phone = document.getElementById('editPhone').value;
             const date = document.getElementById('editDate').value || '未定';
@@ -395,6 +425,7 @@
                         <td>
                             <strong class="s-name">${name}</strong>
                             <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                            <input type="hidden" class="s-inquirer" value="${inquirer}">
                             <input type="hidden" class="s-source" value="${source}">
                         </td>
                         <td><span class="s-course">${course}</span></td>
@@ -429,6 +460,7 @@
                         <td>
                             <strong class="s-name">${name}</strong>
                             <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                            <input type="hidden" class="s-inquirer" value="${inquirer}">
                             <input type="hidden" class="s-source" value="${source}">
                         </td>
                         <td><span class="s-course">${course}</span></td>
@@ -452,6 +484,19 @@
 
             // 一般原地修改更新
             currentEditingRow.querySelector('.s-name').innerText = name;
+            let inquirerEl = currentEditingRow.querySelector('.s-inquirer');
+            if(inquirerEl) {
+                inquirerEl.value = inquirer;
+            } else {
+                // 如果原本沒有隱藏 input，幫忙補上
+                const nameTd = currentEditingRow.querySelector('td:nth-child(1)');
+                let hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.className = 's-inquirer';
+                hiddenInput.value = inquirer;
+                nameTd.appendChild(hiddenInput);
+            }
+
             currentEditingRow.querySelector('.s-course').innerText = course;
             currentEditingRow.querySelector('.s-phone').innerText = phone;
             
