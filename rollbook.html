@@ -67,7 +67,7 @@
 
         /* 全校班級管理專區分類按鈕列 */
         .manage-cat-group {
-            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
         }
         .manage-cat-btn {
             padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 6px;
@@ -193,9 +193,6 @@
         .class-btn-pill.dragging {
             opacity: 0.4; border: 2px dashed var(--accent); background: #e0f2fe;
         }
-        .drag-handle {
-            cursor: grab; font-size: 12px; opacity: 0.6;
-        }
 
         .all-classes-manage-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;
@@ -203,6 +200,10 @@
         .class-manage-card {
             background: white; border: 2px solid #cbd5e1; border-radius: 8px; padding: 15px;
             display: flex; flex-direction: column; justify-content: space-between;
+            transition: 0.2s; user-select: none;
+        }
+        .class-manage-card.dragging {
+            opacity: 0.4; border: 2px dashed #4f46e5; background: #eef2ff;
         }
 
         .dynamic-course-row {
@@ -218,10 +219,32 @@
             font-size: 14px; line-height: 1.4; text-align: center; color: #1e293b;
         }
 
+        /* 課表專屬樣式 */
+        .timetable-week-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 15px;
+        }
+        .timetable-day-col {
+            background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px;
+            display: flex; flex-direction: column; min-height: 250px;
+        }
+        .timetable-day-header {
+            font-size: 14px; font-weight: bold; text-align: center; padding-bottom: 6px;
+            border-bottom: 2px solid #94a3b8; margin-bottom: 8px; color: var(--primary);
+        }
+        .timetable-item {
+            background: white; border-radius: 6px; border: 1.5px solid #e2e8f0; padding: 8px;
+            margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 12px;
+        }
+        .timetable-item .c-title { font-weight: bold; font-size: 13px; color: #1e293b; margin-bottom: 3px; }
+        .timetable-item .c-time { color: #0369a1; font-weight: bold; }
+        .timetable-item .c-teacher { color: #475569; margin-top: 2px; }
+
         @media print {
             @page { size: landscape; margin: 6mm; }
             body { background: white; padding: 0; }
-            header, .tabs, .no-print, .btn, .filter-btn-group { display: none !important; }
+            header, .tabs, .no-print, .btn, .filter-btn-group, .modal-overlay:not(#timetableModal) { display: none !important; }
+            #timetableModal { position: static !important; display: block !important; background: white !important; }
+            #timetableModal .modal-box { width: 100% !important; max-width: 100% !important; box-shadow: none !important; padding: 0 !important; }
             .card { box-shadow: none; padding: 0; margin: 0; border: none; }
             .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
             table { font-size: 9pt; width: 100%; }
@@ -421,15 +444,18 @@
                 <div id="deptClassButtons" class="draggable-class-container"></div>
             </div>
 
-            <!-- 全校班級課程管理專區 -->
+            <!-- 全校班級課程管理專區 (含卡片拖曳排序與一鍵生成課表按鈕) -->
             <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
                 <div class="class-overview-title" style="color:#3730a3; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <span>🏫 全校班級課程管理專區：</span>
-                    <div class="manage-cat-group" id="manageCatGroup">
-                        <button class="manage-cat-btn active" data-cat="all" onclick="setManageCategory('all')">全部班級</button>
-                        <button class="manage-cat-btn" data-cat="care" onclick="setManageCategory('care')">課輔班</button>
-                        <button class="manage-cat-btn" data-cat="elementary" onclick="setManageCategory('elementary')">國小部</button>
-                        <button class="manage-cat-btn" data-cat="junior" onclick="setManageCategory('junior')">國中部</button>
+                    <span>🏫 全校班級課程管理專區 (可拖曳卡片自訂班級排序)：</span>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <div class="manage-cat-group" id="manageCatGroup">
+                            <button class="manage-cat-btn active" data-cat="all" onclick="setManageCategory('all')">全部班級</button>
+                            <button class="manage-cat-btn" data-cat="care" onclick="setManageCategory('care')">課輔班</button>
+                            <button class="manage-cat-btn" data-cat="elementary" onclick="setManageCategory('elementary')">國小部</button>
+                            <button class="manage-cat-btn" data-cat="junior" onclick="setManageCategory('junior')">國中部</button>
+                        </div>
+                        <button class="btn btn-purple" style="padding:6px 14px; font-size:13px;" onclick="generateScheduleTimetable()">📅 產出每週課表</button>
                     </div>
                 </div>
                 <div id="allClassesCardGrid" class="all-classes-manage-grid"></div>
@@ -464,6 +490,24 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- 專屬課表彈窗 (支援列印) -->
+<div class="modal-overlay" id="timetableModal">
+    <div class="modal-box" style="width: 1100px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:10px;">
+            <div>
+                <h3 id="timetableModalTitle" style="color:var(--primary); font-size:20px;">斗六顧德補習班 - 每週課程時間表</h3>
+                <p id="timetableModalSub" style="font-size:13px; color:#64748b; margin-top:4px;"></p>
+            </div>
+            <div class="no-print" style="display:flex; gap:10px;">
+                <button class="btn btn-success" onclick="window.print()">🖨️ 列印此課表</button>
+                <button class="btn btn-outline" onclick="document.getElementById('timetableModal').style.display='none'">關閉</button>
+            </div>
+        </div>
+
+        <div id="timetableContent" style="margin-top:15px;"></div>
     </div>
 </div>
 
@@ -682,7 +726,7 @@
     const db = getFirestore(app);
 
     const SECURITY_CODE = "0618";
-    const CONFIRM_ROLLCALL_CODE = "0000"; // 點名確認密碼
+    const CONFIRM_ROLLCALL_CODE = "0000";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
@@ -1002,6 +1046,9 @@
     }
     function handleDragEnd() { this.classList.remove('dragging'); draggedItem = null; }
 
+    // ==========================================
+    // 全校班級管理專區：卡片拖曳排序與渲染
+    // ==========================================
     window.setManageCategory = function(cat) {
         window.state.manageCategory = cat;
         document.querySelectorAll('#manageCatGroup .manage-cat-btn').forEach(btn => {
@@ -1014,10 +1061,51 @@
         renderAllClassesManagementCards();
     };
 
+    let draggedManageCard = null;
+
+    function handleManageCardDragStart(e) {
+        draggedManageCard = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleManageCardDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    async function handleManageCardDrop(e) {
+        e.stopPropagation();
+        if (draggedManageCard && draggedManageCard !== this) {
+            const fromDept = draggedManageCard.dataset.dept;
+            const fromIndex = parseInt(draggedManageCard.dataset.index);
+            const toDept = this.dataset.dept;
+            const toIndex = parseInt(this.dataset.index);
+
+            if (fromDept && toDept && window.state.courses[fromDept] && window.state.courses[toDept]) {
+                const movedItem = window.state.courses[fromDept].splice(fromIndex, 1)[0];
+                window.state.courses[toDept].splice(toIndex, 0, movedItem);
+                
+                renderAllClassesManagementCards();
+                try {
+                    await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+                } catch (err) {
+                    console.error("班級卡片排序儲存失敗", err);
+                }
+            }
+        }
+        return false;
+    }
+
+    function handleManageCardDragEnd() {
+        if (draggedManageCard) draggedManageCard.classList.remove('dragging');
+        draggedManageCard = null;
+    }
+
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
-        let html = '';
+        grid.innerHTML = '';
 
         const cat = window.state.manageCategory || 'all';
         let targetDepts = ['care', 'elementary', 'junior'];
@@ -1025,12 +1113,15 @@
         else if (cat === 'elementary') targetDepts = ['elementary'];
         else if (cat === 'junior') targetDepts = ['junior'];
 
+        let totalCards = 0;
+
         targetDepts.forEach(deptKey => {
             const deptName = deptKey === 'care' ? '課輔部' : (deptKey === 'elementary' ? '國小部' : '國中部');
             const deptBadge = deptKey === 'care' ? '#0369a1' : (deptKey === 'elementary' ? '#15803d' : '#b45309');
             const list = window.state.courses[deptKey] || [];
 
-            list.forEach(c => {
+            list.forEach((c, cIndex) => {
+                totalCards++;
                 const cName = typeof c === 'object' ? c.name : c;
                 const cDay = typeof c === 'object' ? (c.day || '未設時間') : '';
                 const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '';
@@ -1040,30 +1131,129 @@
                     return arr.includes(cName) && s.status !== 'graduated';
                 }).length;
 
-                const safeName = encodeURIComponent(cName);
-                const safeDay = encodeURIComponent(cDay);
-                const safeTime = encodeURIComponent(cTime);
-                const safeTeacher = encodeURIComponent(cTeacher);
+                const card = document.createElement('div');
+                card.className = 'class-manage-card';
+                card.draggable = true;
+                card.dataset.dept = deptKey;
+                card.dataset.index = cIndex;
 
-                html += `
-                    <div class="class-manage-card">
-                        <div>
+                card.innerHTML = `
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
-                            <div style="font-size:16px; font-weight:bold; color:var(--primary); margin:8px 0 4px;">🏫 ${cName}</div>
-                            <div style="font-size:13px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
-                            <div style="font-size:12px; color:#777; margin-top:2px;">時段：${cTime}</div>
-                            <div style="font-size:13px; color:#666; margin-top:6px;">目前修課學生：<b>${stuCount}</b> 人</div>
+                            <span class="drag-handle" title="按住拖曳可調整順序" style="font-size:16px; cursor:grab; padding:2px 6px; background:#f1f5f9; border-radius:4px;">⠿ 拖曳</span>
                         </div>
-                        <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; text-align:right;">
-                            <button class="btn btn-warning" style="padding:5px 12px; font-size:13px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${safeName}'), decodeURIComponent('${safeDay}'), decodeURIComponent('${safeTime}'), decodeURIComponent('${safeTeacher}'))">⚙️ 管理班級</button>
-                        </div>
+                        <div style="font-size:16px; font-weight:bold; color:var(--primary); margin:8px 0 4px;">🏫 ${cName}</div>
+                        <div style="font-size:13px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
+                        <div style="font-size:12px; color:#777; margin-top:2px;">時段：${cTime}</div>
+                        <div style="font-size:13px; color:#666; margin-top:6px;">目前修課學生：<b>${stuCount}</b> 人</div>
+                    </div>
+                    <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; text-align:right;">
+                        <button class="btn btn-warning" style="padding:5px 12px; font-size:13px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${encodeURIComponent(cName)}'), decodeURIComponent('${encodeURIComponent(cDay)}'), decodeURIComponent('${encodeURIComponent(cTime)}'), decodeURIComponent('${encodeURIComponent(cTeacher)}'))">⚙️ 管理班級</button>
                     </div>
                 `;
+
+                card.addEventListener('dragstart', handleManageCardDragStart);
+                card.addEventListener('dragover', handleManageCardDragOver);
+                card.addEventListener('drop', handleManageCardDrop);
+                card.addEventListener('dragend', handleManageCardDragEnd);
+
+                grid.appendChild(card);
             });
         });
 
-        grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前該分類尚無建立任何班級課程。</p>`;
+        if (totalCards === 0) {
+            grid.innerHTML = `<p style="color:#888; text-align:center; grid-column:1/-1;">目前該分類尚無建立任何班級課程。</p>`;
+        }
     }
+
+    // ==========================================
+    // 自動生成專屬課表功能 (支援國小/國中/課輔/全校)
+    // ==========================================
+    window.generateScheduleTimetable = function() {
+        const cat = window.state.manageCategory || 'all';
+        let targetDepts = ['care', 'elementary', 'junior'];
+        let scopeTitle = "全校所有課程";
+        if (cat === 'care') {
+            targetDepts = ['care'];
+            scopeTitle = "🏢 課輔部專屬每週課表";
+        } else if (cat === 'elementary') {
+            targetDepts = ['elementary'];
+            scopeTitle = "📘 國小部專屬每週課表";
+        } else if (cat === 'junior') {
+            targetDepts = ['junior'];
+            scopeTitle = "📙 國中部專屬每週課表";
+        } else {
+            scopeTitle = "🏫 全校班級每週課表總表";
+        }
+
+        document.getElementById('timetableModalTitle').innerText = `斗六顧德補習班 - ${scopeTitle}`;
+        document.getElementById('timetableModalSub').innerText = `產表時間：${new Date().toLocaleDateString('zh-TW')} ｜ 資料即時連動全校中央學籍系統`;
+
+        // 整理各星期的排課
+        const scheduleByDay = {
+            '星期一': [], '星期二': [], '星期三': [], '星期四': [], '星期五': [], '星期六': [], '星期日': []
+        };
+
+        targetDepts.forEach(deptKey => {
+            const list = window.state.courses[deptKey] || [];
+            list.forEach(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const cDay = typeof c === 'object' ? (c.day || '') : '';
+                const cTime = typeof c === 'object' ? (c.time || '未設時段') : '未設時段';
+                const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '任課老師';
+
+                const stuCount = window.state.students.filter(s => {
+                    const arr = getStudentCoursesArray(s);
+                    return arr.includes(cName) && s.status !== 'graduated';
+                }).length;
+
+                WEEK_DAYS.forEach(day => {
+                    if (cDay.includes(day) || cDay.includes(day.replace('星期', '週'))) {
+                        scheduleByDay[day].push({
+                            dept: deptKey,
+                            name: cName,
+                            time: cTime,
+                            teacher: cTeacher,
+                            count: stuCount
+                        });
+                    }
+                });
+            });
+        });
+
+        let gridHtml = `<div class="timetable-week-grid">`;
+        WEEK_DAYS.forEach(day => {
+            const courses = scheduleByDay[day] || [];
+            gridHtml += `
+                <div class="timetable-day-col">
+                    <div class="timetable-day-header">${day} (${courses.length})</div>
+                    <div style="flex:1;">
+            `;
+
+            if (courses.length === 0) {
+                gridHtml += `<div style="text-align:center; color:#94a3b8; font-size:12px; margin-top:20px;">無排課</div>`;
+            } else {
+                courses.forEach(item => {
+                    const badgeColor = item.dept === 'care' ? '#0369a1' : (item.dept === 'elementary' ? '#15803d' : '#b45309');
+                    gridHtml += `
+                        <div class="timetable-item">
+                            <div class="c-title">${item.name}</div>
+                            <div class="c-time">⏰ ${item.time}</div>
+                            <div class="c-teacher">👨‍🏫 老師：${item.teacher}</div>
+                            <div style="font-size:11px; color:${badgeColor}; font-weight:bold; margin-top:3px;">修課人數：${item.count} 人</div>
+                        </div>
+                    `;
+                });
+            }
+
+            gridHtml += `</div></div>`;
+        });
+        gridHtml += `</div>`;
+
+        document.getElementById('timetableContent').innerHTML = gridHtml;
+        document.getElementById('timetableModal').style.display = 'flex';
+    };
 
     window.openEditClassModal = function(dept, name, day, time, teacher) {
         document.getElementById('edit_original_dept').value = dept;
