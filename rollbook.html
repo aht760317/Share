@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>斗六顧德補習班 - 智慧教務管理、多科修課點名與學生資料總庫</title>
     <style>
         :root {
@@ -14,9 +14,10 @@
             --purple: #8e44ad;
             --bg: #f4f6f9;
             --border: #ccd1d9;
+            --tab-height: 64px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #333; padding-bottom: 90px; font-size: 15px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #333; font-size: 15px; }
 
         header {
             background: var(--primary); color: white; padding: 14px 18px;
@@ -32,34 +33,37 @@
         .nav-link { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 20px; font-weight: bold; display: inline-block; }
         .nav-link:hover { background: rgba(255,255,255,0.35); }
 
-        .container { max-width: 1420px; margin: 15px auto; padding: 0 10px; }
+        .container { max-width: 1420px; margin: 15px auto; padding: 0 12px; }
 
-        /* 手機版：底部固定導覽列 (App 底部切換列) */
+        /* 手機版：底部固定導覽列 (App 底部切換 Bar) */
         @media(max-width: 767px) {
+            body {
+                padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 20px) + 15px) !important;
+            }
             .tabs {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 width: 100%;
+                height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
                 background: #ffffff;
-                border-top: 1px solid #cbd5e1;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+                border-top: 1px solid #e2e8f0;
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
                 z-index: 999;
                 display: flex;
                 justify-content: space-around;
-                align-items: center;
-                padding: 8px 4px;
+                align-items: flex-start;
+                padding: 6px 4px env(safe-area-inset-bottom, 6px);
                 margin: 0;
-                gap: 2px;
+                gap: 4px;
             }
             .tab-btn {
                 flex: 1;
-                min-width: 0;
+                height: 52px;
                 font-size: 11px;
-                padding: 6px 2px;
-                border-radius: 6px;
+                padding: 4px 2px;
+                border-radius: 8px;
                 background: transparent;
-                box-shadow: none;
                 color: #64748b;
                 display: flex;
                 flex-direction: column;
@@ -67,49 +71,53 @@
                 justify-content: center;
                 gap: 3px;
                 border: none;
-                text-align: center;
-                line-height: 1.2;
-                white-space: normal;
-                overflow: hidden;
+                line-height: 1.1;
+                font-weight: 600;
+                transition: all 0.2s ease;
+            }
+            .tab-btn .tab-icon {
+                font-size: 18px;
+                line-height: 1;
             }
             .tab-btn.active {
-                background: #e0f2fe;
-                color: var(--accent);
-                border-color: transparent;
-                box-shadow: none;
+                background: #eff6ff;
+                color: #2563eb;
                 font-weight: bold;
             }
-            body {
-                padding-bottom: 85px !important;
+            .tab-btn.active .tab-icon {
+                transform: scale(1.1);
             }
+            .header-title h2 { font-size: 17px; }
+            .header-title p { font-size: 11px; }
         }
 
-        /* 網頁版：上方大按鈕導覽列 */
+        /* 網頁版：上方按鈕切換列 */
         @media(min-width: 768px) {
+            body { padding-bottom: 40px; }
             .tabs {
                 display: flex;
                 gap: 12px;
                 margin-bottom: 22px;
                 background: white;
-                padding: 12px;
+                padding: 10px;
                 border-radius: 12px;
                 box-shadow: 0 3px 12px rgba(0,0,0,0.06);
             }
             .tab-btn {
                 flex: 1;
-                padding: 14px 20px;
-                border: none;
+                padding: 13px 16px;
+                border: 2px solid #e2e8f0;
                 border-radius: 10px;
                 background: #f8fafc;
-                font-size: 16px;
+                font-size: 15px;
                 font-weight: bold;
                 cursor: pointer;
                 color: var(--primary);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.04);
                 transition: 0.2s;
-                border: 2px solid #e2e8f0;
-                text-align: center;
-                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
             }
             .tab-btn:hover {
                 background: #f1f5f9;
@@ -119,8 +127,9 @@
                 background: var(--accent);
                 color: white;
                 border-color: var(--accent);
-                box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+                box-shadow: 0 4px 15px rgba(52, 152, 219, 0.35);
             }
+            .tab-btn .tab-icon { font-size: 16px; }
             .sync-controls { width: auto; }
             .container { padding: 0 15px; margin: 25px auto; }
             header { padding: 16px 24px; }
@@ -205,12 +214,27 @@
             border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff;
         }
 
+        .select-styled {
+            font-weight: 600;
+            color: var(--primary);
+            border: 2px solid #cbd5e1;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            appearance: none;
+            padding-right: 36px !important;
+        }
+        .select-styled:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { border: 1px solid var(--border); padding: 8px 5px; text-align: center; }
         th { background: #f1f3f5; color: var(--primary); font-weight: bold; }
         .holiday-col { background: #fff3cd !important; color: #856404; font-weight: bold; }
 
-        /* 學生名冊表格樣式 */
         #studentTableSection table th { font-size: 13.5px; padding: 10px 5px; }
         #studentTableSection table td { font-size: 13.5px; padding: 8px 5px; }
 
@@ -236,7 +260,6 @@
             border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
         }
 
-        /* 可拖曳部門導覽列 */
         .dept-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 4px; }
         .dept-btn {
             padding: 8px 12px; border: 2px solid var(--border); background: #f8fafc;
@@ -301,7 +324,6 @@
         }
         .phone-plain-cell { font-size: 13px; line-height: 1.4; text-align: center; color: #1e293b; }
 
-        /* 課表專屬樣式 */
         .timetable-week-grid {
             display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 15px;
         }
@@ -331,7 +353,6 @@
         .timetable-item .c-title { font-weight: bold; font-size: 14px; color: #1e293b; line-height: 1.3; margin-top: 1px; }
         .timetable-item .c-teacher { color: #475569; margin-top: 4px; font-size: 12px; font-weight: 500; }
 
-        /* 一般列印規則 */
         @media print {
             @page { size: landscape; margin: 6mm; }
             body { background: white; padding: 0; }
@@ -343,7 +364,6 @@
             .paper-sheet { box-shadow: none; border: none; padding: 0; overflow: visible; }
         }
 
-        /* 課表專屬單頁列印模式 */
         body.print-timetable-only * { visibility: hidden !important; }
         body.print-timetable-only #timetableModal,
         body.print-timetable-only #timetableModal * { visibility: visible !important; }
@@ -385,16 +405,29 @@
     </div>
     
     <div class="sync-controls no-print">
-        <a href="https://aht760317.github.io/Share/gogogood.html" class="nav-link">🔙 返回行政管理系統</a>
+        <a href="https://aht760317.github.io/Share/gogogood.html" class="nav-link">🔙 返回行政系統</a>
     </div>
 </header>
 
 <div class="container">
+    <!-- 導覽切換 (手機固定底部 / 電腦頂部) -->
     <div class="tabs no-print">
-        <button class="tab-btn active" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
-        <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 點名表生成 (點擊選班級)</button>
-        <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程起訖日排程</button>
-        <button class="tab-btn" onclick="switchTab('students-master')">👥 全校學生檔案總覽</button>
+        <button class="tab-btn active" onclick="switchTab('rollcall')">
+            <span class="tab-icon">📱</span>
+            <span>今日點名</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('sheet')">
+            <span class="tab-icon">🖨️</span>
+            <span>點名表生成</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('course-config')">
+            <span class="tab-icon">⚙️</span>
+            <span>課程排程</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('students-master')">
+            <span class="tab-icon">👥</span>
+            <span>學生總覽</span>
+        </button>
     </div>
 
     <!-- 1. 今日點名與日誌成績 -->
@@ -409,7 +442,7 @@
             </div>
 
             <div style="margin-top:12px;">
-                <span style="font-size:14px; font-weight:bold; color:var(--primary);">課堂篩選 (可按住左側 ⠿ 拖曳調整順序)：</span>
+                <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選 (可按住左側 ⠿ 拖曳排序)：</span>
                 <div class="filter-btn-group" id="courseFilterGroup"></div>
             </div>
 
@@ -463,43 +496,43 @@
         </div>
     </div>
 
-    <!-- 2. 自動生成點名表 (點擊式選班級介面) -->
+    <!-- 2. 自動生成點名表 (下拉選單介面) -->
     <div id="tab-sheet" style="display:none;">
         <div class="card">
-            <h3 style="color:var(--primary); margin-bottom:8px; font-size:17px;">🖨️ 點名表與成績總表生成專區</h3>
-            <p style="font-size:13px; color:#666; margin-bottom:12px;">
-                請直接在下方點擊您想要產出點名表的<b>班級課程</b>，系統將立即為您自動計算週次並連動學生點名狀況。
+            <h3 style="color:var(--primary); margin-bottom:6px; font-size:17px;">🖨️ 點名表與成績總表生成專區</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:14px;">
+                請於下方下拉選單快速選擇班級，系統將自動推算週次、假日與連動學生出缺席記錄。
             </p>
 
-            <!-- 點擊式班級選擇按鈕列 -->
-            <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:14px;">
-                <div style="font-size:13px; font-weight:bold; color:var(--primary); margin-bottom:8px;">🎯 點擊班級卡片立即生成點名表：</div>
-                <div id="sheetCourseClickGrid" class="filter-btn-group"></div>
+            <!-- 下拉選單選擇班級 -->
+            <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <label for="sheetCourseSelectDropdown" style="display:block; font-size:13.5px; font-weight:bold; color:var(--primary); margin-bottom:6px;">
+                    🎯 選擇欲產出點名表的班級課程：
+                </label>
+                <select id="sheetCourseSelectDropdown" class="select-styled" onchange="onDropdownSelectCourse(this.value)" style="margin:0; font-size:15px; padding:10px 14px; width:100%; border-radius:8px;">
+                    <!-- 動態載入班級選項 -->
+                </select>
             </div>
 
             <div class="no-print" style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:15px;">
                 <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                    <div>
-                        <label style="font-size:12px; font-weight:bold;">已選課程：</label>
-                        <input type="text" id="selectedSheetCourseName" readonly style="width:auto; padding:6px 10px; margin:0; background:#e2e8f0; font-weight:bold; color:var(--primary);">
-                    </div>
-                    <div>
+                    <div style="flex:1; min-width:140px;">
                         <label style="font-size:12px; font-weight:bold;">起始日期：</label>
-                        <input type="date" id="sheetQueryStartDate" style="width:auto; padding:6px; margin:0;">
+                        <input type="date" id="sheetQueryStartDate" style="padding:6px; margin:0;">
                     </div>
-                    <div>
+                    <div style="flex:1; min-width:140px;">
                         <label style="font-size:12px; font-weight:bold;">結束日期：</label>
-                        <input type="date" id="sheetQueryEndDate" style="width:auto; padding:6px; margin:0;">
+                        <input type="date" id="sheetQueryEndDate" style="padding:6px; margin:0;">
                     </div>
-                    <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
-                        <button class="btn btn-primary" onclick="generateCustomSheet()" style="padding:7px 12px; font-size:13px;">🔍 重新計算生成</button>
-                        <button class="btn btn-success" onclick="window.print()" style="padding:7px 12px; font-size:13px;">🖨️ 列印點名表</button>
+                    <div style="display:flex; gap:8px; align-items:flex-end; width:100%; margin-top:4px;">
+                        <button class="btn btn-primary" onclick="generateCustomSheet()" style="flex:1; padding:8px 12px; font-size:13px;">🔍 重新計算</button>
+                        <button class="btn btn-success" onclick="window.print()" style="flex:1; padding:8px 12px; font-size:13px;">🖨️ 列印點名表</button>
                     </div>
                 </div>
 
-                <div style="margin-top:8px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                     <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
-                    <span>💡 符號說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b> ｜ 即時連動每日點名記錄。</span>
+                    <span>💡 符號說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b> ｜ 即時連動紀錄。</span>
                 </div>
             </div>
 
@@ -517,11 +550,11 @@
         <div class="card">
             <h3 style="color:var(--primary); font-size:17px;">⚙️ 課程開課起訖日與點名表週期排程</h3>
             <p style="color:#666; font-size:13px; margin-top:4px;">
-                您可以自由為各個班級設定開課起始日與結束日期。設定完成後請點擊下方按鈕輸入管理密碼統一儲存同步！
+                您可以自由為各班級設定開課起始日與結束日期。設定完成後請點擊下方儲存同步！
             </p>
 
             <div style="margin-top:12px;">
-                <span style="font-size:13px; font-weight:bold; color:var(--primary);">學部分類 (可按住左側 ⠿ 拖曳調整順序)：</span>
+                <span style="font-size:13px; font-weight:bold; color:var(--primary);">學部分類 (可按住 ⠿ 拖曳排序)：</span>
                 <div class="filter-btn-group" id="configFilterGroup"></div>
             </div>
 
@@ -540,7 +573,7 @@
 
             <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
                 <input type="date" id="newHolidayDate" style="padding:8px; border-radius:6px; border:1px solid #ccc; width:auto; margin:0;">
-                <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節放假)" style="padding:8px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:180px; margin:0;">
+                <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節放假)" style="padding:8px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:160px; margin:0;">
                 <button class="btn btn-warning" onclick="verifyAndAddHoliday()" style="padding:8px 14px;">➕ 新增放假日</button>
             </div>
 
@@ -553,9 +586,7 @@
     <div id="tab-students-master" style="display:none;">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                <div>
-                    <h3 style="color:var(--primary); margin-bottom:2px; font-size:17px;">👥 全校學籍管理與學生總覽</h3>
-                </div>
+                <h3 style="color:var(--primary); margin-bottom:2px; font-size:17px;">👥 全校學籍管理與學生總覽</h3>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-primary" onclick="openAddClassModal()" style="padding:7px 12px; font-size:13px;">➕ 新增班級</button>
                     <button class="btn btn-success" onclick="openStudentModal()" style="padding:7px 12px; font-size:13px;">➕ 新增學生</button>
@@ -590,7 +621,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
                     <h4 id="studentListTitle" style="color:var(--primary); font-size:15px;">目前學生名冊</h4>
                     <div style="display:flex; gap:6px; align-items:center; width:100%;">
-                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:7px 10px; font-size:13px;">
+                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:8px 10px; font-size:13px;">
                     </div>
                 </div>
 
@@ -631,7 +662,6 @@
                 <button class="btn btn-outline" onclick="document.getElementById('timetableModal').style.display='none'" style="padding:6px 12px; font-size:13px;">關閉</button>
             </div>
         </div>
-
         <div id="timetableContent" style="margin-top:12px;"></div>
     </div>
 </div>
@@ -756,9 +786,7 @@
             <p style="font-size:13px; color:#555; margin:0;">為學生增減所修習的班級課程：</p>
             <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('quickAssignWrapper')">➕ 增加一科</button>
         </div>
-        
         <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; max-height:240px; overflow-y:auto;"></div>
-
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
             <button class="btn btn-success" onclick="saveQuickAssign()" style="padding:7px 14px; font-size:13px;">💾 確認加選並儲存</button>
             <button class="btn btn-outline" onclick="document.getElementById('quickAssignModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
@@ -973,7 +1001,7 @@
             renderMasterStudentsTable();
             renderDeptClassButtons();
             renderCourseCards();
-            renderSheetCourseClickGrid();
+            renderSheetCourseDropdown();
             renderHolidayList();
             renderCourseConfigList();
         } catch (e) {
@@ -993,7 +1021,7 @@
             renderCourseCards();
         } else if (tab === 'sheet') {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            renderSheetCourseClickGrid();
+            renderSheetCourseDropdown();
             if (!window.state.selectedSheetCourse) {
                 const all = getAllCoursesList();
                 if (all.length > 0) selectSheetCourse(all[0].name);
@@ -1272,36 +1300,57 @@
     }
 
     // ==========================================
-    // 點擊式點名表生成
+    // 下拉選單式點名表生成
     // ==========================================
-    function renderSheetCourseClickGrid() {
-        const container = document.getElementById('sheetCourseClickGrid');
-        if (!container) return;
-        container.innerHTML = '';
+    function renderSheetCourseDropdown() {
+        const select = document.getElementById('sheetCourseSelectDropdown');
+        if (!select) return;
+        select.innerHTML = '';
 
-        const allCourses = getAllCoursesList();
-        if (allCourses.length === 0) {
-            container.innerHTML = `<span style="color:#888; font-size:13px;">目前尚無任何班級課程可供選取。</span>`;
-            return;
-        }
+        const deptLabels = { care: '🏢 課輔部', elementary: '📘 國小部', junior: '📙 國中部' };
+        let hasCourses = false;
 
-        allCourses.forEach(c => {
-            const isSelected = window.state.selectedSheetCourse === c.name;
-            const pill = document.createElement('button');
-            pill.type = 'button';
-            pill.className = `filter-pill ${isSelected ? 'active' : ''}`;
-            pill.style.padding = '8px 14px';
-            pill.style.fontSize = '13px';
-            pill.innerHTML = `🏫 ${c.name}`;
-            pill.onclick = () => selectSheetCourse(c.name);
-            container.appendChild(pill);
+        ['care', 'elementary', 'junior'].forEach(dept => {
+            const list = window.state.courses[dept] || [];
+            if (list.length > 0) {
+                hasCourses = true;
+                const optGroup = document.createElement('optgroup');
+                optGroup.label = deptLabels[dept];
+
+                list.forEach(c => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    const opt = document.createElement('option');
+                    opt.value = cName;
+                    opt.innerText = `🏫 ${cName}`;
+                    if (window.state.selectedSheetCourse === cName) {
+                        opt.selected = true;
+                    }
+                    optGroup.appendChild(opt);
+                });
+                select.appendChild(optGroup);
+            }
         });
+
+        if (!hasCourses) {
+            select.innerHTML = `<option value="">目前尚無任何班級課程可供選取</option>`;
+        } else if (!window.state.selectedSheetCourse) {
+            const firstOpt = select.querySelector('option');
+            if (firstOpt) {
+                window.state.selectedSheetCourse = firstOpt.value;
+                select.value = firstOpt.value;
+            }
+        }
     }
+
+    window.onDropdownSelectCourse = function(courseName) {
+        if (!courseName) return;
+        selectSheetCourse(courseName);
+    };
 
     window.selectSheetCourse = function(courseName) {
         window.state.selectedSheetCourse = courseName;
-        document.getElementById('selectedSheetCourseName').value = courseName;
-        renderSheetCourseClickGrid();
+        const select = document.getElementById('sheetCourseSelectDropdown');
+        if (select && select.value !== courseName) select.value = courseName;
         onSheetCourseChanged();
     };
 
