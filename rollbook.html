@@ -305,7 +305,7 @@
         </div>
     </div>
 
-    <!-- 2. 自動生成點名表 (支援自訂起訖日期與快速期數) -->
+    <!-- 2. 自動生成點名表 (支援自訂起訖日期) -->
     <div id="tab-sheet" style="display:none;">
         <div class="card">
             <!-- 查詢與操作控制列 -->
@@ -314,11 +314,6 @@
                     <div>
                         <label style="font-size:13px; font-weight:bold;">選擇課程：</label>
                         <select id="sheetCourseSelect" onchange="onSheetCourseChanged()" style="width:auto; padding:6px 10px; margin:0;"></select>
-                    </div>
-
-                    <div>
-                        <label style="font-size:13px; font-weight:bold;">📅 快速帶入期數：</label>
-                        <select id="sheetPeriodQuickSelect" onchange="onQuickPeriodSelect()" style="width:auto; padding:6px 10px; margin:0; background:#f0fdf4; border-color:#86efac; font-weight:bold; color:#166534;"></select>
                     </div>
 
                     <div>
@@ -1777,10 +1772,8 @@
 
         alert(`✅ 點名確認成功！即將自動跳轉至【${courseName}】自動生成點名總表供主任查核。`);
 
-        // 自動切換到點名表分頁
         switchTab('sheet');
 
-        // 同步選中該課程
         const sheetSel = document.getElementById('sheetCourseSelect');
         if (sheetSel) {
             sheetSel.value = courseName;
@@ -1789,7 +1782,7 @@
     };
 
     // ==========================================
-    // 2. 自動生成點名表 (支援自由指定幾號到幾號)
+    // 2. 自動生成點名表 (支援自訂起訖日期)
     // ==========================================
     function populateSheetCourses() {
         const sel = document.getElementById('sheetCourseSelect');
@@ -1824,7 +1817,6 @@
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
         const baseDate = new Date(baseStart);
         const daysPerPeriod = (info.weeks - 1) * 7;
-        const periodInterval = info.weeks * 7;
 
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
@@ -1832,36 +1824,7 @@
         const defaultEnd = new Date(baseDate.getTime() + daysPerPeriod * 86400000);
         document.getElementById('sheetQueryEndDate').value = formatDate(defaultEnd);
 
-        const quickSel = document.getElementById('sheetPeriodQuickSelect');
-        quickSel.innerHTML = '';
-
-        const calcRange = (offsetPeriods) => {
-            const s = new Date(baseDate.getTime() + (offsetPeriods * periodInterval) * 86400000);
-            const e = new Date(s.getTime() + daysPerPeriod * 86400000);
-            return { start: formatDate(s), end: formatDate(e) };
-        };
-
-        const p_2 = calcRange(-2);
-        const p_1 = calcRange(-1);
-        const p_0 = calcRange(0);
-        const p_plus1 = calcRange(1);
-
-        quickSel.innerHTML += `<option value="${p_0.start}|${p_0.end}">📍 當前本期 (${p_0.start} ~ ${p_0.end})</option>`;
-        quickSel.innerHTML += `<option value="${p_1.start}|${p_1.end}">⏮️ 前一期歷史 (${p_1.start} ~ ${p_1.end})</option>`;
-        quickSel.innerHTML += `<option value="${p_2.start}|${p_2.end}">⏮️ 前兩期歷史 (${p_2.start} ~ ${p_2.end})</option>`;
-        quickSel.innerHTML += `<option value="${p_plus1.start}|${p_plus1.end}">⏭️ 下一期排程 (${p_plus1.start} ~ ${p_plus1.end})</option>`;
-
         generateCustomSheet();
-    };
-
-    window.onQuickPeriodSelect = function() {
-        const val = document.getElementById('sheetPeriodQuickSelect').value;
-        if (val) {
-            const parts = val.split('|');
-            document.getElementById('sheetQueryStartDate').value = parts[0];
-            document.getElementById('sheetQueryEndDate').value = parts[1];
-            generateCustomSheet();
-        }
     };
 
     window.generateCustomSheet = function() {
