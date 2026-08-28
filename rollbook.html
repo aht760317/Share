@@ -52,18 +52,18 @@
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 
-        /* 可拖曳今日篩選導覽列 */
+        /* 放大後的課堂篩選導覽列 */
         .filter-btn-group {
-            display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px;
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px;
         }
         .filter-pill {
-            padding: 8px 14px; border: 2px solid var(--border); background: #f8fafc;
-            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; display: inline-flex; align-items: center; gap: 6px; color: #334155;
+            padding: 10px 18px; border: 2px solid var(--border); background: #f8fafc;
+            border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            user-select: none; display: inline-flex; align-items: center; gap: 8px; color: #334155;
         }
         .filter-pill.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
-        .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3); }
-        .drag-handle { cursor: grab; font-size: 12px; opacity: 0.6; }
+        .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 3px 8px rgba(52, 152, 219, 0.35); }
+        .drag-handle { cursor: grab; font-size: 14px; opacity: 0.6; }
 
         /* 全校班級管理專區分類按鈕列 */
         .manage-cat-group {
@@ -254,9 +254,9 @@
                 </div>
             </div>
 
-            <!-- 可拖曳排序的今日課程篩選列 -->
-            <div style="margin-top:10px;">
-                <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選 (可按住左側 ⠿ 拖曳調整順序)：</span>
+            <!-- 放大且可拖曳排序的今日課程篩選列 -->
+            <div style="margin-top:14px;">
+                <span style="font-size:15px; font-weight:bold; color:var(--primary);">課堂篩選 (可按住左側 ⠿ 拖曳調整順序)：</span>
                 <div class="filter-btn-group" id="courseFilterGroup"></div>
             </div>
 
@@ -353,12 +353,12 @@
         </div>
     </div>
 
-    <!-- 3. 課程開課起始日排程 (含國定假日與放假設定) -->
+    <!-- 3. 課程開課起始日排程 (含寒暑假起訖日設定) -->
     <div id="tab-course-config" style="display:none;">
         <div class="card">
-            <h3 style="color:var(--primary);">⚙️ 課程開課日與點名表週期排程</h3>
+            <h3 style="color:var(--primary);">⚙️ 課程開課起訖日與點名表週期排程 (支援寒暑假調整)</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
-                常態課程國中為3個月(13週)、國小為2個月(9週)；短期特殊班可支援自訂週數。
+                您可以自由為各個班級設定不同的開課起始日與結束日期，以適應寒假、暑假或短期特殊班期的日期變動。
             </p>
 
             <div id="courseConfigList" style="margin-top:15px;"></div>
@@ -690,7 +690,7 @@
         courseFilterMode: 'today', 
         currentDeptView: 'care',
         currentFilterClass: null,
-        manageCategory: 'all', // 全校班級管理專區分類: 'all' | 'care' | 'elementary' | 'junior'
+        manageCategory: 'all',
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
         filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER
     };
@@ -1056,17 +1056,19 @@
 
         try {
             let origStartDate = new Date().toISOString().slice(0, 8) + '01';
+            let origEndDate = '';
             if (window.state.courses[origDept]) {
                 const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
                 if (idx !== -1) {
                     const oldObj = window.state.courses[origDept][idx];
                     if (typeof oldObj === 'object' && oldObj.startDate) origStartDate = oldObj.startDate;
+                    if (typeof oldObj === 'object' && oldObj.endDate) origEndDate = oldObj.endDate;
                     window.state.courses[origDept].splice(idx, 1);
                 }
             }
 
             if (!window.state.courses[newDept]) window.state.courses[newDept] = [];
-            window.state.courses[newDept].push({ name: newName, day: newDay, time: newTime, teacher: newTeacher, startDate: origStartDate });
+            window.state.courses[newDept].push({ name: newName, day: newDay, time: newTime, teacher: newTeacher, startDate: origStartDate, endDate: origEndDate });
 
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
 
@@ -1419,7 +1421,7 @@
         if (!name) return alert('請輸入班級課程名稱！');
 
         if (!window.state.courses[dept]) window.state.courses[dept] = [];
-        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toISOString().slice(0, 8) + '01' });
+        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toISOString().slice(0, 8) + '01', endDate: '' });
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
@@ -1450,7 +1452,8 @@
                     day: typeof c === 'object' ? (c.day || '') : '',
                     time: typeof c === 'object' ? (c.time || '') : '',
                     teacher: typeof c === 'object' ? (c.teacher || '') : '',
-                    startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart
+                    startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart,
+                    endDate: (typeof c === 'object' && c.endDate) ? c.endDate : ''
                 });
             });
         });
@@ -1765,12 +1768,11 @@
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
         const baseDate = new Date(baseStart);
         const daysPerPeriod = (info.weeks - 1) * 7;
-
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
         document.getElementById('sheetQueryStartDate').value = baseStart;
-        const defaultEnd = new Date(baseDate.getTime() + daysPerPeriod * 86400000);
-        document.getElementById('sheetQueryEndDate').value = formatDate(defaultEnd);
+        const defaultEnd = course.endDate || formatDate(new Date(baseDate.getTime() + daysPerPeriod * 86400000));
+        document.getElementById('sheetQueryEndDate').value = defaultEnd;
 
         generateCustomSheet();
     };
@@ -1883,7 +1885,7 @@
     };
 
     // ==========================================
-    // 3. 課程排程管理與放假設定
+    // 3. 課程開課起訖日排程 (含寒暑假設定)
     // ==========================================
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
@@ -1894,7 +1896,8 @@
                     <th>課程名稱</th>
                     <th>所屬部門</th>
                     <th>表單週期排程</th>
-                    <th>開課起始日 (自動推算)</th>
+                    <th>開課起始日</th>
+                    <th>結束日期 (寒暑假調整)</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -1914,6 +1917,9 @@
                     <input type="date" id="cfg_start_${c.name}" value="${c.startDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:auto; margin:0;">
                 </td>
                 <td>
+                    <input type="date" id="cfg_end_${c.name}" value="${c.endDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:auto; margin:0;" placeholder="可選填結束日">
+                </td>
+                <td>
                     <button class="btn btn-primary" style="padding:4px 12px; font-size:13px;" onclick="saveCourseConfig('${c.dept}', '${c.name}')">💾 儲存修改</button>
                 </td>
             </tr>`;
@@ -1924,13 +1930,17 @@
 
     window.saveCourseConfig = async function(dept, courseName) {
         const startDate = document.getElementById(`cfg_start_${courseName}`).value;
+        const endDate = document.getElementById(`cfg_end_${courseName}`).value;
         const targetList = window.state.courses[dept];
         const target = targetList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
-        if (target && typeof target === 'object') target.startDate = startDate;
+        if (target && typeof target === 'object') {
+            target.startDate = startDate;
+            target.endDate = endDate;
+        }
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            alert(`【${courseName}】開課起始日已儲存！`);
+            alert(`【${courseName}】開課起訖日已成功儲存！`);
             renderCourseCards();
         } catch (e) { alert('儲存失敗！'); }
     };
