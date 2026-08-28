@@ -2,1975 +2,1084 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧教務管理、多科修課點名與學生資料總庫</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招生與進班管理系統</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --purple: #8e44ad;
-            --bg: #f4f6f9;
-            --border: #ccd1d9;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #333; padding-bottom: 90px; font-size: 15px; }
-
-        header {
-            background: var(--primary); color: white; padding: 14px 18px;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-        .header-title h2 { margin: 0; font-size: 19px; letter-spacing: 0.5px; }
-        .header-title p { margin: 3px 0 0; font-size: 12px; opacity: 0.85; line-height: 1.4; }
-
-        .sync-controls {
-            display: flex; align-items: center; gap: 10px; width: 100%; justify-content: flex-end;
-        }
-        .nav-link { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 20px; font-weight: bold; display: inline-block; }
-        .nav-link:hover { background: rgba(255,255,255,0.35); }
-
-        .container { max-width: 1420px; margin: 15px auto; padding: 0 10px; }
-
-        /* 手機版：底部固定導覽列 */
-        @media(max-width: 767px) {
-            .tabs {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: #ffffff;
-                border-top: 1px solid #cbd5e1;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
-                z-index: 999;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                padding: 8px 4px;
-                margin: 0;
-                gap: 2px;
-            }
-            .tab-btn {
-                flex: 1;
-                min-width: 0;
-                font-size: 12px;
-                padding: 8px 2px;
-                border-radius: 6px;
-                background: transparent;
-                box-shadow: none;
-                color: #64748b;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 3px;
-                border: none;
-                text-align: center;
-                line-height: 1.2;
-                white-space: normal;
-                overflow: hidden;
-            }
-            .tab-btn.active {
-                background: #e0f2fe;
-                color: var(--accent);
-                border-color: transparent;
-                box-shadow: none;
-                font-weight: bold;
-            }
-            body {
-                padding-bottom: 85px !important;
-            }
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --border-color: #cbd5e1;
         }
 
-        /* 網頁版：上方大按鈕導覽列 */
-        @media(min-width: 768px) {
-            .tabs {
-                display: flex;
-                gap: 12px;
-                margin-bottom: 22px;
-                background: white;
-                padding: 12px;
-                border-radius: 12px;
-                box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-            }
-            .tab-btn {
-                flex: 1;
-                padding: 14px 20px;
-                border: none;
-                border-radius: 10px;
-                background: #f8fafc;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-                color: var(--primary);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-                transition: 0.2s;
-                border: 2px solid #e2e8f0;
-                text-align: center;
-                white-space: nowrap;
-            }
-            .tab-btn:hover {
-                background: #f1f5f9;
-                border-color: var(--accent);
-            }
-            .tab-btn.active {
-                background: var(--accent);
-                color: white;
-                border-color: var(--accent);
-                box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-            }
-            .sync-controls { width: auto; }
-            .container { padding: 0 15px; margin: 25px auto; }
-            header { padding: 16px 24px; }
-            .header-title h2 { font-size: 22px; }
-            .card { padding: 22px; margin-bottom: 20px; }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding: 1rem; padding-bottom: 5rem; }
+        .container { max-width: 1250px; margin: 0 auto; }
+        
+        .page-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; }
+        .page-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
 
-        .card {
-            background: white; border-radius: 10px; padding: 16px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 15px;
+        /* 底部固定導覽列（手機版好按） */
+        .tab-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: #ffffff; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 0.5rem 0.5rem; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+            z-index: 999; 
+            border-top: 1px solid var(--border-color);
         }
+        .tab-btn { 
+            background: transparent; 
+            border: none; 
+            padding: 0.5rem 0.75rem; 
+            border-radius: 0.375rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            color: var(--text-muted); 
+            transition: all 0.2s; 
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            flex: 1;
+        }
+        .tab-btn.active { background: #e0e7ff; color: var(--primary-color); }
 
-        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media(min-width: 768px) {
-            .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-        }
+        .card { background: var(--bg-card); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.25rem; margin-bottom: 1.5rem; }
+        .card h3 { font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
+        
+        /* 表單方塊網格（好填寫） */
+        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+        .form-block-item { background: #f8fafc; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: grab; user-select: none; transition: background 0.2s; }
+        .form-block-item:active { cursor: grabbing; }
+        .form-block-item.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
+        
+        .form-block-item label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; pointer-events: none; }
+        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem; background: #ffffff; cursor: text; }
+        .form-block-item select { height: 48px; }
 
-        /* 篩選標籤群組 */
-        .filter-btn-group {
-            display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px;
-        }
-        .filter-pill {
-            padding: 9px 14px; border: 2px solid var(--border); background: #f8fafc;
-            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; display: inline-flex; align-items: center; gap: 6px; color: #334155;
-        }
-        .filter-pill.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
-        .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 3px 8px rgba(52, 152, 219, 0.35); }
-        .drag-handle { cursor: grab; font-size: 13px; opacity: 0.6; padding: 0 2px; }
-
-        /* 全校班級管理專區分類按鈕列 */
-        .manage-cat-group {
-            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-        }
-        .manage-cat-btn {
-            padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px;
-            border: 1.5px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer; transition: 0.15s;
-        }
-        .manage-cat-btn:hover { background: #f1f5f9; }
-        .manage-cat-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-
-        .btn { padding: 9px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-purple { background: var(--purple); color: white; }
-        .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 0.375rem; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; }
         .btn:hover { opacity: 0.9; }
+        .btn-success { background-color: var(--success-color); }
+        .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; width: auto; }
+        
+        .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
+        .edit-icon-btn:hover { background: #e0e7ff; }
 
-        input[type="text"], input[type="date"], input[type="number"], select, textarea {
-            width: 100%; padding: 10px 12px; margin-top: 4px; margin-bottom: 10px;
-            border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff;
-        }
+        /* 追蹤清單區塊化卡片 */
+        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; min-height: 100px; }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; cursor: grab; user-select: none; }
+        .tracking-block:active { cursor: grabbing; }
+        .tracking-block.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { border: 1px solid var(--border); padding: 8px 5px; text-align: center; }
-        th { background: #f1f3f5; color: var(--primary); font-weight: bold; }
-        .holiday-col { background: #fff3cd !important; color: #856404; font-weight: bold; }
+        .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; pointer-events: none; }
+        .block-header * { pointer-events: auto; } 
+        
+        .block-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+        .block-top-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
-        #studentTableSection table th { font-size: 13.5px; padding: 10px 5px; }
-        #studentTableSection table td { font-size: 13.5px; padding: 8px 5px; }
+        .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.75rem; }
+        .block-footer { background: #f8fafc; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.8rem; }
 
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 10px;
-        }
-        .modal-box {
-            background: white; width: 100%; max-width: 800px; padding: 20px;
-            border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
-        }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; min-width: 600px; }
+        th, td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; vertical-align: top; }
+        th { background-color: #f9fafb; color: var(--text-muted); font-weight: 600; }
+        
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .badge-line { background: #d1fae5; color: #065f46; }
+        .badge-enrolled { background: #d1fae5; color: #065f46; }
 
-        /* 可拖曳部門導覽列 */
-        .dept-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 4px; }
-        .dept-btn {
-            padding: 8px 12px; border: 2px solid var(--border); background: #f8fafc;
-            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
-        }
-        .dept-btn.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
-        .dept-btn.active-allclasses { background: #e0e7ff; border-color: #4f46e5; color: #3730a3; }
-        .dept-btn.active-care { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
-        .dept-btn.active-elem { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
-        .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
-        .dept-btn.active-all { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .dept-btn-fixed-grad {
-            padding: 8px 14px; font-size: 13px; border-radius: 8px;
-            background: #fdf4ff; border: 2px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; white-space: nowrap;
-        }
-        .dept-btn-fixed-grad:hover, .dept-btn-fixed-grad.active-grad {
-            background: #d946ef; color: white;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 0.75rem; width: 100%; max-width: 650px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
+        
+        .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; }
+        .clickable-cell:hover { opacity: 0.8; }
 
-        .class-overview-box {
-            background: #f8fafc; border: 2px solid #cbd5e1; padding: 12px 14px;
-            border-radius: 10px; margin-bottom: 15px;
+        @media(min-width: 768px) {
+            body { padding: 2rem; padding-bottom: 2rem; }
+            .btn { width: auto; }
+            .tab-nav { 
+                position: static; 
+                width: auto; 
+                background: #e5e7eb; 
+                box-shadow: none; 
+                border-top: none;
+                flex-direction: row; 
+                justify-content: flex-start;
+                padding: 0.25rem;
+                border-radius: 0.5rem;
+            }
+            .tab-btn { flex: unset; flex-direction: row; font-size: 0.95rem; }
+            .page-header h1 { font-size: 1.75rem; }
         }
-        .class-overview-title {
-            font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-        }
-
-        .draggable-class-container {
-            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-        }
-        .class-btn-pill {
-            padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.15s;
-            border: 1.5px solid #94a3b8; background: white; color: #334155; margin-bottom: 4px;
-            display: inline-flex; align-items: center; gap: 4px; user-select: none;
-        }
-        .class-btn-pill:hover, .class-btn-pill.active {
-            background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px);
-        }
-        .class-btn-pill.dragging {
-            opacity: 0.4; border: 2px dashed var(--accent); background: #e0f2fe;
-        }
-
-        .all-classes-manage-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px;
-        }
-        .class-manage-card {
-            background: white; border: 2px solid #cbd5e1; border-radius: 8px; padding: 14px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            transition: 0.2s; user-select: none;
-        }
-        .class-manage-card.dragging {
-            opacity: 0.4; border: 2px dashed #4f46e5; background: #eef2ff;
-        }
-
-        .dynamic-course-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-        .course-tag {
-            display: inline-block; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px;
-            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; margin: 2px;
-        }
-        .phone-plain-cell { font-size: 13px; line-height: 1.4; text-align: center; color: #1e293b; }
-
-        /* 課表專屬樣式 */
-        .timetable-week-grid {
-            display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 15px;
-        }
-        @media(min-width: 900px) {
-            .timetable-week-grid { grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        }
-        .timetable-day-col {
-            background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px;
-            display: flex; flex-direction: column; min-height: 200px;
-        }
-        @media(min-width: 900px) { .timetable-day-col { min-height: 280px; } }
-        .timetable-day-header {
-            font-size: 14px; font-weight: bold; text-align: center; padding-bottom: 6px;
-            border-bottom: 2px solid #64748b; margin-bottom: 10px; color: var(--primary); background: #e2e8f0;
-            padding-top: 4px; border-radius: 4px;
-        }
-        .timetable-item {
-            background: white; border-radius: 6px; border: 1.5px solid #cbd5e1; border-left: 4px solid #f59e0b;
-            padding: 9px 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 12px;
-        }
-        .timetable-item .c-time-badge {
-            display: inline-block; background: #fef08a; color: #854d0e; border: 1.5px solid #facc15;
-            font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
-            line-height: 1.3; box-shadow: 0 1px 2px rgba(250, 204, 21, 0.2);
-        }
-        .timetable-item .c-title { font-weight: bold; font-size: 14px; color: #1e293b; line-height: 1.3; margin-top: 1px; }
-        .timetable-item .c-teacher { color: #475569; margin-top: 4px; font-size: 12px; font-weight: 500; }
-
-        /* 一般列印規則 */
-        @media print {
-            @page { size: landscape; margin: 6mm; }
-            body { background: white; padding: 0; }
-            header, .tabs, .no-print, .btn, .filter-btn-group { display: none !important; }
-            .card { box-shadow: none; padding: 0; margin: 0; border: none; }
-            .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
-            table { font-size: 9pt; width: 100%; }
-            th, td { border: 1px solid #000 !important; padding: 4px 2px; }
-        }
-
-        /* 課表專屬單頁列印模式 */
-        body.print-timetable-only * { visibility: hidden !important; }
-        body.print-timetable-only #timetableModal,
-        body.print-timetable-only #timetableModal * { visibility: visible !important; }
-        body.print-timetable-only #timetableModal {
-            position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important;
-            height: auto !important; background: white !important; display: block !important; padding: 0 !important;
-        }
-        body.print-timetable-only #timetableModal .modal-box {
-            width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important;
-            padding: 0 !important; max-height: none !important; overflow: visible !important;
-        }
-        body.print-timetable-only .timetable-week-grid {
-            display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 6px !important; margin-top: 10px !important;
-        }
-        body.print-timetable-only .timetable-day-col {
-            border: 1px solid #000 !important; background: #fff !important; padding: 6px !important; min-height: 480px !important;
-        }
-        body.print-timetable-only .timetable-day-header {
-            background: #f1f5f9 !important; border-bottom: 1.5px solid #000 !important; color: #000 !important; font-size: 11pt !important;
-        }
-        body.print-timetable-only .timetable-item {
-            border: 1px solid #333 !important; border-left: 4px solid #d97706 !important; box-shadow: none !important; margin-bottom: 8px !important; padding: 6px !important;
-        }
-        body.print-timetable-only .timetable-item .c-time-badge {
-            background: #fef08a !important; color: #000 !important; border: 1.5px solid #ca8a04 !important;
-            font-size: 9.5pt !important; font-weight: bold !important; white-space: nowrap !important;
-        }
-        body.print-timetable-only .timetable-item .c-title { color: #000 !important; font-size: 10.5pt !important; }
-        body.print-timetable-only .timetable-item .c-teacher { color: #333 !important; font-size: 9pt !important; }
-        .print-header { display: none; }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="header-title">
-        <h2>斗六顧德補習班 智慧教務與點名系統</h2>
-        <p>全校學籍中央控制總庫 ｜ 支援單一生多科跨班選課 ｜ 課輔部、國小部、國中部連動</p>
-    </div>
-    
-    <div class="sync-controls no-print">
-        <a href="https://aht760317.github.io/Share/gogogood.html" class="nav-link">🔙 返回行政管理系統</a>
-    </div>
-</header>
-
-<div class="container">
-    <div class="tabs no-print">
-        <button class="tab-btn active" onclick="switchTab('sheet')">🖨️ 點名表生成 (點擊選班級)</button>
-        <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程起訖日排程</button>
-        <button class="tab-btn" onclick="switchTab('students-master')">👥 全校學生檔案總覽</button>
-    </div>
-
-    <!-- 1. 自動生成點名表 (點擊式選班級介面) -->
-    <div id="tab-sheet">
-        <div class="card">
-            <h3 style="color:var(--primary); margin-bottom:8px; font-size:17px;">🖨️ 點名表與成績總表生成專區</h3>
-            <p style="font-size:13px; color:#666; margin-bottom:12px;">
-                請直接在下方點擊您想要產出點名表的<b>班級課程</b>，系統將立即為您自動計算週次並連動學生修課資料。
-            </p>
-
-            <!-- 點擊式班級選擇按鈕列 -->
-            <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:14px;">
-                <div style="font-size:13px; font-weight:bold; color:var(--primary); margin-bottom:8px;">🎯 點擊班級卡片立即生成點名表：</div>
-                <div id="sheetCourseClickGrid" class="filter-btn-group"></div>
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1>招生與進班管理系統</h1>
+                <p>未進班方塊化追蹤、正式進班與推薦人獎金獨立管理</p>
             </div>
-
-            <div class="no-print" style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:15px;">
-                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                    <div>
-                        <label style="font-size:12px; font-weight:bold;">已選課程：</label>
-                        <input type="text" id="selectedSheetCourseName" readonly style="width:auto; padding:6px 10px; margin:0; background:#e2e8f0; font-weight:bold; color:var(--primary);">
-                    </div>
-                    <div>
-                        <label style="font-size:12px; font-weight:bold;">起始日期：</label>
-                        <input type="date" id="sheetQueryStartDate" style="width:auto; padding:6px; margin:0;">
-                    </div>
-                    <div>
-                        <label style="font-size:12px; font-weight:bold;">結束日期：</label>
-                        <input type="date" id="sheetQueryEndDate" style="width:auto; padding:6px; margin:0;">
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
-                        <button class="btn btn-primary" onclick="generateCustomSheet()" style="padding:7px 12px; font-size:13px;">🔍 重新計算生成</button>
-                        <button class="btn btn-success" onclick="window.print()" style="padding:7px 12px; font-size:13px;">🖨️ 列印點名表</button>
-                    </div>
-                </div>
-
-                <div style="margin-top:8px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
-                    <span>💡 符號說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b></span>
-                </div>
-            </div>
-
-            <div class="print-header">
-                <h2 id="sheetPrintTitle">斗六顧德補習班 學生點名與成績總表</h2>
-                <p id="sheetPrintSub" style="margin-top:3px; font-size:9pt;"></p>
-            </div>
-
-            <div id="sheetTableContainer" style="overflow-x:auto;"></div>
-        </div>
-    </div>
-
-    <!-- 2. 課程開課起始日排程 -->
-    <div id="tab-course-config" style="display:none;">
-        <div class="card">
-            <h3 style="color:var(--primary); font-size:17px;">⚙️ 課程開課起訖日與點名表週期排程</h3>
-            <p style="color:#666; font-size:13px; margin-top:4px;">
-                您可以自由為各個班級設定開課起始日與結束日期。設定完成後請點擊下方按鈕輸入管理密碼統一儲存同步！
-            </p>
-
-            <div style="margin-top:12px;">
-                <span style="font-size:13px; font-weight:bold; color:var(--primary);">學部分類 (可按住左側 ⠿ 拖曳調整順序)：</span>
-                <div class="filter-btn-group" id="configFilterGroup"></div>
-            </div>
-
-            <div id="courseConfigList" style="margin-top:12px; overflow-x:auto;"></div>
-
-            <div style="margin-top:16px; text-align:right; border-top:1px solid #e2e8f0; padding-top:12px;">
-                <button class="btn btn-success" style="padding:9px 20px; font-size:14px;" onclick="saveAllCourseConfigs()">💾 儲存全部課程設定 (需密碼)</button>
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('trackingTab', this)"><span>📋</span> <span>未進班看板</span></button>
+                <button class="tab-btn" onclick="switchTab('enrolledTab', this)"><span>🎓</span> <span>正式進班</span></button>
+                <button class="tab-btn" onclick="switchTab('referrerTab', this)"><span>🎁</span> <span>推薦人與獎金</span></button>
             </div>
         </div>
 
-        <div class="card" style="border-top: 4px solid var(--warning);">
-            <h3 style="color:var(--primary); font-size:17px;">📢 國定假日與停課放假設定</h3>
-            <p style="color:#666; font-size:13px; margin-top:4px;">
-                設定放假後，所有點名表會自動推算並印出【放假】標記。
-            </p>
-
-            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-                <input type="date" id="newHolidayDate" style="padding:8px; border-radius:6px; border:1px solid #ccc; width:auto; margin:0;">
-                <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節放假)" style="padding:8px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:180px; margin:0;">
-                <button class="btn btn-warning" onclick="verifyAndAddHoliday()" style="padding:8px 14px;">➕ 新增放假日</button>
-            </div>
-
-            <h4 style="margin-top:18px; color:var(--primary); font-size:15px;">目前已設定的放假清單：</h4>
-            <div id="holidayListDiv" style="margin-top:8px; overflow-x:auto;"></div>
-        </div>
-    </div>
-
-    <!-- 3. 全校學生檔案總覽 -->
-    <div id="tab-students-master" style="display:none;">
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                <div>
-                    <h3 style="color:var(--primary); margin-bottom:2px; font-size:17px;">👥 全校學籍管理與學生總覽</h3>
-                </div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="openAddClassModal()" style="padding:7px 12px; font-size:13px;">➕ 新增班級</button>
-                    <button class="btn btn-success" onclick="openStudentModal()" style="padding:7px 12px; font-size:13px;">➕ 新增學生</button>
-                </div>
-            </div>
-
-            <div class="dept-nav" id="deptNavContainer"></div>
-
-            <div class="class-overview-box" id="classOverviewBox">
-                <div class="class-overview-title">🏫 部門所屬班級：</div>
-                <div id="deptClassButtons" class="draggable-class-container"></div>
-            </div>
-
-            <!-- 全校班級課程管理專區 -->
-            <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
-                <div class="class-overview-title" style="color:#3730a3; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <span>🏫 全校班級課程管理專區 (可拖曳排序)：</span>
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                        <div class="manage-cat-group" id="manageCatGroup">
-                            <button class="manage-cat-btn active" data-cat="all" onclick="setManageCategory('all')">全部</button>
-                            <button class="manage-cat-btn" data-cat="care" onclick="setManageCategory('care')">課輔班</button>
-                            <button class="manage-cat-btn" data-cat="elementary" onclick="setManageCategory('elementary')">國小部</button>
-                            <button class="manage-cat-btn" data-cat="junior" onclick="setManageCategory('junior')">國中部</button>
+        <!-- 頁面一：未進班追蹤區塊清單 -->
+        <div id="trackingTab" class="tab-content active">
+            <!-- 步驟二：表單方塊（順序已調整且支援拖曳） -->
+            <div class="card">
+                <h3>📝 問班與老師追蹤管理</h3>
+                
+                <form id="inquiryForm">
+                    <div class="form-blocks-grid" id="formBlocksContainer">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>📌 學生姓名</label>
+                            <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
-                        <button class="btn btn-purple" style="padding:5px 12px; font-size:12px;" onclick="generateScheduleTimetable()">📅 每週課表</button>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>💬 詢問者 (誰來詢問)</label>
+                            <input type="text" id="inquirer" placeholder="例如：王媽媽">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>📚 有意願課程</label>
+                            <input type="text" id="studentCourse" placeholder="例如：國二數學">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>📞 聯絡電話</label>
+                            <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>📅 預定試聽日期</label>
+                            <input type="date" id="trialDate">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>⚡ 目前招生狀態</label>
+                            <select id="studentStatus">
+                                <option value="初次諮詢">初次諮詢</option>
+                                <option value="預約試聽中">預約試聽中</option>
+                                <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
+                            </select>
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>👨‍🏫 負責追蹤老師</label>
+                            <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>🎁 推薦人 (誰介紹的)</label>
+                            <input type="text" id="referrer" placeholder="例如：張小華媽媽">
+                        </div>
                     </div>
-                </div>
-                <div id="allClassesCardGrid" class="all-classes-manage-grid"></div>
+
+                    <div class="form-block-item" style="margin-bottom: 1.25rem;" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                        <label>📝 老師追蹤紀錄</label>
+                        <textarea id="trackNote" rows="3" placeholder="記錄對話內容、家長需求..." style="resize: vertical;"></textarea>
+                    </div>
+
+                    <input type="hidden" id="leadSource" value="LINE">
+                    <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至下方追蹤區塊</button>
+                </form>
             </div>
 
-            <div id="studentTableSection">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-                    <h4 id="studentListTitle" style="color:var(--primary); font-size:15px;">目前學生名冊</h4>
-                    <div style="display:flex; gap:6px; align-items:center; width:100%;">
-                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:7px 10px; font-size:13px;">
+            <!-- 追蹤區塊看板 -->
+            <div class="card">
+                <h3>📊 招生追蹤區塊看板</h3>
+                
+                <div id="trackingCardContainer">
+                    <div class="tracking-block" draggable="true" ondragstart="handleTrackingDragStart(event)" ondragover="handleTrackingDragOver(event)" ondrop="handleTrackingDrop(event)" ondragend="handleTrackingDragEnd(event)">
+                        <div class="block-header">
+                            <div class="block-title">
+                                <span>📌</span> 
+                                <strong class="s-name">林美華</strong>
+                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                                <span class="badge badge-line s-status" style="font-size:0.7rem;">預約試聽中</span>
+                            </div>
+                            <div class="block-top-actions">
+                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
+                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
+                                <input type="hidden" class="s-inquirer" value="林媽媽">
+                                <input type="hidden" class="s-referrer" value="李大同">
+                                <input type="hidden" class="s-source" value="LINE">
+                            </div>
+                        </div>
+                        <div class="block-body">
+                            <div><strong>預約課程：</strong> <span class="s-course">全科暑期班</span></div>
+                            <div><strong>聯絡電話：</strong> <span class="s-phone">0923-456789</span></div>
+                            <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></div>
+                        </div>
+                        <div class="block-footer">
+                            <div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽。</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div style="overflow-x:auto;">
+        <!-- 頁面二：已正式進班名單 -->
+        <div id="enrolledTab" class="tab-content">
+            <div class="card">
+                <h3>🎓 已正式進班同學名單總表</h3>
+                <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:35px;">序</th>
-                                <th style="width:100px;">學生姓名</th>
-                                <th style="width:90px;">生日</th>
-                                <th style="width:100px;">學校</th>
-                                <th style="width:90px;">班級</th>
-                                <th style="width:130px;">電話 1</th>
-                                <th style="width:130px;">電話 2</th>
-                                <th style="width:130px;">電話 3</th>
-                                <th style="width:180px;">補習課程</th>
-                                <th style="width:120px;">操作</th>
+                                <th>姓名</th>
+                                <th>預約課程</th>
+                                <th>電話</th>
+                                <th>進班日期</th>
+                                <th>狀態</th>
+                                <th>追蹤紀錄歷程</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="masterStudentTableBody"></tbody>
+                        <tbody id="enrolledTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁面三：推薦人與老師競賽 -->
+        <div id="referrerTab" class="tab-content">
+            <div class="card">
+                <h3>🎁 推薦人與獎金發放明細</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>學生</th>
+                                <th>招生明細</th>
+                                <th>介紹人</th>
+                                <th>確定進班</th>
+                                <th>獎金狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referrerDetailTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🏆 老師招生競賽排行榜</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>名次</th>
+                                <th>老師姓名</th>
+                                <th>正式人數</th>
+                                <th>明細 (學生與班級)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherRankingTableBody">
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 專屬課表彈窗 -->
-<div class="modal-overlay" id="timetableModal">
-    <div class="modal-box" style="max-width: 1100px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:8px; flex-wrap:wrap; gap:8px;">
-            <div>
-                <h2 id="timetableModalTitle" style="color:var(--primary); font-size:18px; font-weight:bold;">斗六顧德補習班 - 每週課程時間表</h2>
-                <p id="timetableModalSub" style="font-size:12px; color:#64748b; margin-top:2px;"></p>
+    <!-- 已通知家長細節輸入互動視窗 -->
+    <div id="notifyModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">📞 記錄家長通知內容</div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-muted);">通知老師姓名</label>
+                <input type="text" id="notifyTeacherName" placeholder="例如：陳老師" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
             </div>
-            <div class="no-print" style="display:flex; gap:6px;">
-                <button class="btn btn-success" onclick="printTimetable()" style="padding:6px 12px; font-size:13px;">🖨️ 列印課表</button>
-                <button class="btn btn-outline" onclick="document.getElementById('timetableModal').style.display='none'" style="padding:6px 12px; font-size:13px;">關閉</button>
-            </div>
-        </div>
-
-        <div id="timetableContent" style="margin-top:12px;"></div>
-    </div>
-</div>
-
-<!-- 學生新增/編輯彈窗 -->
-<div class="modal-overlay" id="studentModal">
-    <div class="modal-box">
-        <h3 id="studentModalTitle" style="color:var(--primary); margin-bottom:12px; border-bottom:2px solid var(--accent); padding-bottom:6px; font-size:17px;">新增學生學籍檔案</h3>
-        <input type="hidden" id="editStudentFirestoreId">
-
-        <div class="grid-3">
-            <div>
-                <label style="font-size:13px;"><b>學生姓名*：</b></label>
-                <input type="text" id="m_stu_name" placeholder="例如：王小明">
-            </div>
-            <div>
-                <label style="font-size:13px;"><b>性別：</b></label>
-                <select id="m_stu_gender">
-                    <option value="男">男</option>
-                    <option value="女">女</option>
-                </select>
-            </div>
-            <div>
-                <label style="font-size:13px;"><b>身分證字號：</b></label>
-                <input type="text" id="m_stu_idcard" placeholder="例如：P123456789">
-            </div>
-        </div>
-
-        <div class="grid-3">
-            <div>
-                <label style="font-size:13px;"><b>就讀學校：</b></label>
-                <input type="text" id="m_stu_school" placeholder="例如：鎮東國小">
-            </div>
-            <div>
-                <label style="font-size:13px;"><b>學校年級/座號：</b></label>
-                <input type="text" id="m_stu_class" placeholder="例如：五年級甲班 12號">
-            </div>
-            <div>
-                <label style="font-size:13px;"><b>出生年月日：</b></label>
-                <input type="date" id="m_stu_birthday">
-            </div>
-        </div>
-
-        <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin:8px 0;">
-            <h4 style="color:var(--primary); margin-bottom:6px; font-size:14px;">📞 設定三支聯絡電話</h4>
-            <div class="grid-3">
-                <div>
-                    <label style="font-size:12px;">電話 1 (稱謂/號碼)：</label>
-                    <input type="text" id="m_stu_p1_label" value="媽媽" style="margin-bottom:3px; padding:7px;">
-                    <input type="text" id="m_stu_p1_num" placeholder="0912-345-678" style="padding:7px;">
-                </div>
-                <div>
-                    <label style="font-size:12px;">電話 2 (稱謂/號碼)：</label>
-                    <input type="text" id="m_stu_p2_label" value="爸爸" style="margin-bottom:3px; padding:7px;">
-                    <input type="text" id="m_stu_p2_num" placeholder="0923-456-789" style="padding:7px;">
-                </div>
-                <div>
-                    <label style="font-size:12px;">電話 3 (稱謂/號碼)：</label>
-                    <input type="text" id="m_stu_p3_label" value="學生本人" style="margin-bottom:3px; padding:7px;">
-                    <input type="text" id="m_stu_p3_num" placeholder="0934-567-890" style="padding:7px;">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">通知事項分類</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知試聽" checked style="width: 16px; height: 16px;"> 通知試聽
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知就讀" style="width: 16px; height: 16px;"> 通知就讀
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="notifyType" value="通知其他事情" style="width: 16px; height: 16px;"> 通知其他事情
+                    </label>
                 </div>
             </div>
-        </div>
-
-        <div class="grid-3">
-            <div>
-                <label style="font-size:13px;"><b>爸爸職業：</b></label>
-                <input type="text" id="m_stu_father_job" placeholder="例如：公務員">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-muted);">其他補充事項 (選填)</label>
+                <textarea id="notifyCustomText" rows="3" placeholder="請在此輸入其他具體對話內容..." style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; resize: vertical;"></textarea>
             </div>
-            <div>
-                <label style="font-size:13px;"><b>媽媽職業：</b></label>
-                <input type="text" id="m_stu_mother_job" placeholder="例如：教師">
-            </div>
-            <div>
-                <label style="font-size:13px;"><b>健康狀況/過敏：</b></label>
-                <input type="text" id="m_stu_health" placeholder="例如：無特殊疾病">
-            </div>
-        </div>
-
-        <div>
-            <label style="font-size:13px;"><b>通訊地址：</b></label>
-            <input type="text" id="m_stu_address" placeholder="例如：雲林縣斗六市...">
-        </div>
-
-        <div>
-            <label style="font-size:13px;"><b>學生詳細備註事項：</b></label>
-            <textarea id="m_stu_notes" rows="2" style="resize:vertical; line-height:1.4;" placeholder="請輸入學習紀錄、注意事項等備註..."></textarea>
-        </div>
-
-        <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin:10px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                <label style="color:#166534; font-weight:bold; font-size:13px; margin:0;"><b>📖 修習班級課程 (可增加多科)：</b></label>
-                <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
-            </div>
-            <div id="studentCoursesWrapper"></div>
-        </div>
-
-        <div style="border-top:1px solid #e2e8f0; padding-top:10px; margin-top:8px;">
-            <label style="color:var(--primary); font-weight:bold; font-size:13px;"><b>學籍狀態：</b></label>
-            <select id="m_stu_status">
-                <option value="active">在籍就讀中</option>
-                <option value="graduated">🎓 已畢業 / 離班</option>
-            </select>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
-            <button type="button" class="btn btn-danger" id="btnDeleteStudent" onclick="deleteMasterStudent()" style="display:none; padding:7px 12px; font-size:13px;">🗑️ 刪除學生 (需密碼)</button>
-            <div style="display:flex; gap:8px; margin-left:auto;">
-                <button type="button" class="btn btn-success" onclick="saveStudentMasterData()" style="padding:7px 14px; font-size:13px;">💾 儲存檔案</button>
-                <button type="button" class="btn btn-outline" onclick="closeStudentModal()" style="padding:7px 14px; font-size:13px;">取消</button>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeNotifyModal()">取消</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveNotifyRecord()">確認送出</button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 快速加選/複製班級彈窗 -->
-<div class="modal-overlay" id="quickAssignModal">
-    <div class="modal-box" style="max-width:540px;">
-        <h3 id="quickAssignTitle" style="color:var(--primary); margin-bottom:10px; font-size:17px;">📋 快速加選班級課程</h3>
-        <input type="hidden" id="quickAssignFirestoreId">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <p style="font-size:13px; color:#555; margin:0;">為學生增減所修習的班級課程：</p>
-            <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('quickAssignWrapper')">➕ 增加一科</button>
-        </div>
-        
-        <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; max-height:240px; overflow-y:auto;"></div>
-
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-            <button class="btn btn-success" onclick="saveQuickAssign()" style="padding:7px 14px; font-size:13px;">💾 確認加選並儲存</button>
-            <button class="btn btn-outline" onclick="document.getElementById('quickAssignModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
+    <!-- 修改資料的彈跳表格視窗 (Modal) -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✏️ 修改學生招生資料</div>
+            <form id="editForm">
+                <div class="form-blocks-grid">
+                    <div class="form-block-item">
+                        <label>學生姓名</label>
+                        <input type="text" id="editName">
+                    </div>
+                    <div class="form-block-item">
+                        <label>詢問者</label>
+                        <input type="text" id="editInquirer">
+                    </div>
+                    <div class="form-block-item">
+                        <label>有意願課程</label>
+                        <input type="text" id="editCourse">
+                    </div>
+                    <div class="form-block-item">
+                        <label>聯絡電話</label>
+                        <input type="text" id="editPhone">
+                    </div>
+                    <div class="form-block-item">
+                        <label>預定試聽日期</label>
+                        <input type="date" id="editDate">
+                    </div>
+                    <div class="form-block-item">
+                        <label>目前狀態</label>
+                        <select id="editStatusSelect">
+                            <option value="初次諮詢">初次諮詢</option>
+                            <option value="預約試聽中">預約試聽中</option>
+                            <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
+                            <option value="已正式進班">已正式進班</option>
+                        </select>
+                    </div>
+                    <div class="form-block-item">
+                        <label>負責追蹤老師</label>
+                        <input type="text" id="editTeacher">
+                    </div>
+                    <div class="form-block-item">
+                        <label>推薦人</label>
+                        <input type="text" id="editReferrer">
+                    </div>
+                </div>
+                <div class="form-block-item" style="margin-bottom: 1rem;">
+                    <label>追蹤紀錄歷程</label>
+                    <textarea id="editLog" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; resize: vertical;"></textarea>
+                </div>
+                <input type="hidden" id="editSource" value="LINE">
+                <div style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteStudentRecord()">🗑️ 刪除</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn btn-sm" style="background-color: var(--text-muted);" onclick="closeEditModal()">取消</button>
+                        <button type="button" class="btn btn-sm btn-success" onclick="saveEditModal()">儲存</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- 新增班級彈窗 -->
-<div class="modal-overlay" id="addClassModal">
-    <div class="modal-box" style="max-width:480px;">
-        <h3 style="color:var(--primary); margin-bottom:12px; font-size:17px;">➕ 新增班級課程</h3>
-        <label style="font-size:13px;"><b>所屬部門：</b></label>
-        <select id="m_new_class_dept">
-            <option value="care">課輔部</option>
-            <option value="elementary">國小部</option>
-            <option value="junior">國中部</option>
-        </select>
-
-        <label style="font-size:13px;"><b>班級課程名稱：</b></label>
-        <input type="text" id="m_new_class_name" placeholder="例如：小四安親班">
-
-        <label style="font-size:13px;"><b>上課星期：</b></label>
-        <div id="m_new_class_days_wrapper" style="display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; background:#f8fafc; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
-
-        <label style="font-size:13px;"><b>上課時段：</b></label>
-        <input type="text" id="m_new_class_time" placeholder="例如：16:30 - 18:30">
-
-        <label style="font-size:13px;"><b>授課老師：</b></label>
-        <input type="text" id="m_new_class_teacher" placeholder="例如：陳老師">
-
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-            <button class="btn btn-success" onclick="saveNewClass()" style="padding:7px 14px; font-size:13px;">確認新增</button>
-            <button class="btn btn-outline" onclick="document.getElementById('addClassModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
-        </div>
-    </div>
-</div>
-
-<!-- 管理 / 編輯 / 刪除 班級彈窗 -->
-<div class="modal-overlay" id="editClassModal">
-    <div class="modal-box" style="max-width:500px;">
-        <h3 style="color:var(--primary); margin-bottom:12px; border-bottom:2px solid var(--accent); padding-bottom:6px; font-size:17px;">⚙️ 管理班級課程設定</h3>
-        <input type="hidden" id="edit_original_dept">
-        <input type="hidden" id="edit_original_name">
-
-        <label style="font-size:13px;"><b>所屬部門：</b></label>
-        <select id="edit_class_dept">
-            <option value="care">課輔部</option>
-            <option value="elementary">國小部</option>
-            <option value="junior">國中部</option>
-        </select>
-
-        <label style="font-size:13px;"><b>班級課程名稱：</b></label>
-        <input type="text" id="edit_class_name" placeholder="例如：小四安親班">
-
-        <label style="font-size:13px;"><b>上課星期：</b></label>
-        <div id="edit_class_days_wrapper" style="display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; background:#f8fafc; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
-
-        <label style="font-size:13px;"><b>上課時段：</b></label>
-        <input type="text" id="edit_class_time" placeholder="例如：16:30 - 18:30">
-
-        <label style="font-size:13px;"><b>授課老師：</b></label>
-        <input type="text" id="edit_class_teacher" placeholder="例如：陳老師">
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px; flex-wrap:wrap; gap:8px;">
-            <button class="btn btn-danger" onclick="deleteClassCourseFromModal()" style="padding:7px 12px; font-size:13px;">🗑️ 刪除班級 (需密碼)</button>
-            <div style="display:flex; gap:8px;">
-                <button class="btn btn-success" onclick="saveEditedClass()" style="padding:7px 14px; font-size:13px;">💾 儲存修改</button>
-                <button class="btn btn-outline" onclick="document.getElementById('editClassModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
+    <!-- 推薦人獎金管理細節互動視窗 -->
+    <div id="referrerDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header" id="referrerModalTitle">🎁 獎金與比率分配管理</div>
+            <div id="referrerModalBody" style="margin-bottom: 1.5rem;"></div>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉並儲存</button>
             </div>
         </div>
     </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <script>
+        let currentEditingElement = null; 
+        let activeNotifyElement = null;
+        let isEditingEnrolled = false; 
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
-        authDomain: "my-project-9999-479215.firebaseapp.com",
-        projectId: "my-project-9999-479215",
-        storageBucket: "my-project-9999-479215.firebasestorage.app",
-        messagingSenderId: "1020162825898",
-        appId: "1:1020162825898:web:681a7825a197f34e713ad3"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const SECURITY_CODE = "0618";
-    const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-
-    const DEFAULT_DEPT_ORDER = [
-        { key: 'allclasses', label: '🏫 班級全覽' },
-        { key: 'care', label: '🏢 課輔部' },
-        { key: 'elementary', label: '📘 國小部' },
-        { key: 'junior', label: '📙 國中部' },
-        { key: 'all', label: '🌟 全校學生' }
-    ];
-
-    const DEFAULT_CONFIG_FILTER_ORDER = [
-        { key: 'all', label: '🏫 全部' },
-        { key: 'care', label: '🏢 課輔班' },
-        { key: 'elementary', label: '📘 國小部' },
-        { key: 'junior', label: '📙 國中部' }
-    ];
-
-    window.state = {
-        courses: { care: [], elementary: [], junior: [] },
-        students: [],
-        holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
-        attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        currentDeptView: 'care',
-        currentFilterClass: null,
-        manageCategory: 'all',
-        configDeptFilter: 'all',
-        selectedSheetCourse: null,
-        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
-        configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER
-    };
-
-    window.onload = function() {
-        const today = new Date().toISOString().slice(0, 10);
-        document.getElementById('newHolidayDate').value = today;
-        renderDeptNavButtons();
-        renderConfigFilterButtons();
-        initCloudData();
-    };
-
-    function checkPassword(promptText = "🔒 系統安全驗證，請輸入管理密碼：") {
-        const input = prompt(promptText);
-        if (input === SECURITY_CODE) return true;
-        alert("❌ 密碼不正確！操作已取消。");
-        return false;
-    }
-
-    function getStudentCoursesArray(stu) {
-        if (!stu) return [];
-        if (Array.isArray(stu.courses) && stu.courses.length > 0) return stu.courses;
-        if (stu.course) return stu.course.split(/[,，、]/).map(c => c.trim()).filter(c => c);
-        return [];
-    }
-
-    function renderDayCheckboxes(wrapperId, selectedDaysStr = "") {
-        const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return;
-        wrapper.innerHTML = '';
-        const selectedArr = selectedDaysStr ? selectedDaysStr.split(/[,，、]/).map(d => d.trim()) : [];
-        WEEK_DAYS.forEach(day => {
-            const isChecked = selectedArr.includes(day);
-            wrapper.innerHTML += `
-                <label style="display:inline-flex; align-items:center; gap:4px; font-size:12.5px; cursor:pointer; user-select:none; font-weight:bold; color:#334155;">
-                    <input type="checkbox" value="${day}" ${isChecked ? 'checked' : ''} style="width:auto; margin:0; cursor:pointer;"> ${day}
-                </label>
-            `;
-        });
-    }
-
-    function getSelectedDaysFromWrapper(wrapperId) {
-        const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return '星期一';
-        const checkedBoxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
-        const list = Array.from(checkedBoxes).map(cb => cb.value);
-        return list.length > 0 ? list.join('、') : '星期一';
-    }
-
-    async function initCloudData() {
-        try {
-            const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
-            if (coursesDoc.exists()) {
-                const data = coursesDoc.data().data || {};
-                window.state.courses = {
-                    care: data.care || [{ name: '小四課後安親輔導班', day: '星期一、星期二、星期三、星期四、星期五', time: '16:30 - 18:30', teacher: '陳老師' }],
-                    elementary: data.elementary || [{ name: '小五數學培優班', day: '星期二、星期四', time: '18:30 - 20:30', teacher: '林老師' }],
-                    junior: data.junior || [
-                        { name: '國二數學進階A班', day: '星期一、星期四', time: '18:30 - 21:00', teacher: '吳老師' },
-                        { name: '國三會考理化總複習', day: '星期三、星期五', time: '18:30 - 21:30', teacher: '張老師' }
-                    ]
-                };
-            }
-
-            const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
-            window.state.students = [];
-            studentsSnapshot.forEach(d => {
-                const stuData = d.data();
-                const coursesArr = getStudentCoursesArray(stuData);
-                window.state.students.push({
-                    firestoreId: d.id,
-                    ...stuData,
-                    courses: coursesArr,
-                    course: coursesArr.join('、')
-                });
-            });
-
-            renderDeptNavButtons();
-            renderConfigFilterButtons();
-            renderMasterStudentsTable();
-            renderDeptClassButtons();
-            renderSheetCourseClickGrid();
-            renderHolidayList();
-            renderCourseConfigList();
-
-            if (!window.state.selectedSheetCourse) {
-                const all = getAllCoursesList();
-                if (all.length > 0) selectSheetCourse(all[0].name);
-            }
-        } catch (e) {
-            console.error("載入資料失敗：", e);
+        function getFormattedTimestamp() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${month}/${day} ${hours}:${minutes}`;
         }
-    }
 
-    window.switchTab = function(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-sheet').style.display = tab === 'sheet' ? 'block' : 'none';
-        document.getElementById('tab-course-config').style.display = tab === 'course-config' ? 'block' : 'none';
-        document.getElementById('tab-students-master').style.display = tab === 'students-master' ? 'block' : 'none';
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
 
-        if (tab === 'sheet') {
-            document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            renderSheetCourseClickGrid();
-            if (!window.state.selectedSheetCourse) {
-                const all = getAllCoursesList();
-                if (all.length > 0) selectSheetCourse(all[0].name);
+            if (tabId === 'referrerTab') {
+                updateReferrerTable();
+                updateTeacherRanking();
+            }
+        }
+
+        // 步驟二表單方塊的拖曳排序功能
+        let draggedFormBlock = null;
+
+        function handleFormBlockDragStart(e) {
+            draggedFormBlock = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleFormBlockDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('formBlocksContainer');
+            const afterElement = getFormBlockDragAfterElement(container, e.clientX, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedFormBlock);
             } else {
-                generateCustomSheet();
-            }
-        } else if (tab === 'course-config') {
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            renderConfigFilterButtons();
-            renderCourseConfigList();
-            renderHolidayList();
-        } else {
-            document.querySelectorAll('.tab-btn')[2].classList.add('active');
-            renderDeptNavButtons();
-            renderMasterStudentsTable();
-            renderDeptClassButtons();
-        }
-    };
-
-    function renderDeptNavButtons() {
-        const navContainer = document.getElementById('deptNavContainer');
-        if (!navContainer) return;
-        navContainer.innerHTML = '';
-
-        window.state.deptOrder.forEach((dept, index) => {
-            const btn = document.createElement('div');
-            btn.className = 'dept-btn';
-            btn.draggable = true;
-            btn.dataset.deptKey = dept.key;
-            btn.dataset.deptIndex = index;
-
-            if (dept.key === window.state.currentDeptView) {
-                if (dept.key === 'allclasses') btn.classList.add('active-allclasses');
-                if (dept.key === 'care') btn.classList.add('active-care');
-                if (dept.key === 'elementary') btn.classList.add('active-elem');
-                if (dept.key === 'junior') btn.classList.add('active-jun');
-                if (dept.key === 'all') btn.classList.add('active-all');
-            } else if (dept.key === 'all') {
-                btn.style.borderColor = '#8b5cf6';
-                btn.style.color = '#6d28d9';
-                btn.style.background = '#f5f3ff';
-            }
-
-            btn.innerHTML = `<span class="drag-handle">⠿</span> ${dept.label}`;
-
-            btn.onclick = (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                switchDept(dept.key);
-            };
-
-            btn.addEventListener('dragstart', handleDeptDragStart);
-            btn.addEventListener('dragover', handleDeptDragOver);
-            btn.addEventListener('drop', handleDeptDrop);
-            btn.addEventListener('dragend', handleDeptDragEnd);
-
-            navContainer.appendChild(btn);
-        });
-
-        const gradBtn = document.createElement('button');
-        gradBtn.className = `dept-btn-fixed-grad ${window.state.currentDeptView === 'graduated' ? 'active-grad' : ''}`;
-        gradBtn.innerText = '🎓 畢業班';
-        gradBtn.onclick = () => switchDept('graduated');
-        navContainer.appendChild(gradBtn);
-    }
-
-    let draggedDeptItem = null;
-    function handleDeptDragStart(e) { draggedDeptItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleDeptDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    function handleDeptDrop(e) {
-        e.stopPropagation();
-        if (draggedDeptItem !== this && this.dataset && this.dataset.deptIndex !== undefined) {
-            const fromIndex = parseInt(draggedDeptItem.dataset.deptIndex);
-            const toIndex = parseInt(this.dataset.deptIndex);
-            const movedItem = window.state.deptOrder.splice(fromIndex, 1)[0];
-            window.state.deptOrder.splice(toIndex, 0, movedItem);
-            localStorage.setItem('gude_dept_order_v2', JSON.stringify(window.state.deptOrder));
-            renderDeptNavButtons();
-        }
-        return false;
-    }
-    function handleDeptDragEnd() { this.classList.remove('dragging'); draggedDeptItem = null; }
-
-    window.switchDept = function(deptKey) {
-        window.state.currentDeptView = deptKey;
-        window.state.currentFilterClass = null;
-        renderDeptNavButtons();
-        renderDeptClassButtons();
-        renderMasterStudentsTable();
-    };
-
-    function renderDeptClassButtons() {
-        const container = document.getElementById('deptClassButtons');
-        const box = document.getElementById('classOverviewBox');
-        const manageBox = document.getElementById('allClassesManageBox');
-        const studentTableSection = document.getElementById('studentTableSection');
-        if (!container || !box || !manageBox || !studentTableSection) return;
-
-        const deptKey = window.state.currentDeptView;
-
-        if (deptKey === 'allclasses') {
-            box.style.display = 'none';
-            studentTableSection.style.display = 'none';
-            manageBox.style.display = 'block';
-            renderAllClassesManagementCards();
-            return;
-        }
-
-        studentTableSection.style.display = 'block';
-        manageBox.style.display = 'none';
-
-        if (deptKey === 'all' || deptKey === 'graduated') {
-            box.style.display = 'none';
-            return;
-        }
-
-        box.style.display = 'block';
-        const list = window.state.courses[deptKey] || [];
-        container.innerHTML = '';
-
-        const allBtn = document.createElement('button');
-        allBtn.className = `class-btn-pill ${!window.state.currentFilterClass ? 'active' : ''}`;
-        allBtn.innerText = '全部班級';
-        allBtn.onclick = () => filterByClass(null);
-        container.appendChild(allBtn);
-
-        list.forEach((c, index) => {
-            const cName = typeof c === 'object' ? c.name : c;
-            const isActive = window.state.currentFilterClass === cName;
-
-            const btn = document.createElement('div');
-            btn.className = `class-btn-pill ${isActive ? 'active' : ''}`;
-            btn.draggable = true;
-            btn.dataset.index = index;
-            btn.dataset.name = cName;
-
-            btn.innerHTML = `<span class="drag-handle">⠿</span> 🏫 ${cName}`;
-
-            btn.onclick = (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                filterByClass(cName);
-            };
-
-            btn.addEventListener('dragstart', handleDragStart);
-            btn.addEventListener('dragover', handleDragOver);
-            btn.addEventListener('drop', handleDrop);
-            btn.addEventListener('dragend', handleDragEnd);
-
-            container.appendChild(btn);
-        });
-
-        if (list.length === 0) {
-            container.innerHTML += `<span style="color:#888; font-size:12px;">該部門目前尚無班級課程。</span>`;
-        }
-    }
-
-    let draggedItem = null;
-    function handleDragStart(e) { draggedItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    async function handleDrop(e) {
-        e.stopPropagation();
-        if (draggedItem !== this && this.dataset && this.dataset.index !== undefined) {
-            const fromIndex = parseInt(draggedItem.dataset.index);
-            const toIndex = parseInt(this.dataset.index);
-            const deptKey = window.state.currentDeptView;
-            const list = window.state.courses[deptKey];
-            const movedItem = list.splice(fromIndex, 1)[0];
-            list.splice(toIndex, 0, movedItem);
-            renderDeptClassButtons();
-            try {
-                await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            } catch (err) { console.error("排序儲存失敗", err); }
-        }
-        return false;
-    }
-    function handleDragEnd() { this.classList.remove('dragging'); draggedItem = null; }
-
-    window.setManageCategory = function(cat) {
-        window.state.manageCategory = cat;
-        document.querySelectorAll('#manageCatGroup .manage-cat-btn').forEach(btn => {
-            if (btn.dataset.cat === cat) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
-        renderAllClassesManagementCards();
-    };
-
-    let draggedManageCard = null;
-    function handleManageCardDragStart(e) { draggedManageCard = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleManageCardDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    async function handleManageCardDrop(e) {
-        e.stopPropagation();
-        if (draggedManageCard && draggedManageCard !== this) {
-            const fromDept = draggedManageCard.dataset.dept;
-            const fromIndex = parseInt(draggedManageCard.dataset.index);
-            const toDept = this.dataset.dept;
-            const toIndex = parseInt(this.dataset.index);
-
-            if (fromDept && toDept && window.state.courses[fromDept] && window.state.courses[toDept]) {
-                const movedItem = window.state.courses[fromDept].splice(fromIndex, 1)[0];
-                window.state.courses[toDept].splice(toIndex, 0, movedItem);
-                renderAllClassesManagementCards();
-                try {
-                    await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-                } catch (err) { console.error("排序儲存失敗", err); }
+                container.insertBefore(draggedFormBlock, afterElement);
             }
         }
-        return false;
-    }
-    function handleManageCardDragEnd() {
-        if (draggedManageCard) draggedManageCard.classList.remove('dragging');
-        draggedManageCard = null;
-    }
 
-    function renderAllClassesManagementCards() {
-        const grid = document.getElementById('allClassesCardGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
+        function handleFormBlockDrop(e) {
+            e.preventDefault();
+        }
 
-        const cat = window.state.manageCategory || 'all';
-        let targetDepts = ['care', 'elementary', 'junior'];
-        if (cat === 'care') targetDepts = ['care'];
-        else if (cat === 'elementary') targetDepts = ['elementary'];
-        else if (cat === 'junior') targetDepts = ['junior'];
+        function handleFormBlockDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedFormBlock = null;
+        }
 
-        let totalCards = 0;
+        function getFormBlockDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.form-block-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
 
-        targetDepts.forEach(deptKey => {
-            const deptName = deptKey === 'care' ? '課輔部' : (deptKey === 'elementary' ? '國小部' : '國中部');
-            const deptBadge = deptKey === 'care' ? '#0369a1' : (deptKey === 'elementary' ? '#15803d' : '#b45309');
-            const list = window.state.courses[deptKey] || [];
+        // 追蹤看板卡片的拖曳移動功能
+        let draggedTrackingBlock = null;
 
-            list.forEach((c, cIndex) => {
-                totalCards++;
-                const cName = typeof c === 'object' ? c.name : c;
-                const cDay = typeof c === 'object' ? (c.day || '未設時間') : '';
-                const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '';
-                const cTime = typeof c === 'object' ? (c.time || '未設定') : '';
-                const stuCount = window.state.students.filter(s => {
-                    const arr = getStudentCoursesArray(s);
-                    return arr.includes(cName) && s.status !== 'graduated';
-                }).length;
+        function handleTrackingDragStart(e) {
+            draggedTrackingBlock = this;
+            setTimeout(() => this.classList.add('dragging'), 0);
+            e.dataTransfer.effectAllowed = 'move';
+        }
 
-                const card = document.createElement('div');
-                card.className = 'class-manage-card';
-                card.draggable = true;
-                card.dataset.dept = deptKey;
-                card.dataset.index = cIndex;
+        function handleTrackingDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('trackingCardContainer');
+            const afterElement = getTrackingDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedTrackingBlock);
+            } else {
+                container.insertBefore(draggedTrackingBlock, afterElement);
+            }
+        }
 
-                card.innerHTML = `
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
-                            <span class="drag-handle" title="按住拖曳" style="font-size:13px; cursor:grab; padding:2px 6px; background:#f1f5f9; border-radius:4px;">⠿ 拖曳</span>
+        function handleTrackingDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleTrackingDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedTrackingBlock = null;
+        }
+
+        function getTrackingDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.tracking-block:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function saveInquiry() {
+            const name = document.getElementById('studentName').value;
+            const inquirer = document.getElementById('inquirer').value || '未填寫';
+            const referrer = document.getElementById('referrer').value.trim();
+            const course = document.getElementById('studentCourse').value;
+            const phone = document.getElementById('studentPhone').value;
+            const tDate = document.getElementById('trialDate').value || '未定';
+            const teacher = document.getElementById('assignedTeacher').value || '未指定';
+            const status = document.getElementById('studentStatus').value;
+            const note = document.getElementById('trackNote').value;
+            const source = document.getElementById('leadSource').value;
+
+            if(!name) { alert('請填寫學生姓名！'); return; }
+
+            const container = document.getElementById('trackingCardContainer');
+            const newBlock = document.createElement('div');
+            newBlock.className = 'tracking-block';
+            newBlock.setAttribute('draggable', 'true');
+            newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
+            newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
+            newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
+            newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
+            
+            const timestamp = getFormattedTimestamp();
+            const initialLog = note ? `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - ${note}` : `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - 建立追蹤紀錄`;
+
+            newBlock.innerHTML = `
+                <div class="block-header">
+                    <div class="block-title">
+                        <span>📌</span> 
+                        <strong class="s-name">${name}</strong>
+                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                        <span class="badge badge-line s-status" style="font-size:0.7rem;">${status}</span>
+                    </div>
+                    <div class="block-top-actions">
+                        <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
+                        <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
+                        <input type="hidden" class="s-inquirer" value="${inquirer}">
+                        <input type="hidden" class="s-referrer" value="${referrer}">
+                        <input type="hidden" class="s-source" value="${source}">
+                    </div>
+                </div>
+                <div class="block-body">
+                    <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
+                    <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
+                    <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">${tDate}</span></div>
+                </div>
+                <div class="block-footer">
+                    <div class="s-log">${initialLog}</div>
+                </div>
+            `;
+            container.appendChild(newBlock);
+            alert('已成功新增至追蹤區塊列表！');
+            document.getElementById('inquiryForm').reset();
+        }
+
+        function openNotifyModal(btn) {
+            activeNotifyElement = btn.closest('.tracking-block') || btn.closest('tr');
+            
+            const logEl = activeNotifyElement.querySelector('.s-log');
+            let defaultTeacher = '';
+            if (logEl) {
+                const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
+                if (tMatch) defaultTeacher = tMatch[1];
+            }
+            document.getElementById('notifyTeacherName').value = defaultTeacher;
+            document.getElementById('notifyCustomText').value = '';
+            document.querySelector('input[name="notifyType"][value="通知試聽"]').checked = true;
+
+            document.getElementById('notifyModal').style.display = 'flex';
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notifyModal').style.display = 'none';
+            activeNotifyElement = null;
+        }
+
+        function saveNotifyRecord() {
+            if (!activeNotifyElement) return;
+
+            const teacherName = document.getElementById('notifyTeacherName').value.trim() || '未指定';
+            const notifyType = document.querySelector('input[name="notifyType"]:checked').value;
+            const customText = document.getElementById('notifyCustomText').value.trim();
+
+            const logEl = activeNotifyElement.querySelector('.s-log');
+            const timestamp = getFormattedTimestamp();
+
+            let recordText = `[${timestamp} ${teacherName}老師 已${notifyType}`;
+            if (customText) {
+                recordText += `：${customText}`;
+            }
+            recordText += `]`;
+
+            logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">${recordText}</span>`;
+            closeNotifyModal();
+            alert(`已成功記錄：${teacherName}老師 的通知內容！`);
+        }
+
+        function openEditModal(btn) {
+            currentEditingElement = btn.closest('.tracking-block') || btn.closest('tr');
+            isEditingEnrolled = currentEditingElement.closest('#enrolledTableBody') !== null;
+
+            const name = currentEditingElement.querySelector('.s-name').innerText;
+            const inquirerEl = currentEditingElement.querySelector('.s-inquirer');
+            const inquirer = inquirerEl ? inquirerEl.value : '';
+            const referrerEl = currentEditingElement.querySelector('.s-referrer');
+            const referrer = referrerEl ? referrerEl.value : '';
+            const course = currentEditingElement.querySelector('.s-course').innerText;
+            const phone = currentEditingElement.querySelector('.s-phone').innerText;
+            
+            const dateEl = currentEditingElement.querySelector('.s-date');
+            const date = dateEl ? dateEl.innerText : '';
+            
+            const status = currentEditingElement.querySelector('.s-status').innerText;
+            const logHtml = currentEditingElement.querySelector('.s-log').innerHTML;
+
+            let teacher = '未指定';
+            const teacherMatch = logHtml.match(/\[(.*?)\]/);
+            if (teacherMatch) {
+                teacher = teacherMatch[1];
+            }
+
+            const sourceEl = currentEditingElement.querySelector('.s-source');
+            const source = sourceEl ? sourceEl.value : 'LINE';
+
+            document.getElementById('editName').value = name;
+            document.getElementById('editInquirer').value = inquirer;
+            document.getElementById('editReferrer').value = referrer;
+            document.getElementById('editCourse').value = course;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editDate').value = date !== '未定' && date !== '' && !date.includes('轉入') ? date : '';
+            document.getElementById('editTeacher').value = teacher;
+            document.getElementById('editStatusSelect').value = status;
+            document.getElementById('editSource').value = source;
+            document.getElementById('editLog').value = logHtml.replace(/<br\s*[\/]?>/gi, '\n');
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingElement = null;
+            isEditingEnrolled = false;
+        }
+
+        function deleteStudentRecord() {
+            if (!currentEditingElement) return;
+            const name = document.getElementById('editName').value;
+
+            if (confirm(`⚠️ 確定要永久刪除「${name}」這筆招生紀錄嗎？此動作無法復原。`)) {
+                currentEditingElement.remove();
+                closeEditModal();
+                alert('已成功刪除該筆學生資料！');
+            }
+        }
+
+        function saveEditModal() {
+            if (!currentEditingElement) return;
+
+            const name = document.getElementById('editName').value;
+            const inquirer = document.getElementById('editInquirer').value;
+            const referrer = document.getElementById('editReferrer').value.trim();
+            const course = document.getElementById('editCourse').value;
+            const phone = document.getElementById('editPhone').value;
+            let date = document.getElementById('editDate').value || '未定';
+            const teacher = document.getElementById('editTeacher').value || '未指定';
+            const status = document.getElementById('editStatusSelect').value;
+            const source = document.getElementById('editSource').value;
+            let log = document.getElementById('editLog').value;
+
+            if(!name) { alert('學生姓名不能為空！'); return; }
+
+            if (isEditingEnrolled && status !== '已正式進班') {
+                if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤區塊嗎？`)) {
+                    const container = document.getElementById('trackingCardContainer');
+                    const newBlock = document.createElement('div');
+                    newBlock.className = 'tracking-block';
+                    newBlock.setAttribute('draggable', 'true');
+                    newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
+                    newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
+                    newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
+                    newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
+                    
+                    const timestamp = getFormattedTimestamp();
+
+                    newBlock.innerHTML = `
+                        <div class="block-header">
+                            <div class="block-title">
+                                <span>📌</span> 
+                                <strong class="s-name">${name}</strong>
+                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                                <span class="badge badge-line s-status" style="font-size:0.7rem;">${status}</span>
+                            </div>
+                            <div class="block-top-actions">
+                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
+                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
+                                <input type="hidden" class="s-inquirer" value="${inquirer}">
+                                <input type="hidden" class="s-referrer" value="${referrer}">
+                                <input type="hidden" class="s-source" value="${source}">
+                            </div>
                         </div>
-                        <div style="font-size:15px; font-weight:bold; color:var(--primary); margin:6px 0 3px;">🏫 ${cName}</div>
-                        <div style="font-size:12px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
-                        <div style="font-size:11.5px; color:#777; margin-top:2px;">時段：${cTime}</div>
-                        <div style="font-size:12px; color:#666; margin-top:4px;">修課學生：<b>${stuCount}</b> 人</div>
-                    </div>
-                    <div style="margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px; text-align:right;">
-                        <button class="btn btn-warning" style="padding:4px 10px; font-size:12px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${encodeURIComponent(cName)}'), decodeURIComponent('${encodeURIComponent(cDay)}'), decodeURIComponent('${encodeURIComponent(cTime)}'), decodeURIComponent('${encodeURIComponent(cTeacher)}'))">⚙️ 管理班級</button>
-                    </div>
-                `;
-
-                card.addEventListener('dragstart', handleManageCardDragStart);
-                card.addEventListener('dragover', handleManageCardDragOver);
-                card.addEventListener('drop', handleManageCardDrop);
-                card.addEventListener('dragend', handleManageCardDragEnd);
-
-                grid.appendChild(card);
-            });
-        });
-
-        if (totalCards === 0) {
-            grid.innerHTML = `<p style="color:#888; text-align:center; grid-column:1/-1; padding:15px;">目前該分類尚無建立任何班級課程。</p>`;
-        }
-    }
-
-    function renderSheetCourseClickGrid() {
-        const container = document.getElementById('sheetCourseClickGrid');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const allCourses = getAllCoursesList();
-        if (allCourses.length === 0) {
-            container.innerHTML = `<span style="color:#888; font-size:13px;">目前尚無任何班級課程可供選取。</span>`;
-            return;
-        }
-
-        allCourses.forEach(c => {
-            const isSelected = window.state.selectedSheetCourse === c.name;
-            const pill = document.createElement('button');
-            pill.type = 'button';
-            pill.className = `filter-pill ${isSelected ? 'active' : ''}`;
-            pill.style.padding = '8px 14px';
-            pill.style.fontSize = '13px';
-            pill.innerHTML = `🏫 ${c.name}`;
-            pill.onclick = () => selectSheetCourse(c.name);
-            container.appendChild(pill);
-        });
-    }
-
-    window.selectSheetCourse = function(courseName) {
-        window.state.selectedSheetCourse = courseName;
-        document.getElementById('selectedSheetCourseName').value = courseName;
-        renderSheetCourseClickGrid();
-        onSheetCourseChanged();
-    };
-
-    window.generateScheduleTimetable = function() {
-        const cat = window.state.manageCategory || 'all';
-        let targetDepts = ['care', 'elementary', 'junior'];
-        let scopeTitle = "全校所有課程每週課表";
-        if (cat === 'care') {
-            targetDepts = ['care'];
-            scopeTitle = "課輔部專屬每週課表";
-        } else if (cat === 'elementary') {
-            targetDepts = ['elementary'];
-            scopeTitle = "國小部專屬每週課表";
-        } else if (cat === 'junior') {
-            targetDepts = ['junior'];
-            scopeTitle = "國中部專屬每週課表";
-        }
-
-        document.getElementById('timetableModalTitle').innerText = `斗六顧德補習班 - ${scopeTitle}`;
-        document.getElementById('timetableModalSub').innerText = `產表時間：${new Date().toLocaleDateString('zh-TW')}`;
-
-        const scheduleByDay = {
-            '星期一': [], '星期二': [], '星期三': [], '星期四': [], '星期五': [], '星期六': [], '星期日': []
-        };
-
-        targetDepts.forEach(deptKey => {
-            const list = window.state.courses[deptKey] || [];
-            list.forEach(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const cDay = typeof c === 'object' ? (c.day || '') : '';
-                const cTime = typeof c === 'object' ? (c.time || '未設時段') : '未設時段';
-                const cTeacher = typeof c === 'object' ? (c.teacher || '任課老師') : '任課老師';
-
-                WEEK_DAYS.forEach(day => {
-                    if (cDay.includes(day) || cDay.includes(day.replace('星期', '週'))) {
-                        scheduleByDay[day].push({ dept: deptKey, name: cName, time: cTime, teacher: cTeacher });
-                    }
-                });
-            });
-        });
-
-        WEEK_DAYS.forEach(day => {
-            scheduleByDay[day].sort((a, b) => (a.time || '').localeCompare(b.time || '', 'zh-Hant'));
-        });
-
-        let gridHtml = `<div class="timetable-week-grid">`;
-        WEEK_DAYS.forEach(day => {
-            const courses = scheduleByDay[day] || [];
-            gridHtml += `
-                <div class="timetable-day-col">
-                    <div class="timetable-day-header">${day}</div>
-                    <div style="flex:1;">
-            `;
-
-            if (courses.length === 0) {
-                gridHtml += `<div style="text-align:center; color:#94a3b8; font-size:12px; margin-top:20px;">-- 無排課 --</div>`;
-            } else {
-                courses.forEach(item => {
-                    gridHtml += `
-                        <div class="timetable-item">
-                            <div><span class="c-time-badge">${item.time}</span></div>
-                            <div class="c-title">${item.name}</div>
-                            <div class="c-teacher">👨‍🏫 ${item.teacher}</div>
+                        <div class="block-body">
+                            <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
+                            <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
+                            <div><strong>試聽日期：</strong> <span class="s-date" style="font-weight:600;">${date}</span></div>
+                        </div>
+                        <div class="block-footer">
+                            <div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span></div>
                         </div>
                     `;
-                });
-            }
-
-            gridHtml += `</div></div>`;
-        });
-        gridHtml += `</div>`;
-
-        document.getElementById('timetableContent').innerHTML = gridHtml;
-        document.getElementById('timetableModal').style.display = 'flex';
-    };
-
-    window.printTimetable = function() {
-        document.body.classList.add('print-timetable-only');
-        window.print();
-        setTimeout(() => { document.body.classList.remove('print-timetable-only'); }, 800);
-    };
-
-    window.openEditClassModal = function(dept, name, day, time, teacher) {
-        document.getElementById('edit_original_dept').value = dept;
-        document.getElementById('edit_original_name').value = name;
-        document.getElementById('edit_class_dept').value = dept;
-        document.getElementById('edit_class_name').value = name;
-        renderDayCheckboxes('edit_class_days_wrapper', day);
-        document.getElementById('edit_class_time').value = time;
-        document.getElementById('edit_class_teacher').value = teacher;
-        document.getElementById('editClassModal').style.display = 'flex';
-    };
-
-    window.saveEditedClass = async function() {
-        const origDept = document.getElementById('edit_original_dept').value;
-        const origName = document.getElementById('edit_original_name').value;
-        const newDept = document.getElementById('edit_class_dept').value;
-        const newName = document.getElementById('edit_class_name').value.trim();
-        const newDay = getSelectedDaysFromWrapper('edit_class_days_wrapper');
-        const newTime = document.getElementById('edit_class_time').value.trim() || '未設定';
-        const newTeacher = document.getElementById('edit_class_teacher').value.trim() || '任課老師';
-
-        if (!newName) return alert('請輸入班級課程名稱！');
-
-        try {
-            let origStartDate = new Date().toISOString().slice(0, 8) + '01';
-            let origEndDate = '';
-            if (window.state.courses[origDept]) {
-                const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
-                if (idx !== -1) {
-                    const oldObj = window.state.courses[origDept][idx];
-                    if (typeof oldObj === 'object' && oldObj.startDate) origStartDate = oldObj.startDate;
-                    if (typeof oldObj === 'object' && oldObj.endDate) origEndDate = oldObj.endDate;
-                    window.state.courses[origDept].splice(idx, 1);
-                }
-            }
-
-            if (!window.state.courses[newDept]) window.state.courses[newDept] = [];
-            window.state.courses[newDept].push({ name: newName, day: newDay, time: newTime, teacher: newTeacher, startDate: origStartDate, endDate: origEndDate });
-
-            await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-
-            if (origName !== newName) {
-                const updatePromises = [];
-                window.state.students.forEach(stu => {
-                    const courses = getStudentCoursesArray(stu);
-                    if (courses.includes(origName)) {
-                        const updatedCourses = courses.map(c => c === origName ? newName : c);
-                        stu.courses = updatedCourses;
-                        stu.course = updatedCourses.join('、');
-                        updatePromises.push(setDoc(doc(db, "classLogStudents", stu.firestoreId), { ...stu, courses: updatedCourses, course: stu.course }));
-                    }
-                });
-                if (updatePromises.length > 0) await Promise.all(updatePromises);
-            }
-
-            document.getElementById('editClassModal').style.display = 'none';
-            alert(`✅ 班級【${newName}】已更新！`);
-            initCloudData();
-        } catch (e) { console.error(e); alert('修改失敗！'); }
-    };
-
-    window.deleteClassCourseFromModal = async function() {
-        const dept = document.getElementById('edit_original_dept').value;
-        const className = document.getElementById('edit_original_name').value;
-        if (!checkPassword(`🔒 刪除班級【${className}】請輸入管理密碼：`)) return;
-
-        const countInClass = window.state.students.filter(s => {
-            const arr = getStudentCoursesArray(s);
-            return arr.includes(className) && s.status !== 'graduated';
-        }).length;
-
-        let warningText = `⚠️ 確定要刪除班級【${className}】嗎？`;
-        if (countInClass > 0) warningText += `\n\n📌 提醒：目前有 ${countInClass} 位學生修習此課程。`;
-
-        if (confirm(warningText)) {
-            try {
-                window.state.courses[dept] = window.state.courses[dept].filter(c => (typeof c === 'object' ? c.name : c) !== className);
-                await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-                document.getElementById('editClassModal').style.display = 'none';
-                alert(`✅ 班級【${className}】已刪除！`);
-                if (window.state.currentFilterClass === className) window.state.currentFilterClass = null;
-                initCloudData();
-            } catch (e) { console.error(e); alert('刪除失敗！'); }
-        }
-    };
-
-    window.filterByClass = function(className) {
-        window.state.currentFilterClass = className;
-        renderDeptClassButtons();
-        renderMasterStudentsTable();
-    };
-
-    window.renderMasterStudentsTable = function() {
-        const tbody = document.getElementById('masterStudentTableBody');
-        const deptKey = window.state.currentDeptView;
-        const filterClass = window.state.currentFilterClass;
-        const keyword = (document.getElementById('studentSearchInput').value || '').trim().toLowerCase();
-
-        if (deptKey === 'allclasses') return;
-
-        const deptClasses = (window.state.courses[deptKey] || []).map(c => typeof c === 'object' ? c.name : c);
-
-        let filtered = window.state.students.filter(s => {
-            const isGraduated = s.status === 'graduated';
-            const stuCourses = getStudentCoursesArray(s);
-            if (deptKey === 'graduated') return isGraduated;
-            else if (deptKey === 'all') return !isGraduated;
-            else {
-                if (isGraduated) return false;
-                if (filterClass) return stuCourses.includes(filterClass);
-                return stuCourses.some(c => deptClasses.includes(c));
-            }
-        });
-
-        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hant'));
-
-        if (keyword) {
-            filtered = filtered.filter(s => {
-                const name = (s.name || '').toLowerCase();
-                const school = (s.school || '').toLowerCase();
-                const stuClass = (s.studentClass || '').toLowerCase();
-                const course = (s.course || '').toLowerCase();
-                const bday = (s.birthday || '').toLowerCase();
-                const phones = (s.phones || []).map(p => p.number).join(' ');
-                return name.includes(keyword) || school.includes(keyword) || stuClass.includes(keyword) || course.includes(keyword) || bday.includes(keyword) || phones.includes(keyword);
-            });
-        }
-
-        let titleDesc = '目前學生名冊';
-        if (deptKey === 'graduated') titleDesc = '🎓 畢業/離班學員清單';
-        else if (deptKey === 'all') titleDesc = '🌟 全校所有學生總覽';
-        else titleDesc = `目前學生名冊 (${filterClass || (deptKey==='care'?'課輔部':(deptKey==='elementary'?'國小部':'國中部'))})`;
-
-        document.getElementById('studentListTitle').innerText = `${titleDesc} - 共 ${filtered.length} 人`;
-
-        if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
-            return;
-        }
-
-        let html = '';
-        filtered.forEach((stu, idx) => {
-            const stuCourses = getStudentCoursesArray(stu);
-            const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
-            const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
-            const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
-            const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
-            const formatPlainPhone = (p) => (!p || !p.number || p.number.trim() === '') ? `<span style="color:#bbb;">-</span>` : `<div class="phone-plain-cell"><b>${p.label}:</b> ${p.number}</div>`;
-
-            html += `
-                <tr>
-                    <td style="font-weight:bold;">${idx + 1}</td>
-                    <td><b style="color:var(--primary);">${stu.name}</b> <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px;">${stu.gender || '男'}</span></td>
-                    <td style="font-size:12.5px;">${stu.birthday || '-'}</td>
-                    <td style="font-weight:bold;">${stu.school || '-'}</td>
-                    <td style="font-size:12.5px;">${stu.studentClass || '-'}</td>
-                    <td>${formatPlainPhone(p1)}</td>
-                    <td>${formatPlainPhone(p2)}</td>
-                    <td>${formatPlainPhone(p3)}</td>
-                    <td style="text-align:left;"><div>${coursesTags}</div></td>
-                    <td>
-                        <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-                            <button class="btn btn-warning" style="padding:4px 8px; font-size:12px;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
-                            <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-    };
-
-    function getCourseOptionsHtml(selectedValue = "") {
-        let html = `<option value="">-- 請選擇班級課程 --</option>`;
-        const deptLabels = { care: '🏢 課輔部', elementary: '📘 國小部', junior: '📙 國中部' };
-        ['care', 'elementary', 'junior'].forEach(dept => {
-            const list = window.state.courses[dept] || [];
-            if (list.length > 0) {
-                html += `<optgroup label="${deptLabels[dept]}">`;
-                list.forEach(c => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    html += `<option value="${cName}" ${cName === selectedValue ? 'selected' : ''}>${cName}</option>`;
-                });
-                html += `</optgroup>`;
-            }
-        });
-        return html;
-    }
-
-    window.addCourseSelectRow = function(wrapperId, selectedValue = "") {
-        const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return;
-        const row = document.createElement('div');
-        row.className = 'dynamic-course-row';
-        const select = document.createElement('select');
-        select.style.margin = "0";
-        select.style.padding = "7px";
-        select.innerHTML = getCourseOptionsHtml(selectedValue);
-        const removeBtn = document.createElement('button');
-        removeBtn.type = "button";
-        removeBtn.className = "btn btn-danger";
-        removeBtn.style.padding = "6px 10px";
-        removeBtn.style.fontSize = "12px";
-        removeBtn.innerText = "✖";
-        removeBtn.onclick = () => row.remove();
-        row.appendChild(select);
-        row.appendChild(removeBtn);
-        wrapper.appendChild(row);
-    };
-
-    function populateDynamicCourses(wrapperId, coursesArr = []) {
-        const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return;
-        wrapper.innerHTML = '';
-        if (!coursesArr || coursesArr.length === 0) addCourseSelectRow(wrapperId, "");
-        else coursesArr.forEach(cName => addCourseSelectRow(wrapperId, cName));
-    }
-
-    function getSelectedCoursesFromWrapper(wrapperId) {
-        const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return [];
-        const selects = wrapper.querySelectorAll('select');
-        const list = [];
-        selects.forEach(sel => {
-            const val = sel.value.trim();
-            if (val && !list.includes(val)) list.push(val);
-        });
-        return list;
-    }
-
-    window.openStudentModal = function() {
-        document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案";
-        document.getElementById('editStudentFirestoreId').value = "";
-        document.getElementById('btnDeleteStudent').style.display = "none";
-        document.getElementById('m_stu_name').value = "";
-        document.getElementById('m_stu_gender').value = "男";
-        document.getElementById('m_stu_idcard').value = "";
-        document.getElementById('m_stu_school').value = "";
-        document.getElementById('m_stu_class').value = "";
-        document.getElementById('m_stu_birthday').value = "";
-        document.getElementById('m_stu_status').value = "active";
-        document.getElementById('m_stu_p1_label').value = "媽媽";
-        document.getElementById('m_stu_p1_num').value = "";
-        document.getElementById('m_stu_p2_label').value = "爸爸";
-        document.getElementById('m_stu_p2_num').value = "";
-        document.getElementById('m_stu_p3_label').value = "學生本人";
-        document.getElementById('m_stu_p3_num').value = "";
-        document.getElementById('m_stu_address').value = "";
-        document.getElementById('m_stu_father_job').value = "";
-        document.getElementById('m_stu_mother_job').value = "";
-        document.getElementById('m_stu_health').value = "";
-        document.getElementById('m_stu_notes').value = "";
-        populateDynamicCourses('studentCoursesWrapper', []);
-        document.getElementById('studentModal').style.display = "flex";
-    };
-
-    window.openEditStudentModal = function(firestoreId) {
-        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
-        if (!stu) return;
-        document.getElementById('studentModalTitle').innerText = `✏️ 編輯【${stu.name}】學籍`;
-        document.getElementById('editStudentFirestoreId').value = firestoreId;
-        document.getElementById('btnDeleteStudent').style.display = "inline-block";
-        document.getElementById('m_stu_name').value = stu.name || '';
-        document.getElementById('m_stu_gender').value = stu.gender || '男';
-        document.getElementById('m_stu_idcard').value = stu.idCard || '';
-        document.getElementById('m_stu_school').value = stu.school || '';
-        document.getElementById('m_stu_class').value = stu.studentClass || '';
-        document.getElementById('m_stu_birthday').value = stu.birthday || '';
-        document.getElementById('m_stu_status').value = stu.status || 'active';
-        const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
-        const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
-        const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
-        document.getElementById('m_stu_p1_label').value = p1.label || '媽媽';
-        document.getElementById('m_stu_p1_num').value = p1.number || '';
-        document.getElementById('m_stu_p2_label').value = p2.label || '爸爸';
-        document.getElementById('m_stu_p2_num').value = p2.number || '';
-        document.getElementById('m_stu_p3_label').value = p3.label || '學生本人';
-        document.getElementById('m_stu_p3_num').value = p3.number || '';
-        document.getElementById('m_stu_address').value = stu.address || '';
-        document.getElementById('m_stu_father_job').value = stu.fatherJob || '';
-        document.getElementById('m_stu_mother_job').value = stu.motherJob || '';
-        document.getElementById('m_stu_health').value = stu.health || '';
-        document.getElementById('m_stu_notes').value = stu.notes || '';
-        populateDynamicCourses('studentCoursesWrapper', getStudentCoursesArray(stu));
-        document.getElementById('studentModal').style.display = "flex";
-    };
-
-    window.closeStudentModal = function() { document.getElementById('studentModal').style.display = "none"; };
-
-    window.saveStudentMasterData = async function() {
-        const firestoreId = document.getElementById('editStudentFirestoreId').value;
-        const name = document.getElementById('m_stu_name').value.trim();
-        const selectedCourses = getSelectedCoursesFromWrapper('studentCoursesWrapper');
-        if (!name) return alert('⚠️ 學生姓名不能為空白！');
-        if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
-
-        const studentData = {
-            name: name,
-            gender: document.getElementById('m_stu_gender').value,
-            idCard: document.getElementById('m_stu_idcard').value.trim(),
-            school: document.getElementById('m_stu_school').value.trim(),
-            studentClass: document.getElementById('m_stu_class').value.trim(),
-            birthday: document.getElementById('m_stu_birthday').value,
-            courses: selectedCourses,
-            course: selectedCourses.join('、'),
-            status: document.getElementById('m_stu_status').value,
-            phones: [
-                { label: document.getElementById('m_stu_p1_label').value.trim(), number: document.getElementById('m_stu_p1_num').value.trim() },
-                { label: document.getElementById('m_stu_p2_label').value.trim(), number: document.getElementById('m_stu_p2_num').value.trim() },
-                { label: document.getElementById('m_stu_p3_label').value.trim(), number: document.getElementById('m_stu_p3_num').value.trim() }
-            ],
-            address: document.getElementById('m_stu_address').value.trim(),
-            fatherJob: document.getElementById('m_stu_father_job').value.trim(),
-            motherJob: document.getElementById('m_stu_mother_job').value.trim(),
-            health: document.getElementById('m_stu_health').value.trim(),
-            notes: document.getElementById('m_stu_notes').value.trim()
-        };
-
-        try {
-            if (firestoreId) {
-                const target = window.state.students.find(s => s.firestoreId === firestoreId);
-                await setDoc(doc(db, "classLogStudents", firestoreId), { ...studentData, attendanceLogs: (target && target.attendanceLogs) || [] });
-            } else {
-                const docRef = doc(collection(db, "classLogStudents"));
-                await setDoc(docRef, { ...studentData, attendanceLogs: [] });
-            }
-            closeStudentModal();
-            alert(`✅ 學生【${name}】資料已成功儲存！`);
-            initCloudData();
-        } catch (e) { console.error(e); alert('儲存失敗！'); }
-    };
-
-    window.openQuickAssignModal = function(firestoreId) {
-        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
-        if (!stu) return;
-        document.getElementById('quickAssignTitle').innerText = `📋 為【${stu.name}】加選班級課程`;
-        document.getElementById('quickAssignFirestoreId').value = firestoreId;
-        populateDynamicCourses('quickAssignWrapper', getStudentCoursesArray(stu));
-        document.getElementById('quickAssignModal').style.display = 'flex';
-    };
-
-    window.saveQuickAssign = async function() {
-        const firestoreId = document.getElementById('quickAssignFirestoreId').value;
-        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
-        if (!stu) return;
-        const selectedCourses = getSelectedCoursesFromWrapper('quickAssignWrapper');
-        if (selectedCourses.length === 0) return alert('⚠️ 請至少選擇一個修習班級！');
-
-        try {
-            stu.courses = selectedCourses;
-            stu.course = selectedCourses.join('、');
-            await setDoc(doc(db, "classLogStudents", firestoreId), { ...stu, courses: selectedCourses, course: stu.course });
-            document.getElementById('quickAssignModal').style.display = 'none';
-            alert(`✅ 已成功更新【${stu.name}】修課名冊！`);
-            initCloudData();
-        } catch (e) { console.error(e); alert('加選失敗'); }
-    };
-
-    window.deleteMasterStudent = async function() {
-        const firestoreId = document.getElementById('editStudentFirestoreId').value;
-        const name = document.getElementById('m_stu_name').value;
-        if (!firestoreId) return;
-        if (!checkPassword(`🔒 刪除【${name}】學籍資料，請輸入管理密碼：`)) return;
-
-        if (confirm(`⚠️ 確定要永久刪除【${name}】的學生檔案嗎？`)) {
-            try {
-                await deleteDoc(doc(db, "classLogStudents", firestoreId));
-                closeStudentModal();
-                alert(`✅ 學生【${name}】資料已刪除！`);
-                initCloudData();
-            } catch (e) { console.error(e); alert('刪除失敗！'); }
-        }
-    };
-
-    window.openAddClassModal = function() {
-        document.getElementById('m_new_class_name').value = '';
-        renderDayCheckboxes('m_new_class_days_wrapper', '星期一');
-        document.getElementById('m_new_class_time').value = '';
-        document.getElementById('m_new_class_teacher').value = '';
-        document.getElementById('addClassModal').style.display = 'flex';
-    };
-
-    window.saveNewClass = async function() {
-        const dept = document.getElementById('m_new_class_dept').value;
-        const name = document.getElementById('m_new_class_name').value.trim();
-        const day = getSelectedDaysFromWrapper('m_new_class_days_wrapper');
-        const time = document.getElementById('m_new_class_time').value.trim() || '未設定';
-        const teacher = document.getElementById('m_new_class_teacher').value.trim() || '任課老師';
-        if (!name) return alert('請輸入班級課程名稱！');
-
-        if (!window.state.courses[dept]) window.state.courses[dept] = [];
-        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toISOString().slice(0, 8) + '01', endDate: '' });
-
-        try {
-            await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            document.getElementById('addClassModal').style.display = 'none';
-            alert(`✅ 已成功新增【${name}】班級！`);
-            initCloudData();
-        } catch (e) { alert('新增失敗'); }
-    };
-
-    function getParentPhone(stu) {
-        if (!stu) return '-';
-        if (stu.phones && Array.isArray(stu.phones) && stu.phones.length > 0) {
-            const first = stu.phones.find(p => p.number && p.number.trim() !== '');
-            if (first) return `${first.label}: ${first.number}`;
-        }
-        return stu.parentPhone || stu.phone || '-';
-    }
-
-    function getAllCoursesList() {
-        let list = [];
-        const defaultStart = new Date().toISOString().slice(0, 8) + '01';
-        ['care', 'elementary', 'junior'].forEach(dept => {
-            (window.state.courses[dept] || []).forEach((c) => {
-                const name = typeof c === 'object' ? c.name : c;
-                list.push({
-                    dept: dept,
-                    name: name,
-                    day: typeof c === 'object' ? (c.day || '') : '',
-                    time: typeof c === 'object' ? (c.time || '') : '',
-                    teacher: typeof c === 'object' ? (c.teacher || '') : '',
-                    startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart,
-                    endDate: (typeof c === 'object' && c.endDate) ? c.endDate : ''
-                });
-            });
-        });
-        return list;
-    }
-
-    function getCourseDefaultWeeks(course) {
-        const isSpecialCourse = /[（\(].*?[）\)]/.test(course.name);
-        if (isSpecialCourse) return { weeks: 4, desc: '短期特訓班 (4週)' };
-        if (course.dept === 'junior') return { weeks: 13, desc: '國中部：3個月 (13週)' };
-        return { weeks: 9, desc: '國小/課輔：2個月 (9週)' };
-    }
-
-    window.onSheetCourseChanged = function() {
-        const courseName = window.state.selectedSheetCourse;
-        const allCourses = getAllCoursesList();
-        const course = allCourses.find(c => c.name === courseName) || allCourses[0];
-        if (!course) return;
-
-        const info = getCourseDefaultWeeks(course);
-        document.getElementById('sheetPeriodBadge').innerText = info.desc;
-
-        const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
-        const baseDate = new Date(baseStart);
-        const daysPerPeriod = (info.weeks - 1) * 7;
-        const formatDate = (d) => d.toISOString().slice(0, 10);
-
-        document.getElementById('sheetQueryStartDate').value = baseStart;
-        const defaultEnd = course.endDate || formatDate(new Date(baseDate.getTime() + daysPerPeriod * 86400000));
-        document.getElementById('sheetQueryEndDate').value = defaultEnd;
-
-        generateCustomSheet();
-    };
-
-    window.generateCustomSheet = function() {
-        const courseName = window.state.selectedSheetCourse;
-        const allCourses = getAllCoursesList();
-        const course = allCourses.find(c => c.name === courseName) || allCourses[0];
-        if (!course) return;
-
-        let startVal = document.getElementById('sheetQueryStartDate').value;
-        let endVal = document.getElementById('sheetQueryEndDate').value;
-
-        if (!startVal) {
-            startVal = course.startDate || new Date().toISOString().slice(0, 10);
-            document.getElementById('sheetQueryStartDate').value = startVal;
-        }
-        if (!endVal) {
-            const sDate = new Date(startVal);
-            const eDate = new Date(sDate.getTime() + 8 * 7 * 86400000);
-            endVal = eDate.toISOString().slice(0, 10);
-            document.getElementById('sheetQueryEndDate').value = endVal;
-        }
-
-        const courseStudents = window.state.students.filter(s => {
-            const arr = getStudentCoursesArray(s);
-            return arr.includes(course.name) && s.status !== 'graduated';
-        });
-
-        let dateList = [];
-        let cur = new Date(startVal);
-        const endDateObj = new Date(endVal);
-
-        while (cur <= endDateObj && dateList.length < 52) {
-            let dateStr = cur.toISOString().slice(0, 10);
-            let holidayMatch = window.state.holidays.find(h => h.date === dateStr);
-            dateList.push({
-                dateStr: dateStr,
-                shortDate: `${cur.getMonth()+1}/${cur.getDate()}`,
-                holiday: holidayMatch ? holidayMatch.name : null
-            });
-            cur.setDate(cur.getDate() + 7);
-        }
-
-        if (dateList.length === 0) {
-            dateList.push({ dateStr: startVal, shortDate: startVal.slice(5), holiday: null });
-        }
-
-        const actualEndStr = dateList[dateList.length - 1].dateStr;
-        const info = getCourseDefaultWeeks(course);
-
-        document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
-        document.getElementById('sheetPrintSub').innerText = 
-            `學制：${info.desc} (共 ${dateList.length} 週) | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
-
-        let html = `<table>
-            <thead>
-                <tr>
-                    <th style="width:30px;">序</th>
-                    <th style="width:85px;">學生姓名</th>
-                    <th style="width:85px;">學校年級</th>
-                    <th style="width:110px;">主要電話</th>`;
-
-        dateList.forEach((d, i) => {
-            html += `<th style="width:46px;" class="${d.holiday ? 'holiday-col' : ''}">
-                第${i+1}週<br><span style="font-size:7.5pt;">${d.shortDate}</span>
-                ${d.holiday ? `<div style="font-size:6.5pt; color:#856404;">${d.holiday}</div>` : ''}
-            </th>`;
-        });
-
-        html += `<th style="width:50px;">備註</th></tr></thead><tbody>`;
-
-        courseStudents.forEach((stu, idx) => {
-            const phone = getParentPhone(stu);
-            html += `<tr>
-                <td>${idx + 1}</td>
-                <td><b>${stu.name}</b></td>
-                <td>${stu.school || '-'}</td>
-                <td style="font-size:8pt;">${phone}</td>`;
-
-            dateList.forEach(d => {
-                if (d.holiday) {
-                    html += `<td class="holiday-col" style="font-size:7.5pt;">放假</td>`;
+                    container.appendChild(newBlock);
+                    currentEditingElement.remove();
+                    closeEditModal();
+                    alert('已成功將學員移回未進班追蹤區塊！');
+                    return;
                 } else {
-                    const key = `${d.dateStr}_${course.name}_${stu.name}`;
-                    const rec = window.state.attendanceData[key];
-                    let mark = '';
-                    let score = '';
-                    if (rec) {
-                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:10pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:11pt;">✔</span>' : '');
-                        score = (rec.score !== undefined && rec.score !== '') ? `<span style="font-size:7pt;color:#0284c7;font-weight:bold;">${rec.score}分</span>` : '';
+                    return; 
+                }
+            }
+
+            if (!isEditingEnrolled && status === '已正式進班') {
+                if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
+                    const enrolledTbody = document.getElementById('enrolledTableBody');
+                    const newRow = document.createElement('tr');
+                    const timestamp = getFormattedTimestamp();
+                    const enrollDateStr = `${timestamp.split(' ')[0]} 轉入`;
+
+                    if (log.includes('[')) {
+                        log = log.replace(/\[.*?\]/, `[${teacher}]`);
+                    } else {
+                        log = `[${teacher}] ` + log;
                     }
 
-                    html += `<td>
-                        <div style="height:15px; line-height:15px;">${mark}</div>
-                        <div style="height:12px; font-size:7pt; color:#888;">${score || '分:'}</div>
-                    </td>`;
+                    newRow.innerHTML = `
+                        <td>
+                            <strong class="s-name">${name}</strong>
+                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
+                            <input type="hidden" class="s-inquirer" value="${inquirer}">
+                            <input type="hidden" class="s-referrer" value="${referrer}">
+                            <input type="hidden" class="s-source" value="${source}">
+                        </td>
+                        <td><span class="s-course">${course}</span></td>
+                        <td><span class="s-phone">${phone}</span></td>
+                        <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${enrollDateStr}</span></td>
+                        <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
+                        <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--primary-color);">[${timestamp} 已轉入正式進班名單]</span></div></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
+                        </td>
+                    `;
+                    enrolledTbody.appendChild(newRow);
+                    currentEditingElement.remove();
+                    closeEditModal();
+                    alert('已成功移至已正式進班名單！');
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            if (log.includes('[')) {
+                log = log.replace(/\[.*?\]/, `[${teacher}]`);
+            } else {
+                log = `[${teacher}] ` + log;
+            }
+
+            currentEditingElement.querySelector('.s-name').innerText = name;
+            updateHiddenInput(currentEditingElement, 's-inquirer', inquirer);
+            updateHiddenInput(currentEditingElement, 's-referrer', referrer);
+
+            currentEditingElement.querySelector('.s-course').innerText = course;
+            currentEditingElement.querySelector('.s-phone').innerText = phone;
+            
+            const dateEl = currentEditingElement.querySelector('.s-date');
+            if(dateEl && !dateEl.innerText.includes('轉入')) {
+                dateEl.innerText = date;
+            }
+
+            const statusEl = currentEditingElement.querySelector('.s-status');
+            if(statusEl) statusEl.innerText = status;
+
+            currentEditingElement.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
+
+            closeEditModal();
+            alert('修改成功！');
+        }
+
+        function updateHiddenInput(element, className, value) {
+            let inputEl = element.querySelector('.' + className);
+            if(inputEl) {
+                inputEl.value = value;
+            } else {
+                let targetContainer = element.querySelector('.block-top-actions') || element.querySelector('td:nth-child(1)');
+                let hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.className = className;
+                hiddenInput.value = value;
+                targetContainer.appendChild(hiddenInput);
+            }
+        }
+
+        function moveToEnrolled(btn) {
+            const block = btn.closest('.tracking-block');
+            const studentName = block.querySelector('.s-name').innerText;
+
+            if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
+                const topActionsHtml = block.querySelector('.block-top-actions').innerHTML;
+                const courseText = block.querySelector('.s-course').innerText;
+                const phoneText = block.querySelector('.s-phone').innerText;
+                const logHtml = block.querySelector('.s-log').innerHTML; 
+
+                const timestamp = getFormattedTimestamp();
+                const enrollDateDisplay = `${timestamp.split(' ')[0]} 轉入`;
+
+                const enrolledTbody = document.getElementById('enrolledTableBody');
+                const newEnrolledRow = document.createElement('tr');
+
+                let cleanTopActions = topActionsHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
+
+                newEnrolledRow.innerHTML = `
+                    <td>
+                        <strong class="s-name">${studentName}</strong>
+                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
+                        ${cleanTopActions}
+                    </td>
+                    <td><span class="s-course">${courseText}</span></td>
+                    <td><span class="s-phone">${phoneText}</span></td>
+                    <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${enrollDateDisplay}</span></td>
+                    <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
+                    <td><div class="s-log">${logHtml}<br><span style="color:var(--primary-color);">[${timestamp} 已轉入正式進班名單]</span></div></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
+                    </td>
+                `;
+
+                enrolledTbody.appendChild(newEnrolledRow);
+                block.remove();
+
+                alert(`成功！${studentName} 已自動移至「已正式進班名單」頁面。`);
+            }
+        }
+
+        // 推薦人與獎金發放明細管理
+        let referrerBonusStore = {}; 
+
+        function updateReferrerTable() {
+            const tbody = document.getElementById('referrerDetailTableBody');
+            tbody.innerHTML = '';
+
+            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+            let hasRecord = false;
+
+            enrolledRows.forEach((item, index) => {
+                const nameEl = item.querySelector('.s-name');
+                const referrerEl = item.querySelector('.s-referrer');
+                const courseEl = item.querySelector('.s-course');
+                const dateEl = item.querySelector('.s-date');
+
+                if (nameEl) {
+                    const studentName = nameEl.innerText.trim();
+                    let referrerName = referrerEl ? referrerEl.value.trim() : '';
+                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
+                    const dateText = dateEl ? dateEl.innerText.trim() : '未定';
+
+                    if (referrerName && referrerName !== '') {
+                        hasRecord = true;
+                        const recordKey = `enrolled_${index}_${studentName}`;
+
+                        if (!referrerBonusStore[recordKey]) {
+                            referrerBonusStore[recordKey] = {
+                                paid: false,
+                                date: '',
+                                total: 1000,
+                                refR: 70,
+                                teacherR: 30
+                            };
+                        }
+
+                        const store = referrerBonusStore[recordKey];
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${studentName}</strong></td>
+                            <td>${courseName}</td>
+                            <td>
+                                <input type="text" value="${referrerName}" onchange="updateReferrerInline(this, '${studentName}')" style="padding: 0.3rem; border: 1px solid var(--border-color); border-radius: 4px; width: 120px; font-weight: 600; color: var(--primary-color);">
+                            </td>
+                            <td><span style="color:var(--success-color); font-weight:600;">${dateText}</span></td>
+                            <td>
+                                <span class="clickable-cell" onclick="openReferrerRecordModal('${recordKey}', '${studentName}', '${referrerName}', '${courseName}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
+                                    ${store.paid ? `✓ 已發放 (${store.date || '未記錄'})` : '⏳ 未發放 (點擊設定)'}
+                                </span>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
                 }
             });
 
-            html += `<td></td></tr>`;
-        });
-
-        html += `</tbody></table>`;
-        document.getElementById('sheetTableContainer').innerHTML = html;
-    };
-
-    function renderConfigFilterButtons() {
-        const container = document.getElementById('configFilterGroup');
-        if (!container) return;
-        container.innerHTML = '';
-
-        window.state.configFilterOrder.forEach((item, index) => {
-            const btn = document.createElement('div');
-            btn.className = `filter-pill ${window.state.configDeptFilter === item.key ? 'active' : ''}`;
-            btn.draggable = true;
-            btn.dataset.configKey = item.key;
-            btn.dataset.configIndex = index;
-
-            btn.innerHTML = `<span class="drag-handle">⠿</span> ${item.label}`;
-
-            btn.onclick = (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                setConfigDeptFilter(item.key);
-            };
-
-            btn.addEventListener('dragstart', handleConfigFilterDragStart);
-            btn.addEventListener('dragover', handleConfigFilterDragOver);
-            btn.addEventListener('drop', handleConfigFilterDrop);
-            btn.addEventListener('dragend', handleConfigFilterDragEnd);
-
-            container.appendChild(btn);
-        });
-    }
-
-    let draggedConfigFilterItem = null;
-    function handleConfigFilterDragStart(e) { draggedConfigFilterItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleConfigFilterDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    function handleConfigFilterDrop(e) {
-        e.stopPropagation();
-        if (draggedConfigFilterItem !== this && this.dataset && this.dataset.configIndex !== undefined) {
-            const fromIndex = parseInt(draggedConfigFilterItem.dataset.configIndex);
-            const toIndex = parseInt(this.dataset.configIndex);
-            const movedItem = window.state.configFilterOrder.splice(fromIndex, 1)[0];
-            window.state.configFilterOrder.splice(toIndex, 0, movedItem);
-            localStorage.setItem('gude_config_filter_order_v1', JSON.stringify(window.state.configFilterOrder));
-            renderConfigFilterButtons();
+            if (!hasRecord) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">尚無已正式進班且有推薦人的紀錄</td></tr>`;
+            }
         }
-        return false;
-    }
-    function handleConfigFilterDragEnd() { this.classList.remove('dragging'); draggedConfigFilterItem = null; }
 
-    window.setConfigDeptFilter = function(filterKey) {
-        window.state.configDeptFilter = filterKey;
-        renderConfigFilterButtons();
-        renderCourseConfigList();
-    };
+        function updateReferrerInline(inputEl, studentName) {
+            const newReferrerVal = inputEl.value.trim();
 
-    function renderCourseConfigList() {
-        const container = document.getElementById('courseConfigList');
-        if (!container) return;
-        const allCourses = getAllCoursesList();
-        const curFilter = window.state.configDeptFilter || 'all';
+            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+            enrolledRows.forEach(row => {
+                const nameEl = row.querySelector('.s-name');
+                if (nameEl && nameEl.innerText.trim() === studentName) {
+                    let refInput = row.querySelector('.s-referrer');
+                    if (refInput) {
+                        refInput.value = newReferrerVal;
+                    } else {
+                        let hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.className = 's-referrer';
+                        hiddenInput.value = newReferrerVal;
+                        row.querySelector('td:nth-child(1)').appendChild(hiddenInput);
+                    }
+                }
+            });
+            alert(`已成功將 [${studentName}] 的介紹人修改為：${newReferrerVal}`);
+            updateReferrerTable();
+        }
 
-        let filteredCourses = allCourses;
-        if (curFilter !== 'all') filteredCourses = allCourses.filter(c => c.dept === curFilter);
+        function openReferrerRecordModal(recordKey, studentName, referrerName, courseName) {
+            let store = referrerBonusStore[recordKey];
 
-        let html = `<table>
-            <thead>
-                <tr>
-                    <th style="width:180px;">課程名稱</th>
-                    <th style="width:80px;">部門</th>
-                    <th style="width:130px;">週期排程</th>
-                    <th style="width:135px;">開課日起</th>
-                    <th style="width:135px;">結束日期</th>
-                </tr>
-            </thead>
-            <tbody>`;
+            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}] 之獎金管理`;
 
-        if (filteredCourses.length === 0) {
-            html += `<tr><td colspan="5" style="padding:20px; color:#888;">此分類目前尚無班級。</td></tr>`;
-        } else {
-            filteredCourses.forEach(c => {
-                const isSpecial = /[（\(].*?[）\)]/.test(c.name);
-                const deptName = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
-                html += `<tr>
-                    <td><b>${c.name}</b></td>
-                    <td>${deptName}</td>
-                    <td>
-                        <span style="font-weight:bold; font-size:12px; color:${isSpecial?'#ea580c':(c.dept==='junior'?'#b45309':'#0369a1')};">
-                            ${isSpecial ? '⭐ 短期特訓' : (c.dept==='junior'?'國中部(13週)':'國小/課輔(9週)')}
-                        </span>
-                    </td>
-                    <td>
-                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:125px; margin:0; font-size:13px;">
-                    </td>
-                    <td>
-                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:125px; margin:0; font-size:13px;">
-                    </td>
-                </tr>`;
+            let html = `
+                <div style="margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>介紹學生：</strong> ${studentName} ｜ <strong>招生明細：</strong> ${courseName}</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">總獎金 (NT$)</label>
+                            <input type="number" id="modalTotalAmount" value="${store.total}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">推薦人 (%)</label>
+                            <input type="number" id="modalRefRatio" value="${store.refR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">負責老師 (%)</label>
+                            <input type="number" id="modalTeacherRatio" value="${store.teacherR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" id="modalPaidCheck" ${store.paid ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-weight:600;">已發放獎金</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.9rem; color: var(--text-muted);">發放日期：</span>
+                            <input type="date" id="modalPaidDate" value="${store.date}" style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div id="bonusPreviewResult" style="margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; color: var(--success-color);"></div>
+                </div>
+            `;
+
+            document.getElementById('referrerModalBody').innerHTML = html;
+            document.getElementById('referrerDetailModal').style.display = 'flex';
+            window.activeRecordKey = recordKey;
+            calculateSingleBonusPreview();
+        }
+
+        function calculateSingleBonusPreview() {
+            const total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+            const refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+            const teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+
+            const refAmt = (total * refR / 100).toFixed(0);
+            const teacherAmt = (total * teacherR / 100).toFixed(0);
+
+            document.getElementById('bonusPreviewResult').innerHTML = `💡 金額試算： 推薦人家長實領 $${refAmt} 元 (${refR}%) ｜ 負責老師實領 $${teacherAmt} 元 (${teacherR}%)`;
+        }
+
+        function closeReferrerModal() {
+            const key = window.activeRecordKey;
+            if (key && referrerBonusStore[key]) {
+                referrerBonusStore[key].paid = document.getElementById('modalPaidCheck').checked;
+                referrerBonusStore[key].date = document.getElementById('modalPaidDate').value;
+                referrerBonusStore[key].total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+                referrerBonusStore[key].refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+                referrerBonusStore[key].teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+            }
+            document.getElementById('referrerDetailModal').style.display = 'none';
+            updateReferrerTable();
+        }
+
+        // 老師招生競賽排行榜
+        function updateTeacherRanking() {
+            const teacherMap = {};
+            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+
+            enrolledRows.forEach(row => {
+                const nameEl = row.querySelector('.s-name');
+                const courseEl = row.querySelector('.s-course');
+                const dateEl = row.querySelector('.s-date');
+                const logEl = row.querySelector('.s-log');
+
+                if (nameEl) {
+                    const studentName = nameEl.innerText.trim();
+                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
+                    const enrollDate = dateEl ? dateEl.innerText.trim() : '未定日期';
+
+                    let teacherName = '未指定老師';
+                    if (logEl) {
+                        const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
+                        if (tMatch) teacherName = tMatch[1].trim();
+                    }
+
+                    if (!teacherMap[teacherName]) {
+                        teacherMap[teacherName] = [];
+                    }
+                    teacherMap[teacherName].push({
+                        student: studentName,
+                        course: courseName,
+                        date: enrollDate
+                    });
+                }
+            });
+
+            let teacherList = Object.keys(teacherMap).map(t => {
+                return {
+                    name: t,
+                    count: teacherMap[t].length,
+                    details: teacherMap[t]
+                };
+            });
+
+            teacherList.sort((a, b) => b.count - a.count);
+
+            const tbody = document.getElementById('teacherRankingTableBody');
+            tbody.innerHTML = '';
+
+            if (teacherList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">尚無正式進班招生紀錄</td></tr>`;
+                return;
+            }
+
+            teacherList.forEach((item, index) => {
+                let rankDisplay = `#${index + 1}`;
+                if (index === 0) rankDisplay = '🥇 第一名';
+                else if (index === 1) rankDisplay = '🥈 第二名';
+                else if (index === 2) rankDisplay = '🥉 第三名';
+
+                let detailsHtml = item.details.map(d => `• <strong>${d.student}</strong> (${d.course} - <span style="color:var(--success-color);">${d.date}</span>)`).join('<br>');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${rankDisplay}</strong></td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><span class="badge" style="background:#d1fae5; color:#065f46; font-weight:700;">${item.count} 位</span></td>
+                    <td><div style="font-size:0.8rem; line-height:1.4;">${detailsHtml}</div></td>
+                `;
+                tbody.appendChild(tr);
             });
         }
-
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-    }
-
-    window.updateCourseDate = function(dept, courseName, field, value) {
-        const list = window.state.courses[dept];
-        if (!list) return;
-        const target = list.find(c => (typeof c === 'object' ? c.name : c) === courseName);
-        if (target && typeof target === 'object') target[field] = value;
-    };
-
-    window.saveAllCourseConfigs = async function() {
-        if (!checkPassword("🔒 修改課程起訖日，請輸入管理密碼：")) return;
-
-        try {
-            await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            alert("✅ 所有課程起訖日設定已儲存並同步！");
-            renderCourseConfigList();
-        } catch (e) {
-            console.error(e);
-            alert("❌ 儲存失敗！");
-        }
-    };
-
-    window.verifyAndAddHoliday = function() {
-        const date = document.getElementById('newHolidayDate').value;
-        const name = document.getElementById('newHolidayName').value.trim();
-        if (!date || !name) return alert('請輸入完整日期與事由！');
-
-        window.state.holidays.push({ date, name });
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
-        document.getElementById('newHolidayName').value = '';
-        renderHolidayList();
-        alert(`已成功設定放假：${date} 【${name}】！`);
-    };
-
-    function renderHolidayList() {
-        const div = document.getElementById('holidayListDiv');
-        if (!div) return;
-        if (window.state.holidays.length === 0) {
-            div.innerHTML = '<p style="color:#888; font-size:13px;">目前無設定任何放假日期。</p>';
-            return;
-        }
-        let html = '<table><tr><th>放假日期</th><th>放假事由</th><th>操作</th></tr>';
-        window.state.holidays.forEach((h, idx) => {
-            html += `<tr>
-                <td><b>${h.date}</b></td>
-                <td>${h.name}</td>
-                <td><button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="deleteHoliday(${idx})">刪除</button></td>
-            </tr>`;
-        });
-        html += '</table>';
-        div.innerHTML = html;
-    }
-
-    window.deleteHoliday = function(idx) {
-        window.state.holidays.splice(idx, 1);
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
-        renderHolidayList();
-    };
-</script>
+    </script>
 </body>
 </html>
