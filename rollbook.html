@@ -52,6 +52,18 @@
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 
+        /* 課程篩選按鈕列 */
+        .filter-btn-group {
+            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-btn {
+            padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 6px;
+            border: 1.5px solid var(--border); background: white; color: #475569;
+            cursor: pointer; transition: 0.2s;
+        }
+        .filter-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
         .course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; margin-top: 14px;
@@ -128,7 +140,6 @@
         .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
         .dept-btn.active-all { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
 
-        /* 畢業班專屬固定按鈕樣式 */
         .dept-btn-fixed-grad {
             margin-left: auto; padding: 9px 16px; font-size: 13px; border-radius: 8px;
             background: #fdf4ff; border: 2px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
@@ -146,7 +157,6 @@
             font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
         }
 
-        /* 可拖曳班級排序列 */
         .draggable-class-container {
             display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
         }
@@ -189,7 +199,7 @@
         @media print {
             @page { size: landscape; margin: 6mm; }
             body { background: white; padding: 0; }
-            header, .tabs, .no-print, .btn { display: none !important; }
+            header, .tabs, .no-print, .btn, .filter-btn-group { display: none !important; }
             .card { box-shadow: none; padding: 0; margin: 0; border: none; }
             .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
             table { font-size: 9pt; width: 100%; }
@@ -224,14 +234,26 @@
     <!-- 1. 今日點名與日誌成績 -->
     <div id="tab-rollcall">
         <div class="card no-print">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:12px;">
                 <h3 id="currentDayText" style="color:var(--primary);">📅 今日課堂清單</h3>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <label style="font-weight:bold;"> 日期：</label>
-                    <input type="date" id="rollDateInput" onchange="onDateChange()" style="padding:6px; border-radius:6px; border:1px solid #ccc; margin:0;">
-                    <button id="btnToggleAllCourses" class="btn btn-outline" onclick="toggleCourseFilter()">👁️ 顯示全部課程</button>
+                    <label style="font-weight:bold; font-size:14px;">點名日期：</label>
+                    <input type="date" id="rollDateInput" onchange="onDateChange()" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; margin:0; width:auto;">
                 </div>
             </div>
+
+            <!-- 課程快速篩選工具列 -->
+            <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
+                <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選：</span>
+                <div class="filter-btn-group" id="courseFilterGroup">
+                    <button class="filter-btn active" data-filter="today" onclick="setCourseFilter('today')">📅 今日排課</button>
+                    <button class="filter-btn" data-filter="care" onclick="setCourseFilter('care')">🏢 課輔部全部</button>
+                    <button class="filter-btn" data-filter="elementary" onclick="setCourseFilter('elementary')">📘 國小部全部</button>
+                    <button class="filter-btn" data-filter="junior" onclick="setCourseFilter('junior')">📙 國中部全部</button>
+                    <button class="filter-btn" data-filter="all" onclick="setCourseFilter('all')">👁️ 全校所有課程</button>
+                </div>
+            </div>
+
             <div class="course-grid" id="courseGrid"></div>
         </div>
 
@@ -282,7 +304,7 @@
         </div>
     </div>
 
-    <!-- 2. 自動生成點名表 (支援歷史週間查詢與自訂起訖) -->
+    <!-- 2. 自動生成點名表 (支援自訂起訖日期與快速期數) -->
     <div id="tab-sheet" style="display:none;">
         <div class="card">
             <!-- 查詢與操作控制列 -->
@@ -294,18 +316,18 @@
                     </div>
 
                     <div>
-                        <label style="font-size:13px; font-weight:bold;">📅 快速切換期數：</label>
+                        <label style="font-size:13px; font-weight:bold;">📅 快速帶入期數：</label>
                         <select id="sheetPeriodQuickSelect" onchange="onQuickPeriodSelect()" style="width:auto; padding:6px 10px; margin:0; background:#f0fdf4; border-color:#86efac; font-weight:bold; color:#166534;"></select>
                     </div>
 
                     <div>
-                        <label style="font-size:13px; font-weight:bold;">起始開課日：</label>
+                        <label style="font-size:13px; font-weight:bold;">起始日期：</label>
                         <input type="date" id="sheetQueryStartDate" style="width:auto; padding:6px; margin:0;">
                     </div>
 
                     <div>
-                        <label style="font-size:13px; font-weight:bold;">生成週數：</label>
-                        <input type="number" id="sheetQueryWeeks" min="1" max="52" value="13" style="width:75px; padding:6px; margin:0; text-align:center;">
+                        <label style="font-size:13px; font-weight:bold;">結束日期：</label>
+                        <input type="date" id="sheetQueryEndDate" style="width:auto; padding:6px; margin:0;">
                     </div>
 
                     <div style="display:flex; gap:8px; align-items:flex-end; margin-left:auto;">
@@ -314,9 +336,9 @@
                     </div>
                 </div>
 
-                <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:8px;">
+                <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span><b>目前表單學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
-                    <span>💡 出席標記：<b>✔</b> ｜ 請假標記：<b style="color:red;">▲</b> ｜ 資料與每日點名即時連動。</span>
+                    <span>💡 您可自由指定<b>任何開始到結束日期</b>，系統將自動計算涵蓋之課堂週數並即時連動出缺席！</span>
                 </div>
             </div>
 
@@ -370,22 +392,18 @@
                 </div>
             </div>
 
-            <!-- 可直接拖曳調整順序的部門導覽列 -->
             <div class="dept-nav" id="deptNavContainer"></div>
 
-            <!-- 部門所屬班級過濾一覽 -->
             <div class="class-overview-box" id="classOverviewBox">
                 <div class="class-overview-title">🏫 部門所屬班級：</div>
                 <div id="deptClassButtons" class="draggable-class-container"></div>
             </div>
 
-            <!-- 專用班級全覽管理區 -->
             <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
                 <div class="class-overview-title" style="color:#3730a3;">🏫 全校班級課程管理專區：</div>
                 <div id="allClassesCardGrid" class="all-classes-manage-grid"></div>
             </div>
 
-            <!-- 學生名冊清單 -->
             <div id="studentTableSection">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
                     <h4 id="studentListTitle" style="color:var(--primary);">目前學生名冊</h4>
@@ -503,7 +521,6 @@
             <textarea id="m_stu_notes" rows="3" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
         </div>
 
-        <!-- 修習班級課程專區 -->
         <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px; border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <label style="color:#166534; font-weight:bold; font-size:14px; margin:0;"><b>📖 修習班級課程 (可自由增加多門科目)：</b></label>
@@ -512,7 +529,6 @@
             <div id="studentCoursesWrapper"></div>
         </div>
 
-        <!-- 學籍狀態 -->
         <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:10px;">
             <label style="color:var(--primary); font-weight:bold;"><b>學籍狀態：</b></label>
             <select id="m_stu_status">
@@ -651,7 +667,7 @@
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        showAllCourses: false,
+        courseFilterMode: 'today', // 'today' | 'care' | 'elementary' | 'junior' | 'all'
         currentDeptView: 'care',
         currentFilterClass: null,
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER
@@ -747,7 +763,7 @@
     };
 
     // ==========================================
-    // 5. 部門導覽列（支援拖曳排序，畢業班固定於最右側）
+    // 部門導覽列
     // ==========================================
     function renderDeptNavButtons() {
         const navContainer = document.getElementById('deptNavContainer');
@@ -1112,7 +1128,6 @@
         renderMasterStudentsTable();
     };
 
-    // 學生清單表格
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const deptKey = window.state.currentDeptView;
@@ -1213,7 +1228,6 @@
         tbody.innerHTML = html;
     };
 
-    // 動態加選修課科目清單
     function getCourseOptionsHtml(selectedValue = "") {
         let html = `<option value="">-- 請選擇班級課程 --</option>`;
         const deptLabels = { care: '🏢 課輔部', elementary: '📘 國小部', junior: '📙 國中部' };
@@ -1286,7 +1300,6 @@
         return list;
     }
 
-    // 打開新增學生彈窗 (免密碼)
     window.openStudentModal = function() {
         document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案";
         document.getElementById('editStudentFirestoreId').value = "";
@@ -1317,7 +1330,6 @@
         document.getElementById('studentModal').style.display = "flex";
     };
 
-    // 打開編輯學生彈窗 (免密碼)
     window.openEditStudentModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
@@ -1361,7 +1373,6 @@
         document.getElementById('studentModal').style.display = "none";
     };
 
-    // 儲存學生檔案 (免密碼)
     window.saveStudentMasterData = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value.trim();
@@ -1415,7 +1426,6 @@
         }
     };
 
-    // 快速加選班級
     window.openQuickAssignModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
@@ -1459,7 +1469,6 @@
         }
     };
 
-    // 刪除學生資料 (需密碼 0618)
     window.deleteMasterStudent = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value;
@@ -1482,7 +1491,6 @@
         }
     };
 
-    // 新增班級課程
     window.openAddClassModal = function() {
         document.getElementById('m_new_class_name').value = '';
         document.getElementById('m_new_class_day').value = '';
@@ -1544,17 +1552,22 @@
     }
 
     // ==========================================
-    // 1. 今日點名與日誌成績
+    // 1. 今日點名與課堂清單 (多條件篩選)
     // ==========================================
     window.onDateChange = function() {
         renderCourseCards();
         if (window.state.currentCourse) selectCourse(window.state.currentCourse.name);
     };
 
-    window.toggleCourseFilter = function() {
-        window.state.showAllCourses = !window.state.showAllCourses;
-        const btn = document.getElementById('btnToggleAllCourses');
-        btn.innerText = window.state.showAllCourses ? "📅 僅顯示今日排課" : "👁️ 顯示全部課程";
+    window.setCourseFilter = function(mode) {
+        window.state.courseFilterMode = mode;
+        document.querySelectorAll('#courseFilterGroup .filter-btn').forEach(btn => {
+            if (btn.dataset.filter === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
         renderCourseCards();
     };
 
@@ -1570,15 +1583,25 @@
         grid.innerHTML = '';
 
         const allCourses = getAllCoursesList();
+        const mode = window.state.courseFilterMode || 'today';
 
-        const filteredCourses = window.state.showAllCourses 
-            ? allCourses 
-            : allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+        let filteredCourses = [];
+        if (mode === 'today') {
+            filteredCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+        } else if (mode === 'care') {
+            filteredCourses = allCourses.filter(c => c.dept === 'care');
+        } else if (mode === 'elementary') {
+            filteredCourses = allCourses.filter(c => c.dept === 'elementary');
+        } else if (mode === 'junior') {
+            filteredCourses = allCourses.filter(c => c.dept === 'junior');
+        } else {
+            filteredCourses = allCourses;
+        }
 
         if (filteredCourses.length === 0) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">
-                本日 (${curDayName}) 無設定固定排課班級。若需點名其他課程，請點擊右上角「👁️ 顯示全部課程」。
-            </div>`;
+            let emptyMsg = `本日 (${curDayName}) 無排課班級。您可點選上方按鈕查看各學部全部課程。`;
+            if (mode !== 'today') emptyMsg = `該分類目前尚無設定任何班級課程。`;
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">${emptyMsg}</div>`;
             return;
         }
 
@@ -1679,7 +1702,6 @@
             `;
             grid.appendChild(card);
 
-            // 課堂點名單預覽符號：出席顯示 ✔，請假顯示 ▲
             let statusText = `<span style="color:#999;">-</span>`;
             if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold; font-size:16px;">✔</span>`;
             if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:15px;">▲</span>`;
@@ -1736,7 +1758,7 @@
     };
 
     // ==========================================
-    // 2. 自動生成點名表 (支援出席✔、請假▲與即時連動)
+    // 2. 自動生成點名表 (支援自由指定幾號到幾號)
     // ==========================================
     function populateSheetCourses() {
         const sel = document.getElementById('sheetCourseSelect');
@@ -1763,29 +1785,39 @@
         if (!course) return;
 
         const info = getCourseDefaultWeeks(course);
-        document.getElementById('sheetQueryWeeks').value = info.weeks;
         document.getElementById('sheetPeriodBadge').innerText = info.desc;
 
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
-        document.getElementById('sheetQueryStartDate').value = baseStart;
-
-        const quickSel = document.getElementById('sheetPeriodQuickSelect');
-        quickSel.innerHTML = '';
-
         const baseDate = new Date(baseStart);
-        const daysPerPeriod = info.weeks * 7;
-
-        const p_2 = new Date(baseDate.getTime() - daysPerPeriod * 2 * 86400000);
-        const p_1 = new Date(baseDate.getTime() - daysPerPeriod * 1 * 86400000);
-        const p_0 = new Date(baseDate.getTime());
-        const p_plus1 = new Date(baseDate.getTime() + daysPerPeriod * 1 * 86400000);
+        const daysPerPeriod = (info.weeks - 1) * 7;
+        const periodInterval = info.weeks * 7;
 
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
-        quickSel.innerHTML += `<option value="${formatDate(p_0)}">📍 當前本期 (自 ${formatDate(p_0)} 起)</option>`;
-        quickSel.innerHTML += `<option value="${formatDate(p_1)}">⏮️ 前一期歷史 (自 ${formatDate(p_1)} 起)</option>`;
-        quickSel.innerHTML += `<option value="${formatDate(p_2)}">⏮️ 前兩期歷史 (自 ${formatDate(p_2)} 起)</option>`;
-        quickSel.innerHTML += `<option value="${formatDate(p_plus1)}">⏭️ 下一期排程 (自 ${formatDate(p_plus1)} 起)</option>`;
+        // 預設設定起始與結束日
+        document.getElementById('sheetQueryStartDate').value = baseStart;
+        const defaultEnd = new Date(baseDate.getTime() + daysPerPeriod * 86400000);
+        document.getElementById('sheetQueryEndDate').value = formatDate(defaultEnd);
+
+        // 快速期數選單
+        const quickSel = document.getElementById('sheetPeriodQuickSelect');
+        quickSel.innerHTML = '';
+
+        const calcRange = (offsetPeriods) => {
+            const s = new Date(baseDate.getTime() + (offsetPeriods * periodInterval) * 86400000);
+            const e = new Date(s.getTime() + daysPerPeriod * 86400000);
+            return { start: formatDate(s), end: formatDate(e) };
+        };
+
+        const p_2 = calcRange(-2);
+        const p_1 = calcRange(-1);
+        const p_0 = calcRange(0);
+        const p_plus1 = calcRange(1);
+
+        quickSel.innerHTML += `<option value="${p_0.start}|${p_0.end}">📍 當前本期 (${p_0.start} ~ ${p_0.end})</option>`;
+        quickSel.innerHTML += `<option value="${p_1.start}|${p_1.end}">⏮️ 前一期歷史 (${p_1.start} ~ ${p_1.end})</option>`;
+        quickSel.innerHTML += `<option value="${p_2.start}|${p_2.end}">⏮️ 前兩期歷史 (${p_2.start} ~ ${p_2.end})</option>`;
+        quickSel.innerHTML += `<option value="${p_plus1.start}|${p_plus1.end}">⏭️ 下一期排程 (${p_plus1.start} ~ ${p_plus1.end})</option>`;
 
         generateCustomSheet();
     };
@@ -1793,7 +1825,9 @@
     window.onQuickPeriodSelect = function() {
         const val = document.getElementById('sheetPeriodQuickSelect').value;
         if (val) {
-            document.getElementById('sheetQueryStartDate').value = val;
+            const parts = val.split('|');
+            document.getElementById('sheetQueryStartDate').value = parts[0];
+            document.getElementById('sheetQueryEndDate').value = parts[1];
             generateCustomSheet();
         }
     };
@@ -1804,19 +1838,31 @@
         const course = allCourses.find(c => c.name === courseName) || allCourses[0];
         if (!course) return;
 
-        const info = getCourseDefaultWeeks(course);
-        const totalWeeks = parseInt(document.getElementById('sheetQueryWeeks').value) || info.weeks;
-        const startDateVal = document.getElementById('sheetQueryStartDate').value || course.startDate || new Date().toISOString().slice(0, 10);
+        let startVal = document.getElementById('sheetQueryStartDate').value;
+        let endVal = document.getElementById('sheetQueryEndDate').value;
+
+        if (!startVal) {
+            startVal = course.startDate || new Date().toISOString().slice(0, 10);
+            document.getElementById('sheetQueryStartDate').value = startVal;
+        }
+        if (!endVal) {
+            const sDate = new Date(startVal);
+            const eDate = new Date(sDate.getTime() + 8 * 7 * 86400000);
+            endVal = eDate.toISOString().slice(0, 10);
+            document.getElementById('sheetQueryEndDate').value = endVal;
+        }
 
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
             return arr.includes(course.name) && s.status !== 'graduated';
         });
 
+        // 依據指定的 起始日 ~ 結束日 推算每週課堂
         let dateList = [];
-        let cur = new Date(startDateVal);
+        let cur = new Date(startVal);
+        const endDateObj = new Date(endVal);
 
-        for (let i = 0; i < totalWeeks; i++) {
+        while (cur <= endDateObj && dateList.length < 52) {
             let dateStr = cur.toISOString().slice(0, 10);
             let holidayMatch = window.state.holidays.find(h => h.date === dateStr);
             dateList.push({
@@ -1827,11 +1873,20 @@
             cur.setDate(cur.getDate() + 7);
         }
 
-        const endDateStr = dateList[dateList.length - 1].dateStr;
+        if (dateList.length === 0) {
+            dateList.push({
+                dateStr: startVal,
+                shortDate: startVal.slice(5),
+                holiday: null
+            });
+        }
+
+        const actualEndStr = dateList[dateList.length - 1].dateStr;
+        const info = getCourseDefaultWeeks(course);
 
         document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
         document.getElementById('sheetPrintSub').innerText = 
-            `學制：${info.desc} (共 ${totalWeeks} 週) | 查詢課期：${startDateVal} 至 ${endDateStr} | 授課師：${course.teacher || '任課老師'}`;
+            `學制：${info.desc} (共 ${dateList.length} 週) | 查詢課期：${startVal} 至 ${actualEndStr} | 授課師：${course.teacher || '任課老師'}`;
 
         let html = `<table>
             <thead>
@@ -1867,7 +1922,6 @@
                     let mark = '';
                     let score = '';
                     if (rec) {
-                        // 點名表符號標準：請假為 ▲，出席為 ✔
                         mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:11pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:12pt;">✔</span>' : '');
                         score = (rec.score !== undefined && rec.score !== '') ? `<span style="font-size:7.5pt;color:#0284c7;font-weight:bold;">${rec.score}分</span>` : '';
                     }
