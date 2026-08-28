@@ -127,7 +127,16 @@
         .dept-btn.active-elem { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
         .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
         .dept-btn.active-all { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
-        .dept-btn.active-grad { background: #d946ef; border-color: #d946ef; color: white; }
+
+        /* 畢業班專屬固定按鈕樣式 */
+        .dept-btn-fixed-grad {
+            margin-left: auto; padding: 9px 16px; font-size: 13px; border-radius: 8px;
+            background: #fdf4ff; border: 2px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
+            user-select: none;
+        }
+        .dept-btn-fixed-grad:hover, .dept-btn-fixed-grad.active-grad {
+            background: #d946ef; color: white;
+        }
 
         .class-overview-box {
             background: #f8fafc; border: 2px solid #cbd5e1; padding: 14px 18px;
@@ -340,7 +349,7 @@
                 </div>
             </div>
 
-            <!-- 可直接拖曳調整順序的部門導覽列 -->
+            <!-- 可直接拖曳調整順序的部門導覽列 (畢業班獨立固定於最右側) -->
             <div class="dept-nav" id="deptNavContainer"></div>
 
             <!-- 部門所屬班級過濾一覽 (支援拖曳排序) -->
@@ -388,7 +397,7 @@
     </div>
 </div>
 
-<!-- 學生新增/編輯彈窗 -->
+<!-- 學生新增/編輯彈窗 (修習課程已移至最下方) -->
 <div class="modal-overlay" id="studentModal">
     <div class="modal-box">
         <h3 id="studentModalTitle" style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">新增學生學籍檔案</h3>
@@ -425,15 +434,6 @@
                 <label><b>出生年月日：</b></label>
                 <input type="date" id="m_stu_birthday">
             </div>
-        </div>
-
-        <!-- 動態加選修習班級課程專區 -->
-        <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px; border-radius:8px; margin:10px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <label style="color:#166534; font-weight:bold; font-size:14px; margin:0;"><b>📖 修習班級課程 (可自由增加多門科目)：</b></label>
-                <button type="button" class="btn btn-success" style="padding:4px 12px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
-            </div>
-            <div id="studentCoursesWrapper"></div>
         </div>
 
         <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin:10px 0;">
@@ -482,6 +482,16 @@
             <textarea id="m_stu_notes" rows="3" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
         </div>
 
+        <!-- 修習班級課程專區 (已調整移動至下方) -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px; border-radius:8px; margin:12px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label style="color:#166534; font-weight:bold; font-size:14px; margin:0;"><b>📖 修習班級課程 (可自由增加多門科目)：</b></label>
+                <button type="button" class="btn btn-success" style="padding:4px 12px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
+            </div>
+            <div id="studentCoursesWrapper"></div>
+        </div>
+
+        <!-- 學籍狀態 -->
         <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:10px;">
             <label style="color:var(--primary); font-weight:bold;"><b>學籍狀態：</b></label>
             <select id="m_stu_status">
@@ -576,7 +586,6 @@
         <input type="text" id="edit_class_teacher" placeholder="例如：陳老師">
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:12px;">
-            <!-- 刪除班級按鈕改到這裡 -->
             <button class="btn btn-danger" onclick="deleteClassCourseFromModal()">🗑️ 刪除此班級 (需密碼)</button>
             
             <div style="display:flex; gap:8px;">
@@ -607,14 +616,13 @@
     const SECURITY_CODE = "0618";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
-    // 部門導覽列排序資料
+    // 部門導覽列排序資料 (排除畢業班，畢業班獨立固定)
     const DEFAULT_DEPT_ORDER = [
         { key: 'allclasses', label: '🏫 班級全覽' },
         { key: 'care', label: '🏢 課輔部' },
         { key: 'elementary', label: '📘 國小部' },
         { key: 'junior', label: '📙 國中部' },
-        { key: 'all', label: '🌟 全校所有學生總覽 (依姓名排列)' },
-        { key: 'graduated', label: '🎓 畢業班' }
+        { key: 'all', label: '🌟 全校所有學生總覽 (依姓名排列)' }
     ];
 
     window.state = {
@@ -626,7 +634,7 @@
         showAllCourses: false,
         currentDeptView: 'care',
         currentFilterClass: null,
-        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order')) || DEFAULT_DEPT_ORDER
+        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER
     };
 
     window.onload = function() {
@@ -722,13 +730,14 @@
     };
 
     // ==========================================
-    // 5. 部門導覽列（支援直接拖曳排序）
+    // 5. 部門導覽列（支援拖曳排序，畢業班固定於最右側）
     // ==========================================
     function renderDeptNavButtons() {
         const navContainer = document.getElementById('deptNavContainer');
         if (!navContainer) return;
         navContainer.innerHTML = '';
 
+        // 渲染可拖曳之部門按鈕
         window.state.deptOrder.forEach((dept, index) => {
             const btn = document.createElement('div');
             btn.className = 'dept-btn';
@@ -736,22 +745,16 @@
             btn.dataset.deptKey = dept.key;
             btn.dataset.deptIndex = index;
 
-            // 樣式判定
             if (dept.key === window.state.currentDeptView) {
                 if (dept.key === 'allclasses') btn.classList.add('active-allclasses');
                 if (dept.key === 'care') btn.classList.add('active-care');
                 if (dept.key === 'elementary') btn.classList.add('active-elem');
                 if (dept.key === 'junior') btn.classList.add('active-jun');
                 if (dept.key === 'all') btn.classList.add('active-all');
-                if (dept.key === 'graduated') btn.classList.add('active-grad');
             } else if (dept.key === 'all') {
                 btn.style.borderColor = '#8b5cf6';
                 btn.style.color = '#6d28d9';
                 btn.style.background = '#f5f3ff';
-            } else if (dept.key === 'graduated') {
-                btn.style.background = '#fdf4ff';
-                btn.style.borderColor = '#d946ef';
-                btn.style.color = '#a21caf';
             }
 
             btn.innerHTML = `<span class="drag-handle">⠿</span> ${dept.label}`;
@@ -761,7 +764,6 @@
                 switchDept(dept.key);
             };
 
-            // 拖曳事件
             btn.addEventListener('dragstart', handleDeptDragStart);
             btn.addEventListener('dragover', handleDeptDragOver);
             btn.addEventListener('drop', handleDeptDrop);
@@ -769,6 +771,13 @@
 
             navContainer.appendChild(btn);
         });
+
+        // 獨立固定在最右側的「🎓 畢業班」按鈕（不可拖曳）
+        const gradBtn = document.createElement('button');
+        gradBtn.className = `dept-btn-fixed-grad ${window.state.currentDeptView === 'graduated' ? 'active-grad' : ''}`;
+        gradBtn.innerText = '🎓 畢業班';
+        gradBtn.onclick = () => switchDept('graduated');
+        navContainer.appendChild(gradBtn);
     }
 
     let draggedDeptItem = null;
@@ -793,7 +802,7 @@
             const movedItem = window.state.deptOrder.splice(fromIndex, 1)[0];
             window.state.deptOrder.splice(toIndex, 0, movedItem);
 
-            localStorage.setItem('gude_dept_order', JSON.stringify(window.state.deptOrder));
+            localStorage.setItem('gude_dept_order_v2', JSON.stringify(window.state.deptOrder));
             renderDeptNavButtons();
         }
         return false;
