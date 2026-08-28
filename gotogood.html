@@ -50,7 +50,6 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
         
-        /* 名字旁邊的藍色修改筆按鈕 */
         .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
         .edit-icon-btn:hover { background: #e0e7ff; }
 
@@ -63,7 +62,6 @@
         .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
         .block-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
         
-        /* 右上方按鈕群組 */
         .block-top-actions { display: flex; gap: 0.4rem; align-items: center; }
 
         .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.9rem; margin-bottom: 0.75rem; }
@@ -99,7 +97,7 @@
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤看板</button>
                 <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
-                <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人名單與老師競賽</button>
+                <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人與獎金發放管理</button>
             </div>
         </div>
 
@@ -112,8 +110,7 @@
             </div>
 
             <div class="card">
-                <h3>📝 步驟二：問班與老師追蹤管理（方塊化填寫表單 - 支援隨意拖曳排版）</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">💡 提示：按住任一輸入方塊即可左右上下拖曳，調整你習慣的填寫順序。</p>
+                <h3>📝 步驟二：問班與老師追蹤管理</h3>
                 
                 <form id="inquiryForm">
                     <div class="form-blocks-grid" id="formBlocksContainer">
@@ -155,7 +152,7 @@
                         </div>
                     </div>
 
-                    <div class="form-block-item" style="margin-bottom: 1rem;">
+                    <div class="form-block-item" style="margin-bottom: 1rem;" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                         <label>📝 老師追蹤紀錄（主任可隨時檢視過程）</label>
                         <textarea id="trackNote" rows="2" placeholder="例如：記錄對話內容，家長詢問細節。" style="resize: vertical;"></textarea>
                     </div>
@@ -166,8 +163,7 @@
             </div>
 
             <div class="card">
-                <h3>📊 步驟三：招生追蹤區塊看板（支援上下隨意拖曳排序）</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">💡 提示：按住任一區塊即可上下拖曳調整跟進順序。</p>
+                <h3>📊 步驟三：招生追蹤區塊看板</h3>
                 
                 <div id="trackingCardContainer">
                     <div class="tracking-block" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
@@ -178,7 +174,6 @@
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                                 <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">預約試聽中</span>
                             </div>
-                            <!-- 已通知家長與確定進班移至右上角 -->
                             <div class="block-top-actions">
                                 <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                                 <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
@@ -224,26 +219,28 @@
 
         <!-- 頁面三：推薦人名單與老師競賽 -->
         <div id="referrerTab" class="tab-content">
+            <!-- 1. 推薦人介紹獎金發放明細 -->
             <div class="card">
-                <h3>🎁 推薦人介紹排行榜與獎金發放管理</h3>
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">點擊「推薦人姓名」或「獎金狀態」，即可設定獎金發放日期、填寫總金額，並自訂推薦人與老師的獎金分配比率（%）。</p>
+                <h3>🎁 推薦人介紹與獎金發放明細</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">系統自動列出所有有推薦人的學生名單，點擊任一列即可設定獎金發放日期、金額與比率分配。</p>
                 <table>
                     <thead>
                         <tr>
-                            <th>排名</th>
-                            <th>推薦人姓名</th>
-                            <th>介紹總人數</th>
+                            <th>哪位學生</th>
+                            <th>招生明細 (課程)</th>
+                            <th>介紹人是誰</th>
+                            <th>哪一天確定進班</th>
                             <th>獎金發放狀態</th>
                         </tr>
                     </thead>
-                    <tbody id="referrerTableBody">
+                    <tbody id="referrerDetailTableBody">
                     </tbody>
                 </table>
             </div>
 
+            <!-- 2. 老師招生競賽排行榜 -->
             <div class="card">
-                <h3>🏆 老師招生競賽排行榜（依正式進班人數自動統計）</h3>
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">系統會自動抓取所有被指定為負責追蹤老師的正式進班紀錄，即時產生第一名、第二名、第三名與全體老師的競賽成績！</p>
+                <h3>🏆 老師招生競賽排行榜</h3>
                 <table>
                     <thead>
                         <tr>
@@ -353,10 +350,10 @@
         </div>
     </div>
 
-    <!-- 推薦人獎金管理細節互動視窗 -->
+    <!-- 單一學生獎金與比率設定彈窗 -->
     <div id="referrerDetailModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header" id="referrerModalTitle">🎁 推薦人獎金與比率分配管理</div>
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header" id="referrerModalTitle">🎁 獎金與比率分配管理</div>
             <div id="referrerModalBody" style="margin-bottom: 1.5rem;"></div>
             <div style="display: flex; justify-content: flex-end;">
                 <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉並儲存設定</button>
@@ -385,11 +382,12 @@
             btn.classList.add('active');
 
             if (tabId === 'referrerTab') {
-                updateReferrerRanking();
+                updateReferrerTable();
                 updateTeacherRanking();
             }
         }
 
+        // 步驟二表單方塊的拖曳排序功能
         let draggedFormBlock = null;
 
         function handleFormBlockDragStart(e) {
@@ -806,7 +804,6 @@
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
-                // 過濾掉原本的按鈕，保留隱藏欄位
                 let cleanTopActions = topActionsHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
 
                 newEnrolledRow.innerHTML = `
@@ -832,119 +829,86 @@
             }
         }
 
-        // 推薦人與獎金發放管理
-        let referrerDataStore = {}; 
+        // 推薦人與獎金發放明細管理
+        let referrerBonusStore = {}; // 儲存每筆推薦紀錄的獎金發放狀態 { "學生名_推薦人名": { paid: true, date: "2026-08-29", total: 1000, refR: 70, teacherR: 30 } }
 
-        function updateReferrerRanking() {
-            const referrerMap = {};
+        function updateReferrerTable() {
+            const tbody = document.getElementById('referrerDetailTableBody');
+            tbody.innerHTML = '';
+
             const allBlocksAndRows = document.querySelectorAll('.tracking-block, #enrolledTableBody tr');
-            
+            let hasRecord = false;
+
             allBlocksAndRows.forEach(item => {
                 const nameEl = item.querySelector('.s-name');
                 const referrerEl = item.querySelector('.s-referrer');
                 const courseEl = item.querySelector('.s-course');
-                const statusEl = item.querySelector('.s-status');
-                const logEl = item.querySelector('.s-log');
                 const dateEl = item.querySelector('.s-date');
+                const logEl = item.querySelector('.s-log');
 
                 if (nameEl && referrerEl) {
                     const studentName = nameEl.innerText.trim();
                     const referrerName = referrerEl.value.trim();
                     const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
-                    const statusName = statusEl ? statusEl.innerText.trim() : '未填狀態';
                     const dateText = dateEl ? dateEl.innerText.trim() : '未定';
 
-                    let teacherName = '未指定';
-                    if (logEl) {
-                        const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
-                        if (tMatch) teacherName = tMatch[1];
-                    }
-
                     if (referrerName && referrerName !== '') {
-                        if (!referrerMap[referrerName]) {
-                            referrerMap[referrerName] = [];
+                        hasRecord = true;
+                        const recordKey = `${studentName}_${referrerName}`;
+
+                        if (!referrerBonusStore[recordKey]) {
+                            referrerBonusStore[recordKey] = {
+                                paid: false,
+                                date: '',
+                                total: 1000,
+                                refR: 70,
+                                teacherR: 30
+                            };
                         }
-                        referrerMap[referrerName].push({
-                            student: studentName,
-                            course: courseName,
-                            status: statusName,
-                            date: dateText,
-                            teacher: teacherName
-                        });
+
+                        const store = referrerBonusStore[recordKey];
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${studentName}</strong></td>
+                            <td>${courseName}</td>
+                            <td><span style="color:var(--primary-color); font-weight:600;">${referrerName}</span></td>
+                            <td><span style="color:var(--success-color); font-weight:600;">${dateText}</span></td>
+                            <td>
+                                <span class="clickable-cell" onclick="openReferrerRecordModal('${recordKey}', '${studentName}', '${referrerName}', '${courseName}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
+                                    ${store.paid ? `✓ 已發放 (${store.date || '未記錄'})` : '⏳ 未發放 (點擊設定與發放)'}
+                                </span>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
                     }
                 }
             });
 
-            let referrerList = Object.keys(referrerMap).map(ref => {
-                return {
-                    name: ref,
-                    count: referrerMap[ref].length,
-                    details: referrerMap[ref]
-                };
-            });
-
-            referrerList.sort((a, b) => b.count - a.count);
-
-            const tbody = document.getElementById('referrerTableBody');
-            tbody.innerHTML = '';
-
-            if (referrerList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">目前尚無任何推薦人紀錄</td></tr>`;
-                return;
+            if (!hasRecord) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">目前尚無任何推薦介紹紀錄</td></tr>`;
             }
-
-            referrerList.forEach((item, index) => {
-                const rank = index + 1;
-                
-                if (!referrerDataStore[item.name]) {
-                    referrerDataStore[item.name] = { 
-                        paid: false, 
-                        date: '', 
-                        totalAmount: 1000, 
-                        refRatio: 70,   
-                        teacherRatio: 30 
-                    };
-                }
-                const store = referrerDataStore[item.name];
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>#${rank}</strong></td>
-                    <td><span class="clickable-cell" onclick="openReferrerDetail('${item.name}')">${item.name}</span></td>
-                    <td><span class="badge" style="background:#e0e7ff; color:#3730a3; font-weight:700;">${item.count} 人</span></td>
-                    <td>
-                        <span class="clickable-cell" onclick="openReferrerDetail('${item.name}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
-                            ${store.paid ? `✓ 已發放 (${store.date || '未記錄日期'})` : '⏳ 未發放 (點擊設定比率與發放)'}
-                        </span>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            window.currentReferrerMap = referrerMap; 
         }
 
-        function openReferrerDetail(referrerName) {
-            const map = window.currentReferrerMap || {};
-            const students = map[referrerName] || [];
-            let store = referrerDataStore[referrerName];
+        function openReferrerRecordModal(recordKey, studentName, referrerName, courseName) {
+            let store = referrerBonusStore[recordKey];
 
-            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 的獎金與比率分配管理`;
+            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}] 之獎金管理`;
 
             let html = `
                 <div style="margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <h4 style="margin-bottom: 0.75rem; color: var(--primary-color); font-size: 0.95rem;">💰 獎金發放與比率分配設定：</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
+                    <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>介紹學生：</strong> ${studentName} ｜ <strong>招生明細：</strong> ${courseName}</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">總獎金金額 (NT$)</label>
-                            <input type="number" id="modalTotalAmount" value="${store.totalAmount}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                            <input type="number" id="modalTotalAmount" value="${store.total}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">推薦人分配比例 (%)</label>
-                            <input type="number" id="modalRefRatio" value="${store.refRatio}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                            <input type="number" id="modalRefRatio" value="${store.refR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">負責老師分配比例 (%)</label>
-                            <input type="number" id="modalTeacherRatio" value="${store.teacherRatio}" oninput="calculateBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
+                            <input type="number" id="modalTeacherRatio" value="${store.teacherR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.4rem; border:1px solid var(--border-color); border-radius:4px;">
                         </div>
                     </div>
                     <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
@@ -959,43 +923,15 @@
                     </div>
                     <div id="bonusPreviewResult" style="margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; color: var(--success-color);"></div>
                 </div>
-
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 推薦介紹學員與班級、老師清單：</h4>
-                <table style="margin-top: 0;">
-                    <thead>
-                        <tr>
-                            <th>被介紹學生</th>
-                            <th>班級 (課程)</th>
-                            <th>確定進班日期</th>
-                            <th>負責招生老師</th>
-                        </tr>
-                    </thead>
-                    <tbody>
             `;
 
-            if (students.length === 0) {
-                html += `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">無介紹學員資料</td></tr>`;
-            } else {
-                students.forEach(s => {
-                    html += `
-                        <tr>
-                            <td><strong>${s.student}</strong></td>
-                            <td>${s.course}</td>
-                            <td><span style="color:var(--success-color); font-weight:600;">${s.date}</span></td>
-                            <td><span class="badge" style="background:#f1f5f9; color:#334155;">${s.teacher}</span></td>
-                        </tr>
-                    `;
-                });
-            }
-
-            html += `</tbody></table>`;
             document.getElementById('referrerModalBody').innerHTML = html;
             document.getElementById('referrerDetailModal').style.display = 'flex';
-            window.activeReferrerName = referrerName;
-            calculateBonusPreview();
+            window.activeRecordKey = recordKey;
+            calculateSingleBonusPreview();
         }
 
-        function calculateBonusPreview() {
+        function calculateSingleBonusPreview() {
             const total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
             const refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
             const teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
@@ -1003,20 +939,20 @@
             const refAmt = (total * refR / 100).toFixed(0);
             const teacherAmt = (total * teacherR / 100).toFixed(0);
 
-            document.getElementById('bonusPreviewResult').innerHTML = `💡 金額試算結果： 推薦人實領 $${refAmt} 元 (${refR}%) ｜ 負責老師實領 $${teacherAmt} 元 (${teacherR}%)`;
+            document.getElementById('bonusPreviewResult').innerHTML = `💡 金額試算結果： 推薦人家長實領 $${refAmt} 元 (${refR}%) ｜ 負責老師實領 $${teacherAmt} 元 (${teacherR}%)`;
         }
 
         function closeReferrerModal() {
-            const refName = window.activeReferrerName;
-            if (refName && referrerDataStore[refName]) {
-                referrerDataStore[refName].paid = document.getElementById('modalPaidCheck').checked;
-                referrerDataStore[refName].date = document.getElementById('modalPaidDate').value;
-                referrerDataStore[refName].totalAmount = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
-                referrerDataStore[refName].refRatio = parseFloat(document.getElementById('modalRefRatio').value) || 0;
-                referrerDataStore[refName].teacherRatio = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+            const key = window.activeRecordKey;
+            if (key && referrerBonusStore[key]) {
+                referrerBonusStore[key].paid = document.getElementById('modalPaidCheck').checked;
+                referrerBonusStore[key].date = document.getElementById('modalPaidDate').value;
+                referrerBonusStore[key].total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+                referrerBonusStore[key].refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+                referrerBonusStore[key].teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
             }
             document.getElementById('referrerDetailModal').style.display = 'none';
-            updateReferrerRanking();
+            updateReferrerTable();
         }
 
         // 老師招生競賽排行榜
