@@ -145,7 +145,8 @@
         .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 3px; line-height: 1.4; }
         .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; }
         
-        .student-class-note { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 4px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 12px; color: #1e40af; line-height: 1.4; }
+        .student-class-note { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 4px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 12px; color: #1e40af; line-height: 1.4; cursor: pointer; transition: 0.15s; }
+        .student-class-note:hover { background: #dbeafe; }
 
         .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
         .pending-todo-panel h4 { margin: 0 0 8px 0; color: #c53030; display: flex; align-items: center; gap: 6px; font-size: 14px; }
@@ -656,6 +657,58 @@
         </div>
     </div>
 
+    <!-- 💡 學生課堂備註修改/刪除彈窗 -->
+    <div class="modal-overlay" id="student-note-modal">
+        <div class="modal-box" style="width: 450px;">
+            <h3 style="margin-top:0; color:var(--primary);">📝 修改或刪除課堂備註</h3>
+            <input type="hidden" id="edit-note-student-id">
+            <input type="hidden" id="edit-note-log-index">
+            <p id="edit-note-info" style="font-size:13px; color:#555;"></p>
+
+            <label>備註內容：</label>
+            <textarea id="edit-note-text" rows="3" placeholder="請輸入備註內容..."></textarea>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-danger" onclick="requestDeleteStudentNote()">🗑️ 刪除此備註</button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn btn-success" onclick="saveStudentNoteEdit()">確認修改</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('student-note-modal').style.display='none'">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📚 歷史日誌編輯/刪除彈窗 -->
+    <div class="modal-overlay" id="history-log-edit-modal">
+        <div class="modal-box" style="width: 500px;">
+            <h3 style="margin-top:0; color:var(--primary);">📚 修改或刪除歷史教學日誌</h3>
+            <input type="hidden" id="edit-history-firestore-id">
+
+            <label>授課日期：</label>
+            <input type="date" id="edit-history-date">
+
+            <label>課程名稱：</label>
+            <input type="text" id="edit-history-course" placeholder="課程名稱">
+
+            <label>教學進度：</label>
+            <textarea id="edit-history-content" rows="3" placeholder="教學進度"></textarea>
+
+            <label>回家作業：</label>
+            <textarea id="edit-history-homework" rows="2" placeholder="回家作業"></textarea>
+
+            <label>注意事項：</label>
+            <textarea id="edit-history-notes" rows="2" placeholder="注意事項"></textarea>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-danger" onclick="requestDeleteHistoryLog()">🗑️ 刪除此日誌</button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn btn-success" onclick="saveHistoryLogEdit()">確認修改</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('history-log-edit-modal').style.display='none'">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 💡 補課彈窗 -->
     <div class="modal-overlay" id="makeup-modal">
         <div class="modal-box" style="width: 450px;">
@@ -906,7 +959,6 @@
 
         window.pendingActionCallback = null;
 
-        // 解析多科選課陣列，相容單選與複選
         function getStudentCoursesArray(stu) {
             if (!stu) return [];
             if (Array.isArray(stu.courses) && stu.courses.length > 0) return stu.courses;
@@ -918,7 +970,6 @@
 
         async function initCloudData(showSuccessAlert = false) {
             try {
-                // 1. 同步班級課程 (包含課輔部、國小部、國中部)
                 const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
                 if (coursesDoc.exists()) {
                     const data = coursesDoc.data().data || {};
@@ -936,7 +987,6 @@
                     await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
                 }
 
-                // 2. 同步學生學籍名冊
                 const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
                 window.state.students = [];
                 studentsSnapshot.forEach((document) => {
@@ -950,7 +1000,6 @@
                     });
                 });
 
-                // 3. 同步歷史日誌
                 const logsSnapshot = await getDocs(collection(db, "classLogHistory"));
                 window.state.historyLogs = [];
                 logsSnapshot.forEach((document) => {
@@ -1307,6 +1356,67 @@
                 window.renderProfileStudents();
                 window.renderPendingTodoPanels();
             } catch (e) { alert('儲存失敗'); }
+        };
+
+        // 學生課堂備註點擊修改/刪除
+        window.openStudentNoteModal = function(firestoreId, logIndex) {
+            window.requestSecureAction(() => {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
+
+                const log = student.attendanceLogs[logIndex];
+                document.getElementById('edit-note-student-id').value = firestoreId;
+                document.getElementById('edit-note-log-index').value = logIndex;
+                document.getElementById('edit-note-info').innerText = `學生：${student.name} | 日期：${log.date}`;
+                document.getElementById('edit-note-text').value = log.detail || '';
+
+                document.getElementById('student-note-modal').style.display = 'flex';
+            });
+        };
+
+        window.saveStudentNoteEdit = async function() {
+            const firestoreId = document.getElementById('edit-note-student-id').value;
+            const logIndex = Number(document.getElementById('edit-note-log-index').value);
+            const newText = document.getElementById('edit-note-text').value.trim();
+
+            const student = window.state.students.find(s => s.firestoreId === firestoreId);
+            if(!student || !student.attendanceLogs[logIndex]) return;
+
+            student.attendanceLogs[logIndex].detail = newText;
+
+            try {
+                await setDoc(doc(db, "classLogStudents", firestoreId), {
+                    ...student,
+                    attendanceLogs: student.attendanceLogs
+                });
+
+                document.getElementById('student-note-modal').style.display = 'none';
+                alert('✅ 課堂備註已更新！');
+                window.renderProfileStudents();
+            } catch (e) { alert('更新失敗'); }
+        };
+
+        window.requestDeleteStudentNote = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('edit-note-student-id').value;
+                const logIndex = Number(document.getElementById('edit-note-log-index').value);
+
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.attendanceLogs[logIndex]) return;
+
+                student.attendanceLogs[logIndex].detail = "";
+
+                try {
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        ...student,
+                        attendanceLogs: student.attendanceLogs
+                    });
+
+                    document.getElementById('student-note-modal').style.display = 'none';
+                    alert('✅ 該筆課堂備註已刪除！');
+                    window.renderProfileStudents();
+                } catch (e) { alert('刪除失敗'); }
+            });
         };
 
         window.generateParentLog = function(firestoreId, dept) {
@@ -2085,13 +2195,15 @@
                     `;
                 }
 
-                // 3. 備註與親師電聯 QA 紀錄 (包含老師日常日誌備註 + 電聯 QA)
-                const notesList = logs.filter(l => l.detail && l.detail.trim() !== '');
-                let notesHtml = notesList.map(l => `
-                    <div class="student-class-note">
-                        <b>[${l.date}] 課堂備註：</b>${l.detail}
-                    </div>
-                `).join('');
+                // 3. 備註與親師電聯 QA 紀錄 (支援點擊修改/刪除課堂備註)
+                let notesHtml = logs.map((l, logIdx) => {
+                    if (!l.detail || l.detail.trim() === '') return '';
+                    return `
+                        <div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${logIdx})" title="點擊修改或刪除此備註">
+                            <b>[${l.date}] 課堂備註：</b>${l.detail}
+                        </div>
+                    `;
+                }).join('');
 
                 let qaHtml = (s.callQAs || []).map((qa, qaIdx) => {
                     const badgeClass = qa.status === 'unresolved' ? 'call-qa-badge unresolved' : 'call-qa-badge';
@@ -2123,7 +2235,6 @@
             }).join('');
         };
 
-        // 展開 / 收合歷史紀錄的切換函式
         window.toggleMoreRecords = function(firestoreId) {
             const attMore = document.getElementById(`att-more-${firestoreId}`);
             const scoreMore = document.getElementById(`score-more-${firestoreId}`);
