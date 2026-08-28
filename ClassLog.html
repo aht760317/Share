@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (手機響應式 RWD 版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>斗六顧德補習班 - 智慧教學日誌與學生管理系統 (手機響應式 RWD 旗艦版)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -11,105 +11,188 @@
             --danger: #e74c3c;
             --success: #2ecc71;
             --warning: #f39c12;
+            --purple: #8e44ad;
             --bg: #f4f6f9;
             --border: #ccd1d9;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #333; -webkit-text-size-adjust: 100%; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, "Microsoft JhengHei", sans-serif; 
+            margin: 0; 
+            background: var(--bg); 
+            color: #333; 
+            -webkit-text-size-adjust: 100%;
+            padding-bottom: 75px;
+        }
         
-        header { background: var(--primary); color: white; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        header h2 { margin: 0 0 12px 0; font-size: 20px; text-align: center; letter-spacing: 1px; }
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 14px 15px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h2 { margin: 0 0 10px 0; font-size: 18px; text-align: center; letter-spacing: 1px; }
         
         .main-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
         .nav-btn { 
             background: rgba(255, 255, 255, 0.12); 
             border: 2px solid rgba(255, 255, 255, 0.2); 
             color: white; 
-            font-size: 14px; 
+            font-size: 13px; 
             font-weight: bold;
-            padding: 10px 14px; 
+            padding: 8px 12px; 
             cursor: pointer; 
             border-radius: 8px; 
             white-space: nowrap;
             flex-shrink: 0;
             transition: all 0.25s ease; 
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); border-color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
         
+        /* 📱 手機專屬底部快捷導覽列 */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #cbd5e1;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            z-index: 999;
+            justify-content: space-around;
+            padding: 6px 0;
+        }
+        .m-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #64748b;
+            text-decoration: none;
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            flex: 1;
+        }
+        .m-nav-item span.icon { font-size: 18px; margin-bottom: 2px; }
+        .m-nav-item.active { color: var(--accent); }
+
         .container { max-width: 1350px; margin: 15px auto; padding: 0 10px; }
         .section-content { display: none; }
         .section-content.active { display: block; }
         
-        .card { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
         input[type="text"], input[type="date"], input[type="month"], input[type="number"], input[type="password"], select, textarea {
-            width: 100%; padding: 10px; margin: 6px 0 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #fff;
+            width: 100%; padding: 10px; margin: 6px 0 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 15px; background: #fff;
         }
-        .btn { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
+        .btn { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; touch-action: manipulation; }
         .btn:hover { opacity: 0.9; }
         .btn-danger { background: var(--danger); }
         .btn-success { background: var(--success); }
         .btn-warning { background: var(--warning); color: #fff; }
-        .btn-small { padding: 4px 8px; font-size: 12px; margin: 2px; }
+        .btn-small { padding: 6px 10px; font-size: 12px; margin: 2px; border-radius: 4px; }
+        .btn-call { background: #10b981; color: white; text-decoration: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 3px; }
         
         .log-block-progress { background: #f0f7ff; border: 2px solid #b6d4fe; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-        .log-block-progress label { color: #084298; font-weight: bold; font-size: 15px; }
+        .log-block-progress label { color: #084298; font-weight: bold; font-size: 14px; }
 
         .log-block-homework { background: #e8f8f5; border: 2px solid #a3e4d7; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-        .log-block-homework label { color: #0e6655; font-weight: bold; font-size: 15px; }
+        .log-block-homework label { color: #0e6655; font-weight: bold; font-size: 14px; }
 
         .log-block-notes { background: #fff3cd; border: 2px solid #ffecb5; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-        .log-block-notes label { color: #664d03; font-weight: bold; font-size: 15px; }
+        .log-block-notes label { color: #664d03; font-weight: bold; font-size: 14px; }
 
-        /* 手機表格滾動與排版優化 */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: middle; font-size: 13px; }
         th { background: #f1f3f5; text-align: center; color: var(--primary); font-weight: bold; }
         
         .badge-danger { color: var(--danger); font-weight: bold; }
         .badge-success { color: var(--success); font-weight: bold; }
-        .text-alert { color: var(--danger); font-weight: bold; font-size: 11px; background: #fde8e8; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 2px; cursor: pointer; }
-        .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 3px; }
-        .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; }
+        .text-alert { color: var(--danger); font-weight: bold; font-size: 12px; background: #fde8e8; padding: 3px 6px; border-radius: 4px; display: inline-block; margin: 3px 0; cursor: pointer; border: 1px solid #fca5a5; }
+        .call-qa-badge { background: #e2e8f0; color: #1e293b; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 3px; line-height: 1.4; }
+        .call-qa-badge.unresolved { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; }
         
         .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
         .pending-todo-panel h4 { margin: 0 0 8px 0; color: #c53030; display: flex; align-items: center; gap: 6px; font-size: 14px; }
-        .todo-badge-item { background: #fff; border: 1px solid #fc8181; padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .todo-badge-item { background: #fff; border: 1px solid #fc8181; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
         .grid-3 { display: grid; grid-template-columns: 1fr; gap: 10px; }
         .grid-4 { display: grid; grid-template-columns: 1fr; gap: 10px; }
         
+        @media (max-width: 767px) {
+            .mobile-bottom-nav { display: flex; }
+            .main-nav { display: none; }
+            
+            .mobile-card-table thead { display: none; }
+            .mobile-card-table, .mobile-card-table tbody, .mobile-card-table tr, .mobile-card-table td {
+                display: block; width: 100%;
+            }
+            .mobile-card-table tr {
+                background: #ffffff;
+                border: 2px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .mobile-card-table td {
+                border: none;
+                padding: 5px 0;
+                display: flex;
+                flex-direction: column;
+            }
+            .mobile-card-table td::before {
+                content: attr(data-label);
+                font-size: 12px;
+                font-weight: bold;
+                color: #64748b;
+                margin-bottom: 3px;
+            }
+            .mobile-card-table td input, .mobile-card-table td select {
+                margin: 2px 0 6px 0;
+                font-size: 15px;
+            }
+            .modal-box { width: 95% !important; max-height: 92vh; padding: 15px; }
+        }
+
         @media (min-width: 768px) {
-            header h2 { font-size: 24px; }
-            .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); overflow-x: visible; }
-            .nav-btn { white-space: normal; }
+            header h2 { font-size: 22px; }
+            .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); overflow-x: visible; }
+            .nav-btn { white-space: normal; font-size: 14px; padding: 10px 14px; }
             .container { padding: 0 15px; }
             .card { padding: 25px; }
             .grid-2 { grid-template-columns: 1fr 1fr; gap: 20px; }
             .grid-3 { grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
             .grid-4 { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; }
-            table { min-width: 100%; }
         }
 
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         
         .class-btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
-        .btn-elementary { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 10px 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-elementary { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 12px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13px; transition: 0.2s; }
         .btn-elementary.active, .btn-elementary:hover { background: #0284c7; color: white; }
         
-        .btn-junior { background: #fef3c7; border: 2px solid #d97706; color: #b45309; padding: 10px 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-junior { background: #fef3c7; border: 2px solid #d97706; color: #b45309; padding: 8px 12px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13px; transition: 0.2s; }
         .btn-junior.active, .btn-junior:hover { background: #d97706; color: white; }
 
-        .month-days-grid { display: flex; gap: 5px; flex-wrap: wrap; margin: 8px 0 15px 0; background: #f1f5f9; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
-        .day-block-btn { background: white; border: 1px solid #94a3b8; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: #334155; }
+        .month-days-grid { display: flex; gap: 5px; flex-wrap: wrap; margin: 8px 0 15px 0; background: #f1f5f9; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; }
+        .day-block-btn { background: white; border: 1px solid #94a3b8; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; color: #334155; }
         .day-block-btn:hover { background: #e2e8f0; }
         .day-block-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
-        .modal-box { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; backdrop-filter: blur(2px); }
+        .modal-box { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
 
         .student-name-link, .history-log-title-link, .course-edit-link, .interactive-tag { color: var(--accent); cursor: pointer; font-weight: bold; text-decoration: underline; }
         .student-name-link:hover, .history-log-title-link:hover, .course-edit-link:hover, .interactive-tag:hover { color: var(--primary); }
@@ -119,14 +202,14 @@
         .preview-header h3 { margin: 0; font-size: 18px; }
         .preview-header p { margin: 4px 0 0; font-size: 12px; opacity: 0.85; }
         .preview-table { width: 100%; border-collapse: collapse; }
-        .preview-table th, .preview-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 13px; }
+        .preview-table th, .preview-table td { border: 1px solid #e2e8f0; padding: 8px; font-size: 13px; }
         .preview-table th { background: #f8fafc; color: var(--primary); width: 35%; text-align: left; }
         .preview-footer { text-align: center; padding: 12px; font-size: 11px; color: #666; background: #f8fafc; border-top: 1px solid #e2e8f0; }
 
         @media print {
-            header, .no-print { display: none !important; }
+            header, .no-print, .mobile-bottom-nav { display: none !important; }
             .card { box-shadow: none; border: none; padding: 0; margin: 0; }
-            body { background: white; }
+            body { background: white; padding-bottom: 0; }
         }
     </style>
 </head>
@@ -153,14 +236,14 @@
             </div>
 
             <div class="card no-print">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國中部 - 教室教學日誌</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">國中部 - 教室教學日誌</h3>
                 <div class="grid-2">
                     <div>
-                        <label>選擇課程：</label>
+                        <label><b>選擇課程：</b></label>
                         <select id="log-course-select-junior" onchange="renderLogStudents('junior')"></select>
                     </div>
                     <div>
-                        <label>日期：</label>
+                        <label><b>授課日期：</b></label>
                         <input type="date" id="log-date-junior">
                     </div>
                 </div>
@@ -180,7 +263,7 @@
                     <textarea id="log-notes-junior" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
-                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
+                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent); padding:12px;">
                     <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
                     <div class="grid-2">
                         <div>
@@ -198,8 +281,8 @@
 
                     <div id="exam-details-container-junior" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:12px;">
                         <div style="margin-bottom: 10px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
-                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
-                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
+                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 考卷資料夾：</span>
+                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟雲端上傳考卷</a>
                         </div>
                         <div class="grid-3">
                             <div>
@@ -218,9 +301,9 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫</h3>
+                <h3 style="margin-top:15px;">今日學生狀況填寫 (手機自動轉卡片檢視)</h3>
                 <div class="table-responsive">
-                    <table>
+                    <table class="mobile-card-table">
                         <thead>
                             <tr>
                                 <th width="22%">姓名</th>
@@ -233,10 +316,10 @@
                         <tbody id="log-students-tbody-junior"></tbody>
                     </table>
                 </div>
-                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('junior')">儲存國中部今日日誌並同步至雲端</button>
+                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px; margin-top:10px;" onclick="saveLog('junior')">💾 儲存國中部今日日誌並同步至雲端</button>
             </div>
             <div class="card">
-                <h3>歷史教學日誌 (國中部)</h3>
+                <h3 style="margin-top:0;">歷史教學日誌 (國中部)</h3>
                 <div id="logs-container-junior"></div>
             </div>
         </section>
@@ -249,14 +332,14 @@
             </div>
 
             <div class="card no-print">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">國小部 - 教室教學日誌</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">國小部 - 教室教學日誌</h3>
                 <div class="grid-2">
                     <div>
-                        <label>選擇課程：</label>
+                        <label><b>選擇課程：</b></label>
                         <select id="log-course-select-elementary" onchange="renderLogStudents('elementary')"></select>
                     </div>
                     <div>
-                        <label>日期：</label>
+                        <label><b>授課日期：</b></label>
                         <input type="date" id="log-date-elementary">
                     </div>
                 </div>
@@ -276,7 +359,7 @@
                     <textarea id="log-notes-elementary" rows="2" placeholder="請在此輸入今日班級整體注意事項..."></textarea>
                 </div>
 
-                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent);">
+                <div class="card" style="background: #f8fafc; border: 1px dashed var(--accent); padding:12px;">
                     <h4 style="margin-top:0; color:var(--primary);">📝 測驗與雲端考卷管理</h4>
                     <div class="grid-2">
                         <div>
@@ -294,8 +377,8 @@
 
                     <div id="exam-details-container-elementary" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:12px;">
                         <div style="margin-bottom: 10px; background: #e0f2fe; padding: 10px; border-radius: 4px; border: 1px solid #3498db;">
-                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 補習班專屬考卷資料夾：</span>
-                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟 Google 雲端硬碟上傳考卷</a>
+                            <span style="font-size: 13px; color: #0369a1; font-weight: bold;">📁 考卷資料夾：</span>
+                            <a href="https://drive.google.com/drive/folders/1V3OmLr-wism5lxUSpDta4aQyWs11tLur?usp=drive_link" target="_blank" style="font-size: 13px; font-weight: bold; color: var(--accent); text-decoration: underline;">📂 點此開啟雲端上傳考卷</a>
                         </div>
                         <div class="grid-3">
                             <div>
@@ -314,9 +397,9 @@
                     </div>
                 </div>
 
-                <h3>今日學生狀況填寫</h3>
+                <h3 style="margin-top:15px;">今日學生狀況填寫 (手機自動轉卡片檢視)</h3>
                 <div class="table-responsive">
-                    <table>
+                    <table class="mobile-card-table">
                         <thead>
                             <tr>
                                 <th width="22%">姓名</th>
@@ -329,18 +412,18 @@
                         <tbody id="log-students-tbody-elementary"></tbody>
                     </table>
                 </div>
-                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px;" onclick="saveLog('elementary')">儲存國小部今日日誌並同步至雲端</button>
+                <button class="btn" style="width: 100%; font-size: 16px; padding: 12px; margin-top:10px;" onclick="saveLog('elementary')">💾 儲存國小部今日日誌並同步至雲端</button>
             </div>
             <div class="card">
-                <h3>歷史教學日誌 (國小部)</h3>
+                <h3 style="margin-top:0;">歷史教學日誌 (國小部)</h3>
                 <div id="logs-container-elementary"></div>
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 -->
+        <!-- 👑 主任全校日誌快速總覽 (支援排課比對與填寫狀態提醒) -->
         <section id="director-overview" class="section-content">
             <div class="card">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">👑 主任全校教學日誌快速總覽</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">👑 主任全校教學日誌快速總覽</h3>
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                     <div class="grid-2" style="align-items: center; margin-bottom: 10px;">
@@ -348,26 +431,28 @@
                             <label style="font-weight: bold; color: var(--primary);">📅 選擇查詢月份：</label>
                             <input type="month" id="overview-target-month" onchange="generateMonthDaysGrid()">
                         </div>
-                        <div style="text-align: right; padding-top: 10px;">
-                            <button class="btn btn-warning btn-small" onclick="setOverviewToday()">今天</button>
-                            <button class="btn btn-success btn-small" onclick="setOverviewThisWeek()">本周</button>
-                            <button class="btn btn-primary btn-small" onclick="setOverviewThisMonth()">當月</button>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap; padding-top: 5px;">
+                            <button class="btn btn-warning btn-small" onclick="setOverviewToday()">今日</button>
+                            <button class="btn btn-success btn-small" onclick="setOverviewThisWeek()">近一週</button>
+                            <button class="btn btn-primary btn-small" onclick="setOverviewThisMonth()">整月</button>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size: 13px; color: #666; font-weight: bold;">點擊下方日期按鈕快速查看 (🟢 有日誌)：</label>
+                        <label style="font-size: 13px; color: #666; font-weight: bold;">點擊日期快速查看 (🟢 代表有日誌)：</label>
                         <div class="month-days-grid" id="month-days-container"></div>
                     </div>
                 </div>
 
+                <div id="overview-day-status-banner" style="margin-bottom:15px;"></div>
+
                 <h4 id="overview-current-title" style="color: var(--primary);">檢視結果：</h4>
                 
                 <div class="grid-2">
-                    <div style="background: #fdf8f6; border: 2px solid #bae6fd; padding: 15px; border-radius: 8px;">
+                    <div style="background: #fdf8f6; border: 2px solid #bae6fd; padding: 12px; border-radius: 8px;">
                         <h4 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-top:0;">📘 國小部日誌總覽</h4>
                         <div id="director-overview-elementary"></div>
                     </div>
-                    <div style="background: #fffbeb; border: 2px solid #fde68a; padding: 15px; border-radius: 8px;">
+                    <div style="background: #fffbeb; border: 2px solid #fde68a; padding: 12px; border-radius: 8px;">
                         <h4 style="color: #b45309; border-bottom: 2px solid #d97706; padding-bottom: 6px; margin-top:0;">📙 國中部日誌總覽</h4>
                         <div id="director-overview-junior"></div>
                     </div>
@@ -375,21 +460,21 @@
             </div>
         </section>
 
-        <!-- 學生檔案與通訊 -->
+        <!-- 👥 學生檔案與通訊 -->
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div><h3 style="margin:0;">點擊下方班級查詢學生</h3></div>
                     <div><button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生</button></div>
                 </div>
-                <hr style="margin: 15px 0;">
+                <hr style="margin: 12px 0;">
                 <div class="class-btn-group" id="class-buttons-container"></div>
             </div>
 
             <div class="card">
                 <h4 id="current-viewing-class-title" style="color:var(--primary); margin-top:0;">請先選擇上方班級按鈕</h4>
                 <div class="table-responsive">
-                    <table id="profile-table">
+                    <table class="mobile-card-table" id="profile-table">
                         <thead>
                             <tr>
                                 <th width="20%">學生姓名與電話</th>
@@ -409,7 +494,7 @@
         <!-- ⚙️ 系統與課程設定 -->
         <section id="system-settings" class="section-content">
             <div class="card">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">⚙️ 新增與管理班級課程</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">⚙️ 新增與管理班級課程</h3>
                 
                 <div class="grid-2">
                     <div>
@@ -421,13 +506,13 @@
                     </div>
                     <div>
                         <label>課程名稱：</label>
-                        <input type="text" id="new-course-name" placeholder="例如：國一數學特訓班">
+                        <input type="text" id="new-course-name" placeholder="例如：國一數學特訓班 (如有括號為特殊課程)">
                     </div>
                 </div>
 
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                    <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">📅 勾選上課星期 (可複選多天)：</label>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                    <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">📅 勾選上課星期 (可複選)：</label>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <label><input type="checkbox" name="course-days" value="星期一"> 星期一</label>
                         <label><input type="checkbox" name="course-days" value="星期二"> 星期二</label>
                         <label><input type="checkbox" name="course-days" value="星期三"> 星期三</label>
@@ -449,16 +534,16 @@
                     </div>
                 </div>
 
-                <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">＋ 確認加入新課程並同步至雲端</button>
+                <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px; margin-top:8px;">＋ 確認加入新課程並同步至雲端</button>
 
-                <h4 style="margin-top: 30px; color: var(--primary);">目前系統已有課程清單：</h4>
+                <h4 style="margin-top: 25px; color: var(--primary);">目前系統已有課程清單：</h4>
                 <div class="grid-2">
                     <div>
-                        <h5 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 5px;">國小部課程</h5>
+                        <h5 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 5px; margin:5px 0;">國小部課程</h5>
                         <div id="elementary-courses-list"></div>
                     </div>
                     <div>
-                        <h5 style="color: #b45309; border-bottom: 2px solid #d97706; padding-bottom: 5px;">國中部課程</h5>
+                        <h5 style="color: #b45309; border-bottom: 2px solid #d97706; padding-bottom: 5px; margin:5px 0;">國中部課程</h5>
                         <div id="junior-courses-list"></div>
                     </div>
                 </div>
@@ -466,7 +551,31 @@
         </section>
     </div>
 
-    <!-- 📞 親師電聯 QA 紀錄彈窗 -->
+    <!-- 📱 手機常駐底部快捷切換導覽列 -->
+    <div class="mobile-bottom-nav">
+        <button class="m-nav-item active" onclick="switchMobileNav('teaching-logs-junior', this)">
+            <span class="icon">📖</span>
+            <span>國中日誌</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileNav('teaching-logs-elementary', this)">
+            <span class="icon">📘</span>
+            <span>國小日誌</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileNav('director-overview', this)">
+            <span class="icon">👑</span>
+            <span>主任總覽</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileNav('student-profiles', this)">
+            <span class="icon">👥</span>
+            <span>學生名冊</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileNav('system-settings', this)">
+            <span class="icon">⚙️</span>
+            <span>設定</span>
+        </button>
+    </div>
+
+    <!-- 📞 親師電聯 QA 紀錄彈窗 (新增刪除功能) -->
     <div class="modal-overlay" id="call-qa-modal">
         <div class="modal-box">
             <h3 id="call-qa-modal-title" style="margin-top:0; color:var(--primary);">📞 親師電聯 QA 溝通紀錄</h3>
@@ -493,9 +602,12 @@
                 <option value="resolved">✅ 已處理完成</option>
             </select>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-success" onclick="saveCallQAAction()">儲存電聯記錄</button>
-                <button class="btn" style="background:#999;" onclick="document.getElementById('call-qa-modal').style.display='none'">取消</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-danger" id="btn-delete-call-qa" onclick="requestDeleteCallQA()" style="display:none;">🗑️ 刪除此紀錄</button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn btn-success" onclick="saveCallQAAction()">儲存電聯記錄</button>
+                    <button class="btn" style="background:#999;" onclick="document.getElementById('call-qa-modal').style.display='none'">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -519,8 +631,8 @@
                 <input type="date" id="makeup-date-input">
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-success" onclick="saveMakeupAction()">確認儲存</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
+                <button class="btn btn-success" style="flex:1;" onclick="saveMakeupAction()">確認儲存</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('makeup-modal').style.display='none'">取消</button>
             </div>
         </div>
@@ -558,8 +670,8 @@
                 <input type="number" id="retest-score-val-input" placeholder="請輸入補考分數">
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-success" onclick="saveRetestAction()">確認儲存</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
+                <button class="btn btn-success" style="flex:1;" onclick="saveRetestAction()">確認儲存</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('retest-modal').style.display='none'">取消</button>
             </div>
         </div>
@@ -572,8 +684,8 @@
             <input type="hidden" id="approval-history-id">
             <p style="font-size:13px; color:#666;">請輸入主任批示內容或叮嚀，老師將於日誌中同步看到此批示：</p>
             <textarea id="approval-text-input" rows="4" placeholder="例如：主任已閱，請加強第一章複習。"></textarea>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-success" onclick="saveDirectorApproval()">送出主任批示</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
+                <button class="btn btn-success" style="flex:1;" onclick="saveDirectorApproval()">送出主任批示</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('director-approval-modal').style.display='none'">取消</button>
             </div>
         </div>
@@ -598,9 +710,9 @@
             <label>授課老師：</label>
             <input type="text" id="edit-course-teacher" placeholder="授課老師">
 
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除此課程</button>
-                <div>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除課程</button>
+                <div style="display: flex; gap: 8px;">
                     <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
                     <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
                 </div>
@@ -634,10 +746,10 @@
                 </div>
             </div>
             <textarea id="parent-log-text" style="display:none;"></textarea>
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; gap: 8px;">
-                <button class="btn btn-success" onclick="copyParentLog()" style="font-size:14px; padding:10px 14px; flex: 1;">📋 複製文字</button>
-                <button class="btn" style="background:#0284c7; font-size:14px; padding:10px 14px; flex: 1;" onclick="window.print()">🖨️ 列印卡片</button>
-                <button class="btn" style="background:#999; font-size:14px; padding:10px 14px;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap: wrap; gap: 8px;">
+                <button class="btn btn-success" onclick="copyParentLog()" style="font-size:14px; padding:10px; flex: 1;">📋 複製文字</button>
+                <button class="btn" style="background:#0284c7; font-size:14px; padding:10px; flex: 1;" onclick="window.print()">🖨️ 列印卡片</button>
+                <button class="btn" style="background:#999; font-size:14px; padding:10px;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉</button>
             </div>
         </div>
     </div>
@@ -646,10 +758,10 @@
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 350px;">
             <h3 style="margin-top:0; color:var(--danger);">🔒 系統安全驗證</h3>
-            <p style="font-size: 14px; color: #555;">執行此動作需要輸入管理密碼：</p>
+            <p style="font-size: 14px; color: #555;">執行此管理操作需要輸入管理密碼：</p>
             <input type="password" id="global-verify-pwd" placeholder="請輸入管理密碼">
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <button class="btn btn-danger" onclick="confirmPasswordAction()">確認通過</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap:8px;">
+                <button class="btn btn-danger" style="flex:1;" onclick="confirmPasswordAction()">確認通過</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('password-verify-modal').style.display='none'">取消</button>
             </div>
         </div>
@@ -723,7 +835,7 @@
                 </div>
             </div>
 
-            <h4 style="margin: 10px 0 5px 0; color: var(--primary); border-bottom: 1px solid #ddd; padding-bottom: 3px;">📞 設定三支聯絡電話</h4>
+            <h4 style="margin: 10px 0 5px 0; color: var(--primary); border-bottom: 1px solid #ddd; padding-bottom: 3px;">📞 設定三支聯絡電話 (手機可直撥)</h4>
             <div class="grid-3">
                 <div>
                     <label style="font-size:13px;">電話 1 稱謂：</label>
@@ -768,6 +880,8 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
         window.state = {
             courses: {
@@ -842,6 +956,10 @@
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             if(btn) btn.classList.add('active');
 
+            document.querySelectorAll('.m-nav-item').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('onclick').includes(sectionId));
+            });
+
             window.updateCourseDropdowns();
             window.renderSettingsCourseList();
             window.renderClassButtons();
@@ -854,7 +972,36 @@
             if(sectionId === 'teaching-logs-junior') window.renderLogStudents('junior');
             if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
             if(sectionId === 'student-profiles') window.renderProfileStudents();
-        }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.switchMobileNav = function(sectionId, btn) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            document.querySelectorAll('.m-nav-item').forEach(el => el.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('onclick').includes(sectionId));
+            });
+
+            window.updateCourseDropdowns();
+            window.renderSettingsCourseList();
+            window.renderClassButtons();
+            window.renderPendingTodoPanels();
+
+            if(sectionId === 'director-overview') {
+                window.generateMonthDaysGrid();
+                window.renderDirectorOverview();
+            }
+            if(sectionId === 'teaching-logs-junior') window.renderLogStudents('junior');
+            if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
+            if(sectionId === 'student-profiles') window.renderProfileStudents();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
 
         window.updateCourseDropdowns = function() {
             ['junior', 'elementary'].forEach(dept => {
@@ -913,7 +1060,7 @@
                             if(qa.status === 'unresolved') {
                                 pendingItems.push(`
                                     <div class="todo-badge-item">
-                                        <span><b>${s.name}</b> - <span style="color:var(--danger); font-weight:bold;">[未處理電聯QA: ${qa.question.slice(0, 15)}...]</span></span>
+                                        <span><b>${s.name}</b> - <span style="color:var(--danger); font-weight:bold;">[未處理電聯: ${qa.question.slice(0, 12)}...]</span></span>
                                         <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">去處理</button>
                                     </div>
                                 `);
@@ -952,34 +1099,38 @@
             const students = window.state.students.filter(s => s.course === courseName);
 
             if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">此課程目前尚無學生，請先至「學生檔案與通訊」新增。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777; padding:15px;">此課程目前尚無學生，請先至「學生檔案與通訊」新增。</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = students.map(s => `
                 <tr data-firestore-id="${s.firestoreId}">
-                    <td>
-                        <b>${s.name}</b><br>
-                        <button class="btn btn-small btn-warning" style="margin-top:4px;" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 產生家長日誌</button>
+                    <td data-label="學生姓名">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b style="font-size:16px;">${s.name}</b>
+                            <button class="btn btn-small btn-warning" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 家長日誌</button>
+                        </div>
                     </td>
-                    <td>
+                    <td data-label="出席狀況">
                         <select class="log-att-status" onchange="checkRowAlerts(this)">
                             <option value="出席">出席</option>
                             <option value="請假">請假</option>
                             <option value="曠課">曠課</option>
                         </select>
                     </td>
-                    <td><input type="number" class="log-score" placeholder="分數" style="margin:0;" oninput="checkRowAlerts(this)"></td>
-                    <td>
-                        <select class="log-homework-status" style="margin:0;">
+                    <td data-label="考試成績">
+                        <input type="number" class="log-score" placeholder="輸入分數" oninput="checkRowAlerts(this)">
+                    </td>
+                    <td data-label="回家作業">
+                        <select class="log-homework-status">
                             <option value="完成">完成</option>
                             <option value="未交">未交</option>
                             <option value="部分完成">部分完成</option>
                         </select>
                     </td>
-                    <td>
-                        <input type="text" class="log-student-note" placeholder="個別注意事項..." style="margin:0;">
-                        <div class="alert-badge-box" style="margin-top:4px;"></div>
+                    <td data-label="狀態提醒與電聯紀錄">
+                        <input type="text" class="log-student-note" placeholder="個別注意事項...">
+                        <div class="alert-badge-box"></div>
                         <button class="btn btn-small btn-primary" style="margin-top:4px;" onclick="openCallQAModal('${s.firestoreId}')">📞 新增電聯紀錄</button>
                     </td>
                 </tr>
@@ -997,20 +1148,23 @@
 
             let alertsHtml = '';
             if(attStatus === '請假' || attStatus === '曠課') {
-                alertsHtml += `<div class="text-alert">⚠️ 須約補課</div>`;
+                alertsHtml += `<div class="text-alert">⚠️ 須約補課</div> `;
             }
             if(scoreVal !== '' && Number(scoreVal) < passScore) {
-                alertsHtml += `<div class="text-alert">⚠️ 須安排補考</div>`;
+                alertsHtml += `<div class="text-alert">⚠️ 須安排補考</div> `;
             }
             alertBox.innerHTML = alertsHtml;
         };
 
+        // 📞 開啟電聯 QA 彈窗 (支援新增與編輯，編輯時顯示刪除按鈕)
         window.openCallQAModal = function(firestoreId, qaIndex = null) {
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student) return;
 
             document.getElementById('call-qa-student-id').value = firestoreId;
             document.getElementById('call-qa-log-index').value = qaIndex !== null ? qaIndex : '';
+
+            const deleteBtn = document.getElementById('btn-delete-call-qa');
 
             if(qaIndex !== null && student.callQAs && student.callQAs[qaIndex]) {
                 const qa = student.callQAs[qaIndex];
@@ -1019,15 +1173,45 @@
                 document.getElementById('call-qa-reply').value = qa.reply || '';
                 document.getElementById('call-qa-status').value = qa.status || 'unresolved';
                 document.getElementById('call-qa-modal-title').innerText = `📞 編輯 ${student.name} 的電聯 QA 紀錄`;
+                deleteBtn.style.display = "inline-block";
             } else {
                 document.getElementById('call-qa-author').value = '家長';
                 document.getElementById('call-qa-question').value = '';
                 document.getElementById('call-qa-reply').value = '';
                 document.getElementById('call-qa-status').value = 'unresolved';
                 document.getElementById('call-qa-modal-title').innerText = `📞 新增 ${student.name} 的電聯 QA 紀錄`;
+                deleteBtn.style.display = "none";
             }
 
             document.getElementById('call-qa-modal').style.display = 'flex';
+        };
+
+        // 🗑️ 刪除電聯 QA 紀錄
+        window.requestDeleteCallQA = function() {
+            window.requestSecureAction(async () => {
+                const firestoreId = document.getElementById('call-qa-student-id').value;
+                const qaIndexVal = document.getElementById('call-qa-log-index').value;
+
+                if(qaIndexVal === '') return;
+                const idx = Number(qaIndexVal);
+
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if(!student || !student.callQAs || !student.callQAs[idx]) return;
+
+                student.callQAs.splice(idx, 1);
+
+                try {
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        id: student.id, name: student.name, school: student.school || '', studentClass: student.studentClass || '', studentVersion: student.studentVersion || '', course: student.course, phones: student.phones || [],
+                        attendanceLogs: student.attendanceLogs || [], notes: student.notes || [], callQAs: student.callQAs
+                    });
+
+                    document.getElementById('call-qa-modal').style.display = 'none';
+                    alert('✅ 該筆電聯 QA 紀錄已成功刪除！');
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
+                } catch (e) { alert('刪除失敗'); }
+            });
         };
 
         window.saveCallQAAction = async function() {
@@ -1100,7 +1284,7 @@
             document.getElementById('card-teacher').innerText = teacherName;
             document.getElementById('card-student').innerText = student.name;
             document.getElementById('card-att').innerText = att;
-            document.getElementById('card-progress').innerText = progress || '講解指定範圍';
+            document.getElementById('card-progress').innerText = progress || '講解指定進度範圍';
             document.getElementById('card-score').innerText = score;
             document.getElementById('card-homework').innerText = homework || '無';
             document.getElementById('card-hwstatus').innerText = hwStatus;
@@ -1129,7 +1313,7 @@
             const textarea = document.getElementById('parent-log-text');
             textarea.select();
             document.execCommand('copy');
-            alert('✅ 已成功複製學習日誌內容！');
+            alert('✅ 已成功複製學習日誌內容！可直接貼至 LINE 給家長。');
         };
 
         window.openMakeupModal = function(firestoreId, logIndex) {
@@ -1232,7 +1416,6 @@
             } catch (e) { alert('更新失敗'); }
         };
 
-        // 鎖定密碼驗證核心 (統一 0618)
         window.requestSecureAction = function(callback) {
             window.pendingActionCallback = callback;
             document.getElementById('global-verify-pwd').value = "";
@@ -1364,6 +1547,30 @@
             });
         };
 
+        window.addCourse = async function() {
+            const dept = document.getElementById('new-course-dept').value;
+            const name = document.getElementById('new-course-name').value.trim();
+            const time = document.getElementById('new-course-time').value.trim();
+            const teacher = document.getElementById('new-course-teacher').value.trim();
+            
+            const dayCheckboxes = document.querySelectorAll('input[name="course-days"]:checked');
+            const days = Array.from(dayCheckboxes).map(cb => cb.value).join('、');
+
+            if (!name) return alert('請輸入課程名稱！');
+
+            const newCourse = { name, day: days, time, teacher };
+            window.state.courses[dept].push(newCourse);
+            await saveCoursesToCloud();
+
+            document.getElementById('new-course-name').value = '';
+            document.getElementById('new-course-time').value = '';
+            document.getElementById('new-course-teacher').value = '';
+            dayCheckboxes.forEach(cb => cb.checked = false);
+
+            alert('✅ 新課程已成功加入並同步至雲端！');
+            initCloudData();
+        };
+
         window.requestDeleteStudent = function() {
             window.requestSecureAction(async () => {
                 const firestoreId = document.getElementById('edit-student-id').value;
@@ -1400,7 +1607,7 @@
             const examFile = hasExam && examFileInput ? examFileInput.value.trim() : '';
             const answerFile = hasExam && answerFileInput ? answerFileInput.value.trim() : '';
 
-            if(!date || !course || !content) return alert('請填寫完整資訊！');
+            if(!date || !course || !content) return alert('請填寫完整日誌資訊！');
 
             const newLog = {
                 id: Date.now(), dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApprovalText: ''
@@ -1498,16 +1705,16 @@
                 }
 
                 container.innerHTML = logs.map(l => `
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px;">
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:12px; border-radius:6px; margin-bottom:12px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                            <h4 style="margin:0; color:var(--primary);">
+                            <h4 style="margin:0; color:var(--primary); font-size:15px;">
                                 <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] 日期：${l.date}</span>
                             </h4>
                         </div>
-                        <p style="margin:5px 0;"><b>教學進度：</b>${l.content}</p>
-                        <p style="margin:5px 0;"><b>回家作業：</b>${l.homework || '無'}</p>
-                        <p style="margin:5px 0;"><b>注意事項：</b>${l.notes || '無'}</p>
-                        ${l.directorApprovalText ? `<div style="margin-top:8px; background:#e0f2fe; padding:8px; border-radius:4px; border:1px solid #3498db; font-size:13px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
+                        <p style="margin:4px 0; font-size:13.5px;"><b>教學進度：</b>${l.content}</p>
+                        <p style="margin:4px 0; font-size:13.5px;"><b>回家作業：</b>${l.homework || '無'}</p>
+                        <p style="margin:4px 0; font-size:13.5px;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        ${l.directorApprovalText ? `<div style="margin-top:6px; background:#e0f2fe; padding:6px 10px; border-radius:4px; border:1px solid #3498db; font-size:12.5px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
                     </div>
                 `).join('');
             });
@@ -1559,10 +1766,12 @@
             renderDirectorOverview();
         };
 
+        // 👑 主任日誌總覽核心：比對排課班級與老師日誌填寫狀態
         window.renderDirectorOverview = function() {
             const elemContainer = document.getElementById('director-overview-elementary');
             const juniorContainer = document.getElementById('director-overview-junior');
             const titleEl = document.getElementById('overview-current-title');
+            const bannerEl = document.getElementById('overview-day-status-banner');
             if(!elemContainer || !juniorContainer || !titleEl) return;
             
             let targetLogs = [];
@@ -1573,12 +1782,66 @@
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                 targetLogs = window.state.historyLogs.filter(l => new Date(l.date) >= oneWeekAgo);
+                if(bannerEl) bannerEl.innerHTML = '';
             } else if(window.state.currentViewMode === 'month') {
                 titleEl.innerText = `檢視結果：當月 (${monthInput}) 的所有教學日誌`;
                 targetLogs = window.state.historyLogs.filter(l => l.date.startsWith(monthInput));
+                if(bannerEl) bannerEl.innerHTML = '';
             } else {
-                titleEl.innerText = `檢視結果：指定日期 ${window.state.currentSelectedDate} 的教學日誌`;
-                targetLogs = window.state.historyLogs.filter(l => l.date === window.state.currentSelectedDate);
+                const selectedDateStr = window.state.currentSelectedDate;
+                const dObj = new Date(selectedDateStr);
+                const dayName = WEEK_NAMES[dObj.getDay()];
+                titleEl.innerText = `檢視結果：指定日期 ${selectedDateStr} (${dayName}) 的教學日誌`;
+                targetLogs = window.state.historyLogs.filter(l => l.date === selectedDateStr);
+
+                // 比對當天所有排課班級
+                const allCoursesList = [
+                    ...window.state.courses.elementary.map(c => ({ dept: 'elementary', name: typeof c === 'object' ? c.name : c, day: typeof c === 'object' ? (c.day || '') : '', teacher: typeof c === 'object' ? (c.teacher || '任課老師') : '任課老師' })),
+                    ...window.state.courses.junior.map(c => ({ dept: 'junior', name: typeof c === 'object' ? c.name : c, day: typeof c === 'object' ? (c.day || '') : '', teacher: typeof c === 'object' ? (c.teacher || '任課老師') : '任課老師' }))
+                ];
+
+                const todayScheduledCourses = allCoursesList.filter(c => c.day.includes(dayName) || c.day.includes(dayName.replace('星期', '週')));
+
+                let unsubmittedCount = 0;
+                let scheduledStatusHtml = '';
+
+                if(todayScheduledCourses.length > 0) {
+                    todayScheduledCourses.forEach(c => {
+                        const hasSubmitted = targetLogs.some(l => l.course === c.name);
+                        if(!hasSubmitted) unsubmittedCount++;
+
+                        const statusBadge = hasSubmitted 
+                            ? `<span style="background:#2ecc71; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold;">✅ 已完成填寫</span>` 
+                            : `<span style="background:#e74c3c; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; box-shadow:0 0 5px rgba(231,76,60,0.5);">⚠️ 尚未填寫日誌</span>`;
+
+                        scheduledStatusHtml += `
+                            <div style="background:white; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                                <div>
+                                    <b>[${c.dept === 'junior' ? '國中' : '國小'}] ${c.name}</b> 
+                                    <span style="font-size:12px; color:#666;">(授課師：${c.teacher})</span>
+                                </div>
+                                <div>${statusBadge}</div>
+                            </div>
+                        `;
+                    });
+
+                    if(bannerEl) {
+                        const alertSummary = unsubmittedCount > 0 
+                            ? `<div style="background:#fff5f5; border:2px solid #fc8181; padding:12px; border-radius:8px;">
+                                <h4 style="margin:0 0 8px 0; color:#c53030;">📢 ${selectedDateStr} (${dayName}) 課堂日誌填寫狀況 (尚有 ${unsubmittedCount} 門課未填寫)：</h4>
+                                ${scheduledStatusHtml}
+                               </div>`
+                            : `<div style="background:#f0fdf4; border:2px solid #86efac; padding:12px; border-radius:8px;">
+                                <h4 style="margin:0 0 8px 0; color:#16a34a;">🎉 太棒了！${selectedDateStr} (${dayName}) 所有排課班級日誌均已填寫完畢！</h4>
+                                ${scheduledStatusHtml}
+                               </div>`;
+                        bannerEl.innerHTML = alertSummary;
+                    }
+                } else {
+                    if(bannerEl) {
+                        bannerEl.innerHTML = `<div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:10px; border-radius:6px; color:#64748b; font-size:13px; text-align:center;">本日 (${dayName}) 無設定固定排課班級。</div>`;
+                    }
+                }
             }
 
             const renderLogCard = (l) => {
@@ -1588,16 +1851,16 @@
                         const logMatch = (s.attendanceLogs || []).find(att => att.date === l.date);
                         if(logMatch) {
                             if((logMatch.status === '請假' || logMatch.status === '曠課') && !logMatch.makeupDone) {
-                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須約補課 (點擊處理)</div> `;
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ [${s.name}] 須補課 (點此處理)</div> `;
                             }
                             const passScore = logMatch.passScore || 80;
                             if(logMatch.score !== null && logMatch.score < passScore && !logMatch.retestDone) {
-                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 須安排補考 (${logMatch.score}分) (點擊處理)</div> `;
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ [${s.name}] 須補考 (${logMatch.score}分)</div> `;
                             }
                         }
                         (s.callQAs || []).forEach(qa => {
                             if(qa.status === 'unresolved') {
-                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ 學生 [${s.name}] 有未處理電聯QA (點擊處理)</div> `;
+                                alertsHtml += `<div class="text-alert" onclick="jumpToStudentProfile('${s.course}', '${s.firestoreId}')">⚠️ [${s.name}] 未處理電聯QA</div> `;
                             }
                         });
                     }
@@ -1605,21 +1868,21 @@
 
                 const hasApproval = !!l.directorApprovalText;
                 const approveBtnStyle = hasApproval ? 'background: var(--success); color: white;' : 'background: #e2e8f0; color: #334155;';
-                const approveText = hasApproval ? '✏️ 主任已批示 (點擊修改)' : '➕ 點此寫主任批示';
+                const approveText = hasApproval ? '✏️ 主任已批示' : '➕ 寫主任批示';
 
                 return `
-                    <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:15px; border-radius:6px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                            <h4 style="margin:0; color:var(--primary);">
+                    <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:12px; border-radius:6px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:6px;">
+                            <h4 style="margin:0; color:var(--primary); font-size:14.5px;">
                                 <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] ${l.date}</span>
                             </h4>
                             <button class="btn btn-small" style="${approveBtnStyle}" onclick="openDirectorApprovalModal('${l.firestoreId}')">${approveText}</button>
                         </div>
-                        <p style="margin:5px 0; font-size:14px;"><b>教學進度：</b>${l.content}</p>
-                        <p style="margin:5px 0; font-size:14px;"><b>回家作業：</b>${l.homework || '無'}</p>
-                        <p style="margin:5px 0; font-size:14px;"><b>注意事項：</b>${l.notes || '無'}</p>
-                        ${hasApproval ? `<div style="margin-top:8px; background:#e0f2fe; padding:8px; border-radius:4px; border:1px solid #3498db; font-size:13px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
-                        ${alertsHtml ? `<div style="margin-top:8px; background:#fff5f5; padding:8px; border-radius:4px; border:1px solid #feb2b2; font-size:13px;"><b>待辦追蹤提醒：</b><br>${alertsHtml}</div>` : ''}
+                        <p style="margin:4px 0; font-size:13.5px;"><b>教學進度：</b>${l.content}</p>
+                        <p style="margin:4px 0; font-size:13.5px;"><b>回家作業：</b>${l.homework || '無'}</p>
+                        <p style="margin:4px 0; font-size:13.5px;"><b>注意事項：</b>${l.notes || '無'}</p>
+                        ${hasApproval ? `<div style="margin-top:6px; background:#e0f2fe; padding:6px 10px; border-radius:4px; border:1px solid #3498db; font-size:12.5px; color:#0369a1;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
+                        ${alertsHtml ? `<div style="margin-top:6px; background:#fff5f5; padding:6px; border-radius:4px; border:1px solid #feb2b2; font-size:12.5px;"><b>待辦追蹤：</b><br>${alertsHtml}</div>` : ''}
                     </div>
                 `;
             };
@@ -1682,7 +1945,7 @@
 
             if(!selectedClass) {
                 titleEl.innerText = "請先選取上方班級按鈕";
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">尚未選擇班級</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777; padding:15px;">尚未選擇班級</td></tr>`;
                 return;
             }
 
@@ -1690,12 +1953,16 @@
             const students = window.state.students.filter(s => s.course === selectedClass);
 
             if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">此班級目前沒有學生資料，請點擊上方新增。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777; padding:15px;">此班級目前沒有學生資料，請點擊上方新增。</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = students.map(s => {
-                let phonesStr = (s.phones || []).map(p => `${p.label}: ${p.number}`).join('<br>');
+                let phonesStr = (s.phones || []).map(p => {
+                    const cleanPhone = (p.number || '').replace(/[^\d+]/g, '');
+                    const callLink = cleanPhone ? `<a href="tel:${cleanPhone}" class="btn-call">📞 直撥</a>` : '';
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;"><span>${p.label}: <b>${p.number}</b></span> ${callLink}</div>`;
+                }).join('');
                 
                 let attHtml = (s.attendanceLogs || []).map((l, logIdx) => {
                     let attStatusStr = `<span class="${l.status==='出席'?'badge-success':'badge-danger'} interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.status}</span>`;
@@ -1706,25 +1973,25 @@
                             attStatusStr += ` <span class="interactive-tag" onclick="openMakeupModal('${s.firestoreId}', ${logIdx})">[須補課]</span>`;
                         }
                     }
-                    return `${l.date}: ${attStatusStr}`;
-                }).join('<br>') || '尚無紀錄';
+                    return `<div>${l.date}: ${attStatusStr}</div>`;
+                }).join('') || '尚無紀錄';
 
                 let scoreHtml = (s.attendanceLogs || []).map((l, logIdx) => {
                     const passScore = l.passScore || 80;
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null ? l.score : '無'}分</b>`;
                     if(l.score !== null && l.score < passScore) {
                         if(l.retestDone) {
-                            scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate||''}, ${l.retestScore}分已通過)</span>`;
+                            scoreStr += ` <span style="color:#28a745; font-size:12px; font-weight:bold;" class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">(${l.score}分 ➔ 補考: ${l.retestDate||''}, ${l.retestScore}分通過)</span>`;
                         } else {
                             scoreStr += ` <span class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">[須補考]</span>`;
                         }
                     }
-                    return `${l.date}: ${scoreStr}`;
-                }).join('<br>') || '尚無紀錄';
+                    return `<div>${l.date}: ${scoreStr}</div>`;
+                }).join('') || '尚無紀錄';
 
                 let qaHtml = (s.callQAs || []).map((qa, qaIdx) => {
                     const badgeClass = qa.status === 'unresolved' ? 'call-qa-badge unresolved' : 'call-qa-badge';
-                    const statusText = qa.status === 'unresolved' ? '⚠️ 未處理好' : '✅ 已處理完成';
+                    const statusText = qa.status === 'unresolved' ? '⚠️ 未處理好' : '✅ 已完成';
                     return `<div style="margin-bottom:4px; border-bottom:1px dashed #e2e8f0; padding-bottom:3px;">
                         <span class="${badgeClass}" onclick="openCallQAModal('${s.firestoreId}', ${qaIdx})">[${qa.date}] ${qa.author}提出: ${qa.question} (${statusText})</span>
                     </div>`;
@@ -1732,14 +1999,14 @@
 
                 return `
                     <tr data-firestore-id="${s.firestoreId}">
-                        <td>
-                            <span class="student-name-link" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
-                            <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small><br>
-                            <div style="font-size:11px; margin-top:4px; background:#f8fafc; padding:4px; border-radius:4px;">${phonesStr}</div>
+                        <td data-label="學生姓名與通訊">
+                            <span class="student-name-link" style="font-size:16px;" onclick="openEditStudentModal('${s.firestoreId}')">${s.name}</span><br>
+                            <small style="color:#555;">${s.school || ''} ${s.studentClass || ''}</small>
+                            <div style="font-size:12px; margin-top:5px; background:#f8fafc; padding:6px; border-radius:4px; border:1px solid #e2e8f0;">${phonesStr}</div>
                         </td>
-                        <td style="font-size:13px;">${attHtml}</td>
-                        <td style="font-size:13px;">${scoreHtml}</td>
-                        <td style="font-size:13px;">
+                        <td data-label="出缺勤紀錄" style="font-size:13px;">${attHtml}</td>
+                        <td data-label="考試成績" style="font-size:13px;">${scoreHtml}</td>
+                        <td data-label="電聯 QA 紀錄" style="font-size:13px;">
                             ${qaHtml}
                             <button class="btn btn-small btn-warning" style="margin-top:6px;" onclick="openCallQAModal('${s.firestoreId}')">+ 新增電聯QA</button>
                         </td>
@@ -1767,6 +2034,83 @@
             }).join('');
 
             document.getElementById('student-modal').style.display = 'flex';
+        };
+
+        window.openEditStudentModal = function(firestoreId) {
+            window.requestSecureAction(() => {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if (!student) return;
+
+                document.getElementById('modal-title').innerText = `修改學生：${student.name}`;
+                document.getElementById('edit-student-id').value = firestoreId;
+                document.getElementById('modal-name').value = student.name || '';
+                document.getElementById('modal-school').value = student.school || '';
+                document.getElementById('modal-class').value = student.studentClass || '';
+                document.getElementById('modal-version').value = student.studentVersion || '';
+
+                const phones = student.phones || [];
+                document.getElementById('modal-label1').value = phones[0] ? phones[0].label : '爸爸';
+                document.getElementById('modal-phone1').value = phones[0] ? phones[0].number : '';
+                document.getElementById('modal-label2').value = phones[1] ? phones[1].label : '媽媽';
+                document.getElementById('modal-phone2').value = phones[1] ? phones[1].number : '';
+                document.getElementById('modal-label3').value = phones[2] ? phones[2].label : '學生本人';
+                document.getElementById('modal-phone3').value = phones[2] ? phones[2].number : '';
+
+                const allCourses = [...window.state.courses.elementary, ...window.state.courses.junior];
+                document.getElementById('modal-course').innerHTML = allCourses.map(c => {
+                    const cName = typeof c === 'object' ? c.name : c;
+                    return `<option value="${cName}" ${student.course === cName ? 'selected' : ''}>${cName}</option>`;
+                }).join('');
+
+                document.getElementById('delete-student-btn').style.display = "inline-block";
+                document.getElementById('student-modal').style.display = 'flex';
+            });
+        };
+
+        window.saveStudentModal = async function() {
+            const firestoreId = document.getElementById('edit-student-id').value;
+            const name = document.getElementById('modal-name').value.trim();
+            const school = document.getElementById('modal-school').value.trim();
+            const studentClass = document.getElementById('modal-class').value.trim();
+            const studentVersion = document.getElementById('modal-version').value.trim();
+            const course = document.getElementById('modal-course').value;
+
+            const phones = [
+                { label: document.getElementById('modal-label1').value.trim() || '爸爸', number: document.getElementById('modal-phone1').value.trim() },
+                { label: document.getElementById('modal-label2').value.trim() || '媽媽', number: document.getElementById('modal-phone2').value.trim() },
+                { label: document.getElementById('modal-label3').value.trim() || '學生本人', number: document.getElementById('modal-phone3').value.trim() }
+            ].filter(p => p.number !== '');
+
+            if (!name) return alert('學生姓名為必填！');
+
+            if (firestoreId) {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if (student) {
+                    student.name = name;
+                    student.school = school;
+                    student.studentClass = studentClass;
+                    student.studentVersion = studentVersion;
+                    student.course = course;
+                    student.phones = phones;
+
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        id: student.id, name, school, studentClass, studentVersion, course, phones,
+                        attendanceLogs: student.attendanceLogs || [], notes: student.notes || [], callQAs: student.callQAs || []
+                    });
+                }
+            } else {
+                const newStudent = {
+                    id: Date.now(), name, school, studentClass, studentVersion, course, phones,
+                    attendanceLogs: [], notes: [], callQAs: []
+                };
+                const docRef = await addDoc(collection(db, "classLogStudents"), newStudent);
+                newStudent.firestoreId = docRef.id;
+                window.state.students.push(newStudent);
+            }
+
+            document.getElementById('student-modal').style.display = 'none';
+            alert('✅ 學生資料已儲存！');
+            initCloudData();
         };
 
         window.initCloudData = initCloudData;
