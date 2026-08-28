@@ -62,11 +62,14 @@
 
         .smart-paste-box textarea { width: 100%; height: 80px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; resize: vertical; margin-bottom: 0.75rem; }
         
-        /* 表單方塊網格 */
+        /* 步驟二：支援自由拖曳的表單方塊網格 */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .form-block-item label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.3rem; }
-        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.9rem; background: #ffffff; }
+        .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: grab; user-select: none; transition: background 0.2s; }
+        .form-block-item:active { cursor: grabbing; }
+        .form-block-item.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
+        
+        .form-block-item label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.3rem; pointer-events: none; }
+        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.9rem; background: #ffffff; cursor: text; }
 
         .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; width: 100%; }
         .btn:hover { opacity: 0.9; }
@@ -78,17 +81,16 @@
         .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
         .edit-icon-btn:hover { background: #e0e7ff; }
 
-        /* 追蹤清單區塊化卡片 */
-        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
-        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; }
-        
-        .move-btns { display: inline-flex; gap: 0.2rem; margin-right: 0.4rem; }
-        .move-btn { background: #f1f5f9; border: 1px solid var(--border-color); color: var(--text-main); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 700; }
-        .move-btn:hover { background: #e2e8f0; }
+        /* 步驟三：追蹤清單區塊化卡片（全區塊可拖曳移動） */
+        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; min-height: 100px; }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; cursor: grab; user-select: none; }
+        .tracking-block:active { cursor: grabbing; }
+        .tracking-block.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
 
-        .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
-        .block-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+        .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; pointer-events: none; }
+        .block-header * { pointer-events: auto; } 
         
+        .block-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
         .block-top-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
         .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.75rem; }
@@ -155,40 +157,33 @@
                 <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
             </div>
 
+            <!-- 步驟二：依你指定的順序排列，且支援自由拖曳 -->
             <div class="card">
                 <h3>📝 步驟二：問班與老師追蹤管理</h3>
                 
                 <form id="inquiryForm">
-                    <div class="form-blocks-grid">
-                        <div class="form-block-item">
+                    <div class="form-blocks-grid" id="formBlocksContainer">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📌 學生姓名</label>
                             <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>💬 詢問者 (誰來詢問)</label>
                             <input type="text" id="inquirer" placeholder="例如：王媽媽">
                         </div>
-                        <div class="form-block-item">
-                            <label>🎁 推薦人 (誰介紹的)</label>
-                            <input type="text" id="referrer" placeholder="例如：張小華媽媽">
-                        </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📚 有意願課程</label>
                             <input type="text" id="studentCourse" placeholder="例如：國二數學">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📞 聯絡電話</label>
                             <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📅 預定試聽日期</label>
                             <input type="date" id="trialDate">
                         </div>
-                        <div class="form-block-item">
-                            <label>👨‍🏫 負責追蹤老師</label>
-                            <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
-                        </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>⚡ 目前招生狀態</label>
                             <select id="studentStatus">
                                 <option value="初次諮詢">初次諮詢</option>
@@ -196,9 +191,17 @@
                                 <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                             </select>
                         </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>👨‍🏫 負責追蹤老師</label>
+                            <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
+                        </div>
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
+                            <label>🎁 推薦人 (誰介紹的)</label>
+                            <input type="text" id="referrer" placeholder="例如：張小華媽媽">
+                        </div>
                     </div>
 
-                    <div class="form-block-item" style="margin-bottom: 1rem;">
+                    <div class="form-block-item" style="margin-bottom: 1rem;" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                         <label>📝 老師追蹤紀錄</label>
                         <textarea id="trackNote" rows="2" placeholder="記錄對話內容..." style="resize: vertical;"></textarea>
                     </div>
@@ -208,17 +211,14 @@
                 </form>
             </div>
 
+            <!-- 步驟三：可直接拖曳移動的追蹤區塊看板 -->
             <div class="card">
                 <h3>📊 步驟三：招生追蹤區塊看板</h3>
                 
                 <div id="trackingCardContainer">
-                    <div class="tracking-block">
+                    <div class="tracking-block" draggable="true" ondragstart="handleTrackingDragStart(event)" ondragover="handleTrackingDragOver(event)" ondrop="handleTrackingDrop(event)" ondragend="handleTrackingDragEnd(event)">
                         <div class="block-header">
                             <div class="block-title">
-                                <div class="move-btns">
-                                    <button class="move-btn" onclick="moveBlock(this, 'up')" title="往上移動">⬆️</button>
-                                    <button class="move-btn" onclick="moveBlock(this, 'down')" title="往下移動">⬇️</button>
-                                </div>
                                 <span>📌</span> 
                                 <strong class="s-name">林美華</strong>
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
@@ -358,10 +358,6 @@
                         <input type="text" id="editInquirer">
                     </div>
                     <div class="form-block-item">
-                        <label>推薦人</label>
-                        <input type="text" id="editReferrer">
-                    </div>
-                    <div class="form-block-item">
                         <label>有意願課程</label>
                         <input type="text" id="editCourse">
                     </div>
@@ -374,10 +370,6 @@
                         <input type="date" id="editDate">
                     </div>
                     <div class="form-block-item">
-                        <label>負責追蹤老師</label>
-                        <input type="text" id="editTeacher">
-                    </div>
-                    <div class="form-block-item">
                         <label>目前狀態</label>
                         <select id="editStatusSelect">
                             <option value="初次諮詢">初次諮詢</option>
@@ -385,6 +377,14 @@
                             <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                             <option value="已正式進班">已正式進班</option>
                         </select>
+                    </div>
+                    <div class="form-block-item">
+                        <label>負責追蹤老師</label>
+                        <input type="text" id="editTeacher">
+                    </div>
+                    <div class="form-block-item">
+                        <label>推薦人</label>
+                        <input type="text" id="editReferrer">
                     </div>
                 </div>
                 <div class="form-block-item" style="margin-bottom: 1rem;">
@@ -440,22 +440,90 @@
             }
         }
 
-        // 上下移動區塊按鈕控制邏輯
-        function moveBlock(btn, direction) {
-            const block = btn.closest('.tracking-block');
-            const container = document.getElementById('trackingCardContainer');
-            
-            if (direction === 'up') {
-                const prevBlock = block.previousElementSibling;
-                if (prevBlock) {
-                    container.insertBefore(block, prevBlock);
-                }
-            } else if (direction === 'down') {
-                const nextBlock = block.nextElementSibling;
-                if (nextBlock) {
-                    container.insertBefore(nextBlock, block);
-                }
+        // 步驟二表單方塊的拖曳排序功能
+        let draggedFormBlock = null;
+
+        function handleFormBlockDragStart(e) {
+            draggedFormBlock = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleFormBlockDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('formBlocksContainer');
+            const afterElement = getFormBlockDragAfterElement(container, e.clientX, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedFormBlock);
+            } else {
+                container.insertBefore(draggedFormBlock, afterElement);
             }
+        }
+
+        function handleFormBlockDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleFormBlockDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedFormBlock = null;
+        }
+
+        function getFormBlockDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.form-block-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // 步驟三：下方追蹤看板卡片的拖曳移動功能
+        let draggedTrackingBlock = null;
+
+        function handleTrackingDragStart(e) {
+            draggedTrackingBlock = this;
+            setTimeout(() => this.classList.add('dragging'), 0);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleTrackingDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('trackingCardContainer');
+            const afterElement = getTrackingDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedTrackingBlock);
+            } else {
+                container.insertBefore(draggedTrackingBlock, afterElement);
+            }
+        }
+
+        function handleTrackingDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleTrackingDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedTrackingBlock = null;
+        }
+
+        function getTrackingDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.tracking-block:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function parseChatText() {
@@ -489,17 +557,18 @@
             const container = document.getElementById('trackingCardContainer');
             const newBlock = document.createElement('div');
             newBlock.className = 'tracking-block';
+            newBlock.setAttribute('draggable', 'true');
+            newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
+            newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
+            newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
+            newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
             
             const timestamp = getFormattedTimestamp();
             const initialLog = note ? `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - ${note}` : `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - 建立追蹤紀錄`;
 
             newBlock.innerHTML = `
-                <div class="block-header">
+                <div class="block-header" onmousedown="event.stopPropagation()">
                     <div class="block-title">
-                        <div class="move-btns">
-                            <button class="move-btn" onclick="moveBlock(this, 'up')" title="往上移動">⬆️</button>
-                            <button class="move-btn" onclick="moveBlock(this, 'down')" title="往下移動">⬇️</button>
-                        </div>
                         <span>📌</span> 
                         <strong class="s-name">${name}</strong>
                         <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
@@ -649,16 +718,17 @@
                     const container = document.getElementById('trackingCardContainer');
                     const newBlock = document.createElement('div');
                     newBlock.className = 'tracking-block';
+                    newBlock.setAttribute('draggable', 'true');
+                    newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
+                    newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
+                    newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
+                    newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
                     
                     const timestamp = getFormattedTimestamp();
 
                     newBlock.innerHTML = `
-                        <div class="block-header">
+                        <div class="block-header" onmousedown="event.stopPropagation()">
                             <div class="block-title">
-                                <div class="move-btns">
-                                    <button class="move-btn" onclick="moveBlock(this, 'up')" title="往上移動">⬆️</button>
-                                    <button class="move-btn" onclick="moveBlock(this, 'down')" title="往下移動">⬇️</button>
-                                </div>
                                 <span>📌</span> 
                                 <strong class="s-name">${name}</strong>
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
