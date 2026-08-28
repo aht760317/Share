@@ -203,7 +203,7 @@
 
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         
-        .class-btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+        .class-btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
         .btn-care { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 12px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13px; transition: 0.2s; }
         .btn-care.active, .btn-care:hover { background: #0284c7; color: white; }
         
@@ -255,7 +255,7 @@
             <button class="nav-btn" onclick="switchSection('teaching-logs-care', this)">🏢 課輔班日誌<br><small>(週記)</small></button>
             <button class="nav-btn" onclick="switchSection('director-overview', this)">👑 主任全校日誌總覽</button>
             <button class="nav-btn" onclick="switchSection('student-profiles', this)">👥 學生檔案與通訊</button>
-            <button class="nav-btn" onclick="switchSection('all-logs-query', this)">📚 所有日誌查詢</button>
+            <button class="nav-btn" onclick="switchSection('all-logs-query', this)">📚 日誌查詢</button>
         </nav>
     </header>
 
@@ -506,7 +506,7 @@
             </div>
         </section>
 
-        <!-- 👑 主任全校日誌快速總覽 -->
+        <!-- 👑 主任全校日誌總覽 -->
         <section id="director-overview" class="section-content">
             <div class="card">
                 <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">👑 主任全校教學日誌快速總覽</h3>
@@ -550,18 +550,27 @@
             </div>
         </section>
 
-        <!-- 👥 學生檔案與通訊 -->
+        <!-- 👥 學生檔案與通訊 (已分區塊與移除新增學生) -->
         <section id="student-profiles" class="section-content">
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div><h3 style="margin:0;">點擊下方班級查詢學生</h3></div>
-                    <div style="display:flex; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 12px;">
+                    <div><h3 style="margin:0;">👥 學生檔案與通訊 (點擊下方班級按鈕查詢)</h3></div>
+                    <div>
                         <button class="btn btn-primary" onclick="syncWithMasterDatabase()">🔄 重新整理學籍</button>
-                        <button class="btn btn-success" onclick="openAddStudentModal()">+ 新增學生</button>
                     </div>
                 </div>
-                <hr style="margin: 12px 0;">
-                <div class="class-btn-group" id="class-buttons-container"></div>
+                
+                <!-- 國中部班級區塊 -->
+                <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                    <h5 style="color: #b45309; margin: 0 0 8px 0; font-size: 14px; border-bottom: 1px dashed #fde68a; padding-bottom: 4px;">📙 國中部班級</h5>
+                    <div class="class-btn-group" id="class-buttons-junior" style="margin-bottom:0;"></div>
+                </div>
+
+                <!-- 國小部與課輔部班級區塊 -->
+                <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 8px;">
+                    <h5 style="color: #16a34a; margin: 0 0 8px 0; font-size: 14px; border-bottom: 1px dashed #86efac; padding-bottom: 4px;">📘 國小部與課輔部班級</h5>
+                    <div class="class-btn-group" id="class-buttons-elem-care" style="margin-bottom:0;"></div>
+                </div>
             </div>
 
             <div class="card">
@@ -584,10 +593,10 @@
             </div>
         </section>
 
-        <!-- 📚 所有日誌查詢 (一次顯示三個月並可自由切換區間) -->
+        <!-- 📚 日誌查詢 (預設顯示一個月並支援所有日誌與主任退回重寫) -->
         <section id="all-logs-query" class="section-content">
             <div class="card">
-                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">📚 全校所有教學日誌總查詢</h3>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">📚 教學日誌查詢與審核</h3>
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                     <div class="grid-3" style="align-items: center; margin-bottom: 10px;">
@@ -600,9 +609,10 @@
                             <input type="date" id="query-end-date" onchange="renderAllLogsQuery()">
                         </div>
                         <div style="display:flex; gap:5px; flex-wrap:wrap; padding-top: 15px;">
-                            <button class="btn btn-small" onclick="setQueryRange(30)">1個月</button>
+                            <button class="btn btn-primary btn-small" onclick="setQueryRange(30)">1個月</button>
                             <button class="btn btn-warning btn-small" onclick="setQueryRange(90)">3個月</button>
                             <button class="btn btn-success btn-small" onclick="setQueryRange(180)">半年</button>
+                            <button class="btn btn-danger btn-small" onclick="setQueryRange('all')">所有日誌</button>
                         </div>
                     </div>
                 </div>
@@ -645,7 +655,7 @@
         </button>
         <button class="m-nav-item" onclick="switchMobileNav('all-logs-query', this)">
             <span class="icon">📚</span>
-            <span>所有日誌</span>
+            <span>日誌查詢</span>
         </button>
     </div>
 
@@ -830,10 +840,10 @@
         </div>
     </div>
 
-    <!-- 學生檔案新增/修改彈窗 -->
+    <!-- 學生檔案修改彈窗 (移除新增功能) -->
     <div class="modal-overlay" id="student-modal">
         <div class="modal-box">
-            <h3 id="modal-title" style="margin-top:0; color:var(--primary);">新增/修改學生資料</h3>
+            <h3 id="modal-title" style="margin-top:0; color:var(--primary);">修改學生資料</h3>
             <input type="hidden" id="edit-student-id">
             
             <div class="grid-3">
@@ -981,10 +991,10 @@
                 const now = new Date();
                 document.getElementById('overview-target-month').value = now.toISOString().slice(0, 7);
 
-                // 預設查詢所有日誌為三個月區間
+                // 預設查詢日誌區間為一個月
                 const endDateObj = new Date();
                 const startDateObj = new Date();
-                startDateObj.setMonth(startDateObj.getMonth() - 3);
+                startDateObj.setMonth(startDateObj.getMonth() - 1);
                 document.getElementById('query-end-date').value = endDateObj.toISOString().split('T')[0];
                 document.getElementById('query-start-date').value = startDateObj.toISOString().split('T')[0];
 
@@ -1178,10 +1188,10 @@
             }, 100);
         };
 
-        // 主任點擊尚未填寫日誌快速跳轉導引，並可選擇略過
+        // 主任點擊尚未填寫日誌快速跳轉導引，並可選擇略過 (略過後自動導入日誌查詢並消除紅字)
         window.jumpToLogSection = function(dept, courseName, dateStr) {
             const actionKey = `${dateStr}_${courseName}`;
-            const choice = confirm(`是否立即前往填寫「${courseName}」的教學日誌？\n\n[點擊「確定」] 前往填寫\n[點擊「取消」] 略過此提醒（標記為已知悉/不用再提醒）`);
+            const choice = confirm(`是否立即前往填寫「${courseName}」的教學日誌？\n\n[點擊「確定」] 前往手動填寫\n[點擊「取消」] 略過此提醒（標記為已知悉/已處理，並自動導入日誌查詢）`);
             
             if (choice) {
                 let btnIdx = 1;
@@ -1209,7 +1219,11 @@
                     window.state.ignoredUnsubmitted.push(actionKey);
                 }
                 renderDirectorOverview();
-                alert('✅ 已將此筆未填寫提醒標記為略過（已處理好）。');
+                
+                // 自動切換到日誌查詢頁面
+                const queryNavBtn = document.querySelector('nav button:nth-child(6)');
+                switchSection('all-logs-query', queryNavBtn);
+                alert('✅ 已將此筆未填寫提醒標記為略過，並已自動導入「日誌查詢」！');
             }
         };
 
@@ -1694,6 +1708,22 @@
             });
         };
 
+        // 主任「退回重寫」功能 (需要密碼 0618)
+        window.requestDirectorRecallLog = function(firestoreId) {
+            window.requestSecureAction(async () => {
+                try {
+                    await deleteDoc(doc(db, "classLogHistory", firestoreId));
+                    window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
+
+                    alert('✅ 已成功將此日誌退回重寫！');
+                    window.renderHistoryLogs();
+                    window.generateMonthDaysGrid();
+                    window.renderDirectorOverview();
+                    window.renderAllLogsQuery();
+                } catch (e) { alert('退回失敗'); }
+            });
+        };
+
         window.requestDeleteStudent = function() {
             window.requestSecureAction(async () => {
                 const firestoreId = document.getElementById('edit-student-id').value;
@@ -1835,6 +1865,7 @@
                             <h4 style="margin:0; color:var(--primary); font-size:15px;">
                                 <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] 日期：${l.date}</span>
                             </h4>
+                            <button class="btn btn-small btn-danger" onclick="requestDirectorRecallLog('${l.firestoreId}')">🔄 退回重寫</button>
                         </div>
                         <p style="margin:4px 0; font-size:13.5px;"><b>教學進度：</b>${l.content}</p>
                         <p style="margin:4px 0; font-size:13.5px;"><b>回家作業：</b>${l.homework || '無'}</p>
@@ -1845,13 +1876,18 @@
             });
         };
 
-        // 所有日誌查詢區間篩選與渲染
+        // 日誌查詢區間篩選與渲染 (預設一個月，支援所有日誌與退回重寫)
         window.setQueryRange = function(days) {
-            const endObj = new Date();
-            const startObj = new Date();
-            startObj.setDate(startObj.getDate() - days);
-            document.getElementById('query-end-date').value = endObj.toISOString().split('T')[0];
-            document.getElementById('query-start-date').value = startObj.toISOString().split('T')[0];
+            if (days === 'all') {
+                document.getElementById('query-start-date').value = '2025-01-01';
+                document.getElementById('query-end-date').value = new Date().toISOString().split('T')[0];
+            } else {
+                const endObj = new Date();
+                const startObj = new Date();
+                startObj.setDate(startObj.getDate() - days);
+                document.getElementById('query-end-date').value = endObj.toISOString().split('T')[0];
+                document.getElementById('query-start-date').value = startObj.toISOString().split('T')[0];
+            }
             renderAllLogsQuery();
         };
 
@@ -1864,7 +1900,10 @@
 
             const renderCard = (l) => `
                 <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:10px; border-radius:6px; margin-bottom:10px; font-size:13px;">
-                    <b style="color:var(--primary);">[${l.course}] ${l.date}</b>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="color:var(--primary);">[${l.course}] ${l.date}</b>
+                        <button class="btn btn-small btn-danger" style="padding:2px 6px; font-size:11px;" onclick="requestDirectorRecallLog('${l.firestoreId}')">🔄 退回重寫</button>
+                    </div>
                     <p style="margin:3px 0;"><b>進度：</b>${l.content}</p>
                     <p style="margin:3px 0;"><b>作業：</b>${l.homework || '無'}</p>
                     ${l.directorApprovalText ? `<div style="color:#0369a1; margin-top:3px;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
@@ -2047,7 +2086,10 @@
                             <h4 style="margin:0; color:var(--primary); font-size:14.5px;">
                                 <span class="history-log-title-link" onclick="promptEditHistoryLog('${l.firestoreId}')">📚 [${l.course}] ${l.date}</span>
                             </h4>
-                            <button class="btn btn-small" style="${approveBtnStyle}" onclick="openDirectorApprovalModal('${l.firestoreId}')">${approveText}</button>
+                            <div style="display:flex; gap:4px;">
+                                <button class="btn btn-small" style="${approveBtnStyle}" onclick="openDirectorApprovalModal('${l.firestoreId}')">${approveText}</button>
+                                <button class="btn btn-small btn-danger" onclick="requestDirectorRecallLog('${l.firestoreId}')">🔄 退回重寫</button>
+                            </div>
                         </div>
                         <p style="margin:4px 0; font-size:13.5px;"><b>教學進度：</b>${l.content}</p>
                         <p style="margin:4px 0; font-size:13.5px;"><b>回家作業：</b>${l.homework || '無'}</p>
@@ -2068,29 +2110,30 @@
         };
 
         window.renderClassButtons = function() {
-            const container = document.getElementById('class-buttons-container');
-            if(!container) return;
+            const juniorContainer = document.getElementById('class-buttons-junior');
+            const elemCareContainer = document.getElementById('class-buttons-elem-care');
+            if(!juniorContainer || !elemCareContainer) return;
 
-            let html = '';
-            (window.state.courses.care || []).forEach(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const activeClass = window.state.selectedClassForProfile === cName ? 'active' : '';
-                html += `<button class="btn-care ${activeClass}" onclick="selectProfileClass('${cName}')">🏢 課輔: ${cName}</button>`;
-            });
-
-            (window.state.courses.elementary || []).forEach(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                const activeClass = window.state.selectedClassForProfile === cName ? 'active' : '';
-                html += `<button class="btn-elementary ${activeClass}" onclick="selectProfileClass('${cName}')">📘 國小: ${cName}</button>`;
-            });
-
+            let juniorHtml = '';
             (window.state.courses.junior || []).forEach(c => {
                 const cName = typeof c === 'object' ? c.name : c;
                 const activeClass = window.state.selectedClassForProfile === cName ? 'active' : '';
-                html += `<button class="btn-junior ${activeClass}" onclick="selectProfileClass('${cName}')">📙 國中: ${cName}</button>`;
+                juniorHtml += `<button class="btn-junior ${activeClass}" onclick="selectProfileClass('${cName}')">📙 國中: ${cName}</button>`;
             });
+            juniorContainer.innerHTML = juniorHtml || '<p style="color:#777; font-size:13px; margin:0;">尚無國中部班級</p>';
 
-            container.innerHTML = html || '<p style="color:#777;">目前尚無設定課程。</p>';
+            let elemCareHtml = '';
+            (window.state.courses.care || []).forEach(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const activeClass = window.state.selectedClassForProfile === cName ? 'active' : '';
+                elemCareHtml += `<button class="btn-care ${activeClass}" onclick="selectProfileClass('${cName}')">🏢 課輔: ${cName}</button>`;
+            });
+            (window.state.courses.elementary || []).forEach(c => {
+                const cName = typeof c === 'object' ? c.name : c;
+                const activeClass = window.state.selectedClassForProfile === cName ? 'active' : '';
+                elemCareHtml += `<button class="btn-elementary ${activeClass}" onclick="selectProfileClass('${cName}')">📘 國小: ${cName}</button>`;
+            });
+            elemCareContainer.innerHTML = elemCareHtml || '<p style="color:#777; font-size:13px; margin:0;">尚無國小部或課輔部班級</p>';
         };
 
         window.selectProfileClass = function(className) {
@@ -2223,27 +2266,6 @@
             }
         };
 
-        window.openAddStudentModal = function() {
-            document.getElementById('modal-title').innerText = "新增學生資料";
-            document.getElementById('edit-student-id').value = "";
-            document.getElementById('modal-name').value = "";
-            document.getElementById('modal-school').value = "";
-            document.getElementById('modal-class').value = "";
-            document.getElementById('modal-version').value = "";
-            document.getElementById('modal-phone1').value = "";
-            document.getElementById('modal-phone2').value = "";
-            document.getElementById('modal-phone3').value = "";
-            document.getElementById('delete-student-btn').style.display = "none";
-
-            const allCourses = [...(window.state.courses.care || []), ...(window.state.courses.elementary || []), ...(window.state.courses.junior || [])];
-            document.getElementById('modal-course').innerHTML = allCourses.map(c => {
-                const cName = typeof c === 'object' ? c.name : c;
-                return `<option value="${cName}">${cName}</option>`;
-            }).join('');
-
-            document.getElementById('student-modal').style.display = 'flex';
-        };
-
         window.openEditStudentModal = function(firestoreId) {
             window.requestSecureAction(() => {
                 const student = window.state.students.find(s => s.firestoreId === firestoreId);
@@ -2312,14 +2334,6 @@
                         name, school, studentClass, studentVersion, courses: existingCourses, course: student.course, phones
                     });
                 }
-            } else {
-                const newStudent = {
-                    id: Date.now(), name, school, studentClass, studentVersion, courses: [course], course: course, phones,
-                    attendanceLogs: [], notes: [], callQAs: [], status: 'active'
-                };
-                const docRef = await addDoc(collection(db, "classLogStudents"), newStudent);
-                newStudent.firestoreId = docRef.id;
-                window.state.students.push(newStudent);
             }
 
             document.getElementById('student-modal').style.display = 'none';
