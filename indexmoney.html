@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; padding-bottom: 75px; }
         .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
         /* 導覽列 */
@@ -16,11 +16,11 @@
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
 
         .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; }
-        .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab-btn { flex: 1; padding: 14px 10px; background: transparent; border: none; color: #94A3B8; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; text-align: center; }
         .tab-btn.active { color: white; border-bottom: 4px solid var(--accent); background: #0F172A; }
         .tab-btn:hover { color: white; }
 
-        /* 手機專屬底部導覽列 */
+        /* 手機專屬底部導覽列 (5格) */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -42,18 +42,19 @@
             background: transparent;
             border: none;
             color: #94A3B8;
-            padding: 10px 4px;
+            padding: 8px 2px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
-            font-size: 12px;
+            gap: 2px;
+            font-size: 11px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
+            white-space: nowrap;
         }
         .mobile-bottom-nav .nav-item span:first-child {
-            font-size: 18px;
+            font-size: 16px;
         }
         .mobile-bottom-nav .nav-item.active {
             color: white;
@@ -121,7 +122,6 @@
         .filter-bar { background: #F1F5F9; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .finance-bar { background: #FFFBEB; padding: 12px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 15px; }
         
-        /* 表格響應式捲動容器 */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { border: 1px solid #E2E8F0; padding: 10px 8px; text-align: left; vertical-align: middle; }
@@ -133,8 +133,8 @@
         
         .unpaid-reminder { margin-top: 15px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
         .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #FECACA; }
-        .unpaid-list { padding: 12px; background: white; max-height: 200px; overflow-y: auto; }
-        .unpaid-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #E5E7EB; font-size: 13px; }
+        .unpaid-list { padding: 12px; background: white; max-height: 250px; overflow-y: auto; }
+        .unpaid-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB; font-size: 13px; }
         .unpaid-item:last-child { border-bottom: none; }
 
         .action-btn { padding: 5px 8px; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 2px; color: white; cursor: pointer; display: inline-block; margin-top: 2px; }
@@ -219,19 +219,24 @@
         <h1>顧德補習班 繳費管理系統</h1>
     </div>
     
-    <!-- 桌面版上方導覽列 -->
+    <!-- 桌面版上方導覽列 (5個分頁) -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('manage')">1. 繳費紀錄</button>
-        <button class="tab-btn" onclick="switchTab('create')">2. 產生繳費單</button>
-        <button class="tab-btn" onclick="switchTab('settings')">3. 系統設定</button>
-        <button class="tab-btn" onclick="switchTab('directory')" style="background:#065F46;">📖 4. 學生通訊錄</button>
+        <button class="tab-btn" onclick="switchTab('unpaid')">2. 未繳費查詢</button>
+        <button class="tab-btn" onclick="switchTab('create')">3. 產生繳費單</button>
+        <button class="tab-btn" onclick="switchTab('settings')">4. 系統設定</button>
+        <button class="tab-btn" onclick="switchTab('directory')" style="background:#065F46;">📖 5. 學生通訊錄</button>
     </div>
 
-    <!-- 手機版專屬底部導覽列 (一格一格快速切換) -->
+    <!-- 手機版專屬底部導覽列 (5個按鈕) -->
     <div class="mobile-bottom-nav no-print">
         <button class="nav-item active" onclick="switchTab('manage')">
             <span>📊</span>
             <span>繳費紀錄</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('unpaid')">
+            <span>🔴</span>
+            <span>未繳查詢</span>
         </button>
         <button class="nav-item" onclick="switchTab('create')">
             <span>➕</span>
@@ -301,11 +306,6 @@
                     <tbody id="primaryRecordTableBody"></tbody>
                 </table>
             </div>
-            
-            <div class="unpaid-reminder">
-                <div class="unpaid-header" style="background:#FEF2F2; color:#991B1B;">🔴 國小部 - 未繳費提醒總整理</div>
-                <div class="unpaid-list" id="primaryUnpaidListBody"></div>
-            </div>
         </div>
 
         <!-- 國中部收費區塊 -->
@@ -325,15 +325,26 @@
                     <tbody id="juniorRecordTableBody"></tbody>
                 </table>
             </div>
-
-            <div class="unpaid-reminder">
-                <div class="unpaid-header" style="background:#F3E8FF; color:#7E22CE; border-color:#D8B4FE;">🟣 國中部 - 未繳費提醒總整理</div>
-                <div class="unpaid-list" id="juniorUnpaidListBody"></div>
-            </div>
         </div>
     </div>
 
-    <!-- 頁籤 2：產生新繳費單 -->
+    <!-- 頁籤 2：未繳費查詢 -->
+    <div id="unpaid" class="content-area">
+        <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
+        <p style="color: #64748B; font-size: 14px; margin-bottom: 15px;">此處專門彙整所有尚未結帳繳費的學生清單，方便您隨時掌握欠費狀況。</p>
+        
+        <div class="unpaid-reminder" style="margin-top:0;">
+            <div class="unpaid-header" style="background:#FEF2F2; color:#991B1B;">📘 國小部 - 未繳費總覽</div>
+            <div class="unpaid-list" id="tabPrimaryUnpaidListBody" style="max-height: 350px;"></div>
+        </div>
+
+        <div class="unpaid-reminder" style="margin-top: 20px;">
+            <div class="unpaid-header" style="background:#F3E8FF; color:#7E22CE; border-color:#D8B4FE;">📗 國中部 - 未繳費總覽</div>
+            <div class="unpaid-list" id="tabJuniorUnpaidListBody" style="max-height: 350px;"></div>
+        </div>
+    </div>
+
+    <!-- 頁籤 3：產生新繳費單 -->
     <div id="create" class="content-area">
         <h3 class="section-title" style="margin-top:0;">第一步：選擇班級與學生</h3>
         
@@ -403,7 +414,7 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：系統設定 -->
+    <!-- 頁籤 4：系統設定 -->
     <div id="settings" class="content-area">
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 20px; text-align: center;">
             <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 8px; font-size: 18px;">🏫 學生與班級來源狀態</h3>
@@ -451,7 +462,7 @@
         </div>
     </div>
 
-    <!-- 頁籤 4：學生聯絡簿 -->
+    <!-- 頁籤 5：學生聯絡簿 -->
     <div id="directory" class="content-area">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h3 style="margin: 0; color: #065F46; font-size: 20px;">📖 學生通訊錄</h3>
@@ -784,6 +795,7 @@
             if (document.getElementById('directory').classList.contains('active')) {
                 renderDirectoryInit();
             }
+            renderUnpaidTabLists();
         } catch (e) {
             console.error("同步失敗：", e);
         }
@@ -850,11 +862,13 @@
 
         const navItems = document.querySelectorAll('.mobile-bottom-nav .nav-item');
         if(tabId === 'manage' && navItems[0]) navItems[0].classList.add('active');
-        if(tabId === 'create' && navItems[1]) navItems[1].classList.add('active');
-        if(tabId === 'settings' && navItems[2]) navItems[2].classList.add('active');
-        if(tabId === 'directory' && navItems[3]) navItems[3].classList.add('active');
+        if(tabId === 'unpaid' && navItems[1]) navItems[1].classList.add('active');
+        if(tabId === 'create' && navItems[2]) navItems[2].classList.add('active');
+        if(tabId === 'settings' && navItems[3]) navItems[3].classList.add('active');
+        if(tabId === 'directory' && navItems[4]) navItems[4].classList.add('active');
         
         if(tabId === 'manage') renderRecords();
+        if(tabId === 'unpaid') renderUnpaidTabLists();
         if(tabId === 'create') renderClassGrid();
         if(tabId === 'directory') renderDirectoryInit();
         if(tabId === 'settings') {
@@ -1552,8 +1566,39 @@
             juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8;">目前沒有國中部的繳費紀錄。</td></tr>`;
         }
         
-        renderUnpaidReminder();
+        renderUnpaidTabLists();
     }
+
+    // === 渲染「未繳費查詢」分頁清單 ===
+    window.renderUnpaidTabLists = function() {
+        const primaryContainer = document.getElementById('tabPrimaryUnpaidListBody');
+        const juniorContainer = document.getElementById('tabJuniorUnpaidListBody');
+        if (!primaryContainer || !juniorContainer) return;
+        
+        const unpaidBills = window.bills.filter(b => !b.isPaid);
+        const primaryUnpaid = unpaidBills.filter(b => !window.isJuniorHigh(b.className));
+        const juniorUnpaid = unpaidBills.filter(b => window.isJuniorHigh(b.className));
+
+        const buildHtml = (list) => {
+            if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:12px 0; font-size:14px; text-align:center;">🎉 太棒了！目前沒有欠費名單。</div>';
+            return list.map(bill => {
+                const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
+                return `
+                    <div class="unpaid-item">
+                        <div>
+                            <span style="color:#991B1B; font-weight:bold; margin-right:8px;">[${displayMonth}]</span>
+                            <span>${bill.className} - <strong>${bill.studentName}</strong></span>
+                        </div>
+                        <div style="font-weight:bold; color:var(--danger);">
+                            欠款 $${bill.total.toLocaleString()}
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        primaryContainer.innerHTML = buildHtml(primaryUnpaid);
+        juniorContainer.innerHTML = buildHtml(juniorUnpaid);
+    };
 
     window.printSelectedCheckedNotices = function() {
         const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
@@ -1677,35 +1722,6 @@
             }
         }
     };
-
-    window.renderUnpaidReminder = function() {
-        const primaryContainer = document.getElementById('primaryUnpaidListBody');
-        const juniorContainer = document.getElementById('juniorUnpaidListBody');
-        
-        const unpaidBills = window.bills.filter(b => !b.isPaid);
-        const primaryUnpaid = unpaidBills.filter(b => !window.isJuniorHigh(b.className));
-        const juniorUnpaid = unpaidBills.filter(b => window.isJuniorHigh(b.className));
-
-        const buildHtml = (list) => {
-            if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:8px 0; font-size:13px;">🎉 太棒了！目前沒有欠費名單。</div>';
-            return list.map(bill => {
-                const displayMonth = formatDisplayMonth(bill.periodStr || bill.yearMonth);
-                return `
-                    <div class="unpaid-item">
-                        <div>
-                            <span style="color:#991B1B; font-weight:bold; margin-right:8px;">[${displayMonth}]</span>
-                            <span>${bill.className} - <strong>${bill.studentName}</strong></span>
-                        </div>
-                        <div style="font-weight:bold; color:var(--danger);">
-                            欠款 $${bill.total.toLocaleString()}
-                        </div>
-                    </div>`;
-            }).join('');
-        };
-
-        primaryContainer.innerHTML = buildHtml(primaryUnpaid);
-        juniorContainer.innerHTML = buildHtml(juniorUnpaid);
-    }
 
     window.markAsPaid = async function(firestoreId, id) {
         const bill = window.bills.find(b => b.id === id);
