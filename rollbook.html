@@ -52,17 +52,18 @@
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 
-        /* 課程篩選按鈕列 */
+        /* 可拖曳今日篩選導覽列 */
         .filter-btn-group {
-            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px;
         }
-        .filter-btn {
-            padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 6px;
-            border: 1.5px solid var(--border); background: white; color: #475569;
-            cursor: pointer; transition: 0.2s;
+        .filter-pill {
+            padding: 8px 14px; border: 2px solid var(--border); background: #f8fafc;
+            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            user-select: none; display: inline-flex; align-items: center; gap: 6px; color: #334155;
         }
-        .filter-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
-        .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .filter-pill.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
+        .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3); }
+        .drag-handle { cursor: grab; font-size: 12px; opacity: 0.6; }
 
         .course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -242,15 +243,10 @@
                 </div>
             </div>
 
-            <!-- 課程快速篩選工具列 -->
-            <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
-                <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選：</span>
-                <div class="filter-btn-group" id="courseFilterGroup">
-                    <button class="filter-btn active" data-filter="today" onclick="setCourseFilter('today')">📅 今日全部課程</button>
-                    <button class="filter-btn" data-filter="junior" onclick="setCourseFilter('junior')">📙 今日國中</button>
-                    <button class="filter-btn" data-filter="elementary" onclick="setCourseFilter('elementary')">📘 今日國小</button>
-                    <button class="filter-btn" data-filter="care" onclick="setCourseFilter('care')">🏢 今日課輔</button>
-                </div>
+            <!-- 可拖曳排序的今日課程篩選列 -->
+            <div style="margin-top:10px;">
+                <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選 (可按住左側 ⠿ 拖曳調整順序)：</span>
+                <div class="filter-btn-group" id="courseFilterGroup"></div>
             </div>
 
             <div class="course-grid" id="courseGrid"></div>
@@ -657,16 +653,24 @@
         { key: 'all', label: '🌟 全校所有學生總覽 (依姓名排列)' }
     ];
 
+    const DEFAULT_FILTER_ORDER = [
+        { key: 'today', label: '📅 今日全部課程' },
+        { key: 'junior', label: '📙 今日國中' },
+        { key: 'elementary_care', label: '📘 今日國小與課輔' },
+        { key: 'all_courses', label: '👁️ 全部課程' }
+    ];
+
     window.state = {
         courses: { care: [], elementary: [], junior: [] },
         students: [],
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        courseFilterMode: 'today', // 'today' (今日全部課程) | 'junior' (今日國中) | 'elementary' (今日國小) | 'care' (今日課輔)
+        courseFilterMode: 'today', 
         currentDeptView: 'care',
         currentFilterClass: null,
-        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER
+        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
+        filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER
     };
 
     window.onload = function() {
@@ -674,6 +678,7 @@
         document.getElementById('rollDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
         renderDeptNavButtons();
+        renderCourseFilterButtons();
         initCloudData();
     };
 
@@ -722,6 +727,7 @@
             });
 
             renderDeptNavButtons();
+            renderCourseFilterButtons();
             renderMasterStudentsTable();
             renderDeptClassButtons();
             renderCourseCards();
@@ -808,42 +814,25 @@
     }
 
     let draggedDeptItem = null;
-
-    function handleDeptDragStart(e) {
-        draggedDeptItem = this;
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-    }
-
-    function handleDeptDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }
-
+    function handleDeptDragStart(e) { draggedDeptItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function handleDeptDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
     function handleDeptDrop(e) {
         e.stopPropagation();
         if (draggedDeptItem !== this && this.dataset && this.dataset.deptIndex !== undefined) {
             const fromIndex = parseInt(draggedDeptItem.dataset.deptIndex);
             const toIndex = parseInt(this.dataset.deptIndex);
-
             const movedItem = window.state.deptOrder.splice(fromIndex, 1)[0];
             window.state.deptOrder.splice(toIndex, 0, movedItem);
-
             localStorage.setItem('gude_dept_order_v2', JSON.stringify(window.state.deptOrder));
             renderDeptNavButtons();
         }
         return false;
     }
-
-    function handleDeptDragEnd() {
-        this.classList.remove('dragging');
-        draggedDeptItem = null;
-    }
+    function handleDeptDragEnd() { this.classList.remove('dragging'); draggedDeptItem = null; }
 
     window.switchDept = function(deptKey) {
         window.state.currentDeptView = deptKey;
         window.state.currentFilterClass = null;
-
         renderDeptNavButtons();
         renderDeptClassButtons();
         renderMasterStudentsTable();
@@ -876,7 +865,6 @@
 
         box.style.display = 'block';
         const list = window.state.courses[deptKey] || [];
-        
         container.innerHTML = '';
 
         const allBtn = document.createElement('button');
@@ -916,44 +904,25 @@
     }
 
     let draggedItem = null;
-
-    function handleDragStart(e) {
-        draggedItem = this;
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }
-
+    function handleDragStart(e) { draggedItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
     async function handleDrop(e) {
         e.stopPropagation();
         if (draggedItem !== this && this.dataset && this.dataset.index !== undefined) {
             const fromIndex = parseInt(draggedItem.dataset.index);
             const toIndex = parseInt(this.dataset.index);
             const deptKey = window.state.currentDeptView;
-
             const list = window.state.courses[deptKey];
             const movedItem = list.splice(fromIndex, 1)[0];
             list.splice(toIndex, 0, movedItem);
-
             renderDeptClassButtons();
-
             try {
                 await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            } catch (err) {
-                console.error("排序儲存失敗", err);
-            }
+            } catch (err) { console.error("排序儲存失敗", err); }
         }
         return false;
     }
-
-    function handleDragEnd() {
-        this.classList.remove('dragging');
-        draggedItem = null;
-    }
+    function handleDragEnd() { this.classList.remove('dragging'); draggedItem = null; }
 
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
@@ -1003,20 +972,17 @@
     window.openEditClassModal = function(dept, name, day, time, teacher) {
         document.getElementById('edit_original_dept').value = dept;
         document.getElementById('edit_original_name').value = name;
-
         document.getElementById('edit_class_dept').value = dept;
         document.getElementById('edit_class_name').value = name;
         document.getElementById('edit_class_day').value = day;
         document.getElementById('edit_class_time').value = time;
         document.getElementById('edit_class_teacher').value = teacher;
-
         document.getElementById('editClassModal').style.display = 'flex';
     };
 
     window.saveEditedClass = async function() {
         const origDept = document.getElementById('edit_original_dept').value;
         const origName = document.getElementById('edit_original_name').value;
-
         const newDept = document.getElementById('edit_class_dept').value;
         const newName = document.getElementById('edit_class_name').value.trim();
         const newDay = document.getElementById('edit_class_day').value.trim() || '星期一';
@@ -1027,7 +993,6 @@
 
         try {
             let origStartDate = new Date().toISOString().slice(0, 8) + '01';
-
             if (window.state.courses[origDept]) {
                 const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
                 if (idx !== -1) {
@@ -1038,13 +1003,7 @@
             }
 
             if (!window.state.courses[newDept]) window.state.courses[newDept] = [];
-            window.state.courses[newDept].push({
-                name: newName,
-                day: newDay,
-                time: newTime,
-                teacher: newTeacher,
-                startDate: origStartDate
-            });
+            window.state.courses[newDept].push({ name: newName, day: newDay, time: newTime, teacher: newTeacher, startDate: origStartDate });
 
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
 
@@ -1056,65 +1015,40 @@
                         const updatedCourses = courses.map(c => c === origName ? newName : c);
                         stu.courses = updatedCourses;
                         stu.course = updatedCourses.join('、');
-                        updatePromises.push(
-                            setDoc(doc(db, "classLogStudents", stu.firestoreId), {
-                                ...stu,
-                                courses: updatedCourses,
-                                course: stu.course
-                            })
-                        );
+                        updatePromises.push(setDoc(doc(db, "classLogStudents", stu.firestoreId), { ...stu, courses: updatedCourses, course: stu.course }));
                     }
                 });
-                if (updatePromises.length > 0) {
-                    await Promise.all(updatePromises);
-                }
+                if (updatePromises.length > 0) await Promise.all(updatePromises);
             }
 
             document.getElementById('editClassModal').style.display = 'none';
             alert(`✅ 班級【${newName}】資料已成功更新！`);
             initCloudData();
-        } catch (e) {
-            console.error(e);
-            alert('修改班級失敗，請檢查網路連線！');
-        }
+        } catch (e) { console.error(e); alert('修改班級失敗！'); }
     };
 
     window.deleteClassCourseFromModal = async function() {
         const dept = document.getElementById('edit_original_dept').value;
         const className = document.getElementById('edit_original_name').value;
-
-        if (!checkPassword(`🔒 刪除班級【${className}】屬於教務管理操作，請輸入管理密碼：`)) {
-            return;
-        }
+        if (!checkPassword(`🔒 刪除班級【${className}】屬於教務管理操作，請輸入管理密碼：`)) return;
 
         const countInClass = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
             return arr.includes(className) && s.status !== 'graduated';
         }).length;
 
-        let warningText = `⚠️ 確定要刪除班級【${className}】嗎？\n此動作將會從課表與點名表中移除該班級。`;
-        if (countInClass > 0) {
-            warningText += `\n\n📌 提醒：目前有 ${countInClass} 位學生修習此課程，刪除班級不會刪除學生檔案。`;
-        }
+        let warningText = `⚠️ 確定要刪除班級【${className}】嗎？`;
+        if (countInClass > 0) warningText += `\n\n📌 提醒：目前有 ${countInClass} 位學生修習此課程。`;
 
         if (confirm(warningText)) {
             try {
-                window.state.courses[dept] = window.state.courses[dept].filter(c => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return cName !== className;
-                });
-
+                window.state.courses[dept] = window.state.courses[dept].filter(c => (typeof c === 'object' ? c.name : c) !== className);
                 await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
                 document.getElementById('editClassModal').style.display = 'none';
                 alert(`✅ 班級【${className}】已成功刪除！`);
-                if (window.state.currentFilterClass === className) {
-                    window.state.currentFilterClass = null;
-                }
+                if (window.state.currentFilterClass === className) window.state.currentFilterClass = null;
                 initCloudData();
-            } catch (e) {
-                console.error(e);
-                alert('刪除班級失敗，請檢查網路連線！');
-            }
+            } catch (e) { console.error(e); alert('刪除班級失敗！'); }
         }
     };
 
@@ -1137,23 +1071,16 @@
         let filtered = window.state.students.filter(s => {
             const isGraduated = s.status === 'graduated';
             const stuCourses = getStudentCoursesArray(s);
-
-            if (deptKey === 'graduated') {
-                return isGraduated;
-            } else if (deptKey === 'all') {
-                return !isGraduated;
-            } else {
+            if (deptKey === 'graduated') return isGraduated;
+            else if (deptKey === 'all') return !isGraduated;
+            else {
                 if (isGraduated) return false;
                 if (filterClass) return stuCourses.includes(filterClass);
                 return stuCourses.some(c => deptClasses.includes(c));
             }
         });
 
-        filtered.sort((a, b) => {
-            const nameA = a.name || '';
-            const nameB = b.name || '';
-            return nameA.localeCompare(nameB, 'zh-Hant');
-        });
+        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hant'));
 
         if (keyword) {
             filtered = filtered.filter(s => {
@@ -1168,18 +1095,14 @@
         }
 
         let titleDesc = '目前學生名冊';
-        if (deptKey === 'graduated') {
-            titleDesc = '🎓 畢業/離班學員清單';
-        } else if (deptKey === 'all') {
-            titleDesc = '🌟 全校所有學生總覽';
-        } else {
-            titleDesc = `目前學生名冊 (${filterClass || (deptKey==='care'?'課輔部':(deptKey==='elementary'?'國小部':'國中部'))})`;
-        }
+        if (deptKey === 'graduated') titleDesc = '🎓 畢業/離班學員清單';
+        else if (deptKey === 'all') titleDesc = '🌟 全校所有學生總覽';
+        else titleDesc = `目前學生名冊 (${filterClass || (deptKey==='care'?'課輔部':(deptKey==='elementary'?'國小部':'國中部'))})`;
 
         document.getElementById('studentListTitle').innerText = `${titleDesc} - 共 ${filtered.length} 人`;
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="padding:25px; color:#888; text-align:center;">目前查無學生資料。可點擊上方按鈕新增學生！</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="padding:25px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
             return;
         }
 
@@ -1187,23 +1110,15 @@
         filtered.forEach((stu, idx) => {
             const stuCourses = getStudentCoursesArray(stu);
             const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
-
             const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
             const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
             const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
-
-            const formatPlainPhone = (p) => {
-                if (!p || !p.number || p.number.trim() === '') return `<span style="color:#bbb;">-</span>`;
-                return `<div class="phone-plain-cell"><b>${p.label || '電話'}:</b> ${p.number}</div>`;
-            };
+            const formatPlainPhone = (p) => (!p || !p.number || p.number.trim() === '') ? `<span style="color:#bbb;">-</span>` : `<div class="phone-plain-cell"><b>${p.label || '電話'}:</b> ${p.number}</div>`;
 
             html += `
                 <tr>
                     <td>${idx + 1}</td>
-                    <td>
-                        <b style="font-size:14px; color:var(--primary);">${stu.name}</b>
-                        <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px; margin-left:2px;">${stu.gender || '男'}</span>
-                    </td>
+                    <td><b style="font-size:14px; color:var(--primary);">${stu.name}</b> <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px; margin-left:2px;">${stu.gender || '男'}</span></td>
                     <td style="font-size:12px; color:#555;">${stu.birthday || '-'}</td>
                     <td><b>${stu.school || '-'}</b></td>
                     <td style="font-size:12px;">${stu.studentClass || '-'}</td>
@@ -1220,14 +1135,12 @@
                 </tr>
             `;
         });
-
         tbody.innerHTML = html;
     };
 
     function getCourseOptionsHtml(selectedValue = "") {
         let html = `<option value="">-- 請選擇班級課程 --</option>`;
         const deptLabels = { care: '🏢 課輔部', elementary: '📘 國小部', junior: '📙 國中部' };
-
         ['care', 'elementary', 'junior'].forEach(dept => {
             const list = window.state.courses[dept] || [];
             if (list.length > 0) {
@@ -1245,24 +1158,18 @@
     window.addCourseSelectRow = function(wrapperId, selectedValue = "") {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
-
         const row = document.createElement('div');
         row.className = 'dynamic-course-row';
-
         const select = document.createElement('select');
         select.style.margin = "0";
         select.innerHTML = getCourseOptionsHtml(selectedValue);
-
         const removeBtn = document.createElement('button');
         removeBtn.type = "button";
         removeBtn.className = "btn btn-danger";
         removeBtn.style.padding = "6px 12px";
         removeBtn.style.fontSize = "12px";
         removeBtn.innerText = "✖ 移除";
-        removeBtn.onclick = function() {
-            row.remove();
-        };
-
+        removeBtn.onclick = () => row.remove();
         row.appendChild(select);
         row.appendChild(removeBtn);
         wrapper.appendChild(row);
@@ -1272,14 +1179,8 @@
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
         wrapper.innerHTML = '';
-
-        if (!coursesArr || coursesArr.length === 0) {
-            addCourseSelectRow(wrapperId, "");
-        } else {
-            coursesArr.forEach(cName => {
-                addCourseSelectRow(wrapperId, cName);
-            });
-        }
+        if (!coursesArr || coursesArr.length === 0) addCourseSelectRow(wrapperId, "");
+        else coursesArr.forEach(cName => addCourseSelectRow(wrapperId, cName));
     }
 
     function getSelectedCoursesFromWrapper(wrapperId) {
@@ -1289,9 +1190,7 @@
         const list = [];
         selects.forEach(sel => {
             const val = sel.value.trim();
-            if (val && !list.includes(val)) {
-                list.push(val);
-            }
+            if (val && !list.includes(val)) list.push(val);
         });
         return list;
     }
@@ -1300,7 +1199,6 @@
         document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案";
         document.getElementById('editStudentFirestoreId').value = "";
         document.getElementById('btnDeleteStudent').style.display = "none";
-
         document.getElementById('m_stu_name').value = "";
         document.getElementById('m_stu_gender').value = "男";
         document.getElementById('m_stu_idcard').value = "";
@@ -1308,20 +1206,17 @@
         document.getElementById('m_stu_class').value = "";
         document.getElementById('m_stu_birthday').value = "";
         document.getElementById('m_stu_status').value = "active";
-
         document.getElementById('m_stu_p1_label').value = "媽媽";
         document.getElementById('m_stu_p1_num').value = "";
         document.getElementById('m_stu_p2_label').value = "爸爸";
         document.getElementById('m_stu_p2_num').value = "";
         document.getElementById('m_stu_p3_label').value = "學生本人";
         document.getElementById('m_stu_p3_num').value = "";
-
         document.getElementById('m_stu_address').value = "";
         document.getElementById('m_stu_father_job').value = "";
         document.getElementById('m_stu_mother_job').value = "";
         document.getElementById('m_stu_health').value = "";
         document.getElementById('m_stu_notes').value = "";
-
         populateDynamicCourses('studentCoursesWrapper', []);
         document.getElementById('studentModal').style.display = "flex";
     };
@@ -1329,11 +1224,9 @@
     window.openEditStudentModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
-
         document.getElementById('studentModalTitle').innerText = `✏️ 編輯【${stu.name}】學籍檔案`;
         document.getElementById('editStudentFirestoreId').value = firestoreId;
         document.getElementById('btnDeleteStudent').style.display = "inline-block";
-
         document.getElementById('m_stu_name').value = stu.name || '';
         document.getElementById('m_stu_gender').value = stu.gender || '男';
         document.getElementById('m_stu_idcard').value = stu.idCard || '';
@@ -1341,39 +1234,30 @@
         document.getElementById('m_stu_class').value = stu.studentClass || '';
         document.getElementById('m_stu_birthday').value = stu.birthday || '';
         document.getElementById('m_stu_status').value = stu.status || 'active';
-
         const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
         const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
         const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
-
         document.getElementById('m_stu_p1_label').value = p1.label || '媽媽';
         document.getElementById('m_stu_p1_num').value = p1.number || '';
         document.getElementById('m_stu_p2_label').value = p2.label || '爸爸';
         document.getElementById('m_stu_p2_num').value = p2.number || '';
         document.getElementById('m_stu_p3_label').value = p3.label || '學生本人';
         document.getElementById('m_stu_p3_num').value = p3.number || '';
-
         document.getElementById('m_stu_address').value = stu.address || '';
         document.getElementById('m_stu_father_job').value = stu.fatherJob || '';
         document.getElementById('m_stu_mother_job').value = stu.motherJob || '';
         document.getElementById('m_stu_health').value = stu.health || '';
         document.getElementById('m_stu_notes').value = stu.notes || '';
-
-        const selectedCourses = getStudentCoursesArray(stu);
-        populateDynamicCourses('studentCoursesWrapper', selectedCourses);
-
+        populateDynamicCourses('studentCoursesWrapper', getStudentCoursesArray(stu));
         document.getElementById('studentModal').style.display = "flex";
     };
 
-    window.closeStudentModal = function() {
-        document.getElementById('studentModal').style.display = "none";
-    };
+    window.closeStudentModal = function() { document.getElementById('studentModal').style.display = "none"; };
 
     window.saveStudentMasterData = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value.trim();
         const selectedCourses = getSelectedCoursesFromWrapper('studentCoursesWrapper');
-
         if (!name) return alert('⚠️ 學生姓名不能為空白！');
         if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
 
@@ -1402,36 +1286,23 @@
         try {
             if (firestoreId) {
                 const target = window.state.students.find(s => s.firestoreId === firestoreId);
-                await setDoc(doc(db, "classLogStudents", firestoreId), {
-                    ...studentData,
-                    attendanceLogs: (target && target.attendanceLogs) || []
-                });
+                await setDoc(doc(db, "classLogStudents", firestoreId), { ...studentData, attendanceLogs: (target && target.attendanceLogs) || [] });
             } else {
                 const docRef = doc(collection(db, "classLogStudents"));
-                await setDoc(docRef, {
-                    ...studentData,
-                    attendanceLogs: []
-                });
+                await setDoc(docRef, { ...studentData, attendanceLogs: [] });
             }
             closeStudentModal();
             alert(`✅ 學生【${name}】的學籍資料已成功儲存！`);
             initCloudData();
-        } catch (e) {
-            console.error(e);
-            alert('儲存失敗，請檢查網路連線！');
-        }
+        } catch (e) { console.error(e); alert('儲存失敗！'); }
     };
 
     window.openQuickAssignModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
-
         document.getElementById('quickAssignTitle').innerText = `📋 為【${stu.name}】加選班級課程`;
         document.getElementById('quickAssignFirestoreId').value = firestoreId;
-
-        const currentCourses = getStudentCoursesArray(stu);
-        populateDynamicCourses('quickAssignWrapper', currentCourses);
-
+        populateDynamicCourses('quickAssignWrapper', getStudentCoursesArray(stu));
         document.getElementById('quickAssignModal').style.display = 'flex';
     };
 
@@ -1439,40 +1310,24 @@
         const firestoreId = document.getElementById('quickAssignFirestoreId').value;
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
-
         const selectedCourses = getSelectedCoursesFromWrapper('quickAssignWrapper');
-
-        if (selectedCourses.length === 0) {
-            return alert('⚠️ 請至少選擇一個修習班級！');
-        }
+        if (selectedCourses.length === 0) return alert('⚠️ 請至少選擇一個修習班級！');
 
         try {
             stu.courses = selectedCourses;
             stu.course = selectedCourses.join('、');
-
-            await setDoc(doc(db, "classLogStudents", firestoreId), {
-                ...stu,
-                courses: selectedCourses,
-                course: stu.course
-            });
-
+            await setDoc(doc(db, "classLogStudents", firestoreId), { ...stu, courses: selectedCourses, course: stu.course });
             document.getElementById('quickAssignModal').style.display = 'none';
             alert(`✅ 已成功更新【${stu.name}】的修課名冊！`);
             initCloudData();
-        } catch (e) {
-            console.error(e);
-            alert('加選班級失敗');
-        }
+        } catch (e) { console.error(e); alert('加選班級失敗'); }
     };
 
     window.deleteMasterStudent = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value;
         if (!firestoreId) return;
-
-        if (!checkPassword(`🔒 刪除【${name}】的學籍資料屬於危險操作，請輸入管理密碼：`)) {
-            return;
-        }
+        if (!checkPassword(`🔒 刪除【${name}】的學籍資料屬於危險操作，請輸入管理密碼：`)) return;
 
         if (confirm(`⚠️ 確定要永久刪除【${name}】的學生檔案嗎？此動作無法復原！`)) {
             try {
@@ -1480,10 +1335,7 @@
                 closeStudentModal();
                 alert(`✅ 學生【${name}】的資料已成功刪除！`);
                 initCloudData();
-            } catch (e) {
-                console.error(e);
-                alert('刪除失敗，請確認網路連線！');
-            }
+            } catch (e) { console.error(e); alert('刪除失敗！'); }
         }
     };
 
@@ -1501,7 +1353,6 @@
         const day = document.getElementById('m_new_class_day').value.trim() || '星期一';
         const time = document.getElementById('m_new_class_time').value.trim() || '未設定';
         const teacher = document.getElementById('m_new_class_teacher').value.trim() || '任課老師';
-
         if (!name) return alert('請輸入班級課程名稱！');
 
         if (!window.state.courses[dept]) window.state.courses[dept] = [];
@@ -1512,9 +1363,7 @@
             document.getElementById('addClassModal').style.display = 'none';
             alert(`✅ 已成功新增【${name}】班級！`);
             initCloudData();
-        } catch (e) {
-            alert('新增班級失敗');
-        }
+        } catch (e) { alert('新增班級失敗'); }
     };
 
     function getParentPhone(stu) {
@@ -1529,7 +1378,6 @@
     function getAllCoursesList() {
         let list = [];
         const defaultStart = new Date().toISOString().slice(0, 8) + '01';
-
         ['care', 'elementary', 'junior'].forEach(dept => {
             (window.state.courses[dept] || []).forEach((c) => {
                 const name = typeof c === 'object' ? c.name : c;
@@ -1543,27 +1391,65 @@
                 });
             });
         });
-
         return list;
     }
 
     // ==========================================
-    // 1. 今日點名與課堂清單 (今日全部 / 今日國中 / 今日國小 / 今日課輔)
+    // 1. 今日點名與可拖曳排序篩選列
     // ==========================================
     window.onDateChange = function() {
         renderCourseCards();
         if (window.state.currentCourse) selectCourse(window.state.currentCourse.name);
     };
 
+    function renderCourseFilterButtons() {
+        const container = document.getElementById('courseFilterGroup');
+        if (!container) return;
+        container.innerHTML = '';
+
+        window.state.filterOrder.forEach((item, index) => {
+            const btn = document.createElement('div');
+            btn.className = `filter-pill ${window.state.courseFilterMode === item.key ? 'active' : ''}`;
+            btn.draggable = true;
+            btn.dataset.filterKey = item.key;
+            btn.dataset.filterIndex = index;
+
+            btn.innerHTML = `<span class="drag-handle">⠿</span> ${item.label}`;
+
+            btn.onclick = (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                setCourseFilter(item.key);
+            };
+
+            btn.addEventListener('dragstart', handleFilterDragStart);
+            btn.addEventListener('dragover', handleFilterDragOver);
+            btn.addEventListener('drop', handleFilterDrop);
+            btn.addEventListener('dragend', handleFilterDragEnd);
+
+            container.appendChild(btn);
+        });
+    }
+
+    let draggedFilterItem = null;
+    function handleFilterDragStart(e) { draggedFilterItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function handleFilterDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+    function handleFilterDrop(e) {
+        e.stopPropagation();
+        if (draggedFilterItem !== this && this.dataset && this.dataset.filterIndex !== undefined) {
+            const fromIndex = parseInt(draggedFilterItem.dataset.filterIndex);
+            const toIndex = parseInt(this.dataset.filterIndex);
+            const movedItem = window.state.filterOrder.splice(fromIndex, 1)[0];
+            window.state.filterOrder.splice(toIndex, 0, movedItem);
+            localStorage.setItem('gude_filter_order_v2', JSON.stringify(window.state.filterOrder));
+            renderCourseFilterButtons();
+        }
+        return false;
+    }
+    function handleFilterDragEnd() { this.classList.remove('dragging'); draggedFilterItem = null; }
+
     window.setCourseFilter = function(mode) {
         window.state.courseFilterMode = mode;
-        document.querySelectorAll('#courseFilterGroup .filter-btn').forEach(btn => {
-            if (btn.dataset.filter === mode) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
+        renderCourseFilterButtons();
         renderCourseCards();
     };
 
@@ -1581,7 +1467,6 @@
         const allCourses = getAllCoursesList();
         const mode = window.state.courseFilterMode || 'today';
 
-        // 先篩選出今日有排課的課程
         const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
 
         let filteredCourses = [];
@@ -1589,20 +1474,21 @@
             filteredCourses = todayCourses;
         } else if (mode === 'junior') {
             filteredCourses = todayCourses.filter(c => c.dept === 'junior');
-        } else if (mode === 'elementary') {
-            filteredCourses = todayCourses.filter(c => c.dept === 'elementary');
-        } else if (mode === 'care') {
-            filteredCourses = todayCourses.filter(c => c.dept === 'care');
+        } else if (mode === 'elementary_care') {
+            filteredCourses = todayCourses.filter(c => c.dept === 'elementary' || c.dept === 'care');
+        } else if (mode === 'all_courses') {
+            filteredCourses = allCourses;
         }
 
         if (filteredCourses.length === 0) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">
-                本日 (${curDayName}) 此分類無排課班級。
-            </div>`;
+            let msg = `本日 (${curDayName}) 此分類無排課班級。`;
+            if (mode === 'all_courses') msg = `目前全校尚無任何排課班級。`;
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">${msg}</div>`;
             return;
         }
 
         filteredCourses.forEach(c => {
+            const isToday = c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'));
             const deptLabel = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
             const deptColor = c.dept === 'care' ? '#e0f2fe' : (c.dept === 'elementary' ? '#dcfce7' : '#fef3c7');
             const deptTxt = c.dept === 'care' ? '#0369a1' : (c.dept === 'elementary' ? '#15803d' : '#b45309');
@@ -1615,7 +1501,7 @@
                 <span style="font-size:12px; font-weight:bold; background:${deptColor}; color:${deptTxt}; padding:3px 8px; border-radius:4px;">
                     ${deptLabel}
                 </span>
-                <span style="float:right; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:bold; padding:2px 8px; border-radius:4px;">今日排課</span>
+                ${isToday ? '<span style="float:right; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:bold; padding:2px 8px; border-radius:4px;">今日排課</span>' : ''}
                 <div style="font-size:17px; font-weight:bold; margin:8px 0 3px; color:var(--primary);">${c.name}</div>
                 <div style="font-size:13px; color:#64748b;">開課日：${c.startDate} | 授課：${c.teacher || '任課老師'} (${c.day || '未設時間'})</div>
             `;
@@ -1816,7 +1702,6 @@
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
         const baseDate = new Date(baseStart);
         const daysPerPeriod = (info.weeks - 1) * 7;
-
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
         document.getElementById('sheetQueryStartDate').value = baseStart;
@@ -1976,19 +1861,14 @@
     window.saveCourseConfig = async function(dept, courseName) {
         const startDate = document.getElementById(`cfg_start_${courseName}`).value;
         const targetList = window.state.courses[dept];
-
         const target = targetList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
-        if (target && typeof target === 'object') {
-            target.startDate = startDate;
-        }
+        if (target && typeof target === 'object') target.startDate = startDate;
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
             alert(`【${courseName}】開課起始日已儲存！`);
             renderCourseCards();
-        } catch (e) {
-            alert('儲存失敗！');
-        }
+        } catch (e) { alert('儲存失敗！'); }
     };
 
     window.verifyAndAddHoliday = function() {
