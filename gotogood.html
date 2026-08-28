@@ -54,10 +54,10 @@
         .edit-icon-btn:hover { background: #e0e7ff; }
 
         /* 追蹤清單區塊化卡片（支援自由拖曳移動） */
-        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
-        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; min-height: 100px; }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; transition: box-shadow 0.15s; position: relative; user-select: none; }
         .tracking-block:active { cursor: grabbing; }
-        .tracking-block.dragging { opacity: 0.4; background: #e2e8f0; border: 2px dashed var(--primary-color); }
+        .tracking-block.dragging { opacity: 0.3; background: #e2e8f0; border: 2px dashed var(--primary-color); }
         
         .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
         .block-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
@@ -165,8 +165,8 @@
             <div class="card">
                 <h3>📊 步驟三：招生追蹤區塊看板</h3>
                 
-                <div id="trackingCardContainer">
-                    <div class="tracking-block" draggable="true" ondragstart="handleTrackingDragStart(event)" ondragover="handleTrackingDragOver(event)" ondrop="handleTrackingDrop(event)" ondragend="handleTrackingDragEnd(event)">
+                <div id="trackingCardContainer" ondragover="allowDrop(event)">
+                    <div class="tracking-block" draggable="true" ondragstart="handleTrackingDragStart(event)" ondragend="handleTrackingDragEnd(event)">
                         <div class="block-header">
                             <div class="block-title">
                                 <span>📌</span> 
@@ -174,7 +174,7 @@
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                                 <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">預約試聽中</span>
                             </div>
-                            <div class="block-top-actions">
+                            <div class="block-top-actions" onclick="event.stopPropagation()">
                                 <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                                 <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                                 <input type="hidden" class="s-inquirer" value="林媽媽">
@@ -226,7 +226,7 @@
                         <tr>
                             <th>學生</th>
                             <th>招生明細 (課程)</th>
-                            <th>介紹人 (可點擊修改)</th>
+                            <th>介紹人</th>
                             <th>確定進班</th>
                             <th>獎金發放狀態</th>
                         </tr>
@@ -427,34 +427,33 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // 下方追蹤看板區塊的拖曳移動功能
+        // 下方追蹤看板區塊的拖曳移動功能（修正版）
         let draggedTrackingBlock = null;
 
         function handleTrackingDragStart(e) {
             draggedTrackingBlock = this;
-            this.classList.add('dragging');
+            e.stopPropagation();
+            setTimeout(() => this.classList.add('dragging'), 0);
             e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleTrackingDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const container = document.getElementById('trackingCardContainer');
-            const afterElement = getTrackingDragAfterElement(container, e.clientY);
-            if (afterElement == null) {
-                container.appendChild(draggedTrackingBlock);
-            } else {
-                container.insertBefore(draggedTrackingBlock, afterElement);
-            }
-        }
-
-        function handleTrackingDrop(e) {
-            e.preventDefault();
         }
 
         function handleTrackingDragEnd(e) {
             this.classList.remove('dragging');
             draggedTrackingBlock = null;
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            const container = document.getElementById('trackingCardContainer');
+            const draggingEl = document.querySelector('.tracking-block.dragging');
+            if (!draggingEl) return;
+
+            const afterElement = getTrackingDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggingEl);
+            } else {
+                container.insertBefore(draggingEl, afterElement);
+            }
         }
 
         function getTrackingDragAfterElement(container, y) {
@@ -503,8 +502,6 @@
             newBlock.className = 'tracking-block';
             newBlock.setAttribute('draggable', 'true');
             newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
-            newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
-            newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
             newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
             
             const timestamp = getFormattedTimestamp();
@@ -518,7 +515,7 @@
                         <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                         <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                     </div>
-                    <div class="block-top-actions">
+                    <div class="block-top-actions" onclick="event.stopPropagation()">
                         <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                         <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                         <input type="hidden" class="s-inquirer" value="${inquirer}">
@@ -664,8 +661,6 @@
                     newBlock.className = 'tracking-block';
                     newBlock.setAttribute('draggable', 'true');
                     newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
-                    newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
-                    newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
                     newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
                     
                     const timestamp = getFormattedTimestamp();
@@ -678,7 +673,7 @@
                                 <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                                 <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                             </div>
-                            <div class="block-top-actions">
+                            <div class="block-top-actions" onclick="event.stopPropagation()">
                                 <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知家長</button>
                                 <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
                                 <input type="hidden" class="s-inquirer" value="${inquirer}">
@@ -827,14 +822,13 @@
             }
         }
 
-        // 推薦人與獎金發放明細管理（僅抓取正式進班學生，支援介紹人直接修改）
+        // 推薦人與獎金發放明細管理
         let referrerBonusStore = {}; 
 
         function updateReferrerTable() {
             const tbody = document.getElementById('referrerDetailTableBody');
             tbody.innerHTML = '';
 
-            // 嚴格只抓取「已正式進班」名單中的學員
             const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
             let hasRecord = false;
 
@@ -870,7 +864,7 @@
                             <td><strong>${studentName}</strong></td>
                             <td>${courseName}</td>
                             <td>
-                                <input type="text" value="${referrerName}" onchange="updateReferrerInline(this, '${item.id || index}')" style="padding: 0.3rem; border: 1px solid var(--border-color); border-radius: 4px; width: 140px; font-weight: 600; color: var(--primary-color);">
+                                <input type="text" value="${referrerName}" onchange="updateReferrerInline(this, '${studentName}')" style="padding: 0.3rem; border: 1px solid var(--border-color); border-radius: 4px; width: 140px; font-weight: 600; color: var(--primary-color);">
                             </td>
                             <td><span style="color:var(--success-color); font-weight:600;">${dateText}</span></td>
                             <td>
@@ -889,13 +883,9 @@
             }
         }
 
-        // 支援直接在表格中修改介紹人名字並同步更新
-        function updateReferrerInline(inputEl, rowId) {
+        function updateReferrerInline(inputEl, studentName) {
             const newReferrerVal = inputEl.value.trim();
-            const tr = inputEl.closest('tr');
-            const studentName = tr.querySelector('td:nth-child(1)').innerText;
 
-            // 同步更新正式名單表格中該學員的隱藏 input 值
             const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
             enrolledRows.forEach(row => {
                 const nameEl = row.querySelector('.s-name');
