@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>招生與進班管理系統</title>
+    <title>斗六顧德補習班 - 招生與進班雲端管理系統</title>
+    <!-- 引入 SortableJS 支援拖曳排序 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --bg-body: #f3f4f6;
-            --bg-card: #ffffff;
-            --border-color: #cbd5e1;
+            --primary-color: #0F172A;
+            --accent-color: #2563EB;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --border-color: #CBD5E1;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -22,7 +25,7 @@
         .container { max-width: 1250px; margin: 0 auto; }
         
         .page-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .page-header h1 { font-size: 1.5rem; font-weight: 700; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
         .page-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
 
         /* 底部固定導覽列（手機版好按） */
@@ -55,36 +58,36 @@
             gap: 0.2rem;
             flex: 1;
         }
-        .tab-btn.active { background: #e0e7ff; color: var(--primary-color); }
+        .tab-btn.active { background: #E0E7FF; color: var(--accent-color); }
 
         .card { background: var(--bg-card); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.25rem; margin-bottom: 1.5rem; }
-        .card h3 { font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
+        .card h3 { font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--accent-color); display: flex; align-items: center; gap: 0.5rem; }
         
         /* 表單方塊網格（好填寫） */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
-        .form-block-item { background: #f8fafc; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: grab; user-select: none; transition: background 0.2s; }
+        .form-block-item { background: #F8FAFC; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: grab; user-select: none; transition: background 0.2s; }
         .form-block-item:active { cursor: grabbing; }
-        .form-block-item.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
+        .form-block-item.dragging { opacity: 0.3; background: #CBD5E1; border: 2px dashed var(--accent-color); }
         
-        .form-block-item label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; pointer-events: none; }
+        .form-block-item label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.5rem; pointer-events: none; }
         .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem; background: #ffffff; cursor: text; }
         .form-block-item select { height: 48px; }
 
-        .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 0.375rem; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; }
+        .btn { background-color: var(--accent-color); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 0.375rem; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; }
         .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; width: auto; }
         
-        .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
-        .edit-icon-btn:hover { background: #e0e7ff; }
+        .edit-icon-btn { background: none; border: none; color: var(--accent-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
+        .edit-icon-btn:hover { background: #E0E7FF; }
 
         /* 追蹤清單區塊化卡片 */
         #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; min-height: 100px; }
-        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; cursor: grab; user-select: none; }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--accent-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; cursor: grab; user-select: none; }
         .tracking-block:active { cursor: grabbing; }
-        .tracking-block.dragging { opacity: 0.3; background: #cbd5e1; border: 2px dashed var(--primary-color); }
+        .tracking-block.dragging { opacity: 0.3; background: #CBD5E1; border: 2px dashed var(--accent-color); }
 
         .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; pointer-events: none; }
         .block-header * { pointer-events: auto; } 
@@ -93,25 +96,25 @@
         .block-top-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
         .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.75rem; }
-        .block-footer { background: #f8fafc; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.8rem; }
+        .block-footer { background: #F8FAFC; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.8rem; }
 
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; min-width: 600px; }
         th, td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; vertical-align: top; }
-        th { background-color: #f9fafb; color: var(--text-muted); font-weight: 600; }
+        th { background-color: #F1F5F9; color: var(--text-muted); font-weight: 600; }
         
         .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
-        .badge-line { background: #d1fae5; color: #065f46; }
-        .badge-enrolled { background: #d1fae5; color: #065f46; }
+        .badge-line { background: #D1FAE5; color: #065F46; }
+        .badge-enrolled { background: #D1FAE5; color: #065F46; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
         .modal-content { background: white; padding: 1.5rem; border-radius: 0.75rem; width: 100%; max-width: 650px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
-        .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
+        .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent-color); }
         
-        .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; }
+        .clickable-cell { cursor: pointer; color: var(--accent-color); font-weight: 600; text-decoration: underline; }
         .clickable-cell:hover { opacity: 0.8; }
 
         @media(min-width: 768px) {
@@ -120,7 +123,7 @@
             .tab-nav { 
                 position: static; 
                 width: auto; 
-                background: #e5e7eb; 
+                background: #E2E8F0; 
                 box-shadow: none; 
                 border-top: none;
                 flex-direction: row; 
@@ -138,8 +141,8 @@
     <div class="container">
         <div class="page-header">
             <div>
-                <h1>招生與進班管理系統</h1>
-                <p>未進班方塊化追蹤、正式進班與推薦人獎金獨立管理</p>
+                <h1>斗六顧德補習班 - 招生與進班系統</h1>
+                <p>未進班方塊化追蹤、正式進班與推薦人獎金雲端管理</p>
             </div>
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('trackingTab', this)"><span>📋</span> <span>未進班看板</span></button>
@@ -150,7 +153,7 @@
 
         <!-- 頁面一：未進班追蹤區塊清單 -->
         <div id="trackingTab" class="tab-content active">
-            <!-- 步驟二：表單方塊（順序已調整且支援拖曳） -->
+            <!-- 步驟二：表單方塊 -->
             <div class="card">
                 <h3>📝 問班與老師追蹤管理</h3>
                 
@@ -207,34 +210,7 @@
             <!-- 追蹤區塊看板 -->
             <div class="card">
                 <h3>📊 招生追蹤區塊看板</h3>
-                
-                <div id="trackingCardContainer">
-                    <div class="tracking-block" draggable="true" ondragstart="handleTrackingDragStart(event)" ondragover="handleTrackingDragOver(event)" ondrop="handleTrackingDrop(event)" ondragend="handleTrackingDragEnd(event)">
-                        <div class="block-header">
-                            <div class="block-title">
-                                <span>📌</span> 
-                                <strong class="s-name">林美華</strong>
-                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
-                                <span class="badge badge-line s-status" style="font-size:0.7rem;">預約試聽中</span>
-                            </div>
-                            <div class="block-top-actions">
-                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
-                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
-                                <input type="hidden" class="s-inquirer" value="林媽媽">
-                                <input type="hidden" class="s-referrer" value="李大同">
-                                <input type="hidden" class="s-source" value="LINE">
-                            </div>
-                        </div>
-                        <div class="block-body">
-                            <div><strong>預約課程：</strong> <span class="s-course">全科暑期班</span></div>
-                            <div><strong>聯絡電話：</strong> <span class="s-phone">0923-456789</span></div>
-                            <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></div>
-                        </div>
-                        <div class="block-footer">
-                            <div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽。</div>
-                        </div>
-                    </div>
-                </div>
+                <div id="trackingCardContainer"></div>
             </div>
         </div>
 
@@ -255,8 +231,7 @@
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="enrolledTableBody">
-                        </tbody>
+                        <tbody id="enrolledTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -277,8 +252,7 @@
                                 <th>獎金狀態</th>
                             </tr>
                         </thead>
-                        <tbody id="referrerDetailTableBody">
-                        </tbody>
+                        <tbody id="referrerDetailTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -295,8 +269,7 @@
                                 <th>明細 (學生與班級)</th>
                             </tr>
                         </thead>
-                        <tbody id="teacherRankingTableBody">
-                        </tbody>
+                        <tbody id="teacherRankingTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -313,7 +286,7 @@
             </div>
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">通知事項分類</label>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #F8FAFC; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem;">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                         <input type="radio" name="notifyType" value="通知試聽" checked style="width: 16px; height: 16px;"> 通知試聽
                     </label>
@@ -402,10 +375,84 @@
             <div class="modal-header" id="referrerModalTitle">🎁 獎金與比率分配管理</div>
             <div id="referrerModalBody" style="margin-bottom: 1.5rem;"></div>
             <div style="display: flex; justify-content: flex-end;">
-                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉並儲存</button>
+                <button type="button" class="btn btn-sm" style="background-color: var(--accent-color);" onclick="closeReferrerModal()">關閉並儲存</button>
             </div>
         </div>
     </div>
+
+    <!-- Firebase 雲端模組 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+            authDomain: "my-project-9999-479215.firebaseapp.com",
+            projectId: "my-project-9999-479215",
+            storageBucket: "my-project-9999-479215.firebasestorage.app",
+            messagingSenderId: "1020162825898",
+            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+
+        window.admissionData = {
+            tracking: [],
+            enrolled: [],
+            referrerBonus: {}
+        };
+
+        async function initAdmissionCloud() {
+            try {
+                const docSnap = await getDoc(doc(db, "settings", "admissionSystemData"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.admissionData.tracking = data.tracking || [];
+                    window.admissionData.enrolled = data.enrolled || [];
+                    window.admissionData.referrerBonus = data.referrerBonus || {};
+                } else {
+                    // 預設示範資料
+                    window.admissionData.tracking = [
+                        {
+                            id: Date.now(),
+                            name: "林美華",
+                            inquirer: "林媽媽",
+                            referrer: "李大同",
+                            course: "全科暑期班",
+                            phone: "0923-456789",
+                            trialDate: "2026-09-01",
+                            teacher: "陳老師",
+                            status: "預約試聽中",
+                            log: '<strong style="color:var(--accent-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽。'
+                        }
+                    ];
+                }
+                renderAllViews();
+            } catch (e) {
+                console.error("載入招生雲端資料失敗：", e);
+            }
+        }
+
+        window.saveAdmissionCloud = async function() {
+            try {
+                await setDoc(doc(db, "settings", "admissionSystemData"), window.admissionData);
+            } catch (e) {
+                console.error("儲存招生雲端資料失敗：", e);
+            }
+        }
+
+        initAdmissionCloud();
+    </script>
 
     <script>
         let currentEditingElement = null; 
@@ -504,6 +551,7 @@
         function handleTrackingDragEnd(e) {
             this.classList.remove('dragging');
             draggedTrackingBlock = null;
+            syncDOMToData();
         }
 
         function getTrackingDragAfterElement(container, y) {
@@ -519,65 +567,140 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        function saveInquiry() {
-            const name = document.getElementById('studentName').value;
-            const inquirer = document.getElementById('inquirer').value || '未填寫';
+        function renderAllViews() {
+            renderTrackingBlocks();
+            renderEnrolledTable();
+        }
+
+        function renderTrackingBlocks() {
+            const container = document.getElementById('trackingCardContainer');
+            container.innerHTML = '';
+
+            if (!window.admissionData.tracking || window.admissionData.tracking.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">目前尚無未進班追蹤紀錄</div>`;
+                return;
+            }
+
+            window.admissionData.tracking.forEach(item => {
+                const block = document.createElement('div');
+                block.className = 'tracking-block';
+                block.setAttribute('draggable', 'true');
+                block.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
+                block.setAttribute('ondragover', 'handleTrackingDragOver(event)');
+                block.setAttribute('ondrop', 'handleTrackingDrop(event)');
+                block.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
+                block.dataset.id = item.id;
+
+                block.innerHTML = `
+                    <div class="block-header">
+                        <div class="block-title">
+                            <span>📌</span> 
+                            <strong class="s-name">${item.name}</strong>
+                            <button class="edit-icon-btn" onclick="openEditModalById(${item.id}, false)" title="修改資料">✏️</button>
+                            <span class="badge badge-line s-status" style="font-size:0.7rem;">${item.status}</span>
+                        </div>
+                        <div class="block-top-actions">
+                            <button class="btn btn-sm btn-success" onclick="openNotifyModalById(${item.id})">✓ 已通知</button>
+                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolledById(${item.id})">進班 ➔</button>
+                            <input type="hidden" class="s-inquirer" value="${item.inquirer}">
+                            <input type="hidden" class="s-referrer" value="${item.referrer}">
+                        </div>
+                    </div>
+                    <div class="block-body">
+                        <div><strong>預約課程：</strong> <span class="s-course">${item.course}</span></div>
+                        <div><strong>聯絡電話：</strong> <span class="s-phone">${item.phone}</span></div>
+                        <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">${item.trialDate}</span></div>
+                    </div>
+                    <div class="block-footer">
+                        <div class="s-log">${item.log}</div>
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+        }
+
+        function renderEnrolledTable() {
+            const tbody = document.getElementById('enrolledTableBody');
+            tbody.innerHTML = '';
+
+            if (!window.admissionData.enrolled || window.admissionData.enrolled.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">尚無正式進班學員紀錄</td></tr>`;
+                return;
+            }
+
+            window.admissionData.enrolled.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <strong class="s-name">${item.name}</strong>
+                        <button class="edit-icon-btn" onclick="openEditModalById(${item.id}, true)" title="修改資料" style="background:none; border:none; color:var(--accent-color); cursor:pointer;">✏️</button>
+                        <input type="hidden" class="s-inquirer" value="${item.inquirer}">
+                        <input type="hidden" class="s-referrer" value="${item.referrer}">
+                    </td>
+                    <td><span class="s-course">${item.course}</span></td>
+                    <td><span class="s-phone">${item.phone}</span></td>
+                    <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${item.enrollDate}</span></td>
+                    <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
+                    <td><div class="s-log">${item.log}</div></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModalById(${item.id}, true)">✏️ 修改資料</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.syncDOMToData = function() {
+            const blocks = document.querySelectorAll('#trackingCardContainer .tracking-block');
+            let newTracking = [];
+            blocks.forEach(b => {
+                const id = parseInt(b.dataset.id);
+                const item = window.admissionData.tracking.find(x => x.id === id);
+                if (item) newTracking.push(item);
+            });
+            window.admissionData.tracking = newTracking;
+            window.saveAdmissionCloud();
+        }
+
+        window.saveInquiry = function() {
+            const name = document.getElementById('studentName').value.trim();
+            const inquirer = document.getElementById('inquirer').value.trim() || '未填寫';
             const referrer = document.getElementById('referrer').value.trim();
-            const course = document.getElementById('studentCourse').value;
-            const phone = document.getElementById('studentPhone').value;
+            const course = document.getElementById('studentCourse').value.trim();
+            const phone = document.getElementById('studentPhone').value.trim();
             const tDate = document.getElementById('trialDate').value || '未定';
-            const teacher = document.getElementById('assignedTeacher').value || '未指定';
+            const teacher = document.getElementById('assignedTeacher').value.trim() || '未指定';
             const status = document.getElementById('studentStatus').value;
-            const note = document.getElementById('trackNote').value;
-            const source = document.getElementById('leadSource').value;
+            const note = document.getElementById('trackNote').value.trim();
 
             if(!name) { alert('請填寫學生姓名！'); return; }
 
-            const container = document.getElementById('trackingCardContainer');
-            const newBlock = document.createElement('div');
-            newBlock.className = 'tracking-block';
-            newBlock.setAttribute('draggable', 'true');
-            newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
-            newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
-            newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
-            newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
-            
             const timestamp = getFormattedTimestamp();
-            const initialLog = note ? `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - ${note}` : `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - 建立追蹤紀錄`;
+            const initialLog = note ? `<strong style="color:var(--accent-color);">[${teacher}]</strong> ${timestamp} - ${note}` : `<strong style="color:var(--accent-color);">[${teacher}]</strong> ${timestamp} - 建立追蹤紀錄`;
 
-            newBlock.innerHTML = `
-                <div class="block-header">
-                    <div class="block-title">
-                        <span>📌</span> 
-                        <strong class="s-name">${name}</strong>
-                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
-                        <span class="badge badge-line s-status" style="font-size:0.7rem;">${status}</span>
-                    </div>
-                    <div class="block-top-actions">
-                        <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
-                        <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
-                        <input type="hidden" class="s-inquirer" value="${inquirer}">
-                        <input type="hidden" class="s-referrer" value="${referrer}">
-                        <input type="hidden" class="s-source" value="${source}">
-                    </div>
-                </div>
-                <div class="block-body">
-                    <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
-                    <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
-                    <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">${tDate}</span></div>
-                </div>
-                <div class="block-footer">
-                    <div class="s-log">${initialLog}</div>
-                </div>
-            `;
-            container.appendChild(newBlock);
-            alert('已成功新增至追蹤區塊列表！');
+            const newItem = {
+                id: Date.now(),
+                name: name,
+                inquirer: inquirer,
+                referrer: referrer,
+                course: course,
+                phone: phone,
+                trialDate: tDate,
+                teacher: teacher,
+                status: status,
+                log: initialLog
+            };
+
+            window.admissionData.tracking.push(newItem);
+            window.saveAdmissionCloud();
+            renderTrackingBlocks();
+
+            alert('已成功新增至追蹤區塊列表並同步雲端！');
             document.getElementById('inquiryForm').reset();
         }
 
-        function openNotifyModal(btn) {
+        window.openNotifyModal = function(btn) {
             activeNotifyElement = btn.closest('.tracking-block') || btn.closest('tr');
-            
             const logEl = activeNotifyElement.querySelector('.s-log');
             let defaultTeacher = '';
             if (logEl) {
@@ -588,196 +711,101 @@
             document.getElementById('notifyCustomText').value = '';
             document.querySelector('input[name="notifyType"][value="通知試聽"]').checked = true;
 
+            window.activeNotifyId = parseInt(activeNotifyElement.dataset.id || activeNotifyElement.querySelector('.edit-icon-btn').getAttribute('onclick').match(/\d+/)[0]);
             document.getElementById('notifyModal').style.display = 'flex';
         }
 
-        function closeNotifyModal() {
+        window.closeNotifyModal = function() {
             document.getElementById('notifyModal').style.display = 'none';
             activeNotifyElement = null;
         }
 
-        function saveNotifyRecord() {
+        window.saveNotifyRecord = function() {
             if (!activeNotifyElement) return;
 
             const teacherName = document.getElementById('notifyTeacherName').value.trim() || '未指定';
             const notifyType = document.querySelector('input[name="notifyType"]:checked').value;
             const customText = document.getElementById('notifyCustomText').value.trim();
 
-            const logEl = activeNotifyElement.querySelector('.s-log');
             const timestamp = getFormattedTimestamp();
-
             let recordText = `[${timestamp} ${teacherName}老師 已${notifyType}`;
             if (customText) {
                 recordText += `：${customText}`;
             }
             recordText += `]`;
 
-            logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">${recordText}</span>`;
+            const target = window.admissionData.tracking.find(x => x.id === window.activeNotifyId);
+            if (target) {
+                target.log += `<br><span style="color: var(--success-color); font-weight: 500;">${recordText}</span>`;
+                window.saveAdmissionCloud();
+                renderTrackingBlocks();
+            }
+
             closeNotifyModal();
             alert(`已成功記錄：${teacherName}老師 的通知內容！`);
         }
 
-        function openEditModal(btn) {
-            currentEditingElement = btn.closest('.tracking-block') || btn.closest('tr');
-            isEditingEnrolled = currentEditingElement.closest('#enrolledTableBody') !== null;
+        window.openEditModalById = function(id, isEnrolled) {
+            isEditingEnrolled = isEnrolled;
+            const list = isEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
+            const item = list.find(x => x.id === id);
+            if (!item) return;
 
-            const name = currentEditingElement.querySelector('.s-name').innerText;
-            const inquirerEl = currentEditingElement.querySelector('.s-inquirer');
-            const inquirer = inquirerEl ? inquirerEl.value : '';
-            const referrerEl = currentEditingElement.querySelector('.s-referrer');
-            const referrer = referrerEl ? referrerEl.value : '';
-            const course = currentEditingElement.querySelector('.s-course').innerText;
-            const phone = currentEditingElement.querySelector('.s-phone').innerText;
-            
-            const dateEl = currentEditingElement.querySelector('.s-date');
-            const date = dateEl ? dateEl.innerText : '';
-            
-            const status = currentEditingElement.querySelector('.s-status').innerText;
-            const logHtml = currentEditingElement.querySelector('.s-log').innerHTML;
+            window.currentEditingId = id;
 
             let teacher = '未指定';
-            const teacherMatch = logHtml.match(/\[(.*?)\]/);
-            if (teacherMatch) {
-                teacher = teacherMatch[1];
-            }
+            const teacherMatch = item.log.match(/\[(.*?)\]/);
+            if (teacherMatch) teacher = teacherMatch[1];
 
-            const sourceEl = currentEditingElement.querySelector('.s-source');
-            const source = sourceEl ? sourceEl.value : 'LINE';
-
-            document.getElementById('editName').value = name;
-            document.getElementById('editInquirer').value = inquirer;
-            document.getElementById('editReferrer').value = referrer;
-            document.getElementById('editCourse').value = course;
-            document.getElementById('editPhone').value = phone;
-            document.getElementById('editDate').value = date !== '未定' && date !== '' && !date.includes('轉入') ? date : '';
+            document.getElementById('editName').value = item.name;
+            document.getElementById('editInquirer').value = item.inquirer || '';
+            document.getElementById('editReferrer').value = item.referrer || '';
+            document.getElementById('editCourse').value = item.course || '';
+            document.getElementById('editPhone').value = item.phone || '';
+            document.getElementById('editDate').value = item.trialDate && item.trialDate !== '未定' && !item.trialDate.includes('轉入') ? item.trialDate : '';
             document.getElementById('editTeacher').value = teacher;
-            document.getElementById('editStatusSelect').value = status;
-            document.getElementById('editSource').value = source;
-            document.getElementById('editLog').value = logHtml.replace(/<br\s*[\/]?>/gi, '\n');
+            document.getElementById('editStatusSelect').value = isEnrolled ? '已正式進班' : item.status;
+            document.getElementById('editLog').value = item.log.replace(/<br\s*[\/]?>/gi, '\n');
 
             document.getElementById('editModal').style.display = 'flex';
         }
 
-        function closeEditModal() {
+        window.closeEditModal = function() {
             document.getElementById('editModal').style.display = 'none';
-            currentEditingElement = null;
-            isEditingEnrolled = false;
+            window.currentEditingId = null;
         }
 
-        function deleteStudentRecord() {
-            if (!currentEditingElement) return;
+        window.deleteStudentRecord = function() {
+            if (!window.currentEditingId) return;
             const name = document.getElementById('editName').value;
 
-            if (confirm(`⚠️ 確定要永久刪除「${name}」這筆招生紀錄嗎？此動作無法復原。`)) {
-                currentEditingElement.remove();
+            if (confirm(`⚠️ 確定要永久刪除「${name}」這筆招生紀錄嗎？`)) {
+                if (isEditingEnrolled) {
+                    window.admissionData.enrolled = window.admissionData.enrolled.filter(x => x.id !== window.currentEditingId);
+                } else {
+                    window.admissionData.tracking = window.admissionData.tracking.filter(x => x.id !== window.currentEditingId);
+                }
+                window.saveAdmissionCloud();
+                renderAllViews();
                 closeEditModal();
                 alert('已成功刪除該筆學生資料！');
             }
         }
 
-        function saveEditModal() {
-            if (!currentEditingElement) return;
+        window.saveEditModal = function() {
+            if (!window.currentEditingId) return;
 
-            const name = document.getElementById('editName').value;
-            const inquirer = document.getElementById('editInquirer').value;
+            const name = document.getElementById('editName').value.trim();
+            const inquirer = document.getElementById('editInquirer').value.trim();
             const referrer = document.getElementById('editReferrer').value.trim();
-            const course = document.getElementById('editCourse').value;
-            const phone = document.getElementById('editPhone').value;
+            const course = document.getElementById('editCourse').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
             let date = document.getElementById('editDate').value || '未定';
-            const teacher = document.getElementById('editTeacher').value || '未指定';
+            const teacher = document.getElementById('editTeacher').value.trim() || '未指定';
             const status = document.getElementById('editStatusSelect').value;
-            const source = document.getElementById('editSource').value;
-            let log = document.getElementById('editLog').value;
+            let log = document.getElementById('editLog').value.trim().replace(/\n/g, '<br>');
 
             if(!name) { alert('學生姓名不能為空！'); return; }
-
-            if (isEditingEnrolled && status !== '已正式進班') {
-                if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤區塊嗎？`)) {
-                    const container = document.getElementById('trackingCardContainer');
-                    const newBlock = document.createElement('div');
-                    newBlock.className = 'tracking-block';
-                    newBlock.setAttribute('draggable', 'true');
-                    newBlock.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
-                    newBlock.setAttribute('ondragover', 'handleTrackingDragOver(event)');
-                    newBlock.setAttribute('ondrop', 'handleTrackingDrop(event)');
-                    newBlock.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
-                    
-                    const timestamp = getFormattedTimestamp();
-
-                    newBlock.innerHTML = `
-                        <div class="block-header">
-                            <div class="block-title">
-                                <span>📌</span> 
-                                <strong class="s-name">${name}</strong>
-                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
-                                <span class="badge badge-line s-status" style="font-size:0.7rem;">${status}</span>
-                            </div>
-                            <div class="block-top-actions">
-                                <button class="btn btn-sm btn-success" onclick="openNotifyModal(this)">✓ 已通知</button>
-                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">進班 ➔</button>
-                                <input type="hidden" class="s-inquirer" value="${inquirer}">
-                                <input type="hidden" class="s-referrer" value="${referrer}">
-                                <input type="hidden" class="s-source" value="${source}">
-                            </div>
-                        </div>
-                        <div class="block-body">
-                            <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
-                            <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
-                            <div><strong>試聽日期：</strong> <span class="s-date" style="font-weight:600;">${date}</span></div>
-                        </div>
-                        <div class="block-footer">
-                            <div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span></div>
-                        </div>
-                    `;
-                    container.appendChild(newBlock);
-                    currentEditingElement.remove();
-                    closeEditModal();
-                    alert('已成功將學員移回未進班追蹤區塊！');
-                    return;
-                } else {
-                    return; 
-                }
-            }
-
-            if (!isEditingEnrolled && status === '已正式進班') {
-                if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
-                    const enrolledTbody = document.getElementById('enrolledTableBody');
-                    const newRow = document.createElement('tr');
-                    const timestamp = getFormattedTimestamp();
-                    const enrollDateStr = `${timestamp.split(' ')[0]} 轉入`;
-
-                    if (log.includes('[')) {
-                        log = log.replace(/\[.*?\]/, `[${teacher}]`);
-                    } else {
-                        log = `[${teacher}] ` + log;
-                    }
-
-                    newRow.innerHTML = `
-                        <td>
-                            <strong class="s-name">${name}</strong>
-                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
-                            <input type="hidden" class="s-inquirer" value="${inquirer}">
-                            <input type="hidden" class="s-referrer" value="${referrer}">
-                            <input type="hidden" class="s-source" value="${source}">
-                        </td>
-                        <td><span class="s-course">${course}</span></td>
-                        <td><span class="s-phone">${phone}</span></td>
-                        <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${enrollDateStr}</span></td>
-                        <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
-                        <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--primary-color);">[${timestamp} 已轉入正式進班名單]</span></div></td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
-                        </td>
-                    `;
-                    enrolledTbody.appendChild(newRow);
-                    currentEditingElement.remove();
-                    closeEditModal();
-                    alert('已成功移至已正式進班名單！');
-                    return;
-                } else {
-                    return;
-                }
-            }
 
             if (log.includes('[')) {
                 log = log.replace(/\[.*?\]/, `[${teacher}]`);
@@ -785,79 +813,72 @@
                 log = `[${teacher}] ` + log;
             }
 
-            currentEditingElement.querySelector('.s-name').innerText = name;
-            updateHiddenInput(currentEditingElement, 's-inquirer', inquirer);
-            updateHiddenInput(currentEditingElement, 's-referrer', referrer);
+            const sourceList = isEditingEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
+            const itemIndex = sourceList.findIndex(x => x.id === window.currentEditingId);
 
-            currentEditingElement.querySelector('.s-course').innerText = course;
-            currentEditingElement.querySelector('.s-phone').innerText = phone;
-            
-            const dateEl = currentEditingElement.querySelector('.s-date');
-            if(dateEl && !dateEl.innerText.includes('轉入')) {
-                dateEl.innerText = date;
+            if (itemIndex > -1) {
+                let item = sourceList[itemIndex];
+                item.name = name;
+                item.inquirer = inquirer;
+                item.referrer = referrer;
+                item.course = course;
+                item.phone = phone;
+                item.trialDate = date;
+                item.teacher = teacher;
+                item.log = log;
+
+                if (isEditingEnrolled && status !== '已正式進班') {
+                    if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤區塊嗎？`)) {
+                        sourceList.splice(itemIndex, 1);
+                        item.status = status;
+                        const timestamp = getFormattedTimestamp();
+                        item.log += `<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span>`;
+                        window.admissionData.tracking.push(item);
+                        window.saveAdmissionCloud();
+                        renderAllViews();
+                        closeEditModal();
+                        alert('已成功將學員移回未進班追蹤清單！');
+                        return;
+                    }
+                } else if (!isEditingEnrolled && status === '已正式進班') {
+                    if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
+                        sourceList.splice(itemIndex, 1);
+                        const timestamp = getFormattedTimestamp();
+                        item.enrollDate = `${timestamp.split(' ')[0]} 轉入`;
+                        item.log += `<br><span style="color:var(--accent-color);">[${timestamp} 已轉入正式進班名單]</span>`;
+                        window.admissionData.enrolled.push(item);
+                        window.saveAdmissionCloud();
+                        renderAllViews();
+                        closeEditModal();
+                        alert('已成功移至已正式進班名單！');
+                        return;
+                    }
+                } else {
+                    if (!isEditingEnrolled) item.status = status;
+                }
             }
 
-            const statusEl = currentEditingElement.querySelector('.s-status');
-            if(statusEl) statusEl.innerText = status;
-
-            currentEditingElement.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
-
+            window.saveAdmissionCloud();
+            renderAllViews();
             closeEditModal();
             alert('修改成功！');
         }
 
-        function updateHiddenInput(element, className, value) {
-            let inputEl = element.querySelector('.' + className);
-            if(inputEl) {
-                inputEl.value = value;
-            } else {
-                let targetContainer = element.querySelector('.block-top-actions') || element.querySelector('td:nth-child(1)');
-                let hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.className = className;
-                hiddenInput.value = value;
-                targetContainer.appendChild(hiddenInput);
-            }
-        }
+        window.moveToEnrolledById = function(id) {
+            const itemIndex = window.admissionData.tracking.findIndex(x => x.id === id);
+            if (itemIndex === -1) return;
+            const item = window.admissionData.tracking[itemIndex];
 
-        function moveToEnrolled(btn) {
-            const block = btn.closest('.tracking-block');
-            const studentName = block.querySelector('.s-name').innerText;
-
-            if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
-                const topActionsHtml = block.querySelector('.block-top-actions').innerHTML;
-                const courseText = block.querySelector('.s-course').innerText;
-                const phoneText = block.querySelector('.s-phone').innerText;
-                const logHtml = block.querySelector('.s-log').innerHTML; 
-
+            if (confirm(`確定要將「${item.name}」移至【已正式進班】名單嗎？`)) {
+                window.admissionData.tracking.splice(itemIndex, 1);
                 const timestamp = getFormattedTimestamp();
-                const enrollDateDisplay = `${timestamp.split(' ')[0]} 轉入`;
+                item.enrollDate = `${timestamp.split(' ')[0]} 轉入`;
+                item.log += `<br><span style="color:var(--accent-color);">[${timestamp} 已轉入正式進班名單]</span>`;
+                window.admissionData.enrolled.push(item);
 
-                const enrolledTbody = document.getElementById('enrolledTableBody');
-                const newEnrolledRow = document.createElement('tr');
-
-                let cleanTopActions = topActionsHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
-
-                newEnrolledRow.innerHTML = `
-                    <td>
-                        <strong class="s-name">${studentName}</strong>
-                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
-                        ${cleanTopActions}
-                    </td>
-                    <td><span class="s-course">${courseText}</span></td>
-                    <td><span class="s-phone">${phoneText}</span></td>
-                    <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${enrollDateDisplay}</span></td>
-                    <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
-                    <td><div class="s-log">${logHtml}<br><span style="color:var(--primary-color);">[${timestamp} 已轉入正式進班名單]</span></div></td>
-                    <td>
-                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
-                    </td>
-                `;
-
-                enrolledTbody.appendChild(newEnrolledRow);
-                block.remove();
-
-                alert(`成功！${studentName} 已自動移至「已正式進班名單」頁面。`);
+                window.saveAdmissionCloud();
+                renderAllViews();
+                alert(`成功！${item.name} 已自動移至「已正式進班名單」頁面。`);
             }
         }
 
@@ -868,52 +889,38 @@
             const tbody = document.getElementById('referrerDetailTableBody');
             tbody.innerHTML = '';
 
-            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+            const enrolledList = window.admissionData.enrolled || [];
             let hasRecord = false;
 
-            enrolledRows.forEach((item, index) => {
-                const nameEl = item.querySelector('.s-name');
-                const referrerEl = item.querySelector('.s-referrer');
-                const courseEl = item.querySelector('.s-course');
-                const dateEl = item.querySelector('.s-date');
+            enrolledList.forEach((item, index) => {
+                if (item.referrer && item.referrer.trim() !== '') {
+                    hasRecord = true;
+                    const recordKey = `enrolled_${index}_${item.name}`;
 
-                if (nameEl) {
-                    const studentName = nameEl.innerText.trim();
-                    let referrerName = referrerEl ? referrerEl.value.trim() : '';
-                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
-                    const dateText = dateEl ? dateEl.innerText.trim() : '未定';
-
-                    if (referrerName && referrerName !== '') {
-                        hasRecord = true;
-                        const recordKey = `enrolled_${index}_${studentName}`;
-
-                        if (!referrerBonusStore[recordKey]) {
-                            referrerBonusStore[recordKey] = {
-                                paid: false,
-                                date: '',
-                                total: 1000,
-                                refR: 70,
-                                teacherR: 30
-                            };
-                        }
-
-                        const store = referrerBonusStore[recordKey];
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><strong>${studentName}</strong></td>
-                            <td>${courseName}</td>
-                            <td>
-                                <input type="text" value="${referrerName}" onchange="updateReferrerInline(this, '${studentName}')" style="padding: 0.3rem; border: 1px solid var(--border-color); border-radius: 4px; width: 120px; font-weight: 600; color: var(--primary-color);">
-                            </td>
-                            <td><span style="color:var(--success-color); font-weight:600;">${dateText}</span></td>
-                            <td>
-                                <span class="clickable-cell" onclick="openReferrerRecordModal('${recordKey}', '${studentName}', '${referrerName}', '${courseName}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
-                                    ${store.paid ? `✓ 已發放 (${store.date || '未記錄'})` : '⏳ 未發放 (點擊設定)'}
-                                </span>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
+                    if (!window.admissionData.referrerBonus[recordKey]) {
+                        window.admissionData.referrerBonus[recordKey] = {
+                            paid: false,
+                            date: '',
+                            total: 1000,
+                            refR: 70,
+                            teacherR: 30
+                        };
                     }
+
+                    const store = window.admissionData.referrerBonus[recordKey];
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${item.name}</strong></td>
+                        <td>${item.course}</td>
+                        <td style="font-weight: 600; color: var(--accent-color);">${item.referrer}</td>
+                        <td><span style="color:var(--success-color); font-weight:600;">${item.enrollDate}</span></td>
+                        <td>
+                            <span class="clickable-cell" onclick="openReferrerRecordModal('${recordKey}', '${item.name}', '${item.referrer}', '${item.course}')" style="${store.paid ? 'color: var(--success-color);' : 'color: var(--warning-color);'}">
+                                ${store.paid ? `✓ 已發放 (${store.date || '未記錄'})` : '⏳ 未發放 (點擊設定)'}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
                 }
             });
 
@@ -922,36 +929,13 @@
             }
         }
 
-        function updateReferrerInline(inputEl, studentName) {
-            const newReferrerVal = inputEl.value.trim();
-
-            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
-            enrolledRows.forEach(row => {
-                const nameEl = row.querySelector('.s-name');
-                if (nameEl && nameEl.innerText.trim() === studentName) {
-                    let refInput = row.querySelector('.s-referrer');
-                    if (refInput) {
-                        refInput.value = newReferrerVal;
-                    } else {
-                        let hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.className = 's-referrer';
-                        hiddenInput.value = newReferrerVal;
-                        row.querySelector('td:nth-child(1)').appendChild(hiddenInput);
-                    }
-                }
-            });
-            alert(`已成功將 [${studentName}] 的介紹人修改為：${newReferrerVal}`);
-            updateReferrerTable();
-        }
-
-        function openReferrerRecordModal(recordKey, studentName, referrerName, courseName) {
-            let store = referrerBonusStore[recordKey];
+        window.openReferrerRecordModal = function(recordKey, studentName, referrerName, courseName) {
+            let store = window.admissionData.referrerBonus[recordKey];
 
             document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}] 之獎金管理`;
 
             let html = `
-                <div style="margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="margin-bottom: 1rem; background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
                     <p style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>介紹學生：</strong> ${studentName} ｜ <strong>招生明細：</strong> ${courseName}</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
                         <div>
@@ -987,7 +971,7 @@
             calculateSingleBonusPreview();
         }
 
-        function calculateSingleBonusPreview() {
+        window.calculateSingleBonusPreview = function() {
             const total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
             const refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
             const teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
@@ -998,14 +982,15 @@
             document.getElementById('bonusPreviewResult').innerHTML = `💡 金額試算： 推薦人家長實領 $${refAmt} 元 (${refR}%) ｜ 負責老師實領 $${teacherAmt} 元 (${teacherR}%)`;
         }
 
-        function closeReferrerModal() {
+        window.closeReferrerModal = function() {
             const key = window.activeRecordKey;
-            if (key && referrerBonusStore[key]) {
-                referrerBonusStore[key].paid = document.getElementById('modalPaidCheck').checked;
-                referrerBonusStore[key].date = document.getElementById('modalPaidDate').value;
-                referrerBonusStore[key].total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
-                referrerBonusStore[key].refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
-                referrerBonusStore[key].teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+            if (key && window.admissionData.referrerBonus[key]) {
+                window.admissionData.referrerBonus[key].paid = document.getElementById('modalPaidCheck').checked;
+                window.admissionData.referrerBonus[key].date = document.getElementById('modalPaidDate').value;
+                window.admissionData.referrerBonus[key].total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
+                window.admissionData.referrerBonus[key].refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
+                window.admissionData.referrerBonus[key].teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
+                window.saveAdmissionCloud();
             }
             document.getElementById('referrerDetailModal').style.display = 'none';
             updateReferrerTable();
@@ -1014,34 +999,23 @@
         // 老師招生競賽排行榜
         function updateTeacherRanking() {
             const teacherMap = {};
-            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+            const enrolledList = window.admissionData.enrolled || [];
 
-            enrolledRows.forEach(row => {
-                const nameEl = row.querySelector('.s-name');
-                const courseEl = row.querySelector('.s-course');
-                const dateEl = row.querySelector('.s-date');
-                const logEl = row.querySelector('.s-log');
-
-                if (nameEl) {
-                    const studentName = nameEl.innerText.trim();
-                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
-                    const enrollDate = dateEl ? dateEl.innerText.trim() : '未定日期';
-
-                    let teacherName = '未指定老師';
-                    if (logEl) {
-                        const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
-                        if (tMatch) teacherName = tMatch[1].trim();
-                    }
-
-                    if (!teacherMap[teacherName]) {
-                        teacherMap[teacherName] = [];
-                    }
-                    teacherMap[teacherName].push({
-                        student: studentName,
-                        course: courseName,
-                        date: enrollDate
-                    });
+            enrolledList.forEach(item => {
+                let teacherName = '未指定老師';
+                if (item.log) {
+                    const tMatch = item.log.match(/\[(.*?)\]/);
+                    if (tMatch) teacherName = tMatch[1].trim();
                 }
+
+                if (!teacherMap[teacherName]) {
+                    teacherMap[teacherName] = [];
+                }
+                teacherMap[teacherName].push({
+                    student: item.name,
+                    course: item.course,
+                    date: item.enrollDate
+                });
             });
 
             let teacherList = Object.keys(teacherMap).map(t => {
@@ -1074,7 +1048,7 @@
                 tr.innerHTML = `
                     <td><strong>${rankDisplay}</strong></td>
                     <td><strong>${item.name}</strong></td>
-                    <td><span class="badge" style="background:#d1fae5; color:#065f46; font-weight:700;">${item.count} 位</span></td>
+                    <td><span class="badge" style="background:#D1FAE5; color:#065F46; font-weight:700;">${item.count} 位</span></td>
                     <td><div style="font-size:0.8rem; line-height:1.4;">${detailsHtml}</div></td>
                 `;
                 tbody.appendChild(tr);
