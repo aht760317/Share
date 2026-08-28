@@ -54,9 +54,7 @@
         .badge-fb { background: #dbeafe; color: #1e40af; }
         .badge-ig { background: #fce7f3; color: #9d174d; }
         .badge-other { background: #f3f4f6; color: #374151; }
-        
-        .status-not-enrolled { background: #fee2e2; color: #991b1b; }
-        .status-enrolled { background: #dbeafe; color: #1e40af; }
+        .badge-enrolled { background: #d1fae5; color: #065f46; }
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
 
@@ -205,7 +203,7 @@
                         </tr>
                     </thead>
                     <tbody id="enrolledTableBody">
-                        <!-- 這裡會自動接收從第一頁移過來的同學 -->
+                        <!-- 自動接收從第一頁移過來的同學 -->
                     </tbody>
                 </table>
             </div>
@@ -235,15 +233,16 @@
                         <input type="text" id="editCourse">
                     </div>
                     <div class="form-group">
-                        <label>預定試聽日期</label>
+                        <label>預定試聽日期 / 備註</label>
                         <input type="date" id="editDate">
                     </div>
                     <div class="form-group">
-                        <label>目前招生狀態</label>
+                        <label>目前進班 / 追蹤狀態</label>
                         <select id="editStatusSelect">
                             <option value="初次諮詢">初次諮詢</option>
                             <option value="預約試聽中">預約試聽中</option>
                             <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
+                            <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -270,6 +269,7 @@
 
     <script>
         let currentEditingRow = null;
+        let isEditingEnrolled = false; // 判斷目前修改的是不是第二頁的正式進班學員
 
         // 頁面切換控制
         function switchTab(tabId, btn) {
@@ -365,12 +365,18 @@
         function openEditModal(btn) {
             currentEditingRow = btn.closest('tr');
             
+            // 檢查這列是在第一頁還是第二頁
+            isEditingEnrolled = currentEditingRow.closest('#enrolledTableBody') !== null;
+
             const name = currentEditingRow.querySelector('.s-name').innerText;
             const phone = currentEditingRow.querySelector('.s-phone').innerText;
             const inquirer = currentEditingRow.querySelector('.s-inquirer').innerText;
             const source = currentEditingRow.querySelector('.s-source').innerText;
             const course = currentEditingRow.querySelector('.s-course').innerText;
-            const date = currentEditingRow.querySelector('.s-date') ? currentEditingRow.querySelector('.s-date').innerText : '';
+            
+            const dateEl = currentEditingRow.querySelector('.s-date');
+            const date = dateEl ? dateEl.innerText : '';
+            
             const status = currentEditingRow.querySelector('.s-status').innerText;
             const log = currentEditingRow.querySelector('.s-log').innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
 
@@ -389,6 +395,7 @@
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
             currentEditingRow = null;
+            isEditingEnrolled = false;
         }
 
         function saveEditModal() {
@@ -405,17 +412,88 @@
 
             if(!name) { alert('學生姓名不能為空！'); return; }
 
+            const sourceBadgeClass = `badge s-source ${source === 'FB' ? 'badge-fb' : source === 'IG' ? 'badge-ig' : source === 'LINE' ? 'badge-line' : 'badge-other'}`;
+
+            // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁
+            if (isEditingEnrolled && status !== '已正式進班') {
+                if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤清單嗎？`)) {
+                    const trackingTbody = document.getElementById('trackingTableBody');
+                    const newRow = document.createElement('tr');
+
+                    newRow.innerHTML = `
+                        <td>
+                            <span class="${sourceBadgeClass}">${source}</span><br>
+                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong><br>
+                            <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
+                        </td>
+                        <td>
+                            <span class="s-phone">${phone}</span><br>
+                            <small style="color:var(--text-muted)" class="s-course">${course}</small>
+                        </td>
+                        <td><span class="s-inquirer">${inquirer}</span></td>
+                        <td><span class="s-date" style="font-weight:600;">${date}</span></td>
+                        <td><span class="badge badge-line s-status">${status}</span></td>
+                        <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[已從正式名單退回追蹤清單]</span></div></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                            </div>
+                        </td>
+                    `;
+                    trackingTbody.appendChild(newRow);
+                    currentEditingRow.remove();
+                    closeEditModal();
+                    alert('已成功將學員移回未進班追蹤清單！');
+                    return;
+                } else {
+                    return; // 取消移動
+                }
+            }
+
+            // 如果原本在第一頁，但被直接改為「已正式進班」-> 自動移到第二頁
+            if (!isEditingEnrolled && status === '已正式進班') {
+                if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
+                    const enrolledTbody = document.getElementById('enrolledTableBody');
+                    const newRow = document.createElement('tr');
+
+                    newRow.innerHTML = `
+                        <td>
+                            <span class="${sourceBadgeClass}">${source}</span><br>
+                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong>
+                        </td>
+                        <td>
+                            <span class="s-phone">${phone}</span><br>
+                            <small style="color:var(--text-muted)" class="s-course">${course}</small>
+                        </td>
+                        <td><span class="s-inquirer">${inquirer}</span></td>
+                        <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
+                        <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--primary-color);">[已轉入正式進班名單]</span></div></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
+                        </td>
+                    `;
+                    enrolledTbody.appendChild(newRow);
+                    currentEditingRow.remove();
+                    closeEditModal();
+                    alert('已成功移至已正式進班名單！');
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            // 一般原地修改更新
             currentEditingRow.querySelector('.s-name').innerText = name;
             currentEditingRow.querySelector('.s-phone').innerText = phone;
             currentEditingRow.querySelector('.s-inquirer').innerText = inquirer;
             
             const sourceBadge = currentEditingRow.querySelector('.s-source');
             sourceBadge.innerText = source;
-            sourceBadge.className = `badge s-source ${source === 'FB' ? 'badge-fb' : source === 'IG' ? 'badge-ig' : source === 'LINE' ? 'badge-line' : 'badge-other'}`;
+            sourceBadge.className = sourceBadgeClass;
 
             currentEditingRow.querySelector('.s-course').innerText = course;
             
-            // 判斷目前這列是在第一頁還是第二頁（第二頁沒有日期欄位）
             const dateEl = currentEditingRow.querySelector('.s-date');
             if(dateEl) dateEl.innerText = date;
 
@@ -432,16 +510,13 @@
             const studentName = row.querySelector('.s-name').innerText;
 
             if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
-                // 抓取原本整列的資料
                 const sourceHtml = row.querySelector('td:nth-child(1)').innerHTML;
                 const phoneCourseHtml = row.querySelector('td:nth-child(2)').innerHTML;
                 const inquirerText = row.querySelector('.s-inquirer').innerText;
                 const logHtml = row.querySelector('.s-log').innerHTML;
 
-                // 移除原本的修改按鈕，改保留乾淨的資訊
                 let cleanSourceHtml = sourceHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
 
-                // 建立要放入第二頁的新行
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
@@ -449,7 +524,7 @@
                     <td>${cleanSourceHtml}</td>
                     <td>${phoneCourseHtml}</td>
                     <td><span class="s-inquirer">${inquirerText}</span></td>
-                    <td><span class="badge" style="background: #d1fae5; color: #065f46;">已正式進班</span></td>
+                    <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
                     <td><div class="s-log">${logHtml}<br><span style="color:var(--primary-color);">[已轉入正式進班名單]</span></div></td>
                     <td>
                         <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改資料</button>
@@ -457,8 +532,6 @@
                 `;
 
                 enrolledTbody.appendChild(newEnrolledRow);
-
-                // 從第一頁的未進班列表移除
                 row.remove();
 
                 alert(`成功！${studentName} 已自動移至「已正式進班名單」頁面。`);
