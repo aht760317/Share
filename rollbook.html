@@ -571,8 +571,8 @@
         <label><b>班級課程名稱：</b></label>
         <input type="text" id="m_new_class_name" placeholder="例如：小四安親班 或 (暑期先修)">
 
-        <label><b>上課星期 (例：星期一、星期三)：</b></label>
-        <input type="text" id="m_new_class_day" placeholder="例如：星期一、星期四">
+        <label><b>上課星期：</b></label>
+        <div id="m_new_class_days_wrapper" style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 12px; background:#f8fafc; padding:10px; border:1px solid #cbd5e1; border-radius:6px;"></div>
 
         <label><b>上課時段：</b></label>
         <input type="text" id="m_new_class_time" placeholder="例如：16:30 - 18:30">
@@ -604,8 +604,8 @@
         <label><b>班級課程名稱：</b></label>
         <input type="text" id="edit_class_name" placeholder="例如：小四安親班">
 
-        <label><b>上課星期 (例：星期一、星期三)：</b></label>
-        <input type="text" id="edit_class_day" placeholder="例如：星期一、星期四">
+        <label><b>上課星期：</b></label>
+        <div id="edit_class_days_wrapper" style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 12px; background:#f8fafc; padding:10px; border:1px solid #cbd5e1; border-radius:6px;"></div>
 
         <label><b>上課時段：</b></label>
         <input type="text" id="edit_class_time" placeholder="例如：16:30 - 18:30">
@@ -644,6 +644,7 @@
     const SECURITY_CODE = "0618";
     const CONFIRM_ROLLCALL_CODE = "0000"; // 點名確認密碼
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
     const DEFAULT_DEPT_ORDER = [
         { key: 'allclasses', label: '🏫 班級全覽' },
@@ -696,6 +697,30 @@
             return stu.course.split(/[,，、]/).map(c => c.trim()).filter(c => c);
         }
         return [];
+    }
+
+    // 渲染星期勾選方框
+    function renderDayCheckboxes(wrapperId, selectedDaysStr = "") {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+        wrapper.innerHTML = '';
+        const selectedArr = selectedDaysStr ? selectedDaysStr.split(/[,，、]/).map(d => d.trim()) : [];
+        WEEK_DAYS.forEach(day => {
+            const isChecked = selectedArr.includes(day);
+            wrapper.innerHTML += `
+                <label style="display:inline-flex; align-items:center; gap:4px; font-size:13px; cursor:pointer; user-select:none; font-weight:bold; color:#334155;">
+                    <input type="checkbox" value="${day}" ${isChecked ? 'checked' : ''} style="width:auto; margin:0; cursor:pointer;"> ${day}
+                </label>
+            `;
+        });
+    }
+
+    function getSelectedDaysFromWrapper(wrapperId) {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return '星期一';
+        const checkedBoxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
+        const list = Array.from(checkedBoxes).map(cb => cb.value);
+        return list.length > 0 ? list.join('、') : '星期一';
     }
 
     async function initCloudData() {
@@ -974,7 +999,7 @@
         document.getElementById('edit_original_name').value = name;
         document.getElementById('edit_class_dept').value = dept;
         document.getElementById('edit_class_name').value = name;
-        document.getElementById('edit_class_day').value = day;
+        renderDayCheckboxes('edit_class_days_wrapper', day);
         document.getElementById('edit_class_time').value = time;
         document.getElementById('edit_class_teacher').value = teacher;
         document.getElementById('editClassModal').style.display = 'flex';
@@ -985,7 +1010,7 @@
         const origName = document.getElementById('edit_original_name').value;
         const newDept = document.getElementById('edit_class_dept').value;
         const newName = document.getElementById('edit_class_name').value.trim();
-        const newDay = document.getElementById('edit_class_day').value.trim() || '星期一';
+        const newDay = getSelectedDaysFromWrapper('edit_class_days_wrapper');
         const newTime = document.getElementById('edit_class_time').value.trim() || '未設定';
         const newTeacher = document.getElementById('edit_class_teacher').value.trim() || '任課老師';
 
@@ -1341,7 +1366,7 @@
 
     window.openAddClassModal = function() {
         document.getElementById('m_new_class_name').value = '';
-        document.getElementById('m_new_class_day').value = '';
+        renderDayCheckboxes('m_new_class_days_wrapper', '星期一');
         document.getElementById('m_new_class_time').value = '';
         document.getElementById('m_new_class_teacher').value = '';
         document.getElementById('addClassModal').style.display = 'flex';
@@ -1350,7 +1375,7 @@
     window.saveNewClass = async function() {
         const dept = document.getElementById('m_new_class_dept').value;
         const name = document.getElementById('m_new_class_name').value.trim();
-        const day = document.getElementById('m_new_class_day').value.trim() || '星期一';
+        const day = getSelectedDaysFromWrapper('m_new_class_days_wrapper');
         const time = document.getElementById('m_new_class_time').value.trim() || '未設定';
         const teacher = document.getElementById('m_new_class_teacher').value.trim() || '任課老師';
         if (!name) return alert('請輸入班級課程名稱！');
@@ -1702,6 +1727,7 @@
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
         const baseDate = new Date(baseStart);
         const daysPerPeriod = (info.weeks - 1) * 7;
+
         const formatDate = (d) => d.toISOString().slice(0, 10);
 
         document.getElementById('sheetQueryStartDate').value = baseStart;
