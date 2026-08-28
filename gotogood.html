@@ -130,7 +130,6 @@
                                 <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                             </select>
                         </div>
-                        <!-- 隱藏欄位保留系統來源判定用 -->
                         <input type="hidden" id="leadSource" value="LINE">
                     </div>
 
@@ -245,7 +244,6 @@
                             <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
-                    <!-- 隱藏的來源保留欄位 -->
                     <input type="hidden" id="editSource" value="LINE">
                 </div>
                 <div class="form-group" style="margin-bottom: 1rem;">
@@ -411,9 +409,16 @@
             const teacher = document.getElementById('editTeacher').value || '未指定';
             const status = document.getElementById('editStatusSelect').value;
             const source = document.getElementById('editSource').value;
-            const log = document.getElementById('editLog').value;
+            let log = document.getElementById('editLog').value;
 
             if(!name) { alert('學生姓名不能為空！'); return; }
+
+            // 確保修改時如果更新了老師姓名，紀錄開頭的 [老師] 標籤也會同步更新
+            if (log.includes('[')) {
+                log = log.replace(/\[.*?\]/, `[${teacher}]`);
+            } else {
+                log = `[${teacher}] ` + log;
+            }
 
             // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁
             if (isEditingEnrolled && status !== '已正式進班') {
@@ -488,7 +493,6 @@
             if(inquirerEl) {
                 inquirerEl.value = inquirer;
             } else {
-                // 如果原本沒有隱藏 input，幫忙補上
                 const nameTd = currentEditingRow.querySelector('td:nth-child(1)');
                 let hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
@@ -510,7 +514,7 @@
             alert('修改成功！');
         }
 
-        // 點擊「確定進班」自動移到第二個頁面
+        // 點擊「確定進班」自動移到第二個頁面（保持原本的追蹤歷程與老師標籤不變）
         function moveToEnrolled(btn) {
             const row = btn.closest('tr');
             const studentName = row.querySelector('.s-name').innerText;
@@ -520,7 +524,7 @@
                 const courseText = row.querySelector('.s-course').innerText;
                 const phoneText = row.querySelector('.s-phone').innerText;
                 const dateText = row.querySelector('.s-date').innerText;
-                const logHtml = row.querySelector('.s-log').innerHTML;
+                const logHtml = row.querySelector('.s-log').innerHTML; // 完整保留原本包含老師名字的追蹤歷程
 
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
