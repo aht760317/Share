@@ -114,24 +114,20 @@
             border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
         }
 
+        /* 可拖曳部門導覽列 */
         .dept-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .dept-btn {
             padding: 9px 15px; border: 2px solid var(--border); background: #f8fafc;
             border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            user-select: none; display: inline-flex; align-items: center; gap: 4px;
         }
+        .dept-btn.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
         .dept-btn.active-allclasses { background: #e0e7ff; border-color: #4f46e5; color: #3730a3; }
         .dept-btn.active-care { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
         .dept-btn.active-elem { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
         .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
         .dept-btn.active-all { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
-        
-        .dept-btn-small {
-            margin-left: auto; padding: 7px 14px; font-size: 13px; border-radius: 20px;
-            background: #fdf4ff; border: 1.5px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        .dept-btn-small:hover, .dept-btn-small.active-grad {
-            background: #d946ef; color: white;
-        }
+        .dept-btn.active-grad { background: #d946ef; border-color: #d946ef; color: white; }
 
         .class-overview-box {
             background: #f8fafc; border: 2px solid #cbd5e1; padding: 14px 18px;
@@ -141,7 +137,7 @@
             font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
         }
 
-        /* 可拖曳排序列 */
+        /* 可拖曳班級排序列 */
         .draggable-class-container {
             display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
         }
@@ -344,21 +340,12 @@
                 </div>
             </div>
 
-            <!-- 部門導覽列 -->
-            <div class="dept-nav">
-                <button class="dept-btn" id="deptBtn-allclasses" onclick="switchDept('allclasses')">🏫 班級全覽 (管理/刪除班級)</button>
-                <button class="dept-btn active-care" id="deptBtn-care" onclick="switchDept('care')">🏢 課輔部</button>
-                <button class="dept-btn" id="deptBtn-elementary" onclick="switchDept('elementary')">📘 國小部</button>
-                <button class="dept-btn" id="deptBtn-junior" onclick="switchDept('junior')">📙 國中部</button>
-                <button class="dept-btn" id="deptBtn-all" onclick="switchDept('all')" style="border-color:#8b5cf6; color:#6d28d9; background:#f5f3ff;">🌟 全校所有學生總覽 (依姓名排列)</button>
-                <button class="dept-btn-small" id="deptBtn-graduated" onclick="switchDept('graduated')">🎓 畢業班</button>
-            </div>
+            <!-- 可直接拖曳調整順序的部門導覽列 -->
+            <div class="dept-nav" id="deptNavContainer"></div>
 
             <!-- 部門所屬班級過濾一覽 (支援拖曳排序) -->
             <div class="class-overview-box" id="classOverviewBox">
-                <div class="class-overview-title">
-                    🏫 部門所屬班級：<small style="color:#64748b; font-weight:normal;">(可按住 ⠿ 直接左右拖曳更換班級排列順序)</small>
-                </div>
+                <div class="class-overview-title">🏫 部門所屬班級：</div>
                 <div id="deptClassButtons" class="draggable-class-container"></div>
             </div>
 
@@ -495,7 +482,6 @@
             <textarea id="m_stu_notes" rows="3" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
         </div>
 
-        <!-- 學籍狀態移動到最下面 -->
         <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:10px;">
             <label style="color:var(--primary); font-weight:bold;"><b>學籍狀態：</b></label>
             <select id="m_stu_status">
@@ -563,10 +549,10 @@
     </div>
 </div>
 
-<!-- 編輯班級彈窗 -->
+<!-- 管理 / 編輯 / 刪除 班級彈窗 -->
 <div class="modal-overlay" id="editClassModal">
-    <div class="modal-box" style="width:500px;">
-        <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">✏️ 編輯班級課程資料</h3>
+    <div class="modal-box" style="width:520px;">
+        <h3 style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">⚙️ 管理班級課程設定</h3>
         <input type="hidden" id="edit_original_dept">
         <input type="hidden" id="edit_original_name">
 
@@ -589,9 +575,14 @@
         <label><b>授課老師：</b></label>
         <input type="text" id="edit_class_teacher" placeholder="例如：陳老師">
 
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
-            <button class="btn btn-success" onclick="saveEditedClass()">💾 儲存修改</button>
-            <button class="btn btn-outline" onclick="document.getElementById('editClassModal').style.display='none'">取消</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:12px;">
+            <!-- 刪除班級按鈕改到這裡 -->
+            <button class="btn btn-danger" onclick="deleteClassCourseFromModal()">🗑️ 刪除此班級 (需密碼)</button>
+            
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-success" onclick="saveEditedClass()">💾 儲存修改</button>
+                <button class="btn btn-outline" onclick="document.getElementById('editClassModal').style.display='none'">取消</button>
+            </div>
         </div>
     </div>
 </div>
@@ -616,6 +607,16 @@
     const SECURITY_CODE = "0618";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
+    // 部門導覽列排序資料
+    const DEFAULT_DEPT_ORDER = [
+        { key: 'allclasses', label: '🏫 班級全覽' },
+        { key: 'care', label: '🏢 課輔部' },
+        { key: 'elementary', label: '📘 國小部' },
+        { key: 'junior', label: '📙 國中部' },
+        { key: 'all', label: '🌟 全校所有學生總覽 (依姓名排列)' },
+        { key: 'graduated', label: '🎓 畢業班' }
+    ];
+
     window.state = {
         courses: { care: [], elementary: [], junior: [] },
         students: [],
@@ -624,13 +625,15 @@
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
         showAllCourses: false,
         currentDeptView: 'care',
-        currentFilterClass: null
+        currentFilterClass: null,
+        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order')) || DEFAULT_DEPT_ORDER
     };
 
     window.onload = function() {
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('rollDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
+        renderDeptNavButtons();
         initCloudData();
     };
 
@@ -678,6 +681,7 @@
                 });
             });
 
+            renderDeptNavButtons();
             renderMasterStudentsTable();
             renderDeptClassButtons();
             renderCourseCards();
@@ -711,32 +715,100 @@
             renderCourseConfigList();
         } else {
             document.querySelectorAll('.tab-btn')[4].classList.add('active');
+            renderDeptNavButtons();
             renderMasterStudentsTable();
             renderDeptClassButtons();
         }
     };
 
     // ==========================================
-    // 5. 全校學生總覽管理與部門分流
+    // 5. 部門導覽列（支援直接拖曳排序）
     // ==========================================
+    function renderDeptNavButtons() {
+        const navContainer = document.getElementById('deptNavContainer');
+        if (!navContainer) return;
+        navContainer.innerHTML = '';
+
+        window.state.deptOrder.forEach((dept, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'dept-btn';
+            btn.draggable = true;
+            btn.dataset.deptKey = dept.key;
+            btn.dataset.deptIndex = index;
+
+            // 樣式判定
+            if (dept.key === window.state.currentDeptView) {
+                if (dept.key === 'allclasses') btn.classList.add('active-allclasses');
+                if (dept.key === 'care') btn.classList.add('active-care');
+                if (dept.key === 'elementary') btn.classList.add('active-elem');
+                if (dept.key === 'junior') btn.classList.add('active-jun');
+                if (dept.key === 'all') btn.classList.add('active-all');
+                if (dept.key === 'graduated') btn.classList.add('active-grad');
+            } else if (dept.key === 'all') {
+                btn.style.borderColor = '#8b5cf6';
+                btn.style.color = '#6d28d9';
+                btn.style.background = '#f5f3ff';
+            } else if (dept.key === 'graduated') {
+                btn.style.background = '#fdf4ff';
+                btn.style.borderColor = '#d946ef';
+                btn.style.color = '#a21caf';
+            }
+
+            btn.innerHTML = `<span class="drag-handle">⠿</span> ${dept.label}`;
+
+            btn.onclick = (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                switchDept(dept.key);
+            };
+
+            // 拖曳事件
+            btn.addEventListener('dragstart', handleDeptDragStart);
+            btn.addEventListener('dragover', handleDeptDragOver);
+            btn.addEventListener('drop', handleDeptDrop);
+            btn.addEventListener('dragend', handleDeptDragEnd);
+
+            navContainer.appendChild(btn);
+        });
+    }
+
+    let draggedDeptItem = null;
+
+    function handleDeptDragStart(e) {
+        draggedDeptItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDeptDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDeptDrop(e) {
+        e.stopPropagation();
+        if (draggedDeptItem !== this && this.dataset && this.dataset.deptIndex !== undefined) {
+            const fromIndex = parseInt(draggedDeptItem.dataset.deptIndex);
+            const toIndex = parseInt(this.dataset.deptIndex);
+
+            const movedItem = window.state.deptOrder.splice(fromIndex, 1)[0];
+            window.state.deptOrder.splice(toIndex, 0, movedItem);
+
+            localStorage.setItem('gude_dept_order', JSON.stringify(window.state.deptOrder));
+            renderDeptNavButtons();
+        }
+        return false;
+    }
+
+    function handleDeptDragEnd() {
+        this.classList.remove('dragging');
+        draggedDeptItem = null;
+    }
+
     window.switchDept = function(deptKey) {
         window.state.currentDeptView = deptKey;
         window.state.currentFilterClass = null;
 
-        document.getElementById('deptBtn-allclasses').className = 'dept-btn';
-        document.getElementById('deptBtn-care').className = 'dept-btn';
-        document.getElementById('deptBtn-elementary').className = 'dept-btn';
-        document.getElementById('deptBtn-junior').className = 'dept-btn';
-        document.getElementById('deptBtn-all').className = 'dept-btn';
-        document.getElementById('deptBtn-graduated').className = 'dept-btn-small';
-
-        if (deptKey === 'allclasses') document.getElementById('deptBtn-allclasses').classList.add('active-allclasses');
-        if (deptKey === 'care') document.getElementById('deptBtn-care').classList.add('active-care');
-        if (deptKey === 'elementary') document.getElementById('deptBtn-elementary').classList.add('active-elem');
-        if (deptKey === 'junior') document.getElementById('deptBtn-junior').classList.add('active-jun');
-        if (deptKey === 'all') document.getElementById('deptBtn-all').classList.add('active-all');
-        if (deptKey === 'graduated') document.getElementById('deptBtn-graduated').classList.add('active-grad');
-
+        renderDeptNavButtons();
         renderDeptClassButtons();
         renderMasterStudentsTable();
     };
@@ -848,7 +920,7 @@
         draggedItem = null;
     }
 
-    // 渲染全校班級管理卡片（含「編輯」與「刪除」按鈕）
+    // 渲染全校班級管理卡片（僅保留「管理班級」按鈕）
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
@@ -869,7 +941,6 @@
                     return arr.includes(cName) && s.status !== 'graduated';
                 }).length;
 
-                // 安全傳遞參數字串
                 const safeName = encodeURIComponent(cName);
                 const safeDay = encodeURIComponent(cDay);
                 const safeTime = encodeURIComponent(cTime);
@@ -884,9 +955,8 @@
                             <div style="font-size:12px; color:#777; margin-top:2px;">時段：${cTime}</div>
                             <div style="font-size:13px; color:#666; margin-top:6px;">目前修課學生：<b>${stuCount}</b> 人</div>
                         </div>
-                        <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; display:flex; justify-content:flex-end; gap:6px;">
-                            <button class="btn btn-warning" style="padding:4px 10px; font-size:12px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${safeName}'), decodeURIComponent('${safeDay}'), decodeURIComponent('${safeTime}'), decodeURIComponent('${safeTeacher}'))">✏️ 編輯班級</button>
-                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteClassCourse('${deptKey}', decodeURIComponent('${safeName}'))">🗑️ 刪除班級</button>
+                        <div style="margin-top:12px; border-top:1px dashed #e2e8f0; padding-top:10px; text-align:right;">
+                            <button class="btn btn-warning" style="padding:5px 12px; font-size:13px;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${safeName}'), decodeURIComponent('${safeDay}'), decodeURIComponent('${safeTime}'), decodeURIComponent('${safeTeacher}'))">⚙️ 管理班級</button>
                         </div>
                     </div>
                 `;
@@ -896,7 +966,7 @@
         grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前全校尚無建立任何班級課程。</p>`;
     }
 
-    // 打開編輯班級彈窗
+    // 打開管理班級彈窗
     window.openEditClassModal = function(dept, name, day, time, teacher) {
         document.getElementById('edit_original_dept').value = dept;
         document.getElementById('edit_original_name').value = name;
@@ -910,7 +980,7 @@
         document.getElementById('editClassModal').style.display = 'flex';
     };
 
-    // 儲存修改後的班級資料 (支援改名自動連動學生)
+    // 儲存修改後的班級資料
     window.saveEditedClass = async function() {
         const origDept = document.getElementById('edit_original_dept').value;
         const origName = document.getElementById('edit_original_name').value;
@@ -924,9 +994,7 @@
         if (!newName) return alert('請輸入班級課程名稱！');
 
         try {
-            // 1. 從原部門移除該班級舊資料，獲取原本的 startDate
             let origStartDate = new Date().toISOString().slice(0, 8) + '01';
-            let foundOld = false;
 
             if (window.state.courses[origDept]) {
                 const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
@@ -934,11 +1002,9 @@
                     const oldObj = window.state.courses[origDept][idx];
                     if (typeof oldObj === 'object' && oldObj.startDate) origStartDate = oldObj.startDate;
                     window.state.courses[origDept].splice(idx, 1);
-                    foundOld = true;
                 }
             }
 
-            // 2. 加入新資料至新部門
             if (!window.state.courses[newDept]) window.state.courses[newDept] = [];
             window.state.courses[newDept].push({
                 name: newName,
@@ -948,10 +1014,8 @@
                 startDate: origStartDate
             });
 
-            // 儲存班級設定至雲端
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
 
-            // 3. 如果班級名稱有改，自動連動更新學生資料庫中的課程名稱
             if (origName !== newName) {
                 const updatePromises = [];
                 window.state.students.forEach(stu => {
@@ -975,7 +1039,7 @@
             }
 
             document.getElementById('editClassModal').style.display = 'none';
-            alert(`✅ 班級【${newName}】資料已成功更新並同步！`);
+            alert(`✅ 班級【${newName}】資料已成功更新！`);
             initCloudData();
         } catch (e) {
             console.error(e);
@@ -983,7 +1047,11 @@
         }
     };
 
-    window.deleteClassCourse = async function(dept, className) {
+    // 從管理彈窗中執行「刪除班級」
+    window.deleteClassCourseFromModal = async function() {
+        const dept = document.getElementById('edit_original_dept').value;
+        const className = document.getElementById('edit_original_name').value;
+
         if (!checkPassword(`🔒 刪除班級【${className}】屬於教務管理操作，請輸入管理密碼：`)) {
             return;
         }
@@ -1006,6 +1074,7 @@
                 });
 
                 await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+                document.getElementById('editClassModal').style.display = 'none';
                 alert(`✅ 班級【${className}】已成功刪除！`);
                 if (window.state.currentFilterClass === className) {
                     window.state.currentFilterClass = null;
