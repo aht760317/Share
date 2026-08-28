@@ -77,7 +77,6 @@
         }
         .nav-btn:hover, .nav-btn.active { background: var(--accent); border-color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
         
-        /* 手機專屬底部快捷導覽列 */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -154,10 +153,10 @@
             color: #0369a1;
             font-size: 11px;
             font-weight: bold;
-            padding: 1px 6px;
+            padding: 2px 6px;
             border-radius: 4px;
             border: 1px solid #bae6fd;
-            margin-right: 4px;
+            margin-right: 5px;
         }
 
         .pending-todo-panel { background: #fff5f5; border: 2px solid #feb2b2; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
@@ -511,8 +510,9 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 14px;">
                     <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (點擊下方班級按鈕精準分流查詢)</h3></div>
-                    <div>
-                        <button class="btn btn-primary" onclick="syncWithMasterDatabase()">🔄 重新整理學籍</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-warning btn-small" onclick="autoRepairStudentLogs(true)">🛠️ 修復歷史科目標籤</button>
+                        <button class="btn btn-primary btn-small" onclick="syncWithMasterDatabase()">🔄 重新整理學籍</button>
                     </div>
                 </div>
                 
@@ -872,6 +872,56 @@
             return [];
         }
 
+        // 自動修復歷史舊資料（將舊日誌與學生出缺勤進行科目比對與綁定）
+        window.autoRepairStudentLogs = async function(showAlert = false) {
+            let repairedCount = 0;
+            const updatePromises = [];
+
+            window.state.students.forEach(stu => {
+                let stuModified = false;
+                const stuCourses = getStudentCoursesArray(stu);
+
+                if (stu.attendanceLogs && Array.isArray(stu.attendanceLogs)) {
+                    stu.attendanceLogs.forEach(log => {
+                        if (!log.course) {
+                            // 比對同日期的班級日誌
+                            const matchedHistory = window.state.historyLogs.find(h => h.date === log.date && stuCourses.includes(h.course));
+                            if (matchedHistory) {
+                                log.course = matchedHistory.course;
+                                log.dept = matchedHistory.dept;
+                                stuModified = true;
+                                repairedCount++;
+                            } else if (stuCourses.length === 1) {
+                                log.course = stuCourses[0];
+                                stuModified = true;
+                                repairedCount++;
+                            }
+                        }
+                    });
+                }
+
+                if (stuModified) {
+                    updatePromises.push(setDoc(doc(db, "classLogStudents", stu.firestoreId), {
+                        ...stu,
+                        attendanceLogs: stu.attendanceLogs
+                    }));
+                }
+            });
+
+            if (updatePromises.length > 0) {
+                try {
+                    await Promise.all(updatePromises);
+                    if (showAlert) alert(`✅ 成功修復 ${repairedCount} 筆歷史紀錄之科目標籤！`);
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
+                } catch (e) {
+                    console.error("修復失敗", e);
+                }
+            } else if (showAlert) {
+                alert("✨ 所有學生歷史紀錄皆已具備完整科目標籤，無需修復！");
+            }
+        };
+
         async function initCloudData(showSuccessAlert = false) {
             try {
                 const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
@@ -903,6 +953,9 @@
                     window.state.historyLogs.push({ firestoreId: document.id, ...document.data() });
                 });
                 window.state.historyLogs.sort((a, b) => b.id - a.id);
+
+                // 自動進行資料修復
+                await window.autoRepairStudentLogs(false);
 
                 const todayStr = new Date().toISOString().slice(0, 10);
                 document.getElementById('log-date-junior').value = todayStr;
@@ -1027,7 +1080,7 @@
                 return;
             }
 
-            if (title) title.innerText = `🏫 目前檢視班級：【${className}】學生學習與溝通總覽`;
+            if (title) title.innerText = `🏫 目前檢視班級：【${className}】學生專屬學習紀錄總覽`;
 
             const students = window.state.students.filter(s => {
                 const courses = getStudentCoursesArray(s);
@@ -1047,12 +1100,14 @@
                 let scoreHtml = '';
                 let noteHtml = '';
 
-                // 精準過濾：只篩選出屬於當前選擇班級 (className) 的出席與成績紀錄
-                const classLogs = (s.attendanceLogs || []).filter(l => !l.course || l.course === className);
+                // 嚴格精確分流：只篩選屬於當前班級 (className) 的出席與成績紀錄
+                const classLogs = (s.attendanceLogs || []).filter(l => {
+                    return l.course === className || (!l.course && getStudentCoursesArray(s).length === 1);
+                });
 
                 classLogs.slice(0, 15).forEach((l) => {
                     const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
-                    const courseTag = l.course ? `<span class="course-tag-badge">${l.course}</span>` : '';
+                    const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
                     const isAlert = l.status === '請假' || l.status === '曠課';
                     const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger" style="cursor:pointer;" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})"> (未補課-點擊設定)</span>` : '');
                     
