@@ -108,7 +108,7 @@
         .m-nav-item span.icon { font-size: 18px; margin-bottom: 2px; }
         .m-nav-item.active { color: var(--accent); }
 
-        .container { max-width: 1350px; margin: 15px auto; padding: 0 10px; }
+        .container { max-width: 1400px; margin: 15px auto; padding: 0 10px; }
         .section-content { display: none; }
         .section-content.active { display: block; }
         
@@ -154,7 +154,6 @@
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
         .grid-3 { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .grid-4 { display: grid; grid-template-columns: 1fr; gap: 10px; }
         
         @media (max-width: 767px) {
             .mobile-bottom-nav { display: flex; }
@@ -194,13 +193,12 @@
 
         @media (min-width: 768px) {
             .header-top h2 { font-size: 22px; }
-            .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); overflow-x: visible; }
-            .nav-btn { white-space: normal; font-size: 13px; padding: 10px 10px; }
+            .main-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); overflow-x: visible; }
+            .nav-btn { white-space: normal; font-size: 12.5px; padding: 8px 6px; }
             .container { padding: 0 15px; }
             .card { padding: 25px; }
             .grid-2 { grid-template-columns: 1fr 1fr; gap: 20px; }
             .grid-3 { grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-            .grid-4 { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; }
         }
 
         .course-item { display: flex; align-items: center; justify-content: space-between; background: #fdfdfd; border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -254,10 +252,10 @@
         <nav class="main-nav">
             <button class="nav-btn active" onclick="switchSection('teaching-logs-junior', this)">📖 教學日誌<br><small>(國中部)</small></button>
             <button class="nav-btn" onclick="switchSection('teaching-logs-elementary', this)">📘 教學日誌<br><small>(國小部)</small></button>
-            <button class="nav-btn" onclick="switchSection('teaching-logs-care', this)">🏢 課輔班日誌<br><small>(一週一次)</small></button>
+            <button class="nav-btn" onclick="switchSection('teaching-logs-care', this)">🏢 課輔班日誌<br><small>(週記)</small></button>
             <button class="nav-btn" onclick="switchSection('director-overview', this)">👑 主任全校日誌總覽</button>
             <button class="nav-btn" onclick="switchSection('student-profiles', this)">👥 學生檔案與通訊</button>
-            <button class="nav-btn" onclick="switchSection('system-settings', this)">⚙️ 系統與課程設定</button>
+            <button class="nav-btn" onclick="switchSection('all-logs-query', this)">📚 所有日誌查詢</button>
         </nav>
     </header>
 
@@ -586,68 +584,41 @@
             </div>
         </section>
 
-        <!-- ⚙️ 系統與課程設定 -->
-        <section id="system-settings" class="section-content">
+        <!-- 📚 所有日誌查詢 (一次顯示三個月並可自由切換區間) -->
+        <section id="all-logs-query" class="section-content">
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin:0;">⚙️ 新增與管理班級課程</h3>
-                    <button class="btn btn-primary btn-small" onclick="syncWithMasterDatabase()">🔄 強制同步教務總庫</button>
-                </div>
+                <h3 style="color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; margin-top:0;">📚 全校所有教學日誌總查詢</h3>
                 
-                <div class="grid-2">
-                    <div>
-                        <label>所屬部門：</label>
-                        <select id="new-course-dept">
-                            <option value="care">課輔部</option>
-                            <option value="elementary">國小部</option>
-                            <option value="junior">國中部</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>課程名稱：</label>
-                        <input type="text" id="new-course-name" placeholder="例如：國一數學特訓班 (如有括號為特殊課程)">
-                    </div>
-                </div>
-
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                    <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">📅 勾選上課星期 (可複選)：</label>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <label><input type="checkbox" name="course-days" value="星期一"> 星期一</label>
-                        <label><input type="checkbox" name="course-days" value="星期二"> 星期二</label>
-                        <label><input type="checkbox" name="course-days" value="星期三"> 星期三</label>
-                        <label><input type="checkbox" name="course-days" value="星期四"> 星期四</label>
-                        <label><input type="checkbox" name="course-days" value="星期五"> 星期五</label>
-                        <label><input type="checkbox" name="course-days" value="星期六"> 星期六</label>
-                        <label><input type="checkbox" name="course-days" value="星期日"> 星期日</label>
+                <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
+                    <div class="grid-3" style="align-items: center; margin-bottom: 10px;">
+                        <div>
+                            <label style="font-weight: bold; color: var(--primary);">📅 起始日期：</label>
+                            <input type="date" id="query-start-date" onchange="renderAllLogsQuery()">
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; color: var(--primary);">📅 結束日期：</label>
+                            <input type="date" id="query-end-date" onchange="renderAllLogsQuery()">
+                        </div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap; padding-top: 15px;">
+                            <button class="btn btn-small" onclick="setQueryRange(30)">1個月</button>
+                            <button class="btn btn-warning btn-small" onclick="setQueryRange(90)">3個月</button>
+                            <button class="btn btn-success btn-small" onclick="setQueryRange(180)">半年</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid-2">
-                    <div>
-                        <label>上課時間：</label>
-                        <input type="text" id="new-course-time" placeholder="例如：18:30 - 20:30">
-                    </div>
-                    <div>
-                        <label>授課老師：</label>
-                        <input type="text" id="new-course-teacher" placeholder="例如：王老師">
-                    </div>
-                </div>
-
-                <button class="btn" onclick="addCourse()" style="width:100%; padding:12px; font-size:16px; margin-top:8px;">＋ 確認加入新課程並同步至雲端</button>
-
-                <h4 style="margin-top: 25px; color: var(--primary);">目前系統已有課程清單：</h4>
                 <div class="grid-3">
-                    <div>
-                        <h5 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 5px; margin:5px 0;">課輔部課程</h5>
-                        <div id="care-courses-list"></div>
+                    <div style="background: #fdf8f6; border: 2px solid #38bdf8; padding: 12px; border-radius: 8px;">
+                        <h4 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-top:0;">🏢 課輔部日誌</h4>
+                        <div id="all-logs-query-care"></div>
                     </div>
-                    <div>
-                        <h5 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; margin:5px 0;">國小部課程</h5>
-                        <div id="elementary-courses-list"></div>
+                    <div style="background: #fdf8f6; border: 2px solid #bae6fd; padding: 12px; border-radius: 8px;">
+                        <h4 style="color: #0369a1; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-top:0;">📘 國小部日誌</h4>
+                        <div id="all-logs-query-elementary"></div>
                     </div>
-                    <div>
-                        <h5 style="color: #b45309; border-bottom: 2px solid #d97706; padding-bottom: 5px; margin:5px 0;">國中部課程</h5>
-                        <div id="junior-courses-list"></div>
+                    <div style="background: #fffbeb; border: 2px solid #fde68a; padding: 12px; border-radius: 8px;">
+                        <h4 style="color: #b45309; border-bottom: 2px solid #d97706; padding-bottom: 6px; margin-top:0;">📙 國中部日誌</h4>
+                        <div id="all-logs-query-junior"></div>
                     </div>
                 </div>
             </div>
@@ -672,9 +643,9 @@
             <span class="icon">👑</span>
             <span>主任總覽</span>
         </button>
-        <button class="m-nav-item" onclick="switchMobileNav('student-profiles', this)">
-            <span class="icon">👥</span>
-            <span>學生名冊</span>
+        <button class="m-nav-item" onclick="switchMobileNav('all-logs-query', this)">
+            <span class="icon">📚</span>
+            <span>所有日誌</span>
         </button>
     </div>
 
@@ -846,35 +817,6 @@
         </div>
     </div>
 
-    <!-- ⚙️ 課程修改/刪除彈窗 -->
-    <div class="modal-overlay" id="course-edit-modal">
-        <div class="modal-box" style="width: 500px;">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ 修改或刪除課程</h3>
-            <input type="hidden" id="edit-course-dept">
-            <input type="hidden" id="edit-course-original-name">
-
-            <label>課程名稱：</label>
-            <input type="text" id="edit-course-name" placeholder="課程名稱">
-
-            <label>上課星期：</label>
-            <input type="text" id="edit-course-day" placeholder="例如：星期一、星期三">
-
-            <label>上課時間：</label>
-            <input type="text" id="edit-course-time" placeholder="例如：19:00 - 21:00">
-
-            <label>授課老師：</label>
-            <input type="text" id="edit-course-teacher" placeholder="授課老師">
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; flex-wrap:wrap; gap:8px;">
-                <button class="btn btn-danger" onclick="requestDeleteCourse()">🗑️ 刪除課程</button>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-success" onclick="saveCourseEdit()">確認修改</button>
-                    <button class="btn" style="background:#999;" onclick="document.getElementById('course-edit-modal').style.display='none'">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 🔒 安全密碼驗證彈窗 (0618) -->
     <div class="modal-overlay" id="password-verify-modal">
         <div class="modal-box" style="width: 350px;">
@@ -976,6 +918,7 @@
             },
             students: [],
             historyLogs: [],
+            ignoredUnsubmitted: [], // 主任略過的未填寫提醒記錄 (key: date_courseName)
             selectedClassForProfile: null,
             currentSelectedDate: new Date().toISOString().split('T')[0],
             currentViewMode: 'single'
@@ -1034,19 +977,27 @@
                 document.getElementById('log-date-junior').valueAsDate = new Date();
                 document.getElementById('log-date-elementary').valueAsDate = new Date();
                 document.getElementById('log-date-care').valueAsDate = new Date();
+
                 const now = new Date();
                 document.getElementById('overview-target-month').value = now.toISOString().slice(0, 7);
+
+                // 預設查詢所有日誌為三個月區間
+                const endDateObj = new Date();
+                const startDateObj = new Date();
+                startDateObj.setMonth(startDateObj.getMonth() - 3);
+                document.getElementById('query-end-date').value = endDateObj.toISOString().split('T')[0];
+                document.getElementById('query-start-date').value = startDateObj.toISOString().split('T')[0];
 
                 window.updateCourseDropdowns();
                 window.renderLogStudents('junior');
                 window.renderLogStudents('elementary');
                 window.renderLogStudents('care');
-                window.renderSettingsCourseList();
                 window.renderClassButtons();
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
                 window.renderHistoryLogs();
                 window.renderPendingTodoPanels();
+                window.renderAllLogsQuery();
 
                 if (showSuccessAlert) {
                     alert(`✅ 已成功與教務總庫同步最新資料！\n\n📌 班級總數：${(window.state.courses.care.length + window.state.courses.elementary.length + window.state.courses.junior.length)} 班\n👥 全校在籍學生：${window.state.students.length} 人`);
@@ -1061,12 +1012,6 @@
             initCloudData(true);
         };
 
-        async function saveCoursesToCloud() {
-            try {
-                await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            } catch (e) { console.error(e); }
-        }
-
         window.switchSection = function(sectionId, btn) {
             document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
@@ -1078,7 +1023,6 @@
             });
 
             window.updateCourseDropdowns();
-            window.renderSettingsCourseList();
             window.renderClassButtons();
             window.renderPendingTodoPanels();
 
@@ -1090,6 +1034,7 @@
             if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
             if(sectionId === 'teaching-logs-care') window.renderLogStudents('care');
             if(sectionId === 'student-profiles') window.renderProfileStudents();
+            if(sectionId === 'all-logs-query') window.renderAllLogsQuery();
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
@@ -1106,7 +1051,6 @@
             });
 
             window.updateCourseDropdowns();
-            window.renderSettingsCourseList();
             window.renderClassButtons();
             window.renderPendingTodoPanels();
 
@@ -1118,6 +1062,7 @@
             if(sectionId === 'teaching-logs-elementary') window.renderLogStudents('elementary');
             if(sectionId === 'teaching-logs-care') window.renderLogStudents('care');
             if(sectionId === 'student-profiles') window.renderProfileStudents();
+            if(sectionId === 'all-logs-query') window.renderAllLogsQuery();
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
@@ -1233,9 +1178,12 @@
             }, 100);
         };
 
-        // 主任點擊尚未填寫日誌快速跳轉導引
-        window.jumpToLogSection = function(dept, courseName) {
-            if (confirm(`是否立即前往填寫「${courseName}」的教學日誌？`)) {
+        // 主任點擊尚未填寫日誌快速跳轉導引，並可選擇略過
+        window.jumpToLogSection = function(dept, courseName, dateStr) {
+            const actionKey = `${dateStr}_${courseName}`;
+            const choice = confirm(`是否立即前往填寫「${courseName}」的教學日誌？\n\n[點擊「確定」] 前往填寫\n[點擊「取消」] 略過此提醒（標記為已知悉/不用再提醒）`);
+            
+            if (choice) {
                 let btnIdx = 1;
                 let sectionId = 'teaching-logs-junior';
                 if (dept === 'elementary') {
@@ -1250,11 +1198,18 @@
                 
                 setTimeout(() => {
                     const selectEl = document.getElementById(`log-course-select-${dept}`);
-                    if (selectEl) {
-                        selectEl.value = courseName;
-                        renderLogStudents(dept);
-                    }
+                    const dateEl = document.getElementById(`log-date-${dept}`);
+                    if (selectEl) selectEl.value = courseName;
+                    if (dateEl) dateEl.value = dateStr;
+                    renderLogStudents(dept);
                 }, 100);
+            } else {
+                if (!window.state.ignoredUnsubmitted) window.state.ignoredUnsubmitted = [];
+                if (!window.state.ignoredUnsubmitted.includes(actionKey)) {
+                    window.state.ignoredUnsubmitted.push(actionKey);
+                }
+                renderDirectorOverview();
+                alert('✅ 已將此筆未填寫提醒標記為略過（已處理好）。');
             }
         };
 
@@ -1273,7 +1228,7 @@
             });
 
             if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777; padding:15px;">此課程目前尚無學生，請先至「學生檔案與通訊」或「教務總庫」設定選課。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777; padding:15px;">此課程目前尚無學生，請先至「學生檔案與通訊」設定選課。</td></tr>`;
                 return;
             }
 
@@ -1317,7 +1272,7 @@
             const section = row.closest('section');
             if(!section) return;
             const dept = section.id.includes('junior') ? 'junior' : (section.id.includes('elementary') ? 'elementary' : 'care');
-            if (dept === 'care') return; // 課輔部不檢查考試分數
+            if (dept === 'care') return;
 
             const passScore = Number(document.getElementById(`log-pass-score-${dept}`).value) || 80;
             const attStatus = row.querySelector('.log-att-status').value;
@@ -1716,6 +1671,7 @@
                 window.renderHistoryLogs();
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
+                window.renderAllLogsQuery();
             } catch (e) { alert('更新失敗'); }
         };
 
@@ -1733,81 +1689,9 @@
                     window.renderHistoryLogs();
                     window.generateMonthDaysGrid();
                     window.renderDirectorOverview();
+                    window.renderAllLogsQuery();
                 } catch (e) { alert('刪除失敗'); }
             });
-        };
-
-        window.openCourseEditModal = function(dept, index) {
-            window.requestSecureAction(() => {
-                const course = window.state.courses[dept][index];
-                if(!course) return;
-
-                document.getElementById('edit-course-dept').value = dept;
-                document.getElementById('edit-course-original-name').value = index;
-                document.getElementById('edit-course-name').value = typeof course === 'object' ? course.name : course;
-                document.getElementById('edit-course-day').value = course.day || '';
-                document.getElementById('edit-course-time').value = course.time || '';
-                document.getElementById('edit-course-teacher').value = course.teacher || '';
-
-                document.getElementById('course-edit-modal').style.display = 'flex';
-            });
-        };
-
-        window.saveCourseEdit = async function() {
-            const dept = document.getElementById('edit-course-dept').value;
-            const index = Number(document.getElementById('edit-course-original-name').value);
-            const name = document.getElementById('edit-course-name').value.trim();
-            const day = document.getElementById('edit-course-day').value.trim();
-            const time = document.getElementById('edit-course-time').value.trim();
-            const teacher = document.getElementById('edit-course-teacher').value.trim();
-
-            if(!name) return alert('不得為空白！');
-
-            window.state.courses[dept][index] = { name, day, time, teacher };
-            await saveCoursesToCloud();
-
-            document.getElementById('course-edit-modal').style.display = 'none';
-            alert('✅ 課程修改成功！');
-            initCloudData();
-        };
-
-        window.requestDeleteCourse = function() {
-            window.requestSecureAction(async () => {
-                const dept = document.getElementById('edit-course-dept').value;
-                const index = Number(document.getElementById('edit-course-original-name').value);
-
-                window.state.courses[dept].splice(index, 1);
-                await saveCoursesToCloud();
-
-                document.getElementById('course-edit-modal').style.display = 'none';
-                alert('✅ 課程已刪除！');
-                initCloudData();
-            });
-        };
-
-        window.addCourse = async function() {
-            const dept = document.getElementById('new-course-dept').value;
-            const name = document.getElementById('new-course-name').value.trim();
-            const time = document.getElementById('new-course-time').value.trim();
-            const teacher = document.getElementById('new-course-teacher').value.trim();
-            
-            const dayCheckboxes = document.querySelectorAll('input[name="course-days"]:checked');
-            const days = Array.from(dayCheckboxes).map(cb => cb.value).join('、');
-
-            if (!name) return alert('請輸入課程名稱！');
-
-            if (!window.state.courses[dept]) window.state.courses[dept] = [];
-            const newCourse = { name, day: days, time, teacher };
-            window.state.courses[dept].push(newCourse);
-            await saveCoursesToCloud();
-
-            document.getElementById('new-course-name').value = '';
-            document.getElementById('new-course-time').value = '';
-            document.getElementById('new-course-teacher').value = '';
-            dayCheckboxes.forEach(cb => cb.checked = false);
-
-            alert('✅ 新課程已成功加入並同步至雲端！');
-            initCloudData();
         };
 
         window.requestDeleteStudent = function() {
@@ -1898,6 +1782,7 @@
                 window.generateMonthDaysGrid();
                 window.renderDirectorOverview();
                 window.renderPendingTodoPanels();
+                window.renderAllLogsQuery();
             } catch (e) { alert('儲存失敗'); }
         };
 
@@ -1929,6 +1814,7 @@
                 alert('✅ 主任批示已儲存！');
                 window.renderDirectorOverview();
                 window.renderHistoryLogs();
+                window.renderAllLogsQuery();
             } catch (e) { alert('更新失敗'); }
         };
 
@@ -1957,6 +1843,41 @@
                     </div>
                 `).join('');
             });
+        };
+
+        // 所有日誌查詢區間篩選與渲染
+        window.setQueryRange = function(days) {
+            const endObj = new Date();
+            const startObj = new Date();
+            startObj.setDate(startObj.getDate() - days);
+            document.getElementById('query-end-date').value = endObj.toISOString().split('T')[0];
+            document.getElementById('query-start-date').value = startObj.toISOString().split('T')[0];
+            renderAllLogsQuery();
+        };
+
+        window.renderAllLogsQuery = function() {
+            const startStr = document.getElementById('query-start-date').value;
+            const endStr = document.getElementById('query-end-date').value;
+            if(!startStr || !endStr) return;
+
+            const filteredLogs = window.state.historyLogs.filter(l => l.date >= startStr && l.date <= endStr);
+
+            const renderCard = (l) => `
+                <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid var(--accent); padding:10px; border-radius:6px; margin-bottom:10px; font-size:13px;">
+                    <b style="color:var(--primary);">[${l.course}] ${l.date}</b>
+                    <p style="margin:3px 0;"><b>進度：</b>${l.content}</p>
+                    <p style="margin:3px 0;"><b>作業：</b>${l.homework || '無'}</p>
+                    ${l.directorApprovalText ? `<div style="color:#0369a1; margin-top:3px;">👑 <b>主任批示：</b>${l.directorApprovalText}</div>` : ''}
+                </div>
+            `;
+
+            const careLogs = filteredLogs.filter(l => l.dept === 'care');
+            const elemLogs = filteredLogs.filter(l => l.dept === 'elementary');
+            const juniorLogs = filteredLogs.filter(l => l.dept === 'junior');
+
+            document.getElementById('all-logs-query-care').innerHTML = careLogs.length ? careLogs.map(renderCard).join('') : '<p style="color:#777; text-align:center;">此區間無課輔部日誌。</p>';
+            document.getElementById('all-logs-query-elementary').innerHTML = elemLogs.length ? elemLogs.map(renderCard).join('') : '<p style="color:#777; text-align:center;">此區間無國小部日誌。</p>';
+            document.getElementById('all-logs-query-junior').innerHTML = juniorLogs.length ? juniorLogs.map(renderCard).join('') : '<p style="color:#777; text-align:center;">此區間無國中部日誌。</p>';
         };
 
         window.generateMonthDaysGrid = function() {
@@ -2047,11 +1968,19 @@
                 if(todayScheduledCourses.length > 0) {
                     todayScheduledCourses.forEach(c => {
                         const hasSubmitted = targetLogs.some(l => l.course === c.name);
-                        if(!hasSubmitted) unsubmittedCount++;
+                        const actionKey = `${selectedDateStr}_${c.name}`;
+                        const isIgnored = window.state.ignoredUnsubmitted && window.state.ignoredUnsubmitted.includes(actionKey);
 
-                        const statusBadge = hasSubmitted 
-                            ? `<span style="background:#2ecc71; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold;">✅ 已完成填寫</span>` 
-                            : `<span style="background:#e74c3c; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; box-shadow:0 0 5px rgba(231,76,60,0.5); cursor:pointer;" onclick="jumpToLogSection('${c.dept}', '${c.name}')">⚠️ 尚未填寫日誌 (點此前往填寫)</span>`;
+                        if(!hasSubmitted && !isIgnored) unsubmittedCount++;
+
+                        let statusBadge = '';
+                        if (hasSubmitted) {
+                            statusBadge = `<span style="background:#2ecc71; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold;">✅ 已完成填寫</span>`;
+                        } else if (isIgnored) {
+                            statusBadge = `<span style="background:#94a3b8; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold;">🟢 已略過提醒 (主任已處理)</span>`;
+                        } else {
+                            statusBadge = `<span style="background:#e74c3c; color:white; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; box-shadow:0 0 5px rgba(231,76,60,0.5); cursor:pointer;" onclick="jumpToLogSection('${c.dept}', '${c.name}', '${selectedDateStr}')">⚠️ 尚未填寫日誌 (點此處理/略過)</span>`;
+                        }
 
                         const deptBadgeName = c.dept === 'care' ? '課輔' : (c.dept === 'elementary' ? '國小' : '國中');
 
@@ -2073,7 +2002,7 @@
                                 ${scheduledStatusHtml}
                                </div>`
                             : `<div style="background:#f0fdf4; border:2px solid #86efac; padding:12px; border-radius:8px;">
-                                <h4 style="margin:0 0 8px 0; color:#16a34a;">🎉 太棒了！${selectedDateStr} (${dayName}) 所有排課班級日誌均已填寫完畢！</h4>
+                                <h4 style="margin:0 0 8px 0; color:#16a34a;">🎉 太棒了！${selectedDateStr} (${dayName}) 所有排課班級日誌均已處理完畢！</h4>
                                 ${scheduledStatusHtml}
                                </div>`;
                         bannerEl.innerHTML = alertSummary;
@@ -2138,31 +2067,6 @@
             juniorContainer.innerHTML = juniorLogs.length > 0 ? juniorLogs.map(renderLogCard).join('') : `<p style="color:#777; text-align:center;">此區間無國中部日誌。</p>`;
         };
 
-        window.renderSettingsCourseList = function() {
-            const careList = document.getElementById('care-courses-list');
-            const elemList = document.getElementById('elementary-courses-list');
-            const junList = document.getElementById('junior-courses-list');
-            
-            if(careList) {
-                careList.innerHTML = (window.state.courses.care || []).map((c, idx) => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('care', ${idx})"><b>🏢 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
-                }).join('');
-            }
-            if(elemList) {
-                elemList.innerHTML = (window.state.courses.elementary || []).map((c, idx) => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('elementary', ${idx})"><b>📘 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
-                }).join('');
-            }
-            if(junList) {
-                junList.innerHTML = (window.state.courses.junior || []).map((c, idx) => {
-                    const cName = typeof c === 'object' ? c.name : c;
-                    return `<div class="course-item"><span class="course-edit-link" onclick="openCourseEditModal('junior', ${idx})"><b>📙 ${cName}</b> (${c.day || ''} ${c.time || ''} / 授課: ${c.teacher || ''})</span></div>`;
-                }).join('');
-            }
-        };
-
         window.renderClassButtons = function() {
             const container = document.getElementById('class-buttons-container');
             if(!container) return;
@@ -2186,7 +2090,7 @@
                 html += `<button class="btn-junior ${activeClass}" onclick="selectProfileClass('${cName}')">📙 國中: ${cName}</button>`;
             });
 
-            container.innerHTML = html || '<p style="color:#777;">目前尚無設定課程，請至「系統與課程設定」或「教務總庫」新增課程。</p>';
+            container.innerHTML = html || '<p style="color:#777;">目前尚無設定課程。</p>';
         };
 
         window.selectProfileClass = function(className) {
@@ -2220,7 +2124,6 @@
             tbody.innerHTML = students.map(s => {
                 const logs = s.attendanceLogs || [];
 
-                // 1. 出席狀況 (前 5 筆與其餘筆數拆分)
                 const renderAttItem = (l, logIdx) => {
                     let attStatusStr = `<span class="${l.status === '出席' ? 'badge-success' : 'badge-danger'} interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.status}</span>`;
                     if (l.status !== '出席') {
@@ -2237,12 +2140,9 @@
                 const attRest = logs.slice(5).map((l, i) => renderAttItem(l, i + 5)).join('');
                 let attHtml = attTop5 || '尚無紀錄';
                 if (logs.length > 5) {
-                    attHtml += `
-                        <div id="att-more-${s.firestoreId}" style="display:none;">${attRest}</div>
-                    `;
+                    attHtml += `<div id="att-more-${s.firestoreId}" style="display:none;">${attRest}</div>`;
                 }
 
-                // 2. 考試成績 / 表現評量 (前 5 筆與其餘筆數拆分)
                 const renderScoreItem = (l, logIdx) => {
                     const passScore = l.passScore || 80;
                     let scoreStr = `<b class="interactive-tag" onclick="openRetestModal('${s.firestoreId}', ${logIdx})">${l.score !== null && l.score !== undefined ? l.score : '無'}</b>`;
@@ -2266,7 +2166,6 @@
                     `;
                 }
 
-                // 3. 備註與親師電聯 QA 紀錄
                 let notesHtml = logs.map((l, logIdx) => {
                     if (!l.detail || l.detail.trim() === '') return '';
                     return `
