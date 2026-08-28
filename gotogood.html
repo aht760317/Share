@@ -9,6 +9,7 @@
             --primary-color: #4f46e5;
             --success-color: #10b981;
             --warning-color: #f59e0b;
+            --danger-color: #ef4444;
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --bg-body: #f3f4f6;
@@ -36,6 +37,7 @@
         .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
@@ -55,8 +57,8 @@
 
     <div class="container">
         <div class="page-header">
-            <h1>招生詢問與智慧轉班系統</h1>
-            <p>貼上對話自動轉為問班單，支援主任追蹤與試聽日期提醒</p>
+            <h1>招生與進班管理系統</h1>
+            <p>安全權控修改與防呆進班機制</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
@@ -133,7 +135,7 @@
                 <tbody id="trackingTableBody">
                     <tr>
                         <td>
-                            <span class="badge badge-line">LINE</span><br>
+                            <span class="badge badge-line s-source">LINE</span><br>
                             <strong class="s-name">林美華</strong>
                         </td>
                         <td>
@@ -147,7 +149,7 @@
                             <div class="action-btns">
                                 <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
                                 <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                                <button class="btn btn-sm" onclick="convertToClass(this)">確定進班</button>
+                                <button class="btn btn-sm btn-danger" onclick="convertToClass(this)">確定進班</button>
                             </div>
                         </td>
                     </tr>
@@ -157,39 +159,28 @@
     </div>
 
     <script>
-        // 真正智慧解析貼上對話的函數
         function parseChatText() {
             const text = document.getElementById('chatInput').value.trim();
-            if(!text) { 
-                alert('請先將對話貼到文字框中！'); 
-                return; 
-            }
+            if(!text) { alert('請先將對話貼到文字框中！'); return; }
 
-            // 1. 自動抓取手機號碼 (尋找 09 開頭後面接 8 碼數字)
             const phoneRegex = /09\d{2}-?\d{3}-?\d{3}|09\d{8}/g;
             const phoneMatch = text.match(phoneRegex);
             if (phoneMatch) {
                 document.getElementById('studentPhone').value = phoneMatch[0];
             }
 
-            // 2. 將貼上的文字直接帶入追蹤紀錄，方便老師保留原話
             document.getElementById('trackNote').value = "對話原文： " + text;
 
-            // 3. 嘗試自動判斷來源（如果文字裡有提到 IG 或 FB 就自動切換下拉選單）
             if (text.includes('IG') || text.includes('小盒子')) {
                 document.getElementById('leadSource').value = 'IG';
             } else if (text.includes('FB') || text.includes('粉絲')) {
                 document.getElementById('leadSource').value = 'FB';
             } else {
-                document.getElementById('leadSource').value = 'LINE'; // 預設 LINE
+                document.getElementById('leadSource').value = 'LINE';
             }
-
-            // 4. 自動把整段文字填入姓名欄位前方或提示（若找不到名字，保留讓使用者微調）
-            // 抓取前幾個字作為提示
-            alert('已成功抓取電話並帶入追蹤紀錄！請稍微檢查姓名與課程欄位是否正確。');
+            alert('已成功抓取電話並帶入追蹤紀錄！');
         }
 
-        // 儲存並新增至清單
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
             const phone = document.getElementById('studentPhone').value;
@@ -199,10 +190,7 @@
             const status = document.getElementById('studentStatus').value;
             const note = document.getElementById('trackNote').value;
 
-            if(!name) { 
-                alert('請填寫學生姓名！'); 
-                return; 
-            }
+            if(!name) { alert('請填寫學生姓名！'); return; }
 
             const tbody = document.getElementById('trackingTableBody');
             const newRow = document.createElement('tr');
@@ -228,7 +216,7 @@
                     <div class="action-btns">
                         <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
                         <button class="btn btn-sm btn-warning" onclick="editRow(this)">修改</button>
-                        <button class="btn btn-sm" onclick="convertToClass(this)">確定進班</button>
+                        <button class="btn btn-sm btn-danger" onclick="convertToClass(this)">確定進班</button>
                     </div>
                 </td>
             `;
@@ -238,7 +226,6 @@
             document.getElementById('chatInput').value = '';
         }
 
-        // 標記已通知家長
         function markNotified(btn) {
             const row = btn.closest('tr');
             const logEl = row.querySelector('.s-log');
@@ -247,8 +234,16 @@
             alert('已記錄：已完成試聽提醒通知！');
         }
 
-        // 修改資料
+        // 修改資料（需輸入密碼防呆）
         function editRow(btn) {
+            // 預設修改密碼為 1234 (您可以自行更改下方引號內的數字)
+            const password = prompt("【安全防護】修改資料需要輸入管理密碼：");
+            if (password === null) return; // 按取消
+            if (password !== "1234") {
+                alert("密碼錯誤，無法修改！");
+                return;
+            }
+
             const row = btn.closest('tr');
             const nameEl = row.querySelector('.s-name');
             const phoneEl = row.querySelector('.s-phone');
@@ -276,16 +271,27 @@
             alert('資料修改成功！');
         }
 
-        // 確定進班
+        // 確定進班（加入二次防呆確認，避免手殘按錯）
         function convertToClass(btn) {
             const row = btn.closest('tr');
             const studentName = row.querySelector('.s-name').innerText;
             
-            if(confirm(`確定要將「${studentName}」轉入正式班級嗎？`)) {
+            // 二次確認彈窗
+            const isConfirmed = confirm(`【確認進班提示】\n\n您即將將「${studentName}」轉入正式班級。轉入後將鎖定正式進班狀態。\n\n請問是否確定要執行？`);
+            
+            if (isConfirmed) {
                 const statusEl = row.querySelector('.s-status');
                 statusEl.innerText = '已正式進班';
                 statusEl.className = 'badge badge-line s-status';
+                
+                // 把確定進班按鈕改為已完成狀態，避免重複點擊
+                const actionDiv = btn.closest('.action-btns');
+                btn.remove(); // 移除進班按鈕
+                
                 alert(`成功！${studentName} 的資料已正式匯入班級系統。`);
+            } else {
+                // 使用者按了取消
+                console.log("已取消進班操作");
             }
         }
     </script>
