@@ -8,17 +8,58 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; padding-bottom: 70px; }
         .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
         /* 導覽列 */
         .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
 
-        .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        .tab-btn { flex: 1; padding: 12px 15px; background: transparent; border: none; color: #94A3B8; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; }
+        .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { color: white; border-bottom: 4px solid var(--accent); background: #0F172A; }
         .tab-btn:hover { color: white; }
+
+        /* 手機專屬底部導覽列 */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #1E293B;
+            border-top: 1px solid #334155;
+            z-index: 99999;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
+        }
+        @media screen and (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; }
+            .tabs { display: none !important; }
+            body { padding-bottom: 75px !important; }
+        }
+        .mobile-bottom-nav .nav-item {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mobile-bottom-nav .nav-item span:first-child {
+            font-size: 18px;
+        }
+        .mobile-bottom-nav .nav-item.active {
+            color: white;
+            background: #0F172A;
+            border-top: 3px solid var(--accent);
+        }
         
         .content-area { padding: 15px; display: none; }
         .content-area.active { display: block; }
@@ -49,6 +90,7 @@
         /* 快捷按鈕區 */
         .quick-btn { padding: 8px 12px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; cursor: grab; user-select: none; flex: 1 1 30%; min-width: 100px; }
         .quick-btn:active { cursor: grabbing; }
+        .quick-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .quick-btn small { font-size: 11px; color: #4F46E5; font-weight: normal; display: block; margin-top: 2px; }
         .quick-btn.discount { background: #FEF3C7; border-color: #FBBF24; color: #B45309; }
         .quick-btn.discount small { color: #D97706; }
@@ -109,7 +151,6 @@
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-top: 20px; font-size: 18px; }
 
-        /* 手機開單區與表單列直式排列適應 */
         @media screen and (max-width: 768px) {
             body { padding: 5px; }
             .app-container { border-radius: 8px; }
@@ -178,11 +219,32 @@
         <h1>顧德補習班 繳費管理系統</h1>
     </div>
     
+    <!-- 桌面版上方導覽列 -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('manage')">1. 繳費紀錄</button>
         <button class="tab-btn" onclick="switchTab('create')">2. 產生繳費單</button>
         <button class="tab-btn" onclick="switchTab('settings')">3. 系統設定</button>
         <button class="tab-btn" onclick="switchTab('directory')" style="background:#065F46;">📖 4. 學生通訊錄</button>
+    </div>
+
+    <!-- 手機版專屬底部導覽列 (一格一格快速切換) -->
+    <div class="mobile-bottom-nav no-print">
+        <button class="nav-item active" onclick="switchTab('manage')">
+            <span>📊</span>
+            <span>繳費紀錄</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('create')">
+            <span>➕</span>
+            <span>產生單據</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')">
+            <span>⚙️</span>
+            <span>系統設定</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('directory')">
+            <span>📖</span>
+            <span>通訊錄</span>
+        </button>
     </div>
 
     <!-- 頁籤 1：繳費紀錄管理 -->
@@ -779,8 +841,18 @@
     window.switchTab = function(tabId) {
         document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
+        
         document.getElementById(tabId).classList.add('active');
-        document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        
+        const topBtn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+        if(topBtn) topBtn.classList.add('active');
+
+        const navItems = document.querySelectorAll('.mobile-bottom-nav .nav-item');
+        if(tabId === 'manage' && navItems[0]) navItems[0].classList.add('active');
+        if(tabId === 'create' && navItems[1]) navItems[1].classList.add('active');
+        if(tabId === 'settings' && navItems[2]) navItems[2].classList.add('active');
+        if(tabId === 'directory' && navItems[3]) navItems[3].classList.add('active');
         
         if(tabId === 'manage') renderRecords();
         if(tabId === 'create') renderClassGrid();
