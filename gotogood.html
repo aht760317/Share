@@ -14,7 +14,7 @@
             --text-muted: #6b7280;
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
-            --border-color: #e5e7eb;
+            --border-color: #e2e8f0;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -34,9 +34,12 @@
 
         .smart-paste-box textarea { width: 100%; height: 90px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; resize: vertical; margin-bottom: 0.75rem; }
         
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
-        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; }
+        /* 區塊化表單排版網格 (讓每個問題獨立成方塊) */
+        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
+        .form-block-item:hover { border-color: var(--primary-color); box-shadow: 0 2px 4px rgba(79, 70, 229, 0.08); }
+        .form-block-item label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.4rem; }
+        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; background: #ffffff; }
 
         .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; }
         .btn:hover { opacity: 0.9; }
@@ -45,16 +48,16 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
         
-        /* 區塊化卡片專用樣式 (支援拖曳移動) */
+        /* 追蹤清單區塊化卡片 (支援拖曳移動) */
         #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
-        .tracking-block { background: #fafafa; border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
         .tracking-block:active { cursor: grabbing; }
         .tracking-block.dragging { opacity: 0.4; }
         
         .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
         .block-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
         .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.9rem; margin-bottom: 0.75rem; }
-        .block-footer { background: #fff; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.85rem; }
+        .block-footer { background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.85rem; }
         .block-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
@@ -82,10 +85,10 @@
         <div class="page-header">
             <div>
                 <h1>招生與進班管理系統</h1>
-                <p>未進班區塊化追蹤、正式進班與推薦人獎金獨立管理</p>
+                <p>未進班方塊化追蹤、正式進班與推薦人獎金獨立管理</p>
             </div>
             <div class="tab-nav">
-                <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤區塊</button>
+                <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤看板</button>
                 <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
                 <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人名單與獎金</button>
             </div>
@@ -99,61 +102,62 @@
                 <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
             </div>
 
+            <!-- 步驟二：改造成精美方塊化卡片表單 -->
             <div class="card">
-                <h3>📝 步驟二：問班與老師追蹤管理（表單填寫）</h3>
+                <h3>📝 步驟二：問班與老師追蹤管理（方塊化填寫表單）</h3>
                 <form id="inquiryForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>學生姓名</label>
+                    <div class="form-blocks-grid">
+                        <div class="form-block-item">
+                            <label>📌 學生姓名</label>
                             <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
-                        <div class="form-group">
-                            <label>詢問者 (誰來詢問)</label>
+                        <div class="form-block-item">
+                            <label>💬 詢問者 (誰來詢問)</label>
                             <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
                         </div>
-                        <div class="form-group">
-                            <label>推薦人 (誰介紹的)</label>
+                        <div class="form-block-item">
+                            <label>🎁 推薦人 (誰介紹的)</label>
                             <input type="text" id="referrer" placeholder="例如：張小華媽媽 (無則免填)">
                         </div>
-                        <div class="form-group">
-                            <label>有意願課程</label>
+                        <div class="form-block-item">
+                            <label>📚 有意願課程</label>
                             <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
                         </div>
-                        <div class="form-group">
-                            <label>聯絡電話</label>
+                        <div class="form-block-item">
+                            <label>📞 聯絡電話</label>
                             <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
                         </div>
-                        <div class="form-group">
-                            <label>預定試聽日期</label>
+                        <div class="form-block-item">
+                            <label>📅 預定試聽日期</label>
                             <input type="date" id="trialDate">
                         </div>
-                        <div class="form-group">
-                            <label>負責追蹤老師</label>
+                        <div class="form-block-item">
+                            <label>👨‍🏫 負責追蹤老師</label>
                             <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
                         </div>
-                        <div class="form-group">
-                            <label>目前招生狀態</label>
+                        <div class="form-block-item">
+                            <label>⚡ 目前招生狀態</label>
                             <select id="studentStatus">
                                 <option value="初次諮詢">初次諮詢</option>
                                 <option value="預約試聽中">預約試聽中</option>
                                 <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                             </select>
                         </div>
-                        <input type="hidden" id="leadSource" value="LINE">
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label>老師追蹤紀錄（主任可隨時檢視過程）</label>
-                        <input type="text" id="trackNote" placeholder="例如：記錄對話內容，家長詢問細節。">
+                    <div class="form-block-item" style="margin-bottom: 1rem;">
+                        <label>📝 老師追蹤紀錄（主任可隨時檢視過程）</label>
+                        <textarea id="trackNote" rows="2" placeholder="例如：記錄對話內容，家長詢問細節。" style="resize: vertical;"></textarea>
                     </div>
 
+                    <input type="hidden" id="leadSource" value="LINE">
                     <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至下方追蹤區塊</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>📊 步驟三：招生追蹤區塊管理（可上下拖曳區塊排序）</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">💡 提示：按住區塊任意處即可上下拖曳調整排序。</p>
+                <h3>📊 步驟三：招生追蹤區塊看板（支援上下隨意拖曳排序）</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">💡 提示：按住任一區塊即可上下拖曳調整跟進順序。</p>
                 
                 <!-- 可拖曳的區塊容器 -->
                 <div id="trackingCardContainer">
@@ -236,36 +240,36 @@
         <div class="modal-content">
             <div class="modal-header">✏️ 修改學生招生資料</div>
             <form id="editForm">
-                <div class="form-grid">
-                    <div class="form-group">
+                <div class="form-blocks-grid">
+                    <div class="form-block-item">
                         <label>學生姓名</label>
                         <input type="text" id="editName">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>詢問者 (誰來詢問)</label>
                         <input type="text" id="editInquirer">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>推薦人 (誰介紹的)</label>
                         <input type="text" id="editReferrer">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>有意願課程</label>
                         <input type="text" id="editCourse">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>聯絡電話</label>
                         <input type="text" id="editPhone">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>預定試聽日期 / 備註</label>
                         <input type="date" id="editDate">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>負責追蹤老師</label>
                         <input type="text" id="editTeacher">
                     </div>
-                    <div class="form-group">
+                    <div class="form-block-item">
                         <label>目前進班 / 追蹤狀態</label>
                         <select id="editStatusSelect">
                             <option value="初次諮詢">初次諮詢</option>
@@ -274,12 +278,12 @@
                             <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
-                    <input type="hidden" id="editSource" value="LINE">
                 </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
+                <div class="form-block-item" style="margin-bottom: 1rem;">
                     <label>追蹤紀錄歷程</label>
-                    <textarea id="editLog" style="width: 100%; height: 85px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;"></textarea>
+                    <textarea id="editLog" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; resize: vertical;"></textarea>
                 </div>
+                <input type="hidden" id="editSource" value="LINE">
                 <div style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
                     <button type="button" class="btn btn-sm btn-danger" onclick="deleteStudentRecord()">🗑️ 刪除此學生資料</button>
                     <div style="display: flex; gap: 0.5rem;">
@@ -303,7 +307,7 @@
     </div>
 
     <script>
-        let currentEditingElement = null; // 支援區塊或表格列
+        let currentEditingElement = null; 
         let isEditingEnrolled = false; 
 
         function getFormattedTimestamp() {
@@ -398,7 +402,7 @@
             document.getElementById('chatInput').value = '';
         }
 
-        // 區塊拖曳排序邏輯 (HTML5 Drag and Drop)
+        // 區塊拖曳排序邏輯
         let draggedItem = null;
 
         function handleDragStart(e) {
@@ -527,7 +531,6 @@
 
             if(!name) { alert('學生姓名不能為空！'); return; }
 
-            // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁區塊
             if (isEditingEnrolled && status !== '已正式進班') {
                 if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤區塊嗎？`)) {
                     const container = document.getElementById('trackingCardContainer');
@@ -577,7 +580,6 @@
                 }
             }
 
-            // 如果原本在第一頁，但被直接改為「已正式進班」-> 自動移到第二頁
             if (!isEditingEnrolled && status === '已正式進班') {
                 if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
                     const enrolledTbody = document.getElementById('enrolledTableBody');
@@ -612,7 +614,6 @@
                 }
             }
 
-            // 一般原地修改更新
             currentEditingElement.querySelector('.s-name').innerText = name;
             updateHiddenInput(currentEditingElement, 's-inquirer', inquirer);
             updateHiddenInput(currentEditingElement, 's-referrer', referrer);
@@ -664,7 +665,6 @@
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
-                // 組合成表格行
                 newEnrolledRow.innerHTML = `
                     <td>
                         <strong class="s-name">${studentName}</strong>
