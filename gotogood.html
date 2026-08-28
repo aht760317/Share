@@ -38,6 +38,7 @@
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+        .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; } /* 特別給修改按鈕用的小尺寸 */
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
@@ -52,7 +53,7 @@
         .status-not-enrolled { background: #fee2e2; color: #991b1b; }
         .status-enrolled { background: #dbeafe; color: #1e40af; }
 
-        .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
 
         /* 彈跳視窗 Modal 樣式 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
@@ -65,7 +66,7 @@
     <div class="container">
         <div class="page-header">
             <h1>招生與進班管理系統</h1>
-            <p>新增詢問者欄位，並將來源移至底部，提供彈窗完整修改與進班狀態切換</p>
+            <p>修改按鈕已移至名字下方，並加入老師通知署名功能</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
@@ -148,7 +149,8 @@
                     <tr>
                         <td>
                             <span class="badge badge-line s-source">LINE</span><br>
-                            <strong class="s-name">林美華</strong>
+                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">林美華</strong><br>
+                            <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
                         </td>
                         <td>
                             <span class="s-phone">0923-456789</span><br>
@@ -161,7 +163,6 @@
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">修改</button>
                                 <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
                             </div>
                         </td>
@@ -276,7 +277,8 @@
             newRow.innerHTML = `
                 <td>
                     <span class="badge ${sourceBadge} s-source">${source}</span><br>
-                    <strong class="s-name">${name}</strong>
+                    <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong><br>
+                    <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
                 </td>
                 <td>
                     <span class="s-phone">${phone}</span><br>
@@ -289,7 +291,6 @@
                 <td>
                     <div class="action-btns">
                         <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">修改</button>
                         <button class="btn btn-sm status-btn status-not-enrolled" onclick="toggleEnrollStatus(this)">尚未進班</button>
                     </div>
                 </td>
@@ -301,11 +302,22 @@
         }
 
         function markNotified(btn) {
+            // 跳出視窗詢問老師名稱
+            const teacherName = prompt("請輸入通知家長的老師姓名：");
+            
+            // 如果老師按了取消或沒有輸入名字，就中斷執行
+            if (!teacherName) return; 
+
             const row = btn.closest('tr');
             const logEl = row.querySelector('.s-log');
-            const currentDate = new Date().toLocaleDateString();
-            logEl.innerHTML += `<br><span style="color: var(--success-color);">[${currentDate} 老師已打電話/發LINE提醒試聽]</span>`;
-            alert('已記錄：已完成試聽提醒通知！');
+            
+            // 取得目前的日期時間
+            const now = new Date();
+            const formattedDate = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            // 將老師署名加入追蹤紀錄
+            logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">[${formattedDate} ${teacherName}老師 已打電話/發LINE提醒試聽]</span>`;
+            alert(`已記錄：${teacherName}老師 已完成試聽提醒通知！`);
         }
 
         // 開啟修改表單彈窗
