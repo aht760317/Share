@@ -34,12 +34,14 @@
 
         .smart-paste-box textarea { width: 100%; height: 90px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; resize: vertical; margin-bottom: 0.75rem; }
         
-        /* 區塊化表單排版網格 */
+        /* 支援拖曳的表單方塊網格 */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
-        .form-block-item:hover { border-color: var(--primary-color); box-shadow: 0 2px 4px rgba(79, 70, 229, 0.08); }
+        .form-block-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: border-color 0.2s, box-shadow 0.2s; cursor: grab; position: relative; }
+        .form-block-item:active { cursor: grabbing; }
+        .form-block-item.dragging { opacity: 0.4; background: #e2e8f0; border: 2px dashed var(--primary-color); }
+        
         .form-block-item label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.4rem; }
-        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; background: #ffffff; }
+        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; background: #ffffff; cursor: text; }
 
         .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; }
         .btn:hover { opacity: 0.9; }
@@ -72,7 +74,7 @@
         .tab-content.active { display: block; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 750px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); }
         
         .clickable-cell { cursor: pointer; color: var(--primary-color); font-weight: 600; text-decoration: underline; }
@@ -90,7 +92,7 @@
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤看板</button>
                 <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
-                <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人名單與獎金</button>
+                <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人名單與老師競賽</button>
             </div>
         </div>
 
@@ -103,38 +105,41 @@
             </div>
 
             <div class="card">
-                <h3>📝 步驟二：問班與老師追蹤管理（方塊化填寫表單）</h3>
+                <h3>📝 步驟二：問班與老師追蹤管理（方塊化填寫表單 - 支援隨意拖曳排版）</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">💡 提示：按住任一輸入方塊即可左右上下拖曳，調整你習慣的填寫順序。</p>
+                
                 <form id="inquiryForm">
-                    <div class="form-blocks-grid">
-                        <div class="form-block-item">
+                    <!-- 支援拖曳排序的表單方塊網格 -->
+                    <div class="form-blocks-grid" id="formBlocksContainer">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📌 學生姓名</label>
                             <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>💬 詢問者 (誰來詢問)</label>
                             <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>🎁 推薦人 (誰介紹的)</label>
                             <input type="text" id="referrer" placeholder="例如：張小華媽媽 (無則免填)">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📚 有意願課程</label>
                             <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📞 聯絡電話</label>
                             <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>📅 預定試聽日期</label>
                             <input type="date" id="trialDate">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>👨‍🏫 負責追蹤老師</label>
                             <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
                         </div>
-                        <div class="form-block-item">
+                        <div class="form-block-item" draggable="true" ondragstart="handleFormBlockDragStart(event)" ondragover="handleFormBlockDragOver(event)" ondrop="handleFormBlockDrop(event)" ondragend="handleFormBlockDragEnd(event)">
                             <label>⚡ 目前招生狀態</label>
                             <select id="studentStatus">
                                 <option value="初次諮詢">初次諮詢</option>
@@ -211,7 +216,7 @@
             </div>
         </div>
 
-        <!-- 頁面三：推薦人名單與獎金管理 -->
+        <!-- 頁面三：推薦人名單與老師競賽 -->
         <div id="referrerTab" class="tab-content">
             <div class="card">
                 <h3>🎁 推薦人介紹排行榜與獎金發放管理</h3>
@@ -226,6 +231,23 @@
                         </tr>
                     </thead>
                     <tbody id="referrerTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>🏆 老師招生競賽排行榜（依正式進班人數自動統計）</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">系統會自動抓取所有被指定為負責追蹤老師的正式進班紀錄，即時產生第一名、第二名、第三名與全體老師的競賽成績！</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>名次</th>
+                            <th>老師姓名</th>
+                            <th>正式招生人數</th>
+                            <th>招生成就明細 (學生與班級)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacherRankingTableBody">
                     </tbody>
                 </table>
             </div>
@@ -358,7 +380,51 @@
 
             if (tabId === 'referrerTab') {
                 updateReferrerRanking();
+                updateTeacherRanking();
             }
+        }
+
+        // 步驟二表單方塊的拖曳排序功能
+        let draggedFormBlock = null;
+
+        function handleFormBlockDragStart(e) {
+            draggedFormBlock = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleFormBlockDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('formBlocksContainer');
+            const afterElement = getFormBlockDragAfterElement(container, e.clientX, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedFormBlock);
+            } else {
+                container.insertBefore(draggedFormBlock, afterElement);
+            }
+        }
+
+        function handleFormBlockDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleFormBlockDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedFormBlock = null;
+        }
+
+        function getFormBlockDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.form-block-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function parseChatText() {
@@ -475,11 +541,9 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // 開啟「已通知家長」專屬選項與輸入視窗
         function openNotifyModal(btn) {
             activeNotifyElement = btn.closest('.tracking-block') || btn.closest('tr');
             
-            // 自動嘗試抓取現有的負責老師填入
             const logEl = activeNotifyElement.querySelector('.s-log');
             let defaultTeacher = '';
             if (logEl) {
@@ -649,6 +713,12 @@
                     const timestamp = getFormattedTimestamp();
                     const enrollDateStr = `${timestamp.split(' ')[0]} 轉入`;
 
+                    if (log.includes('[')) {
+                        log = log.replace(/\[.*?\]/, `[${teacher}]`);
+                    } else {
+                        log = `[${teacher}] ` + log;
+                    }
+
                     newRow.innerHTML = `
                         <td>
                             <strong class="s-name">${name}</strong>
@@ -674,6 +744,12 @@
                 } else {
                     return;
                 }
+            }
+
+            if (log.includes('[')) {
+                log = log.replace(/\[.*?\]/, `[${teacher}]`);
+            } else {
+                log = `[${teacher}] ` + log;
             }
 
             currentEditingElement.querySelector('.s-name').innerText = name;
@@ -760,6 +836,7 @@
             allBlocksAndRows.forEach(item => {
                 const nameEl = item.querySelector('.s-name');
                 const referrerEl = item.querySelector('.s-referrer');
+                const courseEl = item.querySelector('.s-course');
                 const statusEl = item.querySelector('.s-status');
                 const logEl = item.querySelector('.s-log');
                 const dateEl = item.querySelector('.s-date');
@@ -767,6 +844,7 @@
                 if (nameEl && referrerEl) {
                     const studentName = nameEl.innerText.trim();
                     const referrerName = referrerEl.value.trim();
+                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
                     const statusName = statusEl ? statusEl.innerText.trim() : '未填狀態';
                     const dateText = dateEl ? dateEl.innerText.trim() : '未定';
 
@@ -782,6 +860,7 @@
                         }
                         referrerMap[referrerName].push({
                             student: studentName,
+                            course: courseName,
                             status: statusName,
                             date: dateText,
                             teacher: teacherName
@@ -875,14 +954,14 @@
                     <div id="bonusPreviewResult" style="margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; color: var(--success-color);"></div>
                 </div>
 
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 推薦介紹學員與追蹤老師清單：</h4>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-color);">📌 推薦介紹學員與班級、老師清單：</h4>
                 <table style="margin-top: 0;">
                     <thead>
                         <tr>
                             <th>被介紹學生</th>
-                            <th>確定進班 / 試聽日期</th>
-                            <th>目前狀態</th>
-                            <th>負責追蹤老師</th>
+                            <th>班級 (課程)</th>
+                            <th>確定進班日期</th>
+                            <th>負責招生老師</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -895,8 +974,8 @@
                     html += `
                         <tr>
                             <td><strong>${s.student}</strong></td>
+                            <td>${s.course}</td>
                             <td><span style="color:var(--success-color); font-weight:600;">${s.date}</span></td>
-                            <td><span class="badge" style="background:#e0e7ff; color:#3730a3;">${s.status}</span></td>
                             <td><span class="badge" style="background:#f1f5f9; color:#334155;">${s.teacher}</span></td>
                         </tr>
                     `;
@@ -932,6 +1011,76 @@
             }
             document.getElementById('referrerDetailModal').style.display = 'none';
             updateReferrerRanking();
+        }
+
+        // 老師招生競賽排行榜
+        function updateTeacherRanking() {
+            const teacherMap = {};
+            const enrolledRows = document.querySelectorAll('#enrolledTableBody tr');
+
+            enrolledRows.forEach(row => {
+                const nameEl = row.querySelector('.s-name');
+                const courseEl = row.querySelector('.s-course');
+                const dateEl = row.querySelector('.s-date');
+                const logEl = row.querySelector('.s-log');
+
+                if (nameEl) {
+                    const studentName = nameEl.innerText.trim();
+                    const courseName = courseEl ? courseEl.innerText.trim() : '未填課程';
+                    const enrollDate = dateEl ? dateEl.innerText.trim() : '未定日期';
+
+                    let teacherName = '未指定老師';
+                    if (logEl) {
+                        const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
+                        if (tMatch) teacherName = tMatch[1].trim();
+                    }
+
+                    if (!teacherMap[teacherName]) {
+                        teacherMap[teacherName] = [];
+                    }
+                    teacherMap[teacherName].push({
+                        student: studentName,
+                        course: courseName,
+                        date: enrollDate
+                    });
+                }
+            });
+
+            let teacherList = Object.keys(teacherMap).map(t => {
+                return {
+                    name: t,
+                    count: teacherMap[t].length,
+                    details: teacherMap[t]
+                };
+            });
+
+            teacherList.sort((a, b) => b.count - a.count);
+
+            const tbody = document.getElementById('teacherRankingTableBody');
+            tbody.innerHTML = '';
+
+            if (teacherList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">目前尚無任何老師的正式進班招生紀錄</td></tr>`;
+                return;
+            }
+
+            teacherList.forEach((item, index) => {
+                let rankDisplay = `#${index + 1}`;
+                if (index === 0) rankDisplay = '🥇 第一名';
+                else if (index === 1) rankDisplay = '🥈 第二名';
+                else if (index === 2) rankDisplay = '🥉 第三名';
+
+                let detailsHtml = item.details.map(d => `• 學生：<strong>${d.student}</strong> ｜ 班級：${d.course} ｜ 進班日期：<span style="color:var(--success-color);">${d.date}</span>`).join('<br>');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${rankDisplay}</strong></td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><span class="badge" style="background:#d1fae5; color:#065f46; font-weight:700; font-size:0.9rem;">${item.count} 位</span></td>
+                    <td><div style="font-size:0.85rem; line-height:1.5;">${detailsHtml}</div></td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
     </script>
 </body>
