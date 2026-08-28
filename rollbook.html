@@ -44,6 +44,7 @@
 
         .container { max-width: 1400px; margin: 25px auto; padding: 0 15px; }
 
+        /* 導覽列標籤 (將學生總覽移至最右邊) */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn {
             flex: 1; min-width: 160px; padding: 13px; border: none; border-radius: 8px;
@@ -131,16 +132,40 @@
             border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
         }
 
-        /* 部門切換按鈕組 */
-        .dept-nav { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        /* 部門切換按鈕組與小巧畢業班 */
+        .dept-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .dept-btn {
-            padding: 10px 18px; border: 2px solid var(--border); background: #f8fafc;
+            padding: 10px 20px; border: 2px solid var(--border); background: #f8fafc;
             border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .dept-btn.active-care { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
         .dept-btn.active-elem { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
         .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
-        .dept-btn.active-grad { background: #f3e8ff; border-color: #9333ea; color: #6b21a8; }
+        
+        /* 畢業班小巧獨立按鈕 */
+        .dept-btn-small {
+            margin-left: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px;
+            background: #fdf4ff; border: 1.5px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .dept-btn-small:hover, .dept-btn-small.active-grad {
+            background: #d946ef; color: white;
+        }
+
+        /* 放大部門班級一覽區域 */
+        .class-overview-box {
+            background: #f8fafc; border: 2px solid #cbd5e1; padding: 18px 20px;
+            border-radius: 10px; margin-bottom: 20px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .class-overview-title {
+            font-size: 15px; font-weight: bold; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+        }
+        .class-btn-pill {
+            padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s;
+            border: 1.5px solid #94a3b8; background: white; color: #334155;
+        }
+        .class-btn-pill:hover, .class-btn-pill.active {
+            background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 2px 5px rgba(52,152,219,0.3);
+        }
 
         @media print {
             @page { size: landscape; margin: 6mm; }
@@ -174,74 +199,17 @@
 </header>
 
 <div class="container">
+    <!-- 標籤頁順序調整：學生總覽置於最右側 -->
     <div class="tabs no-print">
-        <button class="tab-btn active" onclick="switchTab('students-master')">👥 全校學生檔案總覽</button>
-        <button class="tab-btn" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
-        <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表 (國中3月/國小2月/自訂)</button>
+        <button class="tab-btn active" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
+        <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表</button>
         <button class="tab-btn" onclick="switchTab('holiday')">⚙️ 國定假日與放假設定</button>
         <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程開課起始日排程</button>
+        <button class="tab-btn" onclick="switchTab('students-master')">👥 全校學生檔案總覽</button>
     </div>
 
-    <!-- 0. 全校學生檔案總覽 (新增部門與畢業班區塊) -->
-    <div id="tab-students-master">
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
-                <div>
-                    <h3 style="color:var(--primary); margin-bottom:4px;">👥 全校學籍管理與學生總覽</h3>
-                    <p style="font-size:13px; color:#666;">在此統一管理全校學生資料，資料將自動同步至點名、日誌與繳費管理系統</p>
-                </div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="openAddClassModal()">➕ 新增班級課程</button>
-                    <button class="btn btn-success" onclick="openStudentModal()">➕ 新增學生基本資料</button>
-                </div>
-            </div>
-
-            <!-- 部門切換標籤 -->
-            <div class="dept-nav">
-                <button class="dept-btn active-care" id="deptBtn-care" onclick="switchDept('care')">🏢 課輔部</button>
-                <button class="dept-btn" id="deptBtn-elementary" onclick="switchDept('elementary')">📘 國小部</button>
-                <button class="dept-btn" id="deptBtn-junior" onclick="switchDept('junior')">📙 國中部</button>
-                <button class="dept-btn" id="deptBtn-graduated" onclick="switchDept('graduated')">🎓 畢業 / 離班學員專區</button>
-            </div>
-
-            <!-- 該部門所屬班級一覽 -->
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px 16px; border-radius:8px; margin-bottom:15px;">
-                <div style="font-weight:bold; color:var(--primary); margin-bottom:8px;">🏫 部門所屬班級一覽 (點擊可快速過濾學生)：</div>
-                <div id="deptClassButtons" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
-            </div>
-
-            <!-- 學生名冊清單 -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h4 id="studentListTitle" style="color:var(--primary);">目前學生名冊</h4>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:220px; margin:0; padding:6px 10px;">
-                </div>
-            </div>
-
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px;">序</th>
-                            <th style="width:90px;">姓名 / 性別</th>
-                            <th style="width:130px;">所屬班級 / 版本</th>
-                            <th style="width:110px;">學校 / 年班</th>
-                            <th style="width:160px;">三支聯絡電話</th>
-                            <th style="width:95px;">身分證字號</th>
-                            <th style="width:90px;">出生年月日</th>
-                            <th style="width:130px;">家長職業 / 地址</th>
-                            <th style="width:110px;">健康狀況 / 備註</th>
-                            <th style="width:110px;">管理操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterStudentTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- 1. 今日點名與日誌成績 -->
-    <div id="tab-rollcall" style="display:none;">
+    <!-- 1. 今日點名與日誌成績 (預設首頁) -->
+    <div id="tab-rollcall">
         <div class="card no-print">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <h3 id="currentDayText" style="color:var(--primary);">📅 今日課堂清單</h3>
@@ -355,9 +323,67 @@
             <div id="courseConfigList" style="margin-top:15px;"></div>
         </div>
     </div>
+
+    <!-- 5. 全校學生檔案總覽 (位於最右側，系統安全模式) -->
+    <div id="tab-students-master" style="display:none;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
+                <div>
+                    <h3 style="color:var(--primary); margin-bottom:4px;">👥 全校學籍管理與學生總覽 (安全系統模式)</h3>
+                    <p style="font-size:13px; color:#666;">在此統一維護全校學生基本資料，異動與刪除皆受密碼防護，資料自動同步至點名、日誌與繳費系統</p>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="openAddClassModal()">➕ 新增班級課程</button>
+                    <button class="btn btn-success" onclick="openStudentModal()">➕ 新增學生資料</button>
+                </div>
+            </div>
+
+            <!-- 部門切換標籤 (畢業班位於最右側小按鈕) -->
+            <div class="dept-nav">
+                <button class="dept-btn active-care" id="deptBtn-care" onclick="switchDept('care')">🏢 課輔部</button>
+                <button class="dept-btn" id="deptBtn-elementary" onclick="switchDept('elementary')">📘 國小部</button>
+                <button class="dept-btn" id="deptBtn-junior" onclick="switchDept('junior')">📙 國中部</button>
+                <button class="dept-btn-small" id="deptBtn-graduated" onclick="switchDept('graduated')">🎓 畢業班</button>
+            </div>
+
+            <!-- 稍微加大的部門所屬班級一覽區塊 -->
+            <div class="class-overview-box">
+                <div class="class-overview-title">🏫 部門所屬班級一覽 (點擊可快速過濾學生)：</div>
+                <div id="deptClassButtons" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+            </div>
+
+            <!-- 學生名冊清單 -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 id="studentListTitle" style="color:var(--primary);">目前學生名冊</h4>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:220px; margin:0; padding:6px 10px;">
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">序</th>
+                            <th style="width:90px;">姓名 / 性別</th>
+                            <th style="width:130px;">所屬班級 / 版本</th>
+                            <th style="width:110px;">學校 / 年班</th>
+                            <th style="width:160px;">三支聯絡電話</th>
+                            <th style="width:95px;">身分證字號</th>
+                            <th style="width:90px;">出生年月日</th>
+                            <th style="width:130px;">家長職業 / 地址</th>
+                            <th style="width:110px;">健康狀況 / 備註</th>
+                            <th style="width:110px;">管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterStudentTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- 學生新增/修改彈窗 -->
+<!-- 學生新增/修改彈窗 (安全受控) -->
 <div class="modal-overlay" id="studentModal">
     <div class="modal-box">
         <h3 id="studentModalTitle" style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">新增學生學籍檔案</h3>
@@ -537,9 +563,9 @@
     };
 
     function checkPassword() {
-        const input = prompt("請輸入權限密碼：");
+        const input = prompt("🔒 系統安全驗證，請輸入管理密碼：");
         if (input === SECURITY_CODE) return true;
-        alert("❌ 密碼不正確！");
+        alert("❌ 密碼不正確！操作已取消。");
         return false;
     }
 
@@ -615,42 +641,43 @@
 
     window.switchTab = function(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-students-master').style.display = tab === 'students-master' ? 'block' : 'none';
         document.getElementById('tab-rollcall').style.display = tab === 'rollcall' ? 'block' : 'none';
         document.getElementById('tab-sheet').style.display = tab === 'sheet' ? 'block' : 'none';
         document.getElementById('tab-holiday').style.display = tab === 'holiday' ? 'block' : 'none';
         document.getElementById('tab-course-config').style.display = tab === 'course-config' ? 'block' : 'none';
+        document.getElementById('tab-students-master').style.display = tab === 'students-master' ? 'block' : 'none';
 
-        if (tab === 'students-master') {
+        if (tab === 'rollcall') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            renderMasterStudentsTable();
-            renderDeptClassButtons();
-        } else if (tab === 'rollcall') {
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
             renderCourseCards();
         } else if (tab === 'sheet') {
-            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
             populateSheetCourses();
             generateCustomSheet();
         } else if (tab === 'holiday') {
-            document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
             renderHolidayList();
+        } else if (tab === 'course-config') {
+            document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            renderCourseConfigList();
         } else {
             document.querySelectorAll('.tab-btn')[4].classList.add('active');
-            renderCourseConfigList();
+            renderMasterStudentsTable();
+            renderDeptClassButtons();
         }
     };
 
     // ==========================================
-    // 0. 全校學生總覽管理與部門分流
+    // 5. 全校學生總覽管理與部門分流
     // ==========================================
     window.switchDept = function(deptKey) {
         window.state.currentDeptView = deptKey;
         window.state.currentFilterClass = null;
 
-        document.querySelectorAll('.dept-btn').forEach(b => {
-            b.className = 'dept-btn';
-        });
+        document.getElementById('deptBtn-care').className = 'dept-btn';
+        document.getElementById('deptBtn-elementary').className = 'dept-btn';
+        document.getElementById('deptBtn-junior').className = 'dept-btn';
+        document.getElementById('deptBtn-graduated').className = 'dept-btn-small';
 
         if (deptKey === 'care') document.getElementById('deptBtn-care').classList.add('active-care');
         if (deptKey === 'elementary') document.getElementById('deptBtn-elementary').classList.add('active-elem');
@@ -667,20 +694,20 @@
         const deptKey = window.state.currentDeptView;
 
         if (deptKey === 'graduated') {
-            container.innerHTML = `<span style="font-size:13px; color:#6b21a8;">🎓 畢業 / 離班學員專區 (不分班級顯示所有歷史學生)</span>`;
+            container.innerHTML = `<span style="font-size:14px; color:#6b21a8; font-weight:bold;">🎓 畢業 / 離班學員專區 (顯示所有歷史畢業與離班學生，可隨時復學)</span>`;
             return;
         }
 
         const list = window.state.courses[deptKey] || [];
-        let html = `<button class="btn btn-outline" style="padding:4px 10px; font-size:12px; ${!window.state.currentFilterClass ? 'background:var(--accent); color:#fff;' : ''}" onclick="filterByClass(null)">全部班級</button>`;
+        let html = `<button class="class-btn-pill ${!window.state.currentFilterClass ? 'active' : ''}" onclick="filterByClass(null)">全部班級</button>`;
 
         list.forEach(c => {
             const cName = typeof c === 'object' ? c.name : c;
             const isActive = window.state.currentFilterClass === cName;
-            html += `<button class="btn btn-outline" style="padding:4px 10px; font-size:12px; ${isActive ? 'background:var(--accent); color:#fff;' : ''}" onclick="filterByClass('${cName}')">🏫 ${cName}</button>`;
+            html += `<button class="class-btn-pill ${isActive ? 'active' : ''}" onclick="filterByClass('${cName}')">🏫 ${cName}</button>`;
         });
 
-        container.innerHTML = html || `<span style="color:#888; font-size:13px;">該部門目前無班級，請點擊上方「新增班級課程」。</span>`;
+        container.innerHTML = html || `<span style="color:#888; font-size:14px;">該部門目前尚無班級課程，請點擊右上角「➕ 新增班級課程」。</span>`;
     }
 
     window.filterByClass = function(className) {
@@ -770,6 +797,8 @@
 
     // 學生彈窗
     window.openStudentModal = function() {
+        if (!checkPassword()) return;
+
         document.getElementById('studentModalTitle').innerText = "新增學生學籍檔案";
         document.getElementById('editStudentFirestoreId').value = "";
         document.getElementById('btnDeleteStudent').style.display = "none";
@@ -791,7 +820,7 @@
         document.getElementById('m_stu_p3_num').value = "";
 
         document.getElementById('m_stu_address').value = "";
-        document.getElementById('m_stu_parentJob').value = "";
+        document.getElementById('m_stu_parent_job').value = "";
         document.getElementById('m_stu_health').value = "";
         document.getElementById('m_stu_notes').value = "";
 
@@ -802,17 +831,25 @@
     function populateStudentModalCourses(selectedVal = '') {
         const sel = document.getElementById('m_stu_course');
         sel.innerHTML = '';
+        let count = 0;
         ['care', 'elementary', 'junior'].forEach(dept => {
             const deptName = dept === 'care' ? '課輔部' : (dept === 'elementary' ? '國小部' : '國中部');
             const list = window.state.courses[dept] || [];
             list.forEach(c => {
                 const cName = typeof c === 'object' ? c.name : c;
                 sel.innerHTML += `<option value="${cName}" ${selectedVal===cName?'selected':''}>[${deptName}] ${cName}</option>`;
+                count++;
             });
         });
+
+        if (count === 0) {
+            sel.innerHTML = `<option value="課後班">[預設] 課後班</option>`;
+        }
     }
 
     window.openEditStudentModal = function(firestoreId) {
+        if (!checkPassword()) return;
+
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
 
@@ -924,6 +961,8 @@
 
     // 新增班級
     window.openAddClassModal = function() {
+        if (!checkPassword()) return;
+
         document.getElementById('m_new_class_name').value = '';
         document.getElementById('m_new_class_day').value = '';
         document.getElementById('m_new_class_time').value = '';
@@ -1223,7 +1262,6 @@
         let periodDesc = "";
 
         if (isSpecialCourse) {
-            // 特殊課程自訂週數 (預設讀取或自訂4週/1個月)
             totalWeeks = course.customWeeks || 4;
             periodDesc = `特殊自訂週期班 (${totalWeeks}週/短期課程)`;
         } else {
