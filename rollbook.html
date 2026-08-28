@@ -52,7 +52,7 @@
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 
-        /* 放大後的課堂篩選導覽列 */
+        /* 可拖曳排序的標籤/按鈕列 */
         .filter-btn-group {
             display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px;
         }
@@ -183,9 +183,6 @@
         .class-btn-pill.dragging {
             opacity: 0.4; border: 2px dashed var(--accent); background: #e0f2fe;
         }
-        .drag-handle {
-            cursor: grab; font-size: 12px; opacity: 0.6;
-        }
 
         .all-classes-manage-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;
@@ -314,7 +311,6 @@
     <!-- 2. 自動生成點名表 (支援自訂起訖日期) -->
     <div id="tab-sheet" style="display:none;">
         <div class="card">
-            <!-- 查詢與操作控制列 -->
             <div class="no-print" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:8px; margin-bottom:15px;">
                 <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
                     <div>
@@ -353,15 +349,26 @@
         </div>
     </div>
 
-    <!-- 3. 課程開課起始日排程 (含寒暑假起訖日設定) -->
+    <!-- 3. 課程開課起始日排程 (含可拖曳部門篩選列與批次密碼儲存) -->
     <div id="tab-course-config" style="display:none;">
         <div class="card">
-            <h3 style="color:var(--primary);">⚙️ 課程開課起訖日與點名表週期排程 (支援寒暑假調整)</h3>
+            <h3 style="color:var(--primary);">⚙️ 課程開課起訖日與點名表週期排程</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
-                您可以自由為各個班級設定不同的開課起始日與結束日期，或使用右側快速選單一鍵套用 1 個月、2 個月或 3 個月期效，以適應寒假、暑假或短期特殊班期的日期變動。
+                您可以自由為各個班級設定開課起始日與結束日期。設定完成後請點擊下方按鈕輸入密碼（0618）統一儲存同步！
             </p>
 
+            <!-- 課程排程部門分類切換列 (可拖曳排序) -->
+            <div style="margin-top:14px;">
+                <span style="font-size:14px; font-weight:bold; color:var(--primary);">學部分類 (可按住左側 ⠿ 拖曳調整順序)：</span>
+                <div class="filter-btn-group" id="configFilterGroup"></div>
+            </div>
+
             <div id="courseConfigList" style="margin-top:15px;"></div>
+
+            <!-- 統一批次儲存按鈕 (需密碼 0618) -->
+            <div style="margin-top:20px; text-align:right; border-top:1px solid #e2e8f0; padding-top:15px;">
+                <button class="btn btn-success" style="padding:10px 24px; font-size:15px;" onclick="saveAllCourseConfigs()">💾 儲存全部課程起訖日設定 (需管理密碼 0618)</button>
+            </div>
         </div>
 
         <div class="card" style="border-top: 4px solid var(--warning);">
@@ -681,6 +688,13 @@
         { key: 'all_courses', label: '👁️ 全部課程' }
     ];
 
+    const DEFAULT_CONFIG_FILTER_ORDER = [
+        { key: 'all', label: '🏫 班級全覽' },
+        { key: 'care', label: '🏢 課輔班' },
+        { key: 'elementary', label: '📘 國小部' },
+        { key: 'junior', label: '📙 國中部' }
+    ];
+
     window.state = {
         courses: { care: [], elementary: [], junior: [] },
         students: [],
@@ -691,8 +705,10 @@
         currentDeptView: 'care',
         currentFilterClass: null,
         manageCategory: 'all',
+        configDeptFilter: 'all',
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
-        filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER
+        filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER,
+        configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER
     };
 
     window.onload = function() {
@@ -701,6 +717,7 @@
         document.getElementById('newHolidayDate').value = today;
         renderDeptNavButtons();
         renderCourseFilterButtons();
+        renderConfigFilterButtons();
         initCloudData();
     };
 
@@ -773,11 +790,13 @@
 
             renderDeptNavButtons();
             renderCourseFilterButtons();
+            renderConfigFilterButtons();
             renderMasterStudentsTable();
             renderDeptClassButtons();
             renderCourseCards();
             populateSheetCourses();
             renderHolidayList();
+            renderCourseConfigList();
         } catch (e) {
             console.error("載入資料失敗：", e);
         }
@@ -799,6 +818,7 @@
             generateCustomSheet();
         } else if (tab === 'course-config') {
             document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            renderConfigFilterButtons();
             renderCourseConfigList();
             renderHolidayList();
         } else {
@@ -1885,87 +1905,133 @@
     };
 
     // ==========================================
-    // 3. 課程開課起訖日排程 (含寒暑假設定)
+    // 3. 課程開課起訖日排程 (含可拖曳分類導覽與批次密碼儲存)
     // ==========================================
+    function renderConfigFilterButtons() {
+        const container = document.getElementById('configFilterGroup');
+        if (!container) return;
+        container.innerHTML = '';
+
+        window.state.configFilterOrder.forEach((item, index) => {
+            const btn = document.createElement('div');
+            btn.className = `filter-pill ${window.state.configDeptFilter === item.key ? 'active' : ''}`;
+            btn.draggable = true;
+            btn.dataset.configKey = item.key;
+            btn.dataset.configIndex = index;
+
+            btn.innerHTML = `<span class="drag-handle">⠿</span> ${item.label}`;
+
+            btn.onclick = (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                setConfigDeptFilter(item.key);
+            };
+
+            btn.addEventListener('dragstart', handleConfigFilterDragStart);
+            btn.addEventListener('dragover', handleConfigFilterDragOver);
+            btn.addEventListener('drop', handleConfigFilterDrop);
+            btn.addEventListener('dragend', handleConfigFilterDragEnd);
+
+            container.appendChild(btn);
+        });
+    }
+
+    let draggedConfigFilterItem = null;
+    function handleConfigFilterDragStart(e) { draggedConfigFilterItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function handleConfigFilterDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+    function handleConfigFilterDrop(e) {
+        e.stopPropagation();
+        if (draggedConfigFilterItem !== this && this.dataset && this.dataset.configIndex !== undefined) {
+            const fromIndex = parseInt(draggedConfigFilterItem.dataset.configIndex);
+            const toIndex = parseInt(this.dataset.configIndex);
+            const movedItem = window.state.configFilterOrder.splice(fromIndex, 1)[0];
+            window.state.configFilterOrder.splice(toIndex, 0, movedItem);
+            localStorage.setItem('gude_config_filter_order_v1', JSON.stringify(window.state.configFilterOrder));
+            renderConfigFilterButtons();
+        }
+        return false;
+    }
+    function handleConfigFilterDragEnd() { this.classList.remove('dragging'); draggedConfigFilterItem = null; }
+
+    window.setConfigDeptFilter = function(filterKey) {
+        window.state.configDeptFilter = filterKey;
+        renderConfigFilterButtons();
+        renderCourseConfigList();
+    };
+
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
+        if (!container) return;
         const allCourses = getAllCoursesList();
+        const curFilter = window.state.configDeptFilter || 'all';
+
+        let filteredCourses = allCourses;
+        if (curFilter !== 'all') {
+            filteredCourses = allCourses.filter(c => c.dept === curFilter);
+        }
+
         let html = `<table>
             <thead>
                 <tr>
-                    <th>課程名稱</th>
-                    <th>所屬部門</th>
-                    <th>表單週期排程</th>
-                    <th>開課起始日</th>
-                    <th>結束日期 (支援快速設定)</th>
-                    <th>操作</th>
+                    <th style="width:220px;">課程名稱</th>
+                    <th style="width:90px;">所屬部門</th>
+                    <th style="width:160px;">表單週期排程</th>
+                    <th style="width:150px;">開課起始日</th>
+                    <th style="width:150px;">結束日期</th>
                 </tr>
             </thead>
             <tbody>`;
-        allCourses.forEach(c => {
-            const isSpecial = /[（\(].*?[）\)]/.test(c.name);
-            const deptName = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
-            html += `<tr>
-                <td><b>${c.name}</b></td>
-                <td>${deptName}</td>
-                <td>
-                    <span style="font-weight:bold; color:${isSpecial?'#ea580c':(c.dept==='junior'?'#b45309':'#0369a1')};">
-                        ${isSpecial ? '⭐ 特殊自訂課程 (括號啟用)' : (c.dept==='junior'?'國中部 (3個月/13週)':'國小/課輔 (2個月/9週)')}
-                    </span>
-                </td>
-                <td>
-                    <input type="date" id="cfg_start_${c.name}" value="${c.startDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:auto; margin:0;">
-                </td>
-                <td>
-                    <div style="display:flex; gap:6px; align-items:center; justify-content:center;">
-                        <input type="date" id="cfg_end_${c.name}" value="${c.endDate || ''}" style="padding:4px; border-radius:4px; border:1px solid #ccc; width:130px; margin:0;">
-                        <select onchange="applyQuickDuration('${c.name}', this.value)" style="width:auto; padding:4px; margin:0; font-size:12px;">
-                            <option value="">快速設定...</option>
-                            <option value="1">1個月</option>
-                            <option value="2">2個月</option>
-                            <option value="3">3個月</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <button class="btn btn-primary" style="padding:4px 12px; font-size:13px;" onclick="saveCourseConfig('${c.dept}', '${c.name}')">💾 儲存修改</button>
-                </td>
-            </tr>`;
-        });
+
+        if (filteredCourses.length === 0) {
+            html += `<tr><td colspan="5" style="padding:25px; color:#888;">此分類目前尚無任何班級課程。</td></tr>`;
+        } else {
+            filteredCourses.forEach(c => {
+                const isSpecial = /[（\(].*?[）\)]/.test(c.name);
+                const deptName = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
+                html += `<tr>
+                    <td><b>${c.name}</b></td>
+                    <td>${deptName}</td>
+                    <td>
+                        <span style="font-weight:bold; color:${isSpecial?'#ea580c':(c.dept==='junior'?'#b45309':'#0369a1')};">
+                            ${isSpecial ? '⭐ 特殊自訂課程 (括號啟用)' : (c.dept==='junior'?'國中部 (3個月/13週)':'國小/課輔 (2個月/9週)')}
+                        </span>
+                    </td>
+                    <td>
+                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px 8px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0;">
+                    </td>
+                    <td>
+                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px 8px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0;">
+                    </td>
+                </tr>`;
+            });
+        }
+
         html += `</tbody></table>`;
         container.innerHTML = html;
     }
 
-    window.applyQuickDuration = function(courseName, months) {
-        if (!months) return;
-        const startInput = document.getElementById(`cfg_start_${courseName}`);
-        const endInput = document.getElementById(`cfg_end_${courseName}`);
-        if (!startInput || !startInput.value) {
-            alert("請先選擇「開課起始日」！");
-            return;
+    window.updateCourseDate = function(dept, courseName, field, value) {
+        const list = window.state.courses[dept];
+        if (!list) return;
+        const target = list.find(c => (typeof c === 'object' ? c.name : c) === courseName);
+        if (target && typeof target === 'object') {
+            target[field] = value;
         }
-        const sDate = new Date(startInput.value);
-        const m = parseInt(months);
-        sDate.setMonth(sDate.getMonth() + m);
-        sDate.setDate(sDate.getDate() - 1);
-        endInput.value = sDate.toISOString().slice(0, 10);
     };
 
-    window.saveCourseConfig = async function(dept, courseName) {
-        const startDate = document.getElementById(`cfg_start_${courseName}`).value;
-        const endDate = document.getElementById(`cfg_end_${courseName}`).value;
-        const targetList = window.state.courses[dept];
-        const target = targetList.find(c => (typeof c === 'object' ? c.name : c) === courseName);
-        if (target && typeof target === 'object') {
-            target.startDate = startDate;
-            target.endDate = endDate;
+    window.saveAllCourseConfigs = async function() {
+        if (!checkPassword("🔒 修改全校課程起訖日排程屬於重要教務設定，請輸入管理密碼：")) {
+            return;
         }
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            alert(`【${courseName}】開課起訖日已成功儲存！`);
+            alert("✅ 所有課程開課起訖日設定已成功統一儲存並同步！");
             renderCourseCards();
-        } catch (e) { alert('儲存失敗！'); }
+            renderCourseConfigList();
+        } catch (e) {
+            console.error(e);
+            alert("❌ 儲存失敗，請檢查網路連線！");
+        }
     };
 
     window.verifyAndAddHoliday = function() {
