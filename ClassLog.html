@@ -526,7 +526,10 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 14px;">
                     <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (點擊下方班級按鈕精準分流查詢)</h3></div>
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <label style="font-size:14px; font-weight:bold; margin:0; color:var(--primary);">📅 日期篩選：</label>
+                        <input type="date" id="profile-filter-date" style="width:160px; margin:0; padding:6px;" onchange="renderProfileStudents()" title="可調整日期查詢特定日誌（如 2026-09-04）">
+                        <button class="btn btn-small" style="background:#64748b;" onclick="document.getElementById('profile-filter-date').value=''; renderProfileStudents();">顯示全部</button>
                         <button class="btn btn-warning btn-small" onclick="autoRepairStudentLogs(true)">🛠️ 修復歷史科目標籤</button>
                         <button class="btn btn-primary btn-small" onclick="syncWithMasterDatabase()">🔄 重新整理學籍</button>
                     </div>
@@ -1103,6 +1106,7 @@
             const tbody = document.getElementById('profile-students-tbody');
             const title = document.getElementById('current-viewing-class-title');
             const className = window.state.selectedClassForProfile;
+            const filterDate = document.getElementById('profile-filter-date')?.value || '';
 
             if (!className) {
                 if (title) title.innerText = "請先點擊上方班級按鈕查詢學生";
@@ -1110,7 +1114,7 @@
                 return;
             }
 
-            if (title) title.innerText = `🏫 目前檢視班級：【${className}】學生專屬學習紀錄總覽`;
+            if (title) title.innerText = `🏫 目前檢視班級：【${className}】學生專屬學習紀錄總覽 ${filterDate ? ' (📅 篩選日期: ' + filterDate + ')' : ''}`;
 
             const students = window.state.students.filter(s => {
                 const courses = getStudentCoursesArray(s);
@@ -1124,14 +1128,23 @@
 
             let html = '';
             students.forEach(s => {
-                const phone = (s.phones && s.phones.find(p => p.number)) ? `${s.phones.find(p => p.number).label}: ${s.phones.find(p => p.number).number}` : (s.phone || '-');
+                // 取第一支聯絡電話
+                let firstPhone = '-';
+                if (s.phones && Array.isArray(s.phones) && s.phones.length > 0) {
+                    const validPhone = s.phones.find(p => p.number);
+                    if (validPhone) firstPhone = validPhone.number;
+                } else if (s.phone) {
+                    firstPhone = s.phone;
+                }
                 
                 let attHtml = '';
                 let scoreHtml = '';
                 let noteHtml = '';
 
                 const classLogs = (s.attendanceLogs || []).filter(l => {
-                    return l.course === className || (!l.course && getStudentCoursesArray(s).length === 1);
+                    const matchClass = (l.course === className || (!l.course && getStudentCoursesArray(s).length === 1));
+                    const matchDate = !filterDate || l.date === filterDate;
+                    return matchClass && matchDate;
                 });
 
                 classLogs.slice(0, 15).forEach((l) => {
@@ -1175,15 +1188,15 @@
                         <td data-label="學生資訊">
                             <b style="font-size:16px; color:var(--primary);">${s.name}</b>
                             <div style="font-size:12.5px; color:#555; margin-top:2px;">${s.school || '-'} ｜ ${s.studentClass || ''}</div>
-                            <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${phone}</div>
+                            <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${firstPhone}</div>
                             <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
                                 <button class="btn btn-small btn-warning" onclick="generateParentLogForStudent('${s.firestoreId}', '${className}')">📋 生成LINE家長日誌</button>
                                 <button class="btn btn-small btn-primary" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                             </div>
                         </td>
-                        <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無出席紀錄</span>'}</td>
-                        <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無測驗紀錄</span>'}</td>
-                        <td data-label="該科備註與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">本科尚無備註紀錄</span>'}</td>
+                        <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無此日期出席紀錄</span>'}</td>
+                        <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無此日期測驗紀錄</span>'}</td>
+                        <td data-label="該科備註與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">本科尚無此日期備註紀錄</span>'}</td>
                     </tr>
                 `;
             });
@@ -1601,10 +1614,15 @@
             const student = window.state.students.find(s => s.firestoreId === firestoreId);
             if(!student) return;
 
-            const classLogs = (student.attendanceLogs || []).filter(l => l.course === className || (!l.course && getStudentCoursesArray(student).length === 1));
+            const filterDate = document.getElementById('profile-filter-date')?.value || '';
+            const classLogs = (student.attendanceLogs || []).filter(l => {
+                const matchClass = (l.course === className || (!l.course && getStudentCoursesArray(student).length === 1));
+                const matchDate = !filterDate || l.date === filterDate;
+                return matchClass && matchDate;
+            });
             const latestLog = classLogs.length > 0 ? classLogs[0] : null;
 
-            const date = latestLog ? latestLog.date : new Date().toISOString().slice(0, 10);
+            const date = latestLog ? latestLog.date : (filterDate || new Date().toISOString().slice(0, 10));
             const course = className;
             const progress = latestLog && latestLog.progress ? latestLog.progress : '指定進度範圍與重點複習';
             const homework = latestLog && latestLog.homeworkContent ? latestLog.homeworkContent : '無';
