@@ -45,8 +45,17 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
         
-        .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
-        .edit-icon-btn:hover { background: #e0e7ff; }
+        /* 區塊化卡片專用樣式 (支援拖曳移動) */
+        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+        .tracking-block { background: #fafafa; border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: grab; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+        .tracking-block:active { cursor: grabbing; }
+        .tracking-block.dragging { opacity: 0.4; }
+        
+        .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .block-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+        .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.9rem; margin-bottom: 0.75rem; }
+        .block-footer { background: #fff; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-size: 0.85rem; }
+        .block-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
@@ -55,8 +64,6 @@
         .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; }
         .badge-line { background: #d1fae5; color: #065f46; }
         .badge-enrolled { background: #d1fae5; color: #065f46; }
-
-        .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -75,16 +82,16 @@
         <div class="page-header">
             <div>
                 <h1>招生與進班管理系統</h1>
-                <p>未進班追蹤、正式進班與推薦人獎金獨立管理</p>
+                <p>未進班區塊化追蹤、正式進班與推薦人獎金獨立管理</p>
             </div>
             <div class="tab-nav">
-                <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤清單</button>
+                <button class="tab-btn active" onclick="switchTab('trackingTab', this)">📋 未進班追蹤區塊</button>
                 <button class="tab-btn" onclick="switchTab('enrolledTab', this)">🎓 已正式進班名單</button>
                 <button class="tab-btn" onclick="switchTab('referrerTab', this)">🎁 推薦人名單與獎金</button>
             </div>
         </div>
 
-        <!-- 頁面一：未進班追蹤清單 -->
+        <!-- 頁面一：未進班追蹤區塊清單 -->
         <div id="trackingTab" class="tab-content active">
             <div class="card smart-paste-box">
                 <h3>💬 步驟一：社群對話貼上轉表格 (FB / IG / LINE)</h3>
@@ -93,7 +100,7 @@
             </div>
 
             <div class="card">
-                <h3>📝 步驟二：問班與老師追蹤管理</h3>
+                <h3>📝 步驟二：問班與老師追蹤管理（表單填寫）</h3>
                 <form id="inquiryForm">
                     <div class="form-grid">
                         <div class="form-group">
@@ -140,46 +147,44 @@
                         <input type="text" id="trackNote" placeholder="例如：記錄對話內容，家長詢問細節。">
                     </div>
 
-                    <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至追蹤列表</button>
+                    <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至下方追蹤區塊</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>📊 步驟三：招生追蹤總表與提醒管理</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>姓名</th>
-                            <th>預約課程</th>
-                            <th>電話</th>
-                            <th>試聽日期</th>
-                            <th>目前進度</th>
-                            <th>追蹤紀錄歷程</th>
-                            <th>操作動作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="trackingTableBody">
-                        <tr>
-                            <td>
-                                <strong class="s-name">林美華</strong>
-                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                <h3>📊 步驟三：招生追蹤區塊管理（可上下拖曳區塊排序）</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">💡 提示：按住區塊任意處即可上下拖曳調整排序。</p>
+                
+                <!-- 可拖曳的區塊容器 -->
+                <div id="trackingCardContainer">
+                    <!-- 預設範例區塊 -->
+                    <div class="tracking-block" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+                        <div class="block-header">
+                            <div class="block-title">
+                                <span>📌</span> <strong class="s-name">林美華</strong>
+                                <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">預約試聽中</span>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
                                 <input type="hidden" class="s-inquirer" value="林媽媽">
                                 <input type="hidden" class="s-referrer" value="李大同">
-                            </td>
-                            <td><span class="s-course">全科暑期班</span></td>
-                            <td><span class="s-phone">0923-456789</span></td>
-                            <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
-                            <td><span class="badge badge-line s-status">預約試聽中</span></td>
-                            <td><div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽，待提醒。</div></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                                    <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                <input type="hidden" class="s-source" value="LINE">
+                            </div>
+                        </div>
+                        <div class="block-body">
+                            <div><strong>預約課程：</strong> <span class="s-course">全科暑期班</span></div>
+                            <div><strong>聯絡電話：</strong> <span class="s-phone">0923-456789</span></div>
+                            <div><strong>試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></div>
+                        </div>
+                        <div class="block-footer">
+                            <div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽，待提醒。</div>
+                        </div>
+                        <div class="block-actions">
+                            <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -290,9 +295,7 @@
     <div id="referrerDetailModal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header" id="referrerModalTitle">🎁 推薦人獎金管理細節</div>
-            <div id="referrerModalBody" style="margin-bottom: 1.5rem;">
-                <!-- 動態生成的連動表格 -->
-            </div>
+            <div id="referrerModalBody" style="margin-bottom: 1.5rem;"></div>
             <div style="display: flex; justify-content: flex-end;">
                 <button type="button" class="btn btn-sm" style="background-color: var(--primary-color);" onclick="closeReferrerModal()">關閉儲存</button>
             </div>
@@ -300,7 +303,7 @@
     </div>
 
     <script>
-        let currentEditingRow = null;
+        let currentEditingElement = null; // 支援區塊或表格列
         let isEditingEnrolled = false; 
 
         function getFormattedTimestamp() {
@@ -351,44 +354,99 @@
 
             if(!name) { alert('請填寫學生姓名！'); return; }
 
-            const tbody = document.getElementById('trackingTableBody');
-            const newRow = document.createElement('tr');
+            const container = document.getElementById('trackingCardContainer');
+            const newBlock = document.createElement('div');
+            newBlock.className = 'tracking-block';
+            newBlock.setAttribute('draggable', 'true');
+            newBlock.setAttribute('ondragstart', 'handleDragStart(event)');
+            newBlock.setAttribute('ondragover', 'handleDragOver(event)');
+            newBlock.setAttribute('ondrop', 'handleDrop(event)');
+            newBlock.setAttribute('ondragend', 'handleDragEnd(event)');
             
             const timestamp = getFormattedTimestamp();
             const initialLog = note ? `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - ${note}` : `<strong style="color:var(--primary-color);">[${teacher}]</strong> ${timestamp} - 建立追蹤紀錄`;
 
-            newRow.innerHTML = `
-                <td>
-                    <strong class="s-name">${name}</strong>
-                    <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
-                    <input type="hidden" class="s-inquirer" value="${inquirer}">
-                    <input type="hidden" class="s-referrer" value="${referrer}">
-                    <input type="hidden" class="s-source" value="${source}">
-                </td>
-                <td><span class="s-course">${course}</span></td>
-                <td><span class="s-phone">${phone}</span></td>
-                <td><span class="s-date" style="font-weight:600;">${tDate}</span></td>
-                <td><span class="badge badge-line s-status">${status}</span></td>
-                <td><div class="s-log">${initialLog}</div></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                        <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+            newBlock.innerHTML = `
+                <div class="block-header">
+                    <div class="block-title">
+                        <span>📌</span> <strong class="s-name">${name}</strong>
+                        <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                     </div>
-                </td>
+                    <div>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
+                        <input type="hidden" class="s-inquirer" value="${inquirer}">
+                        <input type="hidden" class="s-referrer" value="${referrer}">
+                        <input type="hidden" class="s-source" value="${source}">
+                    </div>
+                </div>
+                <div class="block-body">
+                    <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
+                    <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
+                    <div><strong>試聽日期：</strong> <span class="s-date" style="font-weight:600;">${tDate}</span></div>
+                </div>
+                <div class="block-footer">
+                    <div class="s-log">${initialLog}</div>
+                </div>
+                <div class="block-actions">
+                    <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                    <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                </div>
             `;
-            tbody.appendChild(newRow);
-            alert('已成功新增至追蹤列表！');
+            container.appendChild(newBlock);
+            alert('已成功新增至追蹤區塊列表！');
             document.getElementById('inquiryForm').reset();
             document.getElementById('chatInput').value = '';
+        }
+
+        // 區塊拖曳排序邏輯 (HTML5 Drag and Drop)
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const container = document.getElementById('trackingCardContainer');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedItem);
+            } else {
+                container.insertBefore(draggedItem, afterElement);
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.tracking-block:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function markNotified(btn) {
             const teacherName = prompt("請輸入通知家長的老師姓名：");
             if (!teacherName) return; 
 
-            const row = btn.closest('tr');
-            const logEl = row.querySelector('.s-log');
+            const block = btn.closest('.tracking-block') || btn.closest('tr');
+            const logEl = block.querySelector('.s-log');
             const timestamp = getFormattedTimestamp();
             
             logEl.innerHTML += `<br><span style="color: var(--success-color); font-weight: 500;">[${timestamp} ${teacherName}老師 已打電話/發LINE提醒試聽]</span>`;
@@ -396,22 +454,22 @@
         }
 
         function openEditModal(btn) {
-            currentEditingRow = btn.closest('tr');
-            isEditingEnrolled = currentEditingRow.closest('#enrolledTableBody') !== null;
+            currentEditingElement = btn.closest('.tracking-block') || btn.closest('tr');
+            isEditingEnrolled = currentEditingElement.closest('#enrolledTableBody') !== null;
 
-            const name = currentEditingRow.querySelector('.s-name').innerText;
-            const inquirerEl = currentEditingRow.querySelector('.s-inquirer');
+            const name = currentEditingElement.querySelector('.s-name').innerText;
+            const inquirerEl = currentEditingElement.querySelector('.s-inquirer');
             const inquirer = inquirerEl ? inquirerEl.value : '';
-            const referrerEl = currentEditingRow.querySelector('.s-referrer');
+            const referrerEl = currentEditingElement.querySelector('.s-referrer');
             const referrer = referrerEl ? referrerEl.value : '';
-            const course = currentEditingRow.querySelector('.s-course').innerText;
-            const phone = currentEditingRow.querySelector('.s-phone').innerText;
+            const course = currentEditingElement.querySelector('.s-course').innerText;
+            const phone = currentEditingElement.querySelector('.s-phone').innerText;
             
-            const dateEl = currentEditingRow.querySelector('.s-date');
+            const dateEl = currentEditingElement.querySelector('.s-date');
             const date = dateEl ? dateEl.innerText : '';
             
-            const status = currentEditingRow.querySelector('.s-status').innerText;
-            const logHtml = currentEditingRow.querySelector('.s-log').innerHTML;
+            const status = currentEditingElement.querySelector('.s-status').innerText;
+            const logHtml = currentEditingElement.querySelector('.s-log').innerHTML;
 
             let teacher = '未指定';
             const teacherMatch = logHtml.match(/\[(.*?)\]/);
@@ -419,7 +477,7 @@
                 teacher = teacherMatch[1];
             }
 
-            const sourceEl = currentEditingRow.querySelector('.s-source');
+            const sourceEl = currentEditingElement.querySelector('.s-source');
             const source = sourceEl ? sourceEl.value : 'LINE';
 
             document.getElementById('editName').value = name;
@@ -438,23 +496,23 @@
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
-            currentEditingRow = null;
+            currentEditingElement = null;
             isEditingEnrolled = false;
         }
 
         function deleteStudentRecord() {
-            if (!currentEditingRow) return;
+            if (!currentEditingElement) return;
             const name = document.getElementById('editName').value;
 
             if (confirm(`⚠️ 確定要永久刪除「${name}」這筆招生紀錄嗎？此動作無法復原。`)) {
-                currentEditingRow.remove();
+                currentEditingElement.remove();
                 closeEditModal();
                 alert('已成功刪除該筆學生資料！');
             }
         }
 
         function saveEditModal() {
-            if (!currentEditingRow) return;
+            if (!currentEditingElement) return;
 
             const name = document.getElementById('editName').value;
             const inquirer = document.getElementById('editInquirer').value;
@@ -469,42 +527,57 @@
 
             if(!name) { alert('學生姓名不能為空！'); return; }
 
+            // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁區塊
             if (isEditingEnrolled && status !== '已正式進班') {
-                if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤清單嗎？`)) {
-                    const trackingTbody = document.getElementById('trackingTableBody');
-                    const newRow = document.createElement('tr');
+                if (confirm(`狀態已改為「${status}」，確定要將「${name}」移回未進班追蹤區塊嗎？`)) {
+                    const container = document.getElementById('trackingCardContainer');
+                    const newBlock = document.createElement('div');
+                    newBlock.className = 'tracking-block';
+                    newBlock.setAttribute('draggable', 'true');
+                    newBlock.setAttribute('ondragstart', 'handleDragStart(event)');
+                    newBlock.setAttribute('ondragover', 'handleDragOver(event)');
+                    newBlock.setAttribute('ondrop', 'handleDrop(event)');
+                    newBlock.setAttribute('ondragend', 'handleDragEnd(event)');
+                    
                     const timestamp = getFormattedTimestamp();
 
-                    newRow.innerHTML = `
-                        <td>
-                            <strong class="s-name">${name}</strong>
-                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
-                            <input type="hidden" class="s-inquirer" value="${inquirer}">
-                            <input type="hidden" class="s-referrer" value="${referrer}">
-                            <input type="hidden" class="s-source" value="${source}">
-                        </td>
-                        <td><span class="s-course">${course}</span></td>
-                        <td><span class="s-phone">${phone}</span></td>
-                        <td><span class="s-date" style="font-weight:600;">${date}</span></td>
-                        <td><span class="badge badge-line s-status">${status}</span></td>
-                        <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤清單]</span></div></td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
-                                <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                    newBlock.innerHTML = `
+                        <div class="block-header">
+                            <div class="block-title">
+                                <span>📌</span> <strong class="s-name">${name}</strong>
+                                <span class="badge badge-line s-status" style="margin-left: 0.5rem; font-size:0.75rem;">${status}</span>
                             </div>
-                        </td>
+                            <div>
+                                <button class="btn btn-sm btn-warning" onclick="openEditModal(this)">✏️ 修改</button>
+                                <input type="hidden" class="s-inquirer" value="${inquirer}">
+                                <input type="hidden" class="s-referrer" value="${referrer}">
+                                <input type="hidden" class="s-source" value="${source}">
+                            </div>
+                        </div>
+                        <div class="block-body">
+                            <div><strong>預約課程：</strong> <span class="s-course">${course}</span></div>
+                            <div><strong>聯絡電話：</strong> <span class="s-phone">${phone}</span></div>
+                            <div><strong>試聽日期：</strong> <span class="s-date" style="font-weight:600;">${date}</span></div>
+                        </div>
+                        <div class="block-footer">
+                            <div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[${timestamp} 已從正式名單退回追蹤區塊]</span></div>
+                        </div>
+                        <div class="block-actions">
+                            <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
+                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolled(this)">確定進班 ➔</button>
+                        </div>
                     `;
-                    trackingTbody.appendChild(newRow);
-                    currentEditingRow.remove();
+                    container.appendChild(newBlock);
+                    currentEditingElement.remove();
                     closeEditModal();
-                    alert('已成功將學員移回未進班追蹤清單！');
+                    alert('已成功將學員移回未進班追蹤區塊！');
                     return;
                 } else {
                     return; 
                 }
             }
 
+            // 如果原本在第一頁，但被直接改為「已正式進班」-> 自動移到第二頁
             if (!isEditingEnrolled && status === '已正式進班') {
                 if (confirm(`狀態已改為「已正式進班」，確定要將「${name}」移至已正式進班名單嗎？`)) {
                     const enrolledTbody = document.getElementById('enrolledTableBody');
@@ -530,7 +603,7 @@
                         </td>
                     `;
                     enrolledTbody.appendChild(newRow);
-                    currentEditingRow.remove();
+                    currentEditingElement.remove();
                     closeEditModal();
                     alert('已成功移至已正式進班名單！');
                     return;
@@ -539,48 +612,51 @@
                 }
             }
 
-            currentEditingRow.querySelector('.s-name').innerText = name;
-            updateHiddenInput(currentEditingRow, 's-inquirer', inquirer);
-            updateHiddenInput(currentEditingRow, 's-referrer', referrer);
+            // 一般原地修改更新
+            currentEditingElement.querySelector('.s-name').innerText = name;
+            updateHiddenInput(currentEditingElement, 's-inquirer', inquirer);
+            updateHiddenInput(currentEditingElement, 's-referrer', referrer);
 
-            currentEditingRow.querySelector('.s-course').innerText = course;
-            currentEditingRow.querySelector('.s-phone').innerText = phone;
+            currentEditingElement.querySelector('.s-course').innerText = course;
+            currentEditingElement.querySelector('.s-phone').innerText = phone;
             
-            const dateEl = currentEditingRow.querySelector('.s-date');
+            const dateEl = currentEditingElement.querySelector('.s-date');
             if(dateEl && !dateEl.innerText.includes('轉入')) {
                 dateEl.innerText = date;
             }
 
-            currentEditingRow.querySelector('.s-status').innerText = status;
-            currentEditingRow.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
+            const statusEl = currentEditingElement.querySelector('.s-status');
+            if(statusEl) statusEl.innerText = status;
+
+            currentEditingElement.querySelector('.s-log').innerHTML = log.replace(/\n/g, '<br>');
 
             closeEditModal();
             alert('修改成功！');
         }
 
-        function updateHiddenInput(row, className, value) {
-            let inputEl = row.querySelector('.' + className);
+        function updateHiddenInput(element, className, value) {
+            let inputEl = element.querySelector('.' + className);
             if(inputEl) {
                 inputEl.value = value;
             } else {
-                const nameTd = row.querySelector('td:nth-child(1)');
+                let targetContainer = element.querySelector('.block-header div:nth-child(2)') || element.querySelector('td:nth-child(1)');
                 let hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.className = className;
                 hiddenInput.value = value;
-                nameTd.appendChild(hiddenInput);
+                targetContainer.appendChild(hiddenInput);
             }
         }
 
         function moveToEnrolled(btn) {
-            const row = btn.closest('tr');
-            const studentName = row.querySelector('.s-name').innerText;
+            const block = btn.closest('.tracking-block');
+            const studentName = block.querySelector('.s-name').innerText;
 
             if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
-                const nameTdHtml = row.querySelector('td:nth-child(1)').innerHTML;
-                const courseText = row.querySelector('.s-course').innerText;
-                const phoneText = row.querySelector('.s-phone').innerText;
-                const logHtml = row.querySelector('.s-log').innerHTML; 
+                const headerDivHtml = block.querySelector('.block-header div:nth-child(2)').innerHTML;
+                const courseText = block.querySelector('.s-course').innerText;
+                const phoneText = block.querySelector('.s-phone').innerText;
+                const logHtml = block.querySelector('.s-log').innerHTML; 
 
                 const timestamp = getFormattedTimestamp();
                 const enrollDateDisplay = `轉入: ${timestamp.split(' ')[0]}`;
@@ -588,8 +664,13 @@
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
+                // 組合成表格行
                 newEnrolledRow.innerHTML = `
-                    <td>${nameTdHtml}</td>
+                    <td>
+                        <strong class="s-name">${studentName}</strong>
+                        <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料" style="background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
+                        ${headerDivHtml.replace(/<button[\s\S]*?<\/button>/gi, '')}
+                    </td>
                     <td><span class="s-course">${courseText}</span></td>
                     <td><span class="s-phone">${phoneText}</span></td>
                     <td><span class="s-date" style="font-weight:600; color: var(--success-color);">${enrollDateDisplay}</span></td>
@@ -601,26 +682,25 @@
                 `;
 
                 enrolledTbody.appendChild(newEnrolledRow);
-                row.remove();
+                block.remove();
 
                 alert(`成功！${studentName} 已自動移至「已正式進班名單」頁面。`);
             }
         }
 
-        // 推薦人與獎金發放管理（含獨立細節互動彈窗）
-        let referrerDataStore = {}; // 儲存發放狀態與日期 { "李大同": { paid: true, date: "2026-08-29" } }
+        // 推薦人與獎金發放管理
+        let referrerDataStore = {}; 
 
         function updateReferrerRanking() {
             const referrerMap = {};
-
-            const allRows = document.querySelectorAll('#trackingTableBody tr, #enrolledTableBody tr');
+            const allBlocksAndRows = document.querySelectorAll('.tracking-block, #enrolledTableBody tr');
             
-            allRows.forEach(row => {
-                const nameEl = row.querySelector('.s-name');
-                const referrerEl = row.querySelector('.s-referrer');
-                const courseEl = row.querySelector('.s-course');
-                const statusEl = row.querySelector('.s-status');
-                const logEl = row.querySelector('.s-log');
+            allBlocksAndRows.forEach(item => {
+                const nameEl = item.querySelector('.s-name');
+                const referrerEl = item.querySelector('.s-referrer');
+                const courseEl = item.querySelector('.s-course');
+                const statusEl = item.querySelector('.s-status');
+                const logEl = item.querySelector('.s-log');
 
                 if (nameEl && referrerEl) {
                     const studentName = nameEl.innerText.trim();
@@ -687,7 +767,7 @@
                 `;
                 tbody.appendChild(tr);
             });
-            window.currentReferrerMap = referrerMap; //暫存供彈窗讀取
+            window.currentReferrerMap = referrerMap; 
         }
 
         function openReferrerDetail(referrerName) {
