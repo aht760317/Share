@@ -19,7 +19,7 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-body); color: var(--text-main); padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1250px; margin: 0 auto; }
         .page-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .page-header h1 { font-size: 1.75rem; font-weight: 700; }
         .page-header p { color: var(--text-muted); margin-top: 0.5rem; }
@@ -43,7 +43,10 @@
         .btn-success { background-color: var(--success-color); }
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
-        .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+        
+        /* 名字旁邊的藍色修改筆按鈕 */
+        .edit-icon-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
+        .edit-icon-btn:hover { background: #e0e7ff; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
         th, td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
@@ -51,9 +54,6 @@
         
         .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; }
         .badge-line { background: #d1fae5; color: #065f46; }
-        .badge-fb { background: #dbeafe; color: #1e40af; }
-        .badge-ig { background: #fce7f3; color: #9d174d; }
-        .badge-other { background: #f3f4f6; color: #374151; }
         .badge-enrolled { background: #d1fae5; color: #065f46; }
 
         .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-direction: column; }
@@ -102,20 +102,20 @@
                             <input type="text" id="studentName" placeholder="例如：王小明">
                         </div>
                         <div class="form-group">
-                            <label>聯絡電話</label>
-                            <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
-                        </div>
-                        <div class="form-group">
-                            <label>詢問者 (誰來詢問)</label>
-                            <input type="text" id="inquirer" placeholder="例如：王媽媽 / 學生本人">
-                        </div>
-                        <div class="form-group">
                             <label>有意願課程</label>
                             <input type="text" id="studentCourse" placeholder="例如：國二數學精進班">
                         </div>
                         <div class="form-group">
+                            <label>聯絡電話</label>
+                            <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
+                        </div>
+                        <div class="form-group">
                             <label>預定試聽日期</label>
                             <input type="date" id="trialDate">
+                        </div>
+                        <div class="form-group">
+                            <label>負責追蹤老師</label>
+                            <input type="text" id="assignedTeacher" placeholder="例如：陳老師">
                         </div>
                         <div class="form-group">
                             <label>目前招生狀態</label>
@@ -125,15 +125,8 @@
                                 <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>招生來源管道</label>
-                            <select id="leadSource">
-                                <option value="LINE">LINE 官方帳號</option>
-                                <option value="FB">FB 粉絲專頁</option>
-                                <option value="IG">IG 小盒子</option>
-                                <option value="PHONE">電話詢問 / 現場來訪</option>
-                            </select>
-                        </div>
+                        <!-- 隱藏欄位保留系統來源判定用 -->
+                        <input type="hidden" id="leadSource" value="LINE">
                     </div>
 
                     <div class="form-group" style="margin-bottom: 1rem;">
@@ -151,30 +144,26 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>來源 / 姓名</th>
-                            <th>聯絡電話 / 課程</th>
-                            <th>詢問者</th>
+                            <th>姓名</th>
+                            <th>預約課程</th>
+                            <th>電話</th>
                             <th>試聽日期</th>
                             <th>目前進度</th>
-                            <th>老師追蹤紀錄歷程</th>
+                            <th>追蹤紀錄歷程</th>
                             <th>操作動作</th>
                         </tr>
                     </thead>
                     <tbody id="trackingTableBody">
                         <tr>
                             <td>
-                                <span class="badge badge-line s-source">LINE</span><br>
-                                <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">林美華</strong><br>
-                                <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
+                                <strong class="s-name">林美華</strong>
+                                <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
                             </td>
-                            <td>
-                                <span class="s-phone">0923-456789</span><br>
-                                <small style="color:var(--text-muted)" class="s-course">全科暑期班</small>
-                            </td>
-                            <td><span class="s-inquirer">林媽媽</span></td>
+                            <td><span class="s-course">全科暑期班</span></td>
+                            <td><span class="s-phone">0923-456789</span></td>
                             <td><span class="s-date" style="color: var(--warning-color); font-weight:600;">2026-09-01</span></td>
                             <td><span class="badge badge-line s-status">預約試聽中</span></td>
-                            <td><div class="s-log">08/28 老師：已約定週二試聽，待提醒。</div></td>
+                            <td><div class="s-log"><strong style="color:var(--primary-color);">[陳老師]</strong> 08/28 老師：已約定週二試聽，待提醒。</div></td>
                             <td>
                                 <div class="action-btns">
                                     <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
@@ -194,11 +183,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>來源 / 姓名</th>
-                            <th>聯絡電話 / 課程</th>
-                            <th>詢問者</th>
+                            <th>姓名</th>
+                            <th>預約課程</th>
+                            <th>電話</th>
+                            <th>試聽日期</th>
                             <th>正式進班狀態</th>
-                            <th>完整追蹤紀錄歷程</th>
+                            <th>追蹤紀錄歷程</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -221,20 +211,20 @@
                         <input type="text" id="editName">
                     </div>
                     <div class="form-group">
-                        <label>聯絡電話</label>
-                        <input type="text" id="editPhone">
-                    </div>
-                    <div class="form-group">
-                        <label>詢問者 (誰來詢問)</label>
-                        <input type="text" id="editInquirer">
-                    </div>
-                    <div class="form-group">
                         <label>有意願課程</label>
                         <input type="text" id="editCourse">
                     </div>
                     <div class="form-group">
+                        <label>聯絡電話</label>
+                        <input type="text" id="editPhone">
+                    </div>
+                    <div class="form-group">
                         <label>預定試聽日期 / 備註</label>
                         <input type="date" id="editDate">
+                    </div>
+                    <div class="form-group">
+                        <label>負責追蹤老師</label>
+                        <input type="text" id="editTeacher">
                     </div>
                     <div class="form-group">
                         <label>目前進班 / 追蹤狀態</label>
@@ -245,18 +235,11 @@
                             <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>招生來源管道</label>
-                        <select id="editSource">
-                            <option value="LINE">LINE 官方帳號</option>
-                            <option value="FB">FB 粉絲專頁</option>
-                            <option value="IG">IG 小盒子</option>
-                            <option value="PHONE">電話詢問 / 現場來訪</option>
-                        </select>
-                    </div>
+                    <!-- 隱藏的來源保留欄位 -->
+                    <input type="hidden" id="editSource" value="LINE">
                 </div>
                 <div class="form-group" style="margin-bottom: 1rem;">
-                    <label>老師追蹤紀錄歷程</label>
+                    <label>追蹤紀錄歷程</label>
                     <textarea id="editLog" style="width: 100%; height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem;"></textarea>
                 </div>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
@@ -269,7 +252,7 @@
 
     <script>
         let currentEditingRow = null;
-        let isEditingEnrolled = false; // 判斷目前修改的是不是第二頁的正式進班學員
+        let isEditingEnrolled = false; 
 
         // 頁面切換控制
         function switchTab(tabId, btn) {
@@ -290,51 +273,35 @@
             }
 
             document.getElementById('trackNote').value = "對話原文： " + text;
-
-            if (text.includes('IG') || text.includes('小盒子')) {
-                document.getElementById('leadSource').value = 'IG';
-            } else if (text.includes('FB') || text.includes('粉絲')) {
-                document.getElementById('leadSource').value = 'FB';
-            } else {
-                document.getElementById('leadSource').value = 'LINE';
-            }
             alert('已成功抓取電話並帶入追蹤紀錄！');
         }
 
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
-            const phone = document.getElementById('studentPhone').value;
-            const inquirer = document.getElementById('inquirer').value || '未填寫';
             const course = document.getElementById('studentCourse').value;
+            const phone = document.getElementById('studentPhone').value;
             const tDate = document.getElementById('trialDate').value || '未定';
+            const teacher = document.getElementById('assignedTeacher').value || '未指定';
             const status = document.getElementById('studentStatus').value;
-            const source = document.getElementById('leadSource').value;
             const note = document.getElementById('trackNote').value;
+            const source = document.getElementById('leadSource').value;
 
             if(!name) { alert('請填寫學生姓名！'); return; }
 
             const tbody = document.getElementById('trackingTableBody');
             const newRow = document.createElement('tr');
             
-            let sourceBadge = 'badge-line';
-            if(source === 'FB') sourceBadge = 'badge-fb';
-            if(source === 'IG') sourceBadge = 'badge-ig';
-            if(source === 'PHONE') sourceBadge = 'badge-other';
-
             newRow.innerHTML = `
                 <td>
-                    <span class="badge ${sourceBadge} s-source">${source}</span><br>
-                    <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong><br>
-                    <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
+                    <strong class="s-name">${name}</strong>
+                    <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                    <input type="hidden" class="s-source" value="${source}">
                 </td>
-                <td>
-                    <span class="s-phone">${phone}</span><br>
-                    <small style="color:var(--text-muted)" class="s-course">${course}</small>
-                </td>
-                <td><span class="s-inquirer">${inquirer}</span></td>
+                <td><span class="s-course">${course}</span></td>
+                <td><span class="s-phone">${phone}</span></td>
                 <td><span class="s-date" style="font-weight:600;">${tDate}</span></td>
                 <td><span class="badge badge-line s-status">${status}</span></td>
-                <td><div class="s-log">老師追蹤：${note}</div></td>
+                <td><div class="s-log"><strong style="color:var(--primary-color);">[${teacher}]</strong> 追蹤紀錄：${note}</div></td>
                 <td>
                     <div class="action-btns">
                         <button class="btn btn-sm btn-success" onclick="markNotified(this)">✓ 已通知家長</button>
@@ -364,30 +331,36 @@
         // 開啟修改表單彈窗
         function openEditModal(btn) {
             currentEditingRow = btn.closest('tr');
-            
-            // 檢查這列是在第一頁還是第二頁
             isEditingEnrolled = currentEditingRow.closest('#enrolledTableBody') !== null;
 
             const name = currentEditingRow.querySelector('.s-name').innerText;
-            const phone = currentEditingRow.querySelector('.s-phone').innerText;
-            const inquirer = currentEditingRow.querySelector('.s-inquirer').innerText;
-            const source = currentEditingRow.querySelector('.s-source').innerText;
             const course = currentEditingRow.querySelector('.s-course').innerText;
+            const phone = currentEditingRow.querySelector('.s-phone').innerText;
             
             const dateEl = currentEditingRow.querySelector('.s-date');
             const date = dateEl ? dateEl.innerText : '';
             
             const status = currentEditingRow.querySelector('.s-status').innerText;
-            const log = currentEditingRow.querySelector('.s-log').innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
+            const logHtml = currentEditingRow.querySelector('.s-log').innerHTML;
+
+            // 從 log 中抓取老師名字
+            let teacher = '未指定';
+            const teacherMatch = logHtml.match(/\[(.*?)\]/);
+            if (teacherMatch) {
+                teacher = teacherMatch[1];
+            }
+
+            const sourceEl = currentEditingRow.querySelector('.s-source');
+            const source = sourceEl ? sourceEl.value : 'LINE';
 
             document.getElementById('editName').value = name;
-            document.getElementById('editPhone').value = phone;
-            document.getElementById('editInquirer').value = inquirer;
-            document.getElementById('editSource').value = source;
             document.getElementById('editCourse').value = course;
+            document.getElementById('editPhone').value = phone;
             document.getElementById('editDate').value = date !== '未定' && date !== '' ? date : '';
+            document.getElementById('editTeacher').value = teacher;
             document.getElementById('editStatusSelect').value = status;
-            document.getElementById('editLog').value = log;
+            document.getElementById('editSource').value = source;
+            document.getElementById('editLog').value = logHtml.replace(/<br\s*[\/]?>/gi, '\n');
 
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -402,17 +375,15 @@
             if (!currentEditingRow) return;
 
             const name = document.getElementById('editName').value;
-            const phone = document.getElementById('editPhone').value;
-            const inquirer = document.getElementById('editInquirer').value;
-            const source = document.getElementById('editSource').value;
             const course = document.getElementById('editCourse').value;
+            const phone = document.getElementById('editPhone').value;
             const date = document.getElementById('editDate').value || '未定';
+            const teacher = document.getElementById('editTeacher').value || '未指定';
             const status = document.getElementById('editStatusSelect').value;
+            const source = document.getElementById('editSource').value;
             const log = document.getElementById('editLog').value;
 
             if(!name) { alert('學生姓名不能為空！'); return; }
-
-            const sourceBadgeClass = `badge s-source ${source === 'FB' ? 'badge-fb' : source === 'IG' ? 'badge-ig' : source === 'LINE' ? 'badge-line' : 'badge-other'}`;
 
             // 如果原本在第二頁（正式進班），但被改回「未進班」狀態 -> 自動移回第一頁
             if (isEditingEnrolled && status !== '已正式進班') {
@@ -422,15 +393,12 @@
 
                     newRow.innerHTML = `
                         <td>
-                            <span class="${sourceBadgeClass}">${source}</span><br>
-                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong><br>
-                            <button class="btn btn-warning btn-xs" style="margin-top: 0.5rem;" onclick="openEditModal(this)">✏️ 修改</button>
+                            <strong class="s-name">${name}</strong>
+                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                            <input type="hidden" class="s-source" value="${source}">
                         </td>
-                        <td>
-                            <span class="s-phone">${phone}</span><br>
-                            <small style="color:var(--text-muted)" class="s-course">${course}</small>
-                        </td>
-                        <td><span class="s-inquirer">${inquirer}</span></td>
+                        <td><span class="s-course">${course}</span></td>
+                        <td><span class="s-phone">${phone}</span></td>
                         <td><span class="s-date" style="font-weight:600;">${date}</span></td>
                         <td><span class="badge badge-line s-status">${status}</span></td>
                         <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--danger-color);">[已從正式名單退回追蹤清單]</span></div></td>
@@ -447,7 +415,7 @@
                     alert('已成功將學員移回未進班追蹤清單！');
                     return;
                 } else {
-                    return; // 取消移動
+                    return; 
                 }
             }
 
@@ -459,14 +427,13 @@
 
                     newRow.innerHTML = `
                         <td>
-                            <span class="${sourceBadgeClass}">${source}</span><br>
-                            <strong class="s-name" style="display:inline-block; margin-top:0.3rem;">${name}</strong>
+                            <strong class="s-name">${name}</strong>
+                            <button class="edit-icon-btn" onclick="openEditModal(this)" title="修改資料">✏️</button>
+                            <input type="hidden" class="s-source" value="${source}">
                         </td>
-                        <td>
-                            <span class="s-phone">${phone}</span><br>
-                            <small style="color:var(--text-muted)" class="s-course">${course}</small>
-                        </td>
-                        <td><span class="s-inquirer">${inquirer}</span></td>
+                        <td><span class="s-course">${course}</span></td>
+                        <td><span class="s-phone">${phone}</span></td>
+                        <td><span class="s-date" style="font-weight:600;">${date}</span></td>
                         <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
                         <td><div class="s-log">${log.replace(/\n/g, '<br>')}<br><span style="color:var(--primary-color);">[已轉入正式進班名單]</span></div></td>
                         <td>
@@ -485,14 +452,8 @@
 
             // 一般原地修改更新
             currentEditingRow.querySelector('.s-name').innerText = name;
-            currentEditingRow.querySelector('.s-phone').innerText = phone;
-            currentEditingRow.querySelector('.s-inquirer').innerText = inquirer;
-            
-            const sourceBadge = currentEditingRow.querySelector('.s-source');
-            sourceBadge.innerText = source;
-            sourceBadge.className = sourceBadgeClass;
-
             currentEditingRow.querySelector('.s-course').innerText = course;
+            currentEditingRow.querySelector('.s-phone').innerText = phone;
             
             const dateEl = currentEditingRow.querySelector('.s-date');
             if(dateEl) dateEl.innerText = date;
@@ -510,20 +471,20 @@
             const studentName = row.querySelector('.s-name').innerText;
 
             if (confirm(`確定要將「${studentName}」移至【已正式進班】名單嗎？`)) {
-                const sourceHtml = row.querySelector('td:nth-child(1)').innerHTML;
-                const phoneCourseHtml = row.querySelector('td:nth-child(2)').innerHTML;
-                const inquirerText = row.querySelector('.s-inquirer').innerText;
+                const nameTdHtml = row.querySelector('td:nth-child(1)').innerHTML;
+                const courseText = row.querySelector('.s-course').innerText;
+                const phoneText = row.querySelector('.s-phone').innerText;
+                const dateText = row.querySelector('.s-date').innerText;
                 const logHtml = row.querySelector('.s-log').innerHTML;
-
-                let cleanSourceHtml = sourceHtml.replace(/<button[\s\S]*?<\/button>/gi, '');
 
                 const enrolledTbody = document.getElementById('enrolledTableBody');
                 const newEnrolledRow = document.createElement('tr');
 
                 newEnrolledRow.innerHTML = `
-                    <td>${cleanSourceHtml}</td>
-                    <td>${phoneCourseHtml}</td>
-                    <td><span class="s-inquirer">${inquirerText}</span></td>
+                    <td>${nameTdHtml}</td>
+                    <td><span class="s-course">${courseText}</span></td>
+                    <td><span class="s-phone">${phoneText}</span></td>
+                    <td><span class="s-date" style="font-weight:600;">${dateText}</span></td>
                     <td><span class="badge badge-enrolled s-status">已正式進班</span></td>
                     <td><div class="s-log">${logHtml}<br><span style="color:var(--primary-color);">[已轉入正式進班名單]</span></div></td>
                     <td>
