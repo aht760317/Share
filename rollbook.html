@@ -246,11 +246,10 @@
             <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
                 <span style="font-size:13px; font-weight:bold; color:var(--primary);">課堂篩選：</span>
                 <div class="filter-btn-group" id="courseFilterGroup">
-                    <button class="filter-btn active" data-filter="today" onclick="setCourseFilter('today')">📅 今日排課</button>
-                    <button class="filter-btn" data-filter="care" onclick="setCourseFilter('care')">🏢 課輔部全部</button>
-                    <button class="filter-btn" data-filter="elementary" onclick="setCourseFilter('elementary')">📘 國小部全部</button>
-                    <button class="filter-btn" data-filter="junior" onclick="setCourseFilter('junior')">📙 國中部全部</button>
-                    <button class="filter-btn" data-filter="all" onclick="setCourseFilter('all')">👁️ 全校所有課程</button>
+                    <button class="filter-btn active" data-filter="today" onclick="setCourseFilter('today')">📅 今日全部課程</button>
+                    <button class="filter-btn" data-filter="junior" onclick="setCourseFilter('junior')">📙 今日國中</button>
+                    <button class="filter-btn" data-filter="elementary" onclick="setCourseFilter('elementary')">📘 今日國小</button>
+                    <button class="filter-btn" data-filter="care" onclick="setCourseFilter('care')">🏢 今日課輔</button>
                 </div>
             </div>
 
@@ -664,7 +663,7 @@
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
         attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
-        courseFilterMode: 'today',
+        courseFilterMode: 'today', // 'today' (今日全部課程) | 'junior' (今日國中) | 'elementary' (今日國小) | 'care' (今日課輔)
         currentDeptView: 'care',
         currentFilterClass: null,
         deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER
@@ -1549,7 +1548,7 @@
     }
 
     // ==========================================
-    // 1. 今日點名與課堂清單 (多條件篩選 + 點名確認)
+    // 1. 今日點名與課堂清單 (今日全部 / 今日國中 / 今日國小 / 今日課輔)
     // ==========================================
     window.onDateChange = function() {
         renderCourseCards();
@@ -1582,28 +1581,28 @@
         const allCourses = getAllCoursesList();
         const mode = window.state.courseFilterMode || 'today';
 
+        // 先篩選出今日有排課的課程
+        const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+
         let filteredCourses = [];
         if (mode === 'today') {
-            filteredCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
-        } else if (mode === 'care') {
-            filteredCourses = allCourses.filter(c => c.dept === 'care');
-        } else if (mode === 'elementary') {
-            filteredCourses = allCourses.filter(c => c.dept === 'elementary');
+            filteredCourses = todayCourses;
         } else if (mode === 'junior') {
-            filteredCourses = allCourses.filter(c => c.dept === 'junior');
-        } else {
-            filteredCourses = allCourses;
+            filteredCourses = todayCourses.filter(c => c.dept === 'junior');
+        } else if (mode === 'elementary') {
+            filteredCourses = todayCourses.filter(c => c.dept === 'elementary');
+        } else if (mode === 'care') {
+            filteredCourses = todayCourses.filter(c => c.dept === 'care');
         }
 
         if (filteredCourses.length === 0) {
-            let emptyMsg = `本日 (${curDayName}) 無排課班級。您可點選上方按鈕查看各學部全部課程。`;
-            if (mode !== 'today') emptyMsg = `該分類目前尚無設定任何班級課程。`;
-            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">${emptyMsg}</div>`;
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 25px; text-align: center; color: #888; background: #fff; border-radius: 8px; border: 1px dashed #ccc;">
+                本日 (${curDayName}) 此分類無排課班級。
+            </div>`;
             return;
         }
 
         filteredCourses.forEach(c => {
-            const isToday = c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'));
             const deptLabel = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
             const deptColor = c.dept === 'care' ? '#e0f2fe' : (c.dept === 'elementary' ? '#dcfce7' : '#fef3c7');
             const deptTxt = c.dept === 'care' ? '#0369a1' : (c.dept === 'elementary' ? '#15803d' : '#b45309');
@@ -1616,7 +1615,7 @@
                 <span style="font-size:12px; font-weight:bold; background:${deptColor}; color:${deptTxt}; padding:3px 8px; border-radius:4px;">
                     ${deptLabel}
                 </span>
-                ${isToday ? '<span style="float:right; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:bold; padding:2px 8px; border-radius:4px;">今日排課</span>' : ''}
+                <span style="float:right; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:bold; padding:2px 8px; border-radius:4px;">今日排課</span>
                 <div style="font-size:17px; font-weight:bold; margin:8px 0 3px; color:var(--primary);">${c.name}</div>
                 <div style="font-size:13px; color:#64748b;">開課日：${c.startDate} | 授課：${c.teacher || '任課老師'} (${c.day || '未設時間'})</div>
             `;
