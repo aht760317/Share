@@ -213,7 +213,7 @@
 </header>
 
 <div class="container">
-    <!-- 頂部標籤分頁（已精簡為 4 個常用主要標籤） -->
+    <!-- 頂部標籤分頁 -->
     <div class="tabs no-print">
         <button class="tab-btn active" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
         <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表</button>
@@ -227,7 +227,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <h3 id="currentDayText" style="color:var(--primary);">📅 今日課堂清單</h3>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <label style="font-weight:bold;">點名日期：</label>
+                    <label style="font-weight:bold;"> 日期：</label>
                     <input type="date" id="rollDateInput" onchange="onDateChange()" style="padding:6px; border-radius:6px; border:1px solid #ccc; margin:0;">
                     <button id="btnToggleAllCourses" class="btn btn-outline" onclick="toggleCourseFilter()">👁️ 顯示全部課程</button>
                 </div>
@@ -243,13 +243,13 @@
                 </div>
                 <div class="no-print" style="display:flex; gap:10px; align-items:center;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none;">⚠️ 本日為設定之放假日</span>
-                    <button class="btn btn-primary" onclick="quickMarkAll()">⚡ 全員到齊點名</button>
+                    <button class="btn btn-primary" onclick="quickMarkAll()">⚡ 全員到齊點名 (✔)</button>
                 </div>
             </div>
 
             <div style="margin-top:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <span id="rollStatsText" style="font-weight:bold; color:var(--primary);">應到 0 人 / 出席 0 人</span>
-                <span style="font-size:13px; color:#888;">💡 支援跨班修課學生點名，各班成績與出缺席各自獨立記錄。</span>
+                <span style="font-size:13px; color:#888;">💡 點名符號標準：出席打勾 <b>✔</b> ｜ 請假三角形 <b style="color:red;">▲</b></span>
             </div>
 
             <div class="student-grid" id="studentRollGrid"></div>
@@ -282,18 +282,42 @@
         </div>
     </div>
 
-    <!-- 2. 自動生成點名表 -->
+    <!-- 2. 自動生成點名表 (支援歷史週間查詢與自訂起訖) -->
     <div id="tab-sheet" style="display:none;">
         <div class="card">
-            <div class="no-print" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:15px; background:#f8fafc; padding:12px; border-radius:8px;">
-                <label><b>選擇課程：</b></label>
-                <select id="sheetCourseSelect" onchange="generateCustomSheet()" style="padding:6px; border-radius:6px; width:auto;"></select>
+            <!-- 查詢與操作控制列 -->
+            <div class="no-print" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:8px; margin-bottom:15px;">
+                <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+                    <div>
+                        <label style="font-size:13px; font-weight:bold;">選擇課程：</label>
+                        <select id="sheetCourseSelect" onchange="onSheetCourseChanged()" style="width:auto; padding:6px 10px; margin:0;"></select>
+                    </div>
 
-                <label><b>表單週期：</b></label>
-                <span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:5px 10px; border-radius:6px; font-weight:bold;">自動推算中</span>
+                    <div>
+                        <label style="font-size:13px; font-weight:bold;">📅 快速切換期數：</label>
+                        <select id="sheetPeriodQuickSelect" onchange="onQuickPeriodSelect()" style="width:auto; padding:6px 10px; margin:0; background:#f0fdf4; border-color:#86efac; font-weight:bold; color:#166534;"></select>
+                    </div>
 
-                <button class="btn btn-primary" onclick="window.print()">🖨️ 列印點名表 (A4橫向)</button>
-                <button class="btn btn-warning" onclick="promptEditSheetStart()">✏️ 調整此表起始開課日</button>
+                    <div>
+                        <label style="font-size:13px; font-weight:bold;">起始開課日：</label>
+                        <input type="date" id="sheetQueryStartDate" style="width:auto; padding:6px; margin:0;">
+                    </div>
+
+                    <div>
+                        <label style="font-size:13px; font-weight:bold;">生成週數：</label>
+                        <input type="number" id="sheetQueryWeeks" min="1" max="52" value="13" style="width:75px; padding:6px; margin:0; text-align:center;">
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:flex-end; margin-left:auto;">
+                        <button class="btn btn-primary" onclick="generateCustomSheet()">🔍 立即查詢生成</button>
+                        <button class="btn btn-success" onclick="window.print()">🖨️ 列印點名表</button>
+                    </div>
+                </div>
+
+                <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:8px;">
+                    <span><b>目前表單學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
+                    <span>💡 出席標記：<b>✔</b> ｜ 請假標記：<b style="color:red;">▲</b> ｜ 資料與每日點名即時連動。</span>
+                </div>
             </div>
 
             <div class="print-header">
@@ -307,7 +331,6 @@
 
     <!-- 3. 課程開課起始日排程 (含國定假日與放假設定) -->
     <div id="tab-course-config" style="display:none;">
-        <!-- 課程排程卡片 -->
         <div class="card">
             <h3 style="color:var(--primary);">⚙️ 課程開課日與點名表週期排程</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
@@ -317,7 +340,6 @@
             <div id="courseConfigList" style="margin-top:15px;"></div>
         </div>
 
-        <!-- 國定假日與放假設定區塊 (合併置於下方) -->
         <div class="card" style="border-top: 4px solid var(--warning);">
             <h3 style="color:var(--primary);">📢 國定假日與停課放假設定</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
@@ -348,10 +370,10 @@
                 </div>
             </div>
 
-            <!-- 可直接拖曳調整順序的部門導覽列 (畢業班獨立固定於最右側) -->
+            <!-- 可直接拖曳調整順序的部門導覽列 -->
             <div class="dept-nav" id="deptNavContainer"></div>
 
-            <!-- 部門所屬班級過濾一覽 (支援拖曳排序) -->
+            <!-- 部門所屬班級過濾一覽 -->
             <div class="class-overview-box" id="classOverviewBox">
                 <div class="class-overview-title">🏫 部門所屬班級：</div>
                 <div id="deptClassButtons" class="draggable-class-container"></div>
@@ -766,7 +788,6 @@
             navContainer.appendChild(btn);
         });
 
-        // 固定在最右側的「🎓 畢業班」按鈕
         const gradBtn = document.createElement('button');
         gradBtn.className = `dept-btn-fixed-grad ${window.state.currentDeptView === 'graduated' ? 'active-grad' : ''}`;
         gradBtn.innerText = '🎓 畢業班';
@@ -816,7 +837,6 @@
         renderMasterStudentsTable();
     };
 
-    // 渲染部門所屬班級按鈕（支援滑鼠拖曳排序）
     function renderDeptClassButtons() {
         const container = document.getElementById('deptClassButtons');
         const box = document.getElementById('classOverviewBox');
@@ -923,7 +943,6 @@
         draggedItem = null;
     }
 
-    // 渲染全校班級管理卡片
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
@@ -1625,12 +1644,14 @@
         });
 
         let presentCount = 0;
+        let leaveCount = 0;
         let paperRowsHtml = '';
 
         courseStudents.forEach((stu, idx) => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
             const record = window.state.attendanceData[key] || { status: '未到', time: '', score: '' };
             if (record.status === '出席') presentCount++;
+            if (record.status === '請假') leaveCount++;
 
             const phone = getParentPhone(stu);
 
@@ -1648,19 +1669,20 @@
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-top:12px;">
                     <button class="btn ${record.status === '出席' ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px;" onclick="setAttendance('${key}', '出席')">
-                        ${record.status === '出席' ? '✅ 已出席' : '簽到'}
+                        ${record.status === '出席' ? '✔ 已出席' : '簽到 (✔)'}
                     </button>
                     <button class="btn btn-warning" style="padding:7px;" onclick="setAttendance('${key}', '請假')">
-                        ${record.status === '請假' ? '⚠️ 已請假' : '請假'}
+                        ${record.status === '請假' ? '▲ 已請假' : '請假 (▲)'}
                     </button>
                     <input type="number" placeholder="成績" value="${record.score !== undefined ? record.score : ''}" style="width:65px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center; margin:0;" onchange="saveScore('${key}', this.value)">
                 </div>
             `;
             grid.appendChild(card);
 
-            let statusText = `<span style="color:#999;">未到</span>`;
-            if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold;">✔ 出席</span>`;
-            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold;">假 (請假)</span>`;
+            // 課堂點名單預覽符號：出席顯示 ✔，請假顯示 ▲
+            let statusText = `<span style="color:#999;">-</span>`;
+            if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold; font-size:16px;">✔</span>`;
+            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:15px;">▲</span>`;
 
             paperRowsHtml += `
                 <tr>
@@ -1676,13 +1698,10 @@
         });
 
         document.getElementById('rollStatsText').innerText = 
-            `應到：${courseStudents.length} 人 / 出席：${presentCount} 人 / 請假：${courseStudents.filter(s => {
-                const k = `${dateStr}_${c.name}_${s.name}`;
-                return window.state.attendanceData[k] && window.state.attendanceData[k].status === '請假';
-            }).length} 人`;
+            `應到：${courseStudents.length} 人 / 出席 (✔)：${presentCount} 人 / 請假 (▲)：${leaveCount} 人`;
 
         document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名單`;
-        document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 授課教師：${c.teacher || '任課老師'} | 應到人數：${courseStudents.length} 人 | 實到：${presentCount} 人`;
+        document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 授課教師：${c.teacher || '任課老師'} | 應到：${courseStudents.length} 人 | 實到：${presentCount} 人`;
         document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="7" style="padding:15px; color:#888;">此班級目前無在籍修課學生</td></tr>`;
     }
 
@@ -1717,7 +1736,7 @@
     };
 
     // ==========================================
-    // 2. 自動生成點名表
+    // 2. 自動生成點名表 (支援出席✔、請假▲與即時連動)
     // ==========================================
     function populateSheetCourses() {
         const sel = document.getElementById('sheetCourseSelect');
@@ -1727,24 +1746,55 @@
         allCourses.forEach(c => {
             sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
+        onSheetCourseChanged();
     }
 
-    window.promptEditSheetStart = async function() {
+    function getCourseDefaultWeeks(course) {
+        const isSpecialCourse = /[（\(].*?[）\)]/.test(course.name);
+        if (isSpecialCourse) return { weeks: 4, desc: '特殊自訂週期班 (4週/短期課程)' };
+        if (course.dept === 'junior') return { weeks: 13, desc: '國中部：3個月 (13週)' };
+        return { weeks: 9, desc: '國小/課輔：2個月 (9週)' };
+    }
+
+    window.onSheetCourseChanged = function() {
         const courseName = document.getElementById('sheetCourseSelect').value;
         const allCourses = getAllCoursesList();
-        const target = allCourses.find(c => c.name === courseName);
-        if (!target) return;
+        const course = allCourses.find(c => c.name === courseName) || allCourses[0];
+        if (!course) return;
 
-        const newDate = prompt(`請輸入【${target.name}】點名表的起始開課日期 (格式：YYYY-MM-DD)：`, target.startDate);
-        if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-            const targetObj = window.state.courses[target.dept].find(c => (typeof c === 'object' ? c.name : c) === courseName);
-            if (targetObj && typeof targetObj === 'object') targetObj.startDate = newDate;
+        const info = getCourseDefaultWeeks(course);
+        document.getElementById('sheetQueryWeeks').value = info.weeks;
+        document.getElementById('sheetPeriodBadge').innerText = info.desc;
 
-            await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
+        const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
+        document.getElementById('sheetQueryStartDate').value = baseStart;
+
+        const quickSel = document.getElementById('sheetPeriodQuickSelect');
+        quickSel.innerHTML = '';
+
+        const baseDate = new Date(baseStart);
+        const daysPerPeriod = info.weeks * 7;
+
+        const p_2 = new Date(baseDate.getTime() - daysPerPeriod * 2 * 86400000);
+        const p_1 = new Date(baseDate.getTime() - daysPerPeriod * 1 * 86400000);
+        const p_0 = new Date(baseDate.getTime());
+        const p_plus1 = new Date(baseDate.getTime() + daysPerPeriod * 1 * 86400000);
+
+        const formatDate = (d) => d.toISOString().slice(0, 10);
+
+        quickSel.innerHTML += `<option value="${formatDate(p_0)}">📍 當前本期 (自 ${formatDate(p_0)} 起)</option>`;
+        quickSel.innerHTML += `<option value="${formatDate(p_1)}">⏮️ 前一期歷史 (自 ${formatDate(p_1)} 起)</option>`;
+        quickSel.innerHTML += `<option value="${formatDate(p_2)}">⏮️ 前兩期歷史 (自 ${formatDate(p_2)} 起)</option>`;
+        quickSel.innerHTML += `<option value="${formatDate(p_plus1)}">⏭️ 下一期排程 (自 ${formatDate(p_plus1)} 起)</option>`;
+
+        generateCustomSheet();
+    };
+
+    window.onQuickPeriodSelect = function() {
+        const val = document.getElementById('sheetPeriodQuickSelect').value;
+        if (val) {
+            document.getElementById('sheetQueryStartDate').value = val;
             generateCustomSheet();
-            alert('開課起始日已更新！');
-        } else if (newDate) {
-            alert('日期格式不正確！');
         }
     };
 
@@ -1754,30 +1804,10 @@
         const course = allCourses.find(c => c.name === courseName) || allCourses[0];
         if (!course) return;
 
-        const isSpecialCourse = /[（\(].*?[）\)]/.test(course.name);
+        const info = getCourseDefaultWeeks(course);
+        const totalWeeks = parseInt(document.getElementById('sheetQueryWeeks').value) || info.weeks;
+        const startDateVal = document.getElementById('sheetQueryStartDate').value || course.startDate || new Date().toISOString().slice(0, 10);
 
-        let totalWeeks = 9;
-        let periodDesc = "";
-
-        if (isSpecialCourse) {
-            totalWeeks = course.customWeeks || 4;
-            periodDesc = `特殊自訂週期班 (${totalWeeks}週/短期課程)`;
-        } else {
-            if (course.dept === 'junior') {
-                totalWeeks = 13;
-                periodDesc = `國中部：3個月 (13週)`;
-            } else if (course.dept === 'care') {
-                totalWeeks = 9;
-                periodDesc = `課輔部：2個月 (9週)`;
-            } else {
-                totalWeeks = 9;
-                periodDesc = `國小部：2個月 (9週)`;
-            }
-        }
-        
-        document.getElementById('sheetPeriodBadge').innerText = periodDesc;
-
-        const startDateVal = course.startDate || new Date().toISOString().slice(0, 10);
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
             return arr.includes(course.name) && s.status !== 'graduated';
@@ -1801,7 +1831,7 @@
 
         document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
         document.getElementById('sheetPrintSub').innerText = 
-            `學制：${periodDesc} | 課期區間：${startDateVal} 至 ${endDateStr} | 授課師：${course.teacher || '任課老師'}`;
+            `學制：${info.desc} (共 ${totalWeeks} 週) | 查詢課期：${startDateVal} 至 ${endDateStr} | 授課師：${course.teacher || '任課老師'}`;
 
         let html = `<table>
             <thead>
@@ -1837,12 +1867,13 @@
                     let mark = '';
                     let score = '';
                     if (rec) {
-                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;">假</span>' : (rec.status === '出席' ? '✔' : '');
+                        // 點名表符號標準：請假為 ▲，出席為 ✔
+                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:11pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:12pt;">✔</span>' : '');
                         score = (rec.score !== undefined && rec.score !== '') ? `<span style="font-size:7.5pt;color:#0284c7;font-weight:bold;">${rec.score}分</span>` : '';
                     }
 
                     html += `<td>
-                        <div style="height:15px;">${mark}</div>
+                        <div style="height:16px; line-height:16px;">${mark}</div>
                         <div style="height:13px; font-size:7.5pt; color:#888;">${score || '分:'}</div>
                     </td>`;
                 }
@@ -1856,7 +1887,7 @@
     };
 
     // ==========================================
-    // 3. 課程排程管理與放假設定 (已整併至同分頁)
+    // 3. 課程排程管理與放假設定
     // ==========================================
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
