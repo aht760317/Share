@@ -15,8 +15,8 @@
         .header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .header h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
-        .btn-sync { background: #059669; color: white; border: 1px solid #34D399; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-sync:hover { background: #047857; }
+        .btn-sync { background: #059669; color: white; border: 1px solid #34D399; padding: 9px 18px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-sync:hover { background: #047857; transform: translateY(-1px); }
 
         .tabs { display: flex; background: #1E293B; overflow-x: auto; white-space: nowrap; }
         .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: #94A3B8; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
@@ -183,7 +183,7 @@
     <div class="header">
         <h1>顧德補習班 繳費管理系統 (雲端同步版)</h1>
         <div class="header-actions">
-            <button class="btn-sync" onclick="syncStudentProfilesOnly()">🔄 同步學生個人通訊資料</button>
+            <button class="btn-sync" onclick="syncAllFromRollbook()">🔄 一鍵從點名系統同步班級與學籍</button>
         </div>
     </div>
     
@@ -347,7 +347,7 @@
         <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 25px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: var(--primary);">🏫 班級設定</h3>
-                <button class="btn-sync" onclick="syncStudentProfilesOnly()">🔄 同步學生個人資料</button>
+                <button class="btn-sync" onclick="syncAllFromRollbook()">🔄 從點名系統一鍵同步全部班級與學生</button>
             </div>
             
             <div class="form-row" style="margin-bottom: 15px;">
@@ -439,7 +439,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
             <h3 style="margin: 0; color: #065F46; font-size: 24px;">📖 學生通訊錄查詢與編輯</h3>
             <div>
-                <button class="btn-sync" style="margin-right:10px;" onclick="syncStudentProfilesOnly()">🔄 同步學生個人通訊資料</button>
+                <button class="btn-sync" style="margin-right:10px;" onclick="syncAllFromRollbook()">🔄 同步最新學籍</button>
                 <button class="btn-select" style="background:#10B981; color:white; font-weight:bold; font-size:18px; padding:10px 20px;" onclick="printDirectory()">🖨️ 列印畫面上通訊錄</button>
             </div>
         </div>
@@ -709,81 +709,103 @@
         }
     }
 
-    // === 僅同步學生個人通訊與學籍資料 (不改動班級、同名同姓依生日精確防呆比對) ===
-    window.syncStudentProfilesOnly = async function() {
-        if (!confirm('確認要從【點名與學籍系統】同步學生個人的聯絡資料與備註嗎？\n（此動作不會增減您的班級，僅更新現有名冊中的學生資料）')) return;
+    // === 完整自動同步：包含班級建立、學生名單歸位、個人資料與生日防呆 ===
+    window.syncAllFromRollbook = async function() {
+        if (!confirm('確認要從【點名與學籍系統】完整同步所有「班級課程」與「學生名單」嗎？\n（系統將自動建立各班並填入修課學生，完全不影響您後續自由收費開單）')) return;
 
         try {
+            // 1. 取得點名系統所有班級課程設定
+            const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
+            const syncedClasses = {};
+            const syncedClassOrder = [];
+
+            if (coursesDoc.exists()) {
+                const cData = coursesDoc.data().data || {};
+                ['care', 'elementary', 'junior'].forEach(dept => {
+                    (cData[dept] || []).forEach(c => {
+                        const name = typeof c === 'object' ? c.name : c;
+                        if (name && !syncedClasses[name]) {
+                            syncedClasses[name] = [];
+                            syncedClassOrder.push(name);
+                        }
+                    });
+                });
+            }
+
+            // 2. 取得點名系統所有學生
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
-            const rawStudents = [];
+            const syncedDetails = { ...window.studentDetails };
+            let totalStudentsSynced = 0;
+
             studentsSnapshot.forEach(d => {
                 const s = d.data();
-                if (s && s.name) rawStudents.push(s);
-            });
+                if (s.status === 'graduated') return; // 排除畢業生
 
-            let matchedCount = 0;
-            const newStudentDetails = { ...window.studentDetails };
+                const stuName = (s.name || '').trim();
+                if (!stuName) return;
 
-            // 遍歷管帳系統現有的所有班級與其學生
-            Object.keys(window.config.classes).forEach(clsName => {
-                const studentList = window.config.classes[clsName] || [];
+                // 取得選修的班級
+                let courses = [];
+                if (Array.isArray(s.courses) && s.courses.length > 0) courses = s.courses;
+                else if (s.course) courses = s.course.split(/[,，、]/).map(x => x.trim()).filter(x => x);
 
-                studentList.forEach(stuName => {
-                    const cleanName = stuName.trim();
-                    // 找出點名系統中同名學生
-                    const sameNameStudents = rawStudents.filter(s => s.name.trim() === cleanName);
-                    if (sameNameStudents.length === 0) return;
+                const p1 = (s.phones && s.phones[0]) || {};
+                const p2 = (s.phones && s.phones[1]) || {};
+                const p3 = (s.phones && s.phones[2]) || {};
 
-                    let targetStudent = null;
-                    if (sameNameStudents.length === 1) {
-                        targetStudent = sameNameStudents[0];
-                    } else {
-                        // 同名同姓有多位時，比對現有資料中的出生年月日
-                        const existingDetail = window.studentDetails[`${clsName}_${cleanName}`] || {};
-                        if (existingDetail.birthday) {
-                            targetStudent = sameNameStudents.find(s => s.birthday === existingDetail.birthday);
-                        }
-                        // 若無生日比對則默認取第一位在籍學員
-                        if (!targetStudent) {
-                            targetStudent = sameNameStudents.find(s => s.status !== 'graduated') || sameNameStudents[0];
-                        }
+                courses.forEach(clsName => {
+                    if (!syncedClasses[clsName]) {
+                        syncedClasses[clsName] = [];
+                        syncedClassOrder.push(clsName);
+                    }
+                    if (!syncedClasses[clsName].includes(stuName)) {
+                        syncedClasses[clsName].push(stuName);
                     }
 
-                    if (targetStudent) {
-                        const p1 = (targetStudent.phones && targetStudent.phones[0]) || {};
-                        const p2 = (targetStudent.phones && targetStudent.phones[1]) || {};
-                        const p3 = (targetStudent.phones && targetStudent.phones[2]) || {};
-
-                        const detailKey = `${clsName}_${cleanName}`;
-                        newStudentDetails[detailKey] = {
-                            school: targetStudent.school || '',
-                            gradeClass: targetStudent.studentClass || '',
-                            gender: targetStudent.gender === '女' ? 'female' : 'male',
-                            birthday: targetStudent.birthday || '', // 記錄生日以利精確識別
-                            contact1Name: p1.label || '聯絡人1',
-                            contact1Phone: p1.number || '',
-                            contact2Name: p2.label || '聯絡人2',
-                            contact2Phone: p2.number || '',
-                            contact3Name: p3.label || '聯絡人3',
-                            contact3Phone: p3.number || '',
-                            note: targetStudent.notes || ''
-                        };
-                        matchedCount++;
-                    }
+                    const detailKey = `${clsName}_${stuName}`;
+                    syncedDetails[detailKey] = {
+                        school: s.school || '',
+                        gradeClass: s.studentClass || '',
+                        gender: s.gender === '女' ? 'female' : 'male',
+                        birthday: s.birthday || '',
+                        contact1Name: p1.label || '聯絡人1',
+                        contact1Phone: p1.number || '',
+                        contact2Name: p2.label || '聯絡人2',
+                        contact2Phone: p2.number || '',
+                        contact3Name: p3.label || '聯絡人3',
+                        contact3Phone: p3.number || '',
+                        note: s.notes || ''
+                    };
+                    totalStudentsSynced++;
                 });
             });
 
-            window.studentDetails = newStudentDetails;
+            // 保留原本存在於收費系統但點名系統沒有的自訂班級
+            Object.keys(window.config.classes).forEach(oldCls => {
+                if (!syncedClasses[oldCls]) {
+                    syncedClasses[oldCls] = window.config.classes[oldCls];
+                    if (!syncedClassOrder.includes(oldCls)) syncedClassOrder.push(oldCls);
+                }
+            });
+
+            window.config.classes = syncedClasses;
+            window.config.classOrder = syncedClassOrder;
+            window.studentDetails = syncedDetails;
+
+            await saveClassesToCloud();
             await saveStudentDetailsToCloud();
 
+            renderClassConfigList();
+            renderClassGrid();
+            updateBatchPrintDropdown();
             if (document.getElementById('directory').classList.contains('active')) {
-                showDirectoryClass(window.currentDirectoryClass);
+                renderDirectoryInit();
             }
 
-            alert(`🎉 學生資料同步完成！\n已成功對照並更新 ${matchedCount} 位學生的通訊錄與個人詳細資料。`);
+            alert(`🎉 同步成功！\n共同步了 ${syncedClassOrder.length} 個班級與 ${totalStudentsSynced} 人次學生學籍資料。`);
         } catch (e) {
-            console.error("同步學生個人資料失敗：", e);
-            alert("❌ 同步失敗，請確認網路連線。");
+            console.error("同步失敗：", e);
+            alert("❌ 同步失敗，請確認網路連線與資料庫存取權限。");
         }
     };
 
@@ -1055,7 +1077,7 @@
         }
 
         if (window.config.classOrder.length === 0) {
-            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無班級，請於上方新增</div>';
+            list.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無班級，請於上方新增或點擊同步</div>';
             return;
         }
         
