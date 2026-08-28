@@ -213,10 +213,10 @@
 </header>
 
 <div class="container">
+    <!-- 頂部標籤分頁（已精簡為 4 個常用主要標籤） -->
     <div class="tabs no-print">
         <button class="tab-btn active" onclick="switchTab('rollcall')">📱 今日點名與日誌成績</button>
         <button class="tab-btn" onclick="switchTab('sheet')">🖨️ 自動生成點名表</button>
-        <button class="tab-btn" onclick="switchTab('holiday')">⚙️ 國定假日與放假設定</button>
         <button class="tab-btn" onclick="switchTab('course-config')">⚙️ 課程開課起始日排程</button>
         <button class="tab-btn" onclick="switchTab('students-master')">👥 全校學生檔案總覽</button>
     </div>
@@ -305,9 +305,20 @@
         </div>
     </div>
 
-    <!-- 3. 國定假日與放假設定 -->
-    <div id="tab-holiday" style="display:none;">
+    <!-- 3. 課程開課起始日排程 (含國定假日與放假設定) -->
+    <div id="tab-course-config" style="display:none;">
+        <!-- 課程排程卡片 -->
         <div class="card">
+            <h3 style="color:var(--primary);">⚙️ 課程開課日與點名表週期排程</h3>
+            <p style="color:#666; font-size:14px; margin-top:4px;">
+                常態課程國中為3個月(13週)、國小為2個月(9週)；短期特殊班可支援自訂週數。
+            </p>
+
+            <div id="courseConfigList" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- 國定假日與放假設定區塊 (合併置於下方) -->
+        <div class="card" style="border-top: 4px solid var(--warning);">
             <h3 style="color:var(--primary);">📢 國定假日與停課放假設定</h3>
             <p style="color:#666; font-size:14px; margin-top:4px;">
                 設定放假後，所有點名表會自動推算並印出【放假】標記。
@@ -324,19 +335,7 @@
         </div>
     </div>
 
-    <!-- 4. 課程開課起始日排程 -->
-    <div id="tab-course-config" style="display:none;">
-        <div class="card">
-            <h3 style="color:var(--primary);">⚙️ 課程開課日與點名表週期排程</h3>
-            <p style="color:#666; font-size:14px; margin-top:4px;">
-                常態課程國中為3個月(13週)、國小為2個月(9週)；短期特殊班可支援自訂週數。
-            </p>
-
-            <div id="courseConfigList" style="margin-top:15px;"></div>
-        </div>
-    </div>
-
-    <!-- 5. 全校學生檔案總覽 (中央學籍總庫) -->
+    <!-- 4. 全校學生檔案總覽 (中央學籍總庫) -->
     <div id="tab-students-master" style="display:none;">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
@@ -397,7 +396,7 @@
     </div>
 </div>
 
-<!-- 學生新增/編輯彈窗 (修習課程已移至最下方) -->
+<!-- 學生新增/編輯彈窗 -->
 <div class="modal-overlay" id="studentModal">
     <div class="modal-box">
         <h3 id="studentModalTitle" style="color:var(--primary); margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:8px;">新增學生學籍檔案</h3>
@@ -482,7 +481,7 @@
             <textarea id="m_stu_notes" rows="3" style="resize:vertical; line-height:1.5;" placeholder="請在此輸入學生學習紀錄、注意事項、交通接送等備註..."></textarea>
         </div>
 
-        <!-- 修習班級課程專區 (已調整移動至下方) -->
+        <!-- 修習班級課程專區 -->
         <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px; border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <label style="color:#166534; font-weight:bold; font-size:14px; margin:0;"><b>📖 修習班級課程 (可自由增加多門科目)：</b></label>
@@ -616,7 +615,6 @@
     const SECURITY_CODE = "0618";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
-    // 部門導覽列排序資料 (排除畢業班，畢業班獨立固定)
     const DEFAULT_DEPT_ORDER = [
         { key: 'allclasses', label: '🏫 班級全覽' },
         { key: 'care', label: '🏢 課輔部' },
@@ -704,7 +702,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-rollcall').style.display = tab === 'rollcall' ? 'block' : 'none';
         document.getElementById('tab-sheet').style.display = tab === 'sheet' ? 'block' : 'none';
-        document.getElementById('tab-holiday').style.display = tab === 'holiday' ? 'block' : 'none';
         document.getElementById('tab-course-config').style.display = tab === 'course-config' ? 'block' : 'none';
         document.getElementById('tab-students-master').style.display = tab === 'students-master' ? 'block' : 'none';
 
@@ -715,14 +712,12 @@
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             populateSheetCourses();
             generateCustomSheet();
-        } else if (tab === 'holiday') {
-            document.querySelectorAll('.tab-btn')[2].classList.add('active');
-            renderHolidayList();
         } else if (tab === 'course-config') {
-            document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
             renderCourseConfigList();
+            renderHolidayList();
         } else {
-            document.querySelectorAll('.tab-btn')[4].classList.add('active');
+            document.querySelectorAll('.tab-btn')[3].classList.add('active');
             renderDeptNavButtons();
             renderMasterStudentsTable();
             renderDeptClassButtons();
@@ -737,7 +732,6 @@
         if (!navContainer) return;
         navContainer.innerHTML = '';
 
-        // 渲染可拖曳之部門按鈕
         window.state.deptOrder.forEach((dept, index) => {
             const btn = document.createElement('div');
             btn.className = 'dept-btn';
@@ -772,7 +766,7 @@
             navContainer.appendChild(btn);
         });
 
-        // 獨立固定在最右側的「🎓 畢業班」按鈕（不可拖曳）
+        // 固定在最右側的「🎓 畢業班」按鈕
         const gradBtn = document.createElement('button');
         gradBtn.className = `dept-btn-fixed-grad ${window.state.currentDeptView === 'graduated' ? 'active-grad' : ''}`;
         gradBtn.innerText = '🎓 畢業班';
@@ -929,7 +923,7 @@
         draggedItem = null;
     }
 
-    // 渲染全校班級管理卡片（僅保留「管理班級」按鈕）
+    // 渲染全校班級管理卡片
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
         if (!grid) return;
@@ -975,7 +969,6 @@
         grid.innerHTML = html || `<p style="color:#888; text-align:center; grid-column:1/-1;">目前全校尚無建立任何班級課程。</p>`;
     }
 
-    // 打開管理班級彈窗
     window.openEditClassModal = function(dept, name, day, time, teacher) {
         document.getElementById('edit_original_dept').value = dept;
         document.getElementById('edit_original_name').value = name;
@@ -989,7 +982,6 @@
         document.getElementById('editClassModal').style.display = 'flex';
     };
 
-    // 儲存修改後的班級資料
     window.saveEditedClass = async function() {
         const origDept = document.getElementById('edit_original_dept').value;
         const origName = document.getElementById('edit_original_name').value;
@@ -1056,7 +1048,6 @@
         }
     };
 
-    // 從管理彈窗中執行「刪除班級」
     window.deleteClassCourseFromModal = async function() {
         const dept = document.getElementById('edit_original_dept').value;
         const className = document.getElementById('edit_original_name').value;
@@ -1865,47 +1856,7 @@
     };
 
     // ==========================================
-    // 3. 放假管理
-    // ==========================================
-    window.verifyAndAddHoliday = function() {
-        const date = document.getElementById('newHolidayDate').value;
-        const name = document.getElementById('newHolidayName').value.trim();
-        if (!date || !name) return alert('請輸入完整日期與事由！');
-
-        window.state.holidays.push({ date, name });
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
-        document.getElementById('newHolidayName').value = '';
-        renderHolidayList();
-        alert(`已成功設定放假：${date} 【${name}】！`);
-    };
-
-    function renderHolidayList() {
-        const div = document.getElementById('holidayListDiv');
-        if (!div) return;
-        if (window.state.holidays.length === 0) {
-            div.innerHTML = '<p style="color:#888;">目前無設定任何放假日期。</p>';
-            return;
-        }
-        let html = '<table><tr><th>放假日期</th><th>放假事由</th><th>管理操作</th></tr>';
-        window.state.holidays.forEach((h, idx) => {
-            html += `<tr>
-                <td><b>${h.date}</b></td>
-                <td>${h.name}</td>
-                <td><button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteHoliday(${idx})">刪除放假</button></td>
-            </tr>`;
-        });
-        html += '</table>';
-        div.innerHTML = html;
-    }
-
-    window.deleteHoliday = function(idx) {
-        window.state.holidays.splice(idx, 1);
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
-        renderHolidayList();
-    };
-
-    // ==========================================
-    // 4. 課程排程管理
+    // 3. 課程排程管理與放假設定 (已整併至同分頁)
     // ==========================================
     function renderCourseConfigList() {
         const container = document.getElementById('courseConfigList');
@@ -1960,6 +1911,43 @@
         } catch (e) {
             alert('儲存失敗！');
         }
+    };
+
+    window.verifyAndAddHoliday = function() {
+        const date = document.getElementById('newHolidayDate').value;
+        const name = document.getElementById('newHolidayName').value.trim();
+        if (!date || !name) return alert('請輸入完整日期與事由！');
+
+        window.state.holidays.push({ date, name });
+        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+        document.getElementById('newHolidayName').value = '';
+        renderHolidayList();
+        alert(`已成功設定放假：${date} 【${name}】！`);
+    };
+
+    function renderHolidayList() {
+        const div = document.getElementById('holidayListDiv');
+        if (!div) return;
+        if (window.state.holidays.length === 0) {
+            div.innerHTML = '<p style="color:#888;">目前無設定任何放假日期。</p>';
+            return;
+        }
+        let html = '<table><tr><th>放假日期</th><th>放假事由</th><th>管理操作</th></tr>';
+        window.state.holidays.forEach((h, idx) => {
+            html += `<tr>
+                <td><b>${h.date}</b></td>
+                <td>${h.name}</td>
+                <td><button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteHoliday(${idx})">刪除放假</button></td>
+            </tr>`;
+        });
+        html += '</table>';
+        div.innerHTML = html;
+    }
+
+    window.deleteHoliday = function(idx) {
+        window.state.holidays.splice(idx, 1);
+        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+        renderHolidayList();
     };
 </script>
 </body>
