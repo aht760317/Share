@@ -1888,29 +1888,89 @@
                 const firestoreId = document.getElementById('edit-history-firestore-id').value;
                 if(!firestoreId) return;
 
+                const logToDelete = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+
                 try {
                     await deleteDoc(doc(db, "classLogHistory", firestoreId));
                     window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
 
+                    if (logToDelete) {
+                        const targetDate = logToDelete.date;
+                        const targetCourse = logToDelete.course;
+                        
+                        const updatePromises = [];
+                        window.state.students.forEach(student => {
+                            if (student.attendanceLogs && Array.isArray(student.attendanceLogs)) {
+                                const initialLength = student.attendanceLogs.length;
+                                student.attendanceLogs = student.attendanceLogs.filter(l => {
+                                    const matchCourse = (l.course === targetCourse || (!l.course && getStudentCoursesArray(student).length === 1));
+                                    return !(l.date === targetDate && matchCourse);
+                                });
+
+                                if (student.attendanceLogs.length !== initialLength) {
+                                    updatePromises.push(setDoc(doc(db, "classLogStudents", student.firestoreId), {
+                                        ...student,
+                                        attendanceLogs: student.attendanceLogs
+                                    }));
+                                }
+                            }
+                        });
+                        if (updatePromises.length > 0) {
+                            await Promise.all(updatePromises);
+                        }
+                    }
+
                     document.getElementById('history-log-edit-modal').style.display = 'none';
-                    alert('✅ 歷史日誌已刪除！');
+                    alert('✅ 歷史日誌已刪除，且對應學生的當日出缺勤與成績紀錄已同步清除！');
                     window.renderHistoryLogs();
                     window.renderAllLogsQuery();
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
                 } catch (e) { alert('刪除失敗'); }
             });
         };
 
         window.requestDirectorRecallLog = function() {
             const firestoreId = document.getElementById('audit-firestore-id').value;
+            const logToDelete = window.state.historyLogs.find(l => l.firestoreId === firestoreId);
+
             window.requestSecureAction(async () => {
                 try {
                     await deleteDoc(doc(db, "classLogHistory", firestoreId));
                     window.state.historyLogs = window.state.historyLogs.filter(l => l.firestoreId !== firestoreId);
 
+                    if (logToDelete) {
+                        const targetDate = logToDelete.date;
+                        const targetCourse = logToDelete.course;
+                        
+                        const updatePromises = [];
+                        window.state.students.forEach(student => {
+                            if (student.attendanceLogs && Array.isArray(student.attendanceLogs)) {
+                                const initialLength = student.attendanceLogs.length;
+                                student.attendanceLogs = student.attendanceLogs.filter(l => {
+                                    const matchCourse = (l.course === targetCourse || (!l.course && getStudentCoursesArray(student).length === 1));
+                                    return !(l.date === targetDate && matchCourse);
+                                });
+
+                                if (student.attendanceLogs.length !== initialLength) {
+                                    updatePromises.push(setDoc(doc(db, "classLogStudents", student.firestoreId), {
+                                        ...student,
+                                        attendanceLogs: student.attendanceLogs
+                                    }));
+                                }
+                            }
+                        });
+                        if (updatePromises.length > 0) {
+                            await Promise.all(updatePromises);
+                        }
+                    }
+
                     document.getElementById('director-audit-modal').style.display = 'none';
-                    alert('✅ 已成功將此日誌退回重寫！');
+                    alert('✅ 已成功將此日誌退回重寫，且對應學生的當日出缺勤與成績紀錄已同步清除！');
                     window.renderHistoryLogs();
                     window.renderAllLogsQuery();
+                    window.renderProfileStudents();
+                    window.renderPendingTodoPanels();
                 } catch (e) { alert('退回失敗'); }
             });
         };
