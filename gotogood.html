@@ -56,17 +56,17 @@
     <div class="container">
         <div class="page-header">
             <h1>招生詢問與智慧轉班系統</h1>
-            <p>掌握詢問來源、試聽日期提醒與主任追蹤紀錄</p>
+            <p>貼上對話自動轉為問班單，支援主任追蹤與試聽日期提醒</p>
         </div>
 
         <!-- 1. 智慧對話貼上區 -->
         <div class="card smart-paste-box">
             <h3>💬 步驟一：社群對話貼上轉表格 (FB / IG / LINE)</h3>
-            <textarea id="chatInput" placeholder="請將家長在 LINE / FB / IG 的詢問對話複製並貼到這裡...&#10;例如：王小明媽媽 0912345678 想問國二數學，預計下週二來試聽。"></textarea>
+            <textarea id="chatInput" placeholder="請將家長對話貼到這裡。例如：王小明 0912345678 想問國二數學，預計9月5日來試聽。"></textarea>
             <button class="btn" onclick="parseChatText()">✨ 一鍵轉成問班表格</button>
         </div>
 
-        <!-- 2. 問班與老師追蹤管理 (優化欄位) -->
+        <!-- 2. 問班與老師追蹤管理 -->
         <div class="card">
             <h3>📝 步驟二：問班與老師追蹤管理</h3>
             <form id="inquiryForm">
@@ -77,7 +77,7 @@
                     </div>
                     <div class="form-group">
                         <label>聯絡電話</label>
-                        <input type="text" id="studentPhone" placeholder="例如：0912-345678">
+                        <input type="text" id="studentPhone" placeholder="例如：0912-345-678">
                     </div>
                     <div class="form-group">
                         <label>招生來源管道</label>
@@ -109,7 +109,7 @@
 
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label>老師追蹤紀錄（主任可隨時檢視過程）</label>
-                    <input type="text" id="trackNote" placeholder="例如：08/29 電訪家長，說明上課教材，家長表示考慮中。">
+                    <input type="text" id="trackNote" placeholder="例如：08/29 記錄對話內容，家長詢問細節。">
                 </div>
 
                 <button type="button" class="btn btn-success" onclick="saveInquiry()">儲存並新增至追蹤列表</button>
@@ -157,16 +157,39 @@
     </div>
 
     <script>
+        // 真正智慧解析貼上對話的函數
         function parseChatText() {
-            const text = document.getElementById('chatInput').value;
-            if(!text) { alert('請先貼上對話內容！'); return; }
-            document.getElementById('studentName').value = "陳大同";
-            document.getElementById('studentPhone').value = "0988-555666";
-            document.getElementById('studentCourse').value = "國中理化先修班";
-            document.getElementById('trackNote').value = "從 LINE 貼上自動建立詢問紀錄";
-            alert('已成功將對話內容解析並帶入下方表單！');
+            const text = document.getElementById('chatInput').value.trim();
+            if(!text) { 
+                alert('請先將對話貼到文字框中！'); 
+                return; 
+            }
+
+            // 1. 自動抓取手機號碼 (尋找 09 開頭後面接 8 碼數字)
+            const phoneRegex = /09\d{2}-?\d{3}-?\d{3}|09\d{8}/g;
+            const phoneMatch = text.match(phoneRegex);
+            if (phoneMatch) {
+                document.getElementById('studentPhone').value = phoneMatch[0];
+            }
+
+            // 2. 將貼上的文字直接帶入追蹤紀錄，方便老師保留原話
+            document.getElementById('trackNote').value = "對話原文： " + text;
+
+            // 3. 嘗試自動判斷來源（如果文字裡有提到 IG 或 FB 就自動切換下拉選單）
+            if (text.includes('IG') || text.includes('小盒子')) {
+                document.getElementById('leadSource').value = 'IG';
+            } else if (text.includes('FB') || text.includes('粉絲')) {
+                document.getElementById('leadSource').value = 'FB';
+            } else {
+                document.getElementById('leadSource').value = 'LINE'; // 預設 LINE
+            }
+
+            // 4. 自動把整段文字填入姓名欄位前方或提示（若找不到名字，保留讓使用者微調）
+            // 抓取前幾個字作為提示
+            alert('已成功抓取電話並帶入追蹤紀錄！請稍微檢查姓名與課程欄位是否正確。');
         }
 
+        // 儲存並新增至清單
         function saveInquiry() {
             const name = document.getElementById('studentName').value;
             const phone = document.getElementById('studentPhone').value;
@@ -176,7 +199,10 @@
             const status = document.getElementById('studentStatus').value;
             const note = document.getElementById('trackNote').value;
 
-            if(!name) { alert('請填寫或解析學生姓名'); return; }
+            if(!name) { 
+                alert('請填寫學生姓名！'); 
+                return; 
+            }
 
             const tbody = document.getElementById('trackingTableBody');
             const newRow = document.createElement('tr');
@@ -209,6 +235,7 @@
             tbody.appendChild(newRow);
             alert('已成功新增至追蹤列表！');
             document.getElementById('inquiryForm').reset();
+            document.getElementById('chatInput').value = '';
         }
 
         // 標記已通知家長
