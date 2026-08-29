@@ -531,7 +531,7 @@
                 </div>
 
                 <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">自動推算中</span></span>
+                    <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">自訂排程</span></span>
                     <span>💡 符號說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b> ｜ 即時連動紀錄。</span>
                 </div>
             </div>
@@ -2109,29 +2109,18 @@
         selectSheetCourse(courseName);
     };
 
-    function getCourseDefaultWeeks(course) {
-        const isSpecialCourse = /[（\(].*?[）\)]/.test(course.name);
-        if (isSpecialCourse) return { weeks: 4, desc: '短期特訓班 (4週)' };
-        if (course.dept === 'junior') return { weeks: 13, desc: '國中部：3個月 (13週)' };
-        return { weeks: 9, desc: '國小/課輔：2個月 (9週)' };
-    }
-
     window.onSheetCourseChanged = function() {
         const courseName = window.state.selectedSheetCourse;
         const allCourses = getAllCoursesList();
         const course = allCourses.find(c => c.name === courseName) || allCourses[0];
         if (!course) return;
 
-        const info = getCourseDefaultWeeks(course);
-        document.getElementById('sheetPeriodBadge').innerText = info.desc;
+        document.getElementById('sheetPeriodBadge').innerText = "自訂排程";
 
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
-        const baseDate = new Date(baseStart);
-        const daysPerPeriod = (info.weeks - 1) * 7;
-        const formatDate = (d) => d.toISOString().slice(0, 10);
-
         document.getElementById('sheetQueryStartDate').value = baseStart;
-        const defaultEnd = course.endDate || formatDate(new Date(baseDate.getTime() + daysPerPeriod * 86400000));
+        
+        const defaultEnd = course.endDate || new Date(new Date(baseStart).getTime() + 8 * 7 * 86400000).toISOString().slice(0, 10);
         document.getElementById('sheetQueryEndDate').value = defaultEnd;
 
         generateCustomSheet();
@@ -2151,9 +2140,7 @@
             document.getElementById('sheetQueryStartDate').value = startVal;
         }
         if (!endVal) {
-            const sDate = new Date(startVal);
-            const eDate = new Date(sDate.getTime() + 8 * 7 * 86400000);
-            endVal = eDate.toISOString().slice(0, 10);
+            endVal = course.endDate || new Date(new Date(startVal).getTime() + 8 * 7 * 86400000).toISOString().slice(0, 10);
             document.getElementById('sheetQueryEndDate').value = endVal;
         }
 
@@ -2182,11 +2169,10 @@
         }
 
         const actualEndStr = dateList[dateList.length - 1].dateStr;
-        const info = getCourseDefaultWeeks(course);
 
         document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
         document.getElementById('sheetPrintSub').innerText = 
-            `學制：${info.desc} (共 ${dateList.length} 週) | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
+            `學制：自訂排程 (共 ${dateList.length} 週) | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
 
         let html = `<table>
             <thead>
@@ -2303,34 +2289,27 @@
         let html = `<table>
             <thead>
                 <tr>
-                    <th style="width:180px;">課程名稱</th>
-                    <th style="width:80px;">部門</th>
-                    <th style="width:130px;">週期排程</th>
-                    <th style="width:135px;">開課日起</th>
-                    <th style="width:135px;">結束日期</th>
+                    <th style="width:200px;">課程名稱</th>
+                    <th style="width:90px;">部門</th>
+                    <th style="width:145px;">開課日起</th>
+                    <th style="width:145px;">結束日期</th>
                 </tr>
             </thead>
             <tbody>`;
 
         if (filteredCourses.length === 0) {
-            html += `<tr><td colspan="5" style="padding:20px; color:#888;">此分類目前尚無班級。</td></tr>`;
+            html += `<tr><td colspan="4" style="padding:20px; color:#888;">此分類目前尚無班級。</td></tr>`;
         } else {
             filteredCourses.forEach(c => {
-                const isSpecial = /[（\(].*?[）\)]/.test(c.name);
                 const deptName = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
                 html += `<tr>
                     <td><b>${c.name}</b></td>
                     <td>${deptName}</td>
                     <td>
-                        <span style="font-weight:bold; font-size:12px; color:${isSpecial?'#ea580c':(c.dept==='junior'?'#b45309':'#0369a1')};">
-                            ${isSpecial ? '⭐ 短期特訓' : (c.dept==='junior'?'國中部(13週)':'國小/課輔(9週)')}
-                        </span>
+                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0; font-size:13px;">
                     </td>
                     <td>
-                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:125px; margin:0; font-size:13px;">
-                    </td>
-                    <td>
-                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:125px; margin:0; font-size:13px;">
+                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0; font-size:13px;">
                     </td>
                 </tr>`;
             });
