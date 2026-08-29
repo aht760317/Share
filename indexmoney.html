@@ -1657,11 +1657,11 @@
 
             let actionHtml = `<div class="action-cell">`;
             if(!bill.isPaid) {
-                actionHtml += `<button class="action-btn btn-blue" onclick="printDocument(${bill.id}, 'notice')">🖨️通知</button>`;
+                actionHtml += `<button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id})">🖨️通知</button>`;
                 actionHtml += `<button class="action-btn btn-purple" onclick="openEditBillModal('${bill.firestoreId}', ${bill.id})">✏️修改</button>`;
                 actionHtml += `<button class="action-btn btn-green" onclick="markAsPaid('${bill.firestoreId}', ${bill.id})">💰收款</button>`;
             } else {
-                actionHtml += `<button class="action-btn btn-warning" onclick="printDocument(${bill.id}, 'receipt')">🖨️收據</button>`;
+                actionHtml += `<button class="action-btn btn-warning" onclick="openReceiptPreviewModal(${bill.id})">🖨️收據</button>`;
                 actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment('${bill.firestoreId}', ${bill.id})">↩️取消</button>`;
             }
             actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill('${bill.firestoreId}', ${bill.id}, '${bill.studentName}')">刪除</button>`;
@@ -1770,7 +1770,10 @@
 
     window.printFromPreview = function() {
         const id = parseInt(document.getElementById('billPreviewId').value);
-        printDocument(id, 'notice');
+        const bill = window.bills.find(b => b.id === id);
+        if (!bill) return;
+        const type = bill.isPaid ? 'receipt' : 'notice';
+        printDocument(id, type);
     };
 
     window.printSelectedCheckedNotices = function() {
@@ -1940,8 +1943,8 @@
                     paidDate: bill.paidDate
                 });
                 renderRecords();
-                if(confirm('已結帳成功並同步至雲端！\n需要立刻列印「雙聯式正式收據」給家長嗎？')) {
-                    printDocument(id, 'receipt');
+                if(confirm('已結帳成功並同步至雲端！\n需要立刻預覽「雙聯式正式收據」嗎？')) {
+                    openReceiptPreviewModal(id);
                 }
             } catch (e) {
                 console.error(e);
