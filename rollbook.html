@@ -501,7 +501,7 @@
         <div class="card">
             <h3 style="color:var(--primary); margin-bottom:6px; font-size:17px;">🖨️ 點名表與成績總表生成專區</h3>
             <p style="font-size:13px; color:#666; margin-bottom:14px;">
-                請於下方下拉選單選擇班級並設定日期區間，系統將自動於下方產出點名表與成績總表。
+                請於下方下拉選單選擇班級並設定日期區間，系統將依據班級上課星期自動產出對應的點名表。
             </p>
 
             <!-- 下拉選單選擇班級 -->
@@ -525,12 +525,13 @@
                         <input type="date" id="sheetQueryEndDate" style="padding:6px; margin:0;" onchange="generateCustomSheet()">
                     </div>
                     <div style="display:flex; gap:8px; align-items:flex-end; width:100%; margin-top:4px;">
+                        <button class="btn btn-primary" onclick="generateCustomSheet()" style="flex:1; padding:8px 12px; font-size:13px;">📋 生產點名表</button>
                         <button class="btn btn-success" onclick="window.print()" style="flex:1; padding:8px 12px; font-size:13px;">🖨️ 列印點名表</button>
                     </div>
                 </div>
 
                 <div style="margin-top:10px; font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">自訂排程</span></span>
+                    <span><b>週期學制：</b><span id="sheetPeriodBadge" style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">依上課星期自動對應</span></span>
                     <span>💡 符號說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b> ｜ 即時連動紀錄。</span>
                 </div>
             </div>
@@ -2115,7 +2116,7 @@
         const course = allCourses.find(c => c.name === courseName) || allCourses[0];
         if (!course) return;
 
-        document.getElementById('sheetPeriodBadge').innerText = "自訂排程";
+        document.getElementById('sheetPeriodBadge').innerText = `上課日：${course.day || '未設定'}`;
 
         const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
         document.getElementById('sheetQueryStartDate').value = baseStart;
@@ -2149,30 +2150,42 @@
             return arr.includes(course.name) && s.status !== 'graduated';
         });
 
+        // 取得該班級設定的上課星期（例如：星期一、星期二... 或 星期一、星期二、星期三、星期四、星期五）
+        const courseDaysStr = course.day || '';
+        const targetWeekDays = WEEK_DAYS.filter(d => courseDaysStr.includes(d) || courseDaysStr.includes(d.replace('星期', '週')));
+
         let dateList = [];
         let cur = new Date(startVal);
         const endDateObj = new Date(endVal);
 
-        while (cur <= endDateObj && dateList.length < 52) {
-            let dateStr = cur.toISOString().slice(0, 10);
-            let holidayMatch = window.state.holidays.find(h => h.date === dateStr);
-            dateList.push({
-                dateStr: dateStr,
-                shortDate: `${cur.getMonth()+1}/${cur.getDate()}`,
-                holiday: holidayMatch ? holidayMatch.name : null
-            });
-            cur.setDate(cur.getDate() + 7);
+        // 依照日期逐天檢查，如果該天的星期符合該班級上課星期，就納入點名表直行
+        while (cur <= endDateObj && dateList.length < 100) {
+            let dayIndex = cur.getDay(); // 0 是週日, 1 是週一... 6 是週六
+            // 轉換為 WEEK_DAYS 對應字串
+            let dayName = dayIndex === 0 ? '星期日' : WEEK_DAYS[dayIndex - 1];
+
+            if (targetWeekDays.length === 0 || targetWeekDays.includes(dayName)) {
+                let dateStr = cur.toISOString().slice(0, 10);
+                let holidayMatch = window.state.holidays.find(h => h.date === dateStr);
+                dateList.push({
+                    dateStr: dateStr,
+                    shortDate: `${cur.getMonth()+1}/${cur.getDate()}`,
+                    dayName: dayName.replace('星期', '週'),
+                    holiday: holidayMatch ? holidayMatch.name : null
+                });
+            }
+            cur.setDate(cur.getDate() + 1);
         }
 
         if (dateList.length === 0) {
-            dateList.push({ dateStr: startVal, shortDate: startVal.slice(5), holiday: null });
+            dateList.push({ dateStr: startVal, shortDate: startVal.slice(5), dayName: '', holiday: null });
         }
 
         const actualEndStr = dateList[dateList.length - 1].dateStr;
 
         document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
         document.getElementById('sheetPrintSub').innerText = 
-            `學制：自訂排程 (共 ${dateList.length} 週) | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
+            `上課星期：${course.day || '自訂'} | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
 
         let html = `<table>
             <thead>
@@ -2183,8 +2196,8 @@
                     <th style="width:110px;">主要電話</th>`;
 
         dateList.forEach((d, i) => {
-            html += `<th style="width:46px;" class="${d.holiday ? 'holiday-col' : ''}">
-                第${i+1}週<br><span style="font-size:7.5pt;">${d.shortDate}</span>
+            html += `<th style="width:48px;" class="${d.holiday ? 'holiday-col' : ''}">
+                ${d.shortDate}<br><span style="font-size:7pt;">${d.dayName}</span>
                 ${d.holiday ? `<div style="font-size:6.5pt; color:#856404;">${d.holiday}</div>` : ''}
             </th>`;
         });
@@ -2289,27 +2302,29 @@
         let html = `<table>
             <thead>
                 <tr>
-                    <th style="width:200px;">課程名稱</th>
-                    <th style="width:90px;">部門</th>
-                    <th style="width:145px;">開課日起</th>
-                    <th style="width:145px;">結束日期</th>
+                    <th style="width:180px;">課程名稱</th>
+                    <th style="width:80px;">部門</th>
+                    <th style="width:130px;">上課星期</th>
+                    <th style="width:125px;">開課日起</th>
+                    <th style="width:125px;">結束日期</th>
                 </tr>
             </thead>
             <tbody>`;
 
         if (filteredCourses.length === 0) {
-            html += `<tr><td colspan="4" style="padding:20px; color:#888;">此分類目前尚無班級。</td></tr>`;
+            html += `<tr><td colspan="5" style="padding:20px; color:#888;">此分類目前尚無班級。</td></tr>`;
         } else {
             filteredCourses.forEach(c => {
                 const deptName = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
                 html += `<tr>
                     <td><b>${c.name}</b></td>
                     <td>${deptName}</td>
+                    <td style="font-size:12px; color:#555;">${c.day || '未設定'}</td>
                     <td>
-                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0; font-size:13px;">
+                        <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:115px; margin:0; font-size:13px;">
                     </td>
                     <td>
-                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:135px; margin:0; font-size:13px;">
+                        <input type="date" value="${c.endDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'endDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:115px; margin:0; font-size:13px;">
                     </td>
                 </tr>`;
             });
@@ -2356,7 +2371,7 @@
         const div = document.getElementById('holidayListDiv');
         if (!div) return;
         if (window.state.holidays.length === 0) {
-            div.innerHTML = '<p style="color:#888; font-size:13px;">目前無設定任何放假日期。</p>';
+            div.innerHTML = '<p style="color:#888; font-size:13px;">目前無設定任何放假日期。';
             return;
         }
         let html = '<table><tr><th>放假日期</th><th>放假事由</th><th>操作</th></tr>';
