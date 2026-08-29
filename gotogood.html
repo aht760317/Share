@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>斗六顧德補習班 - 招生與進班雲端管理系統</title>
-    <!-- 引入 SortableJS 支援拖曳排序 -->
+    <!-- 引入 SortableJS 支援手機與電腦的滑順拖曳排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -73,11 +73,11 @@
         .edit-icon-btn { background: none; border: none; color: var(--accent-color); cursor: pointer; font-size: 1.1rem; padding: 0.1rem 0.3rem; margin-left: 0.3rem; border-radius: 4px; transition: background 0.2s; }
         .edit-icon-btn:hover { background: #E0E7FF; }
 
-        /* 追蹤清單區塊化卡片 (已放大字體與間距) */
+        /* 追蹤清單區塊化卡片 */
         #trackingCardContainer { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1rem; min-height: 100px; }
         .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 8px solid var(--accent-color); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); position: relative; cursor: grab; user-select: none; }
         .tracking-block:active { cursor: grabbing; }
-        .tracking-block.dragging { opacity: 0.3; background: #CBD5E1; border: 2px dashed var(--accent-color); }
+        .tracking-block.dragging { opacity: 0.5; background: #E0E7FF; border: 2px dashed var(--accent-color); }
 
         .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem; pointer-events: none; }
         .block-header * { pointer-events: auto; } 
@@ -104,7 +104,7 @@
         .modal-content { background: white; padding: 1.5rem; border-radius: 0.75rem; width: 100%; max-width: 650px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
         .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent-color); }
         
-        /* 表單方塊網格（好填寫） */
+        /* 表單方塊網格 */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
         .form-block-item { background: #F8FAFC; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; }
         .form-block-item label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.5rem; pointer-events: none; }
@@ -132,6 +132,25 @@
             margin-bottom: 1.5rem;
             animation: pulseAlert 2s infinite;
             cursor: pointer;
+        }
+
+        /* ✨ 亮亮的黃色按鈕動畫 */
+        @keyframes pulseYellowGlow {
+            0% { background-color: #F59E0B; box-shadow: 0 0 5px rgba(245, 158, 11, 0.6); color: white; }
+            50% { background-color: #FDE047; box-shadow: 0 0 15px rgba(253, 224, 71, 1); color: #1F2937; transform: scale(1.03); }
+            100% { background-color: #F59E0B; box-shadow: 0 0 5px rgba(245, 158, 11, 0.6); color: white; }
+        }
+        .btn-glowing-yellow {
+            animation: pulseYellowGlow 2s infinite;
+            font-weight: 800;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-glowing-yellow:hover {
+            animation: none;
+            background-color: #FBBF24;
+            color: #1F2937;
+            transform: scale(1.05);
         }
 
         @media(min-width: 768px) {
@@ -203,7 +222,7 @@
             <!-- 追蹤區塊看板 (置頂、放大顯示) -->
             <div class="card">
                 <h3>📊 招生追蹤區塊看板</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">可直接拖曳區塊改變排列順序。點擊「✏️ 完善資料」可更新最新狀態與試聽日期。</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">可直接拖曳下方卡片改變排列順序。點擊「✏️ 完善資料」可更新最新狀態與試聽日期。</p>
                 <div id="trackingCardContainer"></div>
             </div>
         </div>
@@ -404,7 +423,7 @@
         window.getDoc = getDoc;
 
         window.admissionData = {
-            inquiries: [], // 新同學問班 (待處理)
+            inquiries: [],
             tracking: [],
             enrolled: [],
             referrerBonus: {}
@@ -420,7 +439,6 @@
                     window.admissionData.enrolled = data.enrolled || [];
                     window.admissionData.referrerBonus = data.referrerBonus || {};
                 } else {
-                    // 預設示範資料
                     window.admissionData.tracking = [
                         {
                             id: Date.now(),
@@ -458,6 +476,7 @@
         let currentEditingElement = null; 
         let activeNotifyElement = null;
         let isEditingEnrolled = false; 
+        let trackingSortableInstance = null; // SortableJS 實例儲存變數
 
         function getFormattedTimestamp() {
             const now = new Date();
@@ -489,7 +508,6 @@
             }
         }
 
-        // 模擬外部表單匯入資料的測試函數
         window.simulateNewInquiry = function() {
             const now = new Date();
             const askTime = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -509,50 +527,6 @@
             renderAllViews();
         }
 
-        // 追蹤看板卡片的拖曳移動功能
-        let draggedTrackingBlock = null;
-
-        function handleTrackingDragStart(e) {
-            draggedTrackingBlock = this;
-            setTimeout(() => this.classList.add('dragging'), 0);
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleTrackingDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const container = document.getElementById('trackingCardContainer');
-            const afterElement = getTrackingDragAfterElement(container, e.clientY);
-            if (afterElement == null) {
-                container.appendChild(draggedTrackingBlock);
-            } else {
-                container.insertBefore(draggedTrackingBlock, afterElement);
-            }
-        }
-
-        function handleTrackingDrop(e) {
-            e.preventDefault();
-        }
-
-        function handleTrackingDragEnd(e) {
-            this.classList.remove('dragging');
-            draggedTrackingBlock = null;
-            syncDOMToData();
-        }
-
-        function getTrackingDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.tracking-block:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-
         function renderAllViews() {
             renderInquiries();
             renderTrackingBlocks();
@@ -560,7 +534,6 @@
             checkNewInquiriesAlert();
         }
 
-        // 渲染新同學問班 (待處理)
         function renderInquiries() {
             const tbody = document.getElementById('inquiryTableBody');
             tbody.innerHTML = '';
@@ -587,7 +560,6 @@
             });
         }
 
-        // 將新資料轉入追蹤區塊
         window.processNewInquiry = function(id) {
             const index = window.admissionData.inquiries.findIndex(x => x.id === id);
             if (index > -1) {
@@ -623,7 +595,6 @@
             }
         }
 
-        // 渲染追蹤區塊 (已放大)
         function renderTrackingBlocks() {
             const container = document.getElementById('trackingCardContainer');
             container.innerHTML = '';
@@ -636,11 +607,6 @@
             window.admissionData.tracking.forEach(item => {
                 const block = document.createElement('div');
                 block.className = 'tracking-block';
-                block.setAttribute('draggable', 'true');
-                block.setAttribute('ondragstart', 'handleTrackingDragStart(event)');
-                block.setAttribute('ondragover', 'handleTrackingDragOver(event)');
-                block.setAttribute('ondrop', 'handleTrackingDrop(event)');
-                block.setAttribute('ondragend', 'handleTrackingDragEnd(event)');
                 block.dataset.id = item.id;
 
                 block.innerHTML = `
@@ -648,7 +614,7 @@
                         <div class="block-title">
                             <span style="font-size: 1.5rem;">📌</span> 
                             <strong class="s-name">${item.name}</strong>
-                            <button class="btn" style="background-color: var(--warning-color); color: white; margin-left: 0.75rem; padding: 0.3rem 0.75rem; font-size: 0.95rem; border-radius: 4px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
+                            <button class="btn btn-glowing-yellow" style="margin-left: 0.75rem; padding: 0.35rem 0.75rem; font-size: 0.95rem; border-radius: 4px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
                             <span class="badge badge-line s-status" style="margin-left: 0.5rem;">${item.status}</span>
                         </div>
                         <div class="block-top-actions">
@@ -669,9 +635,32 @@
                 `;
                 container.appendChild(block);
             });
+
+            // 初始化 SortableJS 支援順暢的手機/電腦拖曳
+            if (trackingSortableInstance) {
+                trackingSortableInstance.destroy();
+            }
+            trackingSortableInstance = new Sortable(container, {
+                animation: 150,
+                ghostClass: 'dragging',
+                onEnd: function () {
+                    syncDOMToData();
+                }
+            });
         }
 
-        // 後續的函式保持相同... 
+        window.syncDOMToData = function() {
+            const blocks = document.querySelectorAll('#trackingCardContainer .tracking-block');
+            let newTracking = [];
+            blocks.forEach(b => {
+                const id = parseInt(b.dataset.id);
+                const item = window.admissionData.tracking.find(x => x.id === id);
+                if (item) newTracking.push(item);
+            });
+            window.admissionData.tracking = newTracking;
+            window.saveAdmissionCloud();
+        }
+
         function renderEnrolledTable() {
             const tbody = document.getElementById('enrolledTableBody');
             tbody.innerHTML = '';
@@ -701,18 +690,6 @@
                 `;
                 tbody.appendChild(tr);
             });
-        }
-
-        window.syncDOMToData = function() {
-            const blocks = document.querySelectorAll('#trackingCardContainer .tracking-block');
-            let newTracking = [];
-            blocks.forEach(b => {
-                const id = parseInt(b.dataset.id);
-                const item = window.admissionData.tracking.find(x => x.id === id);
-                if (item) newTracking.push(item);
-            });
-            window.admissionData.tracking = newTracking;
-            window.saveAdmissionCloud();
         }
 
         window.openNotifyModalById = function(id) {
@@ -900,7 +877,6 @@
             }
         }
 
-        // 推薦人與獎金發放明細管理
         function updateReferrerTable() {
             const tbody = document.getElementById('referrerDetailTableBody');
             tbody.innerHTML = '';
@@ -1012,7 +988,6 @@
             updateReferrerTable();
         }
 
-        // 老師招生競賽排行榜
         function updateTeacherRanking() {
             const teacherMap = {};
             const enrolledList = window.admissionData.enrolled || [];
