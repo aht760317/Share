@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #0F172A; --accent: #2563EB; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; --bg: #F8FAFC; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; padding-bottom: 75px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; padding-bottom: 85px; }
         .app-container { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
         
         /* 導覽列 */
@@ -35,7 +35,7 @@
         @media screen and (max-width: 768px) {
             .mobile-bottom-nav { display: flex; }
             .tabs { display: none !important; }
-            body { padding-bottom: 75px !important; }
+            body { padding-bottom: 85px !important; }
         }
         .mobile-bottom-nav .nav-item {
             flex: 1;
@@ -136,6 +136,34 @@
         .unpaid-reminder { margin-top: 15px; border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; }
         .unpaid-header { background: #FEF2F2; color: #991B1B; padding: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #FECACA; }
         .unpaid-list { padding: 12px; background: white; max-height: 450px; overflow-y: auto; }
+
+        /* 未繳費卡片手機排版優化 */
+        .unpaid-card {
+            background: white; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 10px;
+        }
+        @media screen and (max-width: 768px) {
+            .unpaid-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .unpaid-card-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 6px;
+                border-top: 1px dashed #E2E8F0;
+                padding-top: 8px;
+            }
+        }
 
         .action-cell { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; white-space: nowrap; }
         .action-btn { padding: 5px 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; color: white; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 2px; transition: 0.2s; white-space: nowrap; flex-shrink: 0; }
@@ -875,6 +903,16 @@
         } catch (e) { console.error(e); }
     }
 
+    window.verifyAndDelete = function(actionDescription, callback) {
+        const pwd = prompt(`🔒 安全驗證\n您正在執行「${actionDescription}」\n請輸入安全密碼：`);
+        if (pwd === null) return;
+        if (pwd === '0618') {
+            callback();
+        } else {
+            alert('❌ 密碼錯誤！動作已取消。');
+        }
+    }
+
     window.getCurrentMonthStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1236,22 +1274,24 @@
 
         if (!name) { alert('項目名稱不能為空！'); return; }
 
-        window.quickItems[index] = { name, price };
-        await saveQuickItemsToCloud();
-        renderQuickItemConfigList();
-        closeModal('quickItemModal');
-        alert('✏️ 快捷項目修改成功！');
+        verifyAndDelete(`修改快捷項目「${window.quickItems[index].name}」`, async () => {
+            window.quickItems[index] = { name, price };
+            await saveQuickItemsToCloud();
+            renderQuickItemConfigList();
+            closeModal('quickItemModal');
+            alert('✏️ 快捷項目修改成功！');
+        });
     }
 
     window.deleteQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
         const itemName = window.quickItems[index].name;
-        if (confirm(`確定要刪除快捷項目「${itemName}」嗎？`)) {
+        verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
             window.quickItems.splice(index, 1);
             await saveQuickItemsToCloud();
             renderQuickItemConfigList();
             closeModal('quickItemModal');
-        }
+        });
     }
 
     window.renderClassGrid = function() {
@@ -1643,16 +1683,16 @@
             return list.map(bill => {
                 const periodText = bill.periodStr || bill.yearMonth || '';
                 return `
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-                        <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                            <span style="font-size: 14px; color: #64748B; font-weight: bold; background: #F1F5F9; padding: 4px 8px; border-radius: 4px; white-space: nowrap;">${periodText}</span>
-                            <span style="font-size: 16px; font-weight: bold; color: #1E293B; white-space: nowrap;">${bill.className} - ${bill.studentName}</span>
-                            <span style="font-size: 15px; color: var(--danger); font-weight: bold; white-space: nowrap;">尚未繳費金額：$${bill.total.toLocaleString()}</span>
+                    <div class="unpaid-card">
+                        <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <span style="font-size: 13px; color: #64748B; font-weight: bold; background: #F1F5F9; padding: 3px 6px; border-radius: 4px; white-space: nowrap;">${periodText}</span>
+                            <span style="font-size: 15px; font-weight: bold; color: #1E293B; white-space: nowrap;">${bill.className} - ${bill.studentName}</span>
+                            <span style="font-size: 14px; color: var(--danger); font-weight: bold; white-space: nowrap;">未繳：$${bill.total.toLocaleString()}</span>
                         </div>
-                        <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-                            <button class="action-btn btn-blue" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;" onclick="openBillPreviewModal(${bill.id})">👁️ 預覽繳費</button>
-                            <button class="action-btn btn-green" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;" onclick="openReceiptPreviewModal(${bill.id})">💰 預覽收據</button>
-                            <button class="action-btn btn-purple" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;" onclick="confirmMarkAsPaidFromUnpaid('${bill.firestoreId}', ${bill.id}, '${bill.studentName}', ${bill.total})">✅ 標示已繳</button>
+                        <div class="unpaid-card-actions">
+                            <button class="action-btn btn-blue" style="padding: 5px 8px; font-size: 11px; white-space: nowrap;" onclick="openBillPreviewModal(${bill.id})">預覽繳費</button>
+                            <button class="action-btn btn-green" style="padding: 5px 8px; font-size: 11px; white-space: nowrap;" onclick="openReceiptPreviewModal(${bill.id})">預覽收據</button>
+                            <button class="action-btn btn-purple" style="padding: 5px 8px; font-size: 11px; white-space: nowrap;" onclick="confirmMarkAsPaidFromUnpaid('${bill.firestoreId}', ${bill.id}, '${bill.studentName}', ${bill.total})">標示已繳</button>
                         </div>
                     </div>`;
             }).join('');
@@ -1724,22 +1764,24 @@
     };
 
     window.openEditBillModal = function(firestoreId, id) {
-        const bill = window.bills.find(b => b.id === id);
-        if (!bill) return;
+        verifyAndDelete(`修改未繳費單據`, () => {
+            const bill = window.bills.find(b => b.id === id);
+            if (!bill) return;
 
-        document.getElementById('editBillFirestoreId').value = firestoreId;
-        document.getElementById('editBillId').value = id;
-        document.getElementById('editBillStudentInfo').value = `${bill.className} - ${bill.studentName}`;
-        document.getElementById('editBillPeriod').value = bill.periodStr || bill.yearMonth || '';
+            document.getElementById('editBillFirestoreId').value = firestoreId;
+            document.getElementById('editBillId').value = id;
+            document.getElementById('editBillStudentInfo').value = `${bill.className} - ${bill.studentName}`;
+            document.getElementById('editBillPeriod').value = bill.periodStr || bill.yearMonth || '';
 
-        const container = document.getElementById('editBillItemsContainer');
-        container.innerHTML = '';
-        
-        bill.items.forEach((item, index) => {
-            appendEditBillItemRow(item.name, item.amount);
+            const container = document.getElementById('editBillItemsContainer');
+            container.innerHTML = '';
+            
+            bill.items.forEach((item, index) => {
+                appendEditBillItemRow(item.name, item.amount);
+            });
+
+            document.getElementById('editBillModal').style.display = 'flex';
         });
-
-        document.getElementById('editBillModal').style.display = 'flex';
     };
 
     window.addEditBillItemRow = function() {
@@ -1845,32 +1887,35 @@
     }
 
     window.cancelPayment = async function(firestoreId, id) {
-        const bill = window.bills.find(b => b.id === id);
-        if(bill) {
-            bill.isPaid = false;
-            bill.paidDate = null;
-            try {
-                await setDoc(doc(db, "bills", firestoreId), {
-                    id: bill.id,
-                    date: bill.date,
-                    yearMonth: bill.yearMonth,
-                    periodStr: bill.periodStr,
-                    className: bill.className,
-                    studentName: bill.studentName,
-                    items: bill.items,
-                    total: bill.total,
-                    isPaid: false,
-                    paidDate: null
-                });
-                renderRecords();
-            } catch (e) {
-                console.error(e);
+        verifyAndDelete(`取消繳費紀錄`, async () => {
+            const bill = window.bills.find(b => b.id === id);
+            if(bill) {
+                bill.isPaid = false;
+                bill.paidDate = null;
+                try {
+                    await setDoc(doc(db, "bills", firestoreId), {
+                        id: bill.id,
+                        date: bill.date,
+                        yearMonth: bill.yearMonth,
+                        periodStr: bill.periodStr,
+                        className: bill.className,
+                        studentName: bill.studentName,
+                        items: bill.items,
+                        total: bill.total,
+                        isPaid: false,
+                        paidDate: null
+                    });
+                    renderRecords();
+                    alert('已成功取消繳費，恢復為「未繳費」狀態！');
+                } catch (e) {
+                    console.error(e);
+                }
             }
-        }
+        });
     }
 
     window.promptDeleteBill = async function(firestoreId, id, studentName) {
-        if (confirm(`確定要刪除學生「${studentName}」的繳費紀錄嗎？`)) {
+        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
             try {
                 await deleteDoc(doc(db, "bills", firestoreId));
                 window.bills = window.bills.filter(b => b.id !== id);
@@ -1878,7 +1923,7 @@
             } catch (e) {
                 console.error(e);
             }
-        }
+        });
     }
 
     window.openReportModal = function(type) {
