@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德文理補習班 | 招生與雲端管理系統</title>
-    <!-- 引入 Tailwind CSS -->
+    <title>斗六顧德文理補習班 | 課程諮詢與招生雲端管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- 引入 SortableJS 支援拖曳排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -21,17 +19,17 @@
             --bg-card: #FFFFFF;
             --border-color: #CBD5E1;
         }
-        body { font-family: 'Noto Sans TC', sans-serif; scroll-behavior: smooth; padding-bottom: 5rem; background-color: #F8FAFC;}
-        
-        /* 隱藏未啟用的分頁 */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { font-family: 'Noto Sans TC', sans-serif; scroll-behavior: smooth; padding-bottom: 5rem; background-color: #F8FAFC; }
 
-        /* 底部導覽列 (整合前台與後台) */
+        /* 分頁切換控制 */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 頂部/底部 固定導覽列 */
         .tab-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; display: flex; 
-            justify-content: space-around; padding: 0.5rem 0.2rem; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); 
+            justify-content: space-around; padding: 0.5rem 0.2rem; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); 
             z-index: 999; border-top: 1px solid var(--border-color);
         }
         .tab-btn {
@@ -41,50 +39,44 @@
             position: relative;
         }
         .tab-btn.active { background: #EFF6FF; color: var(--accent-color); }
-        .tab-btn .icon { font-size: 1.25rem; }
+        .tab-btn .icon { font-size: 1.2rem; }
         .badge-alert {
-            position: absolute; top: -2px; right: 10%; background: var(--danger-color); color: white;
+            position: absolute; top: 0px; right: 15%; background: var(--danger-color); color: white;
             font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 99px; font-weight: bold; display: none;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
         }
 
-        /* 後台專用樣式 */
+        /* 後台卡片與表格 */
         .admin-card { background: var(--bg-card); border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #E2E8F0; }
-        .admin-card h3 { font-size: 1.25rem; font-weight: bold; margin-bottom: 1.25rem; color: var(--accent-color); display: flex; align-items: center; gap: 0.5rem; }
+        .admin-card h3 { font-size: 1.2rem; font-weight: bold; margin-bottom: 1.25rem; color: var(--accent-color); display: flex; align-items: center; gap: 0.5rem; }
         
-        /* 拖曳方塊 */
         .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
-        .form-block-item { background: #F8FAFC; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; cursor: grab; user-select: none; }
-        .form-block-item.dragging { opacity: 0.3; background: #E2E8F0; border: 2px dashed var(--accent-color); }
-        .form-block-item label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.5rem; pointer-events: none; }
-        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.95rem; background: #ffffff; }
+        .form-block-item { background: #F8FAFC; border: 1.5px solid var(--border-color); border-radius: 0.5rem; padding: 0.85rem; user-select: none; }
+        .form-block-item label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.4rem; }
+        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 0.9rem; background: #ffffff; }
         
-        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--accent-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: grab; margin-bottom: 1rem; }
-        .tracking-block.dragging { opacity: 0.3; border: 2px dashed var(--accent-color); }
+        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--accent-color); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         
         .admin-table-wrap { width: 100%; overflow-x: auto; }
-        .admin-table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        .admin-table th, .admin-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; text-align: left; }
-        .admin-table th { background-color: #F1F5F9; color: var(--text-muted); }
+        .admin-table { width: 100%; border-collapse: collapse; min-width: 650px; }
+        .admin-table th, .admin-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; text-align: left; }
+        .admin-table th { background-color: #F1F5F9; color: var(--text-muted); font-weight: 600; }
 
-        /* Modal 彈窗 */
+        /* Modal 彈跳視窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
-        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 100%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
-        .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent-color); border-bottom: 2px solid #EFF6FF; padding-bottom: 0.5rem;}
-        
-        /* 新報名卡片 */
-        .new-inquiry-card { border-left: 6px solid var(--danger-color); background: #FEF2F2; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 100%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+        .modal-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent-color); border-bottom: 2px solid #EFF6FF; padding-bottom: 0.5rem; }
 
         @media(min-width: 768px) {
             .tab-nav { top: 0; bottom: auto; height: 60px; padding: 0 2rem; justify-content: center; gap: 1rem; }
-            .tab-btn { flex-direction: row; font-size: 1rem; padding: 0.5rem 1.25rem; flex: none; }
-            body { padding-top: 80px; padding-bottom: 2rem; }
-            .badge-alert { top: 5px; right: 5px; }
+            .tab-btn { flex-direction: row; font-size: 0.95rem; padding: 0.5rem 1.25rem; flex: none; }
+            body { padding-top: 75px; padding-bottom: 2rem; }
+            .badge-alert { top: 8px; right: 8px; }
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800">
 
-    <!-- 頂部/底部 導覽列 -->
     <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('frontTab', this)">
             <span class="icon">🏠</span><span>家長問班專區</span>
@@ -100,557 +92,6 @@
             <span class="icon">🎓</span><span>正式進班</span>
         </button>
         <button class="tab-btn" onclick="switchTab('referrerTab', this)">
-            <span class="icon">🎁</span><span>獎金管理</span>
+            <span class="icon">🎁</span><span>推薦人與獎金</span>
         </button>
     </div>
-
-    <!-- ========================================== -->
-    <!-- [分頁 1] 家長問班專區 (前台) -->
-    <!-- ========================================== -->
-    <div id="frontTab" class="tab-content active max-w-5xl mx-auto px-4 py-4 space-y-10">
-        <!-- 頂部標題區 -->
-        <header class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 text-white py-12 px-6 text-center shadow-lg rounded-3xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style="background-image: radial-gradient(circle, #ffffff 2px, transparent 2px); background-size: 30px 30px;"></div>
-            <div class="max-w-4xl mx-auto relative z-10">
-                <span class="bg-yellow-400 text-blue-900 text-sm uppercase px-4 py-1.5 rounded-full font-bold tracking-widest shadow-sm">招生諮詢專區</span>
-                <h1 class="text-4xl md:text-6xl font-extrabold mt-6 mb-4 tracking-wide drop-shadow-md">斗六顧德文理補習班</h1>
-                <p class="mt-4 text-blue-100 text-base md:text-lg font-medium">用心陪伴、因材施教，為孩子打造扎實的學習基礎！</p>
-            </div>
-        </header>
-
-        <!-- 顧德辦學特色 -->
-        <section class="grid md:grid-cols-3 gap-6 relative z-20">
-            <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-blue-500 text-center">
-                <div class="text-4xl mb-3">🏆</div>
-                <h3 class="font-bold text-lg text-slate-800 mb-2">專業優質師資</h3>
-                <p class="text-slate-600 text-sm">嚴選專業各科教師，掌握最新課綱與會考趨勢，提供最高品質教學。</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-indigo-500 text-center">
-                <div class="text-4xl mb-3">💖</div>
-                <h3 class="font-bold text-lg text-slate-800 mb-2">用心陪伴輔導</h3>
-                <p class="text-slate-600 text-sm">重視孩子的學習態度與品格發展，提供完善的課後輔導與關懷。</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-yellow-400 text-center">
-                <div class="text-4xl mb-3">🏫</div>
-                <h3 class="font-bold text-lg text-slate-800 mb-2">舒適安全環境</h3>
-                <p class="text-slate-600 text-sm">明亮寬敞的教室空間，打造讓家長安心、孩子專心的學習天地。</p>
-            </div>
-        </section>
-
-        <!-- 家長線上填寫問班資料表單 (改為 JS 提交至 Firebase) -->
-        <section class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-slate-200 space-y-6">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-slate-900 inline-block relative">
-                    線上問班預約表單
-                    <div class="absolute w-full h-3 bg-yellow-200 bottom-1 left-0 -z-10 rounded-sm"></div>
-                </h2>
-                <p class="text-slate-500 mt-3">請填寫基本資料並勾選想了解的班級，我們將有專人盡快與您聯繫！</p>
-            </div>
-
-            <form id="publicInquiryForm" onsubmit="submitParentInquiry(event)" class="space-y-8 max-w-3xl mx-auto">
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner">
-                    <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center">
-                        <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm mr-2">1</span> 填寫聯絡與就讀學校資訊
-                    </h3>
-                    <div class="grid md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">學生名字 <span class="text-red-500">*</span></label>
-                            <input type="text" id="p_student_name" required placeholder="請輸入學生姓名" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">聯絡電話 <span class="text-red-500">*</span></label>
-                            <input type="tel" id="p_phone" required placeholder="例如：0912-345678" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">孩子目前年級 <span class="text-red-500">*</span></label>
-                            <select id="p_grade" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
-                                <option value="">-- 請選擇年級 --</option>
-                                <option value="幼兒園大班(升小一)">幼兒園大班 (升小一)</option>
-                                <option value="國小一年級">國小一年級</option>
-                                <option value="國小二年級">國小二年級</option>
-                                <option value="國小三年級">國小三年級</option>
-                                <option value="國小四年級">國小四年級</option>
-                                <option value="國小五年級">國小五年級</option>
-                                <option value="國小六年級">國小六年級</option>
-                                <option value="國中一年級 (七年級)">國中一年級 (七年級)</option>
-                                <option value="國中二年級 (八年級)">國中二年級 (八年級)</option>
-                                <option value="國中三年級 (九年級/會考)">國中三年級 (九年級/會考)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">就讀學校 <span class="text-red-500">*</span></label>
-                            <select id="p_school" onchange="checkSchoolOther(this)" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
-                                <option value="">-- 請選擇學校 --</option>
-                                <optgroup label="【國小區】">
-                                    <option value="斗六國小">斗六國小</option>
-                                    <option value="鎮南國小">鎮南國小</option>
-                                    <option value="公誠國小">公誠國小</option>
-                                    <option value="石榴國小">石榴國小</option>
-                                    <option value="雲科大實驗國民小學">雲科大實驗國民小學</option>
-                                </optgroup>
-                                <optgroup label="【國中區】">
-                                    <option value="斗六國中">斗六國中</option>
-                                    <option value="雲林國中">雲林國中</option>
-                                    <option value="石榴國中">石榴國中</option>
-                                    <option value="正心中學（國中部）">正心中學（國中部）</option>
-                                </optgroup>
-                                <option value="其他">其他（自行輸入）</option>
-                            </select>
-                        </div>
-                        <div id="otherSchoolDiv" class="hidden md:col-span-2">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">請輸入學校名稱 <span class="text-red-500">*</span></label>
-                            <input type="text" id="p_other_school" placeholder="請填寫學校名稱" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm bg-white">
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center">
-                        <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm mr-2">2</span> 請勾選想諮詢的班別（可複選）
-                    </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="小一正音班" class="w-4 h-4"><span>小一正音班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="安親課輔班" class="w-4 h-4"><span>安親課輔班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="國小數學班" class="w-4 h-4"><span>國小數學班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="國小英文班" class="w-4 h-4"><span>國小英文班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="寒暑假冬夏令營" class="w-4 h-4 text-emerald-600"><span class="text-emerald-700 font-bold">寒暑假冬夏令營</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-indigo-200 bg-indigo-50/30"><input type="checkbox" name="p_courses" value="國中國文(帝都)" class="w-4 h-4 text-indigo-600"><span class="text-indigo-700 font-bold">國中國文(帝都)</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="國中數學班" class="w-4 h-4"><span>國中數學班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-slate-200 bg-white"><input type="checkbox" name="p_courses" value="國中英文班" class="w-4 h-4"><span>國中英文班</span></label>
-                        <label class="flex items-center space-x-2 p-3 rounded-xl border border-rose-200 bg-rose-50/30 md:col-span-2"><input type="checkbox" name="p_courses" value="國三會考班(全科)" class="w-4 h-4 text-rose-600"><span class="text-rose-700 font-bold">🔥 國三會考衝刺班</span></label>
-                    </div>
-                </div>
-
-                <div class="pt-4 text-center">
-                    <button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 px-12 rounded-full shadow-xl hover:shadow-2xl transition-all text-lg">
-                        📤 確認送出問班資料
-                    </button>
-                    <p class="text-sm text-slate-500 mt-4">送出後將直接傳送至補習班系統，老師會盡快與您聯繫！</p>
-                </div>
-            </form>
-        </section>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- [分頁 2] 新同學報名區 (後台專用) -->
-    <!-- ========================================== -->
-    <div id="newInquiryTab" class="tab-content max-w-6xl mx-auto px-4 py-4">
-        <div class="admin-card">
-            <h3 class="text-red-600 text-2xl mb-2">🚨 有新同學來報名了！</h3>
-            <p class="text-slate-600 mb-6 font-bold">這裡顯示由「家長問班專區」線上填寫傳送過來的熱騰騰資料，請盡快致電聯繫，並轉入追蹤看板！</p>
-            <div id="newInquiryListContainer" class="space-y-4">
-                <!-- 動態載入新報名 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- [分頁 3] 未進班看板 (後台專用) -->
-    <!-- ========================================== -->
-    <div id="trackingTab" class="tab-content max-w-6xl mx-auto px-4 py-4">
-        <!-- 手動新增表單 -->
-        <div class="admin-card">
-            <h3>📝 老師手動建檔與追蹤管理</h3>
-            <form id="inquiryForm">
-                <div class="form-blocks-grid" id="formBlocksContainer">
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>📌 學生姓名</label><input type="text" id="studentName" placeholder="例如：王小明">
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>💬 詢問者 (誰來詢問)</label><input type="text" id="inquirer" placeholder="例如：王媽媽">
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>📚 有意願課程</label><input type="text" id="studentCourse" placeholder="例如：國二數學">
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>📞 聯絡電話</label><input type="text" id="studentPhone" placeholder="例如：0912-345-678">
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>⚡ 目前招生狀態</label>
-                        <select id="studentStatus">
-                            <option value="初次諮詢">初次諮詢</option>
-                            <option value="預約試聽中">預約試聽中</option>
-                            <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
-                        </select>
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>👨‍🏫 負責追蹤老師</label><input type="text" id="assignedTeacher" placeholder="例如：陳老師">
-                    </div>
-                    <div class="form-block-item" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                        <label>🎁 推薦人 (介紹人)</label><input type="text" id="referrer" placeholder="例如：張小華媽媽">
-                    </div>
-                </div>
-                <div class="form-block-item mb-4" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                    <label>📝 老師追蹤紀錄</label>
-                    <textarea id="trackNote" rows="2" placeholder="記錄對話內容、家長需求..." style="resize: vertical;"></textarea>
-                </div>
-                <button type="button" class="w-full md:w-auto bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700" onclick="saveInquiry()">➕ 儲存並新增至下方追蹤區塊</button>
-            </form>
-        </div>
-
-        <!-- 追蹤區塊看板 -->
-        <div class="admin-card">
-            <h3>📊 招生追蹤區塊看板 (可拖曳排序)</h3>
-            <div id="trackingCardContainer" class="flex flex-col gap-4 mt-4 min-h-[100px]"></div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- [分頁 4] 正式進班 (後台專用) -->
-    <!-- ========================================== -->
-    <div id="enrolledTab" class="tab-content max-w-6xl mx-auto px-4 py-4">
-        <div class="admin-card">
-            <h3>🎓 已正式進班同學名單總表</h3>
-            <div class="admin-table-wrap">
-                <table class="admin-table">
-                    <thead><tr><th>姓名</th><th>預約課程</th><th>電話</th><th>進班日期</th><th>狀態</th><th>追蹤紀錄歷程</th><th>操作</th></tr></thead>
-                    <tbody id="enrolledTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- [分頁 5] 推薦人獎金 (後台專用) -->
-    <!-- ========================================== -->
-    <div id="referrerTab" class="tab-content max-w-6xl mx-auto px-4 py-4">
-        <div class="admin-card">
-            <h3>🎁 推薦人與獎金發放明細</h3>
-            <div class="admin-table-wrap">
-                <table class="admin-table">
-                    <thead><tr><th>學生</th><th>招生明細</th><th>介紹人</th><th>確定進班</th><th>獎金狀態</th></tr></thead>
-                    <tbody id="referrerDetailTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="admin-card">
-            <h3>🏆 老師招生競賽排行榜</h3>
-            <div class="admin-table-wrap">
-                <table class="admin-table">
-                    <thead><tr><th>名次</th><th>老師姓名</th><th>正式人數</th><th>明細 (學生與班級)</th></tr></thead>
-                    <tbody id="teacherRankingTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 彈跳視窗區塊 (Modals) -->
-    <!-- ========================================== -->
-    <!-- 修改資料視窗 -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">✏️ 修改/補全 學生招生資料</div>
-            <form id="editForm">
-                <div class="form-blocks-grid">
-                    <div class="form-block-item"><label>學生姓名</label><input type="text" id="editName"></div>
-                    <div class="form-block-item"><label>詢問者/電話</label>
-                        <input type="text" id="editInquirer" placeholder="誰來問的" class="mb-2">
-                        <input type="text" id="editPhone" placeholder="電話">
-                    </div>
-                    <div class="form-block-item"><label>有意願課程</label><input type="text" id="editCourse"></div>
-                    <div class="form-block-item"><label>目前狀態</label>
-                        <select id="editStatusSelect">
-                            <option value="初次諮詢">初次諮詢</option>
-                            <option value="預約試聽中">預約試聽中</option>
-                            <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
-                            <option value="已正式進班">已正式進班</option>
-                        </select>
-                    </div>
-                    <div class="form-block-item"><label>負責追蹤老師</label><input type="text" id="editTeacher"></div>
-                    <div class="form-block-item"><label>推薦人</label><input type="text" id="editReferrer"></div>
-                </div>
-                <div class="form-block-item mb-4">
-                    <label>追蹤紀錄歷程 (可在此繼續打字記錄)</label>
-                    <textarea id="editLog" rows="4" style="resize: vertical;"></textarea>
-                </div>
-                <div class="flex justify-between items-center mt-4">
-                    <button type="button" class="bg-red-500 text-white px-4 py-2 rounded" onclick="deleteStudentRecord()">🗑️ 刪除</button>
-                    <div class="space-x-2">
-                        <button type="button" class="bg-gray-400 text-white px-4 py-2 rounded" onclick="closeEditModal()">取消</button>
-                        <button type="button" class="bg-green-600 text-white px-4 py-2 rounded font-bold" onclick="saveEditModal()">💾 儲存變更</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Firebase 雲端與邏輯模組 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
-            authDomain: "my-project-9999-479215.firebaseapp.com",
-            projectId: "my-project-9999-479215",
-            storageBucket: "my-project-9999-479215.firebasestorage.app",
-            messagingSenderId: "1020162825898",
-            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // 初始化全域資料結構
-        window.admissionData = { tracking: [], enrolled: [], referrerBonus: {}, newInquiries: [] };
-
-        async function initAdmissionCloud() {
-            try {
-                const docSnap = await getDoc(doc(db, "settings", "admissionSystemData"));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    window.admissionData.tracking = data.tracking || [];
-                    window.admissionData.enrolled = data.enrolled || [];
-                    window.admissionData.referrerBonus = data.referrerBonus || {};
-                    window.admissionData.newInquiries = data.newInquiries || [];
-                }
-                renderAllViews();
-            } catch (e) {
-                console.error("載入失敗：", e);
-            }
-        }
-
-        window.saveAdmissionCloud = async function() {
-            try {
-                await setDoc(doc(db, "settings", "admissionSystemData"), window.admissionData);
-            } catch (e) {
-                console.error("儲存失敗：", e);
-            }
-        }
-        initAdmissionCloud();
-    </script>
-
-    <script>
-        // --- 基礎工具與切換 ---
-        function getFormattedTimestamp() {
-            const now = new Date();
-            return `${now.getMonth() + 1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        }
-
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            if(btn) btn.classList.add('active');
-            window.scrollTo(0,0);
-        }
-
-        function checkSchoolOther(select) {
-            const otherDiv = document.getElementById('otherSchoolDiv');
-            const otherInput = document.getElementById('p_other_school');
-            if (select.value === '其他') {
-                otherDiv.classList.remove('hidden');
-                otherInput.setAttribute('required', 'required');
-            } else {
-                otherDiv.classList.add('hidden');
-                otherInput.removeAttribute('required');
-                otherInput.value = '';
-            }
-        }
-
-        // --- 模組 1: 家長前端提交 ---
-        window.submitParentInquiry = function(e) {
-            e.preventDefault();
-            const name = document.getElementById('p_student_name').value;
-            const phone = document.getElementById('p_phone').value;
-            const grade = document.getElementById('p_grade').value;
-            const schoolSel = document.getElementById('p_school').value;
-            const school = schoolSel === '其他' ? document.getElementById('p_other_school').value : schoolSel;
-            
-            let courses = [];
-            document.querySelectorAll('input[name="p_courses"]:checked').forEach(cb => courses.push(cb.value));
-            if(courses.length === 0) { alert('請至少勾選一個想了解的班級！'); return; }
-
-            const newInq = {
-                id: Date.now(),
-                studentName: name, phone: phone, grade: grade, school: school,
-                courses: courses, timestamp: getFormattedTimestamp()
-            };
-
-            window.admissionData.newInquiries.push(newInq);
-            window.saveAdmissionCloud();
-            alert('🎉 感謝您的填寫！資料已成功送出，老師會盡快與您聯繫。');
-            document.getElementById('publicInquiryForm').reset();
-            document.getElementById('otherSchoolDiv').classList.add('hidden');
-            renderAllViews();
-        }
-
-        // --- 模組 2: 新生報名區 (後端處理) ---
-        function renderNewInquiries() {
-            const container = document.getElementById('newInquiryListContainer');
-            const badge = document.getElementById('newInquiryBadge');
-            container.innerHTML = '';
-            
-            const count = window.admissionData.newInquiries.length;
-            if(count > 0) {
-                badge.innerText = count; badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
-                container.innerHTML = '<div class="text-center text-gray-500 py-10 bg-white rounded-xl border">目前沒有新的線上報名資料。</div>';
-                return;
-            }
-
-            window.admissionData.newInquiries.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'new-inquiry-card p-5 rounded-xl shadow-sm border border-red-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4';
-                div.innerHTML = `
-                    <div>
-                        <div class="text-xs text-red-500 font-bold mb-1">⏱️ 填寫時間：${item.timestamp}</div>
-                        <h4 class="text-lg font-bold text-gray-800">${item.studentName} <span class="text-sm font-normal text-gray-600">(${item.school} / ${item.grade})</span></h4>
-                        <p class="text-sm text-gray-600 mt-1">📞 電話：<span class="font-bold text-blue-600">${item.phone}</span></p>
-                        <p class="text-sm text-gray-600 mt-1">📚 想問班級：<span class="font-bold text-indigo-600">${item.courses.join('、')}</span></p>
-                    </div>
-                    <button onclick="processNewInquiry(${item.id})" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition">
-                        👨‍🏫 老師處理專區 (轉入追蹤) ➔
-                    </button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        window.processNewInquiry = function(id) {
-            const index = window.admissionData.newInquiries.findIndex(x => x.id === id);
-            if(index > -1) {
-                const inq = window.admissionData.newInquiries[index];
-                const newTracking = {
-                    id: inq.id, name: inq.studentName, inquirer: "家長 (官網填寫)", referrer: "",
-                    course: inq.courses.join(", "), phone: inq.phone, teacher: "未指定",
-                    status: "初次諮詢", trialDate: "未定",
-                    log: `<strong style="color:var(--danger-color);">[系統]</strong> ${inq.timestamp} 家長官網報名。<br>學校: ${inq.school}, 年級: ${inq.grade}`
-                };
-                window.admissionData.tracking.push(newTracking);
-                window.admissionData.newInquiries.splice(index, 1);
-                window.saveAdmissionCloud();
-                
-                // 跳轉並打開編輯視窗讓老師邊打電話邊填寫
-                switchTab('trackingTab', document.querySelectorAll('.tab-btn')[2]);
-                setTimeout(() => { openEditModalById(inq.id, false); }, 300);
-            }
-        }
-
-        // --- 模組 3: 所有畫面重新渲染 ---
-        function renderAllViews() {
-            renderNewInquiries();
-            renderTrackingBlocks();
-            renderEnrolledTable();
-            // ... (如果想實作獎金與排行榜可以呼叫對應函式)
-        }
-
-        // --- 模組 4: 追蹤與編輯邏輯 (精簡版) ---
-        function renderTrackingBlocks() {
-            const container = document.getElementById('trackingCardContainer');
-            container.innerHTML = '';
-            if (!window.admissionData.tracking || window.admissionData.tracking.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white border rounded-xl">目前尚無未進班追蹤紀錄</div>`; return;
-            }
-            window.admissionData.tracking.forEach(item => {
-                const block = document.createElement('div');
-                block.className = 'tracking-block flex flex-col md:flex-row justify-between gap-4';
-                block.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-lg font-bold">${item.name}</span>
-                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">${item.status}</span>
-                            <button onclick="openEditModalById(${item.id}, false)" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded">✏️編輯</button>
-                        </div>
-                        <div class="text-sm text-gray-600 grid grid-cols-2 gap-2 mb-2">
-                            <div>📚 課程：${item.course}</div><div>📞 電話：${item.phone}</div>
-                        </div>
-                        <div class="bg-gray-50 p-2 text-sm rounded border text-gray-700">${item.log}</div>
-                    </div>
-                    <div class="flex flex-col gap-2 justify-center">
-                        <button onclick="moveToEnrolledById(${item.id})" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold w-full">轉入正式進班</button>
-                    </div>
-                `;
-                container.appendChild(block);
-            });
-        }
-
-        function renderEnrolledTable() {
-            const tbody = document.getElementById('enrolledTableBody');
-            tbody.innerHTML = '';
-            if (!window.admissionData.enrolled || window.admissionData.enrolled.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">尚無正式進班學員</td></tr>`; return;
-            }
-            window.admissionData.enrolled.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${item.name}</strong></td>
-                        <td>${item.course}</td><td>${item.phone}</td>
-                        <td class="text-green-600 font-bold">${item.enrollDate}</td>
-                        <td><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">已正式進班</span></td>
-                        <td class="text-xs text-gray-600">${item.log}</td>
-                        <td><button onclick="openEditModalById(${item.id}, true)" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs">修改</button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        // 修改視窗邏輯
-        let isEditingEnrolled = false;
-        window.openEditModalById = function(id, isEnrolled) {
-            isEditingEnrolled = isEnrolled;
-            const list = isEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
-            const item = list.find(x => x.id === id);
-            if (!item) return;
-            window.currentEditingId = id;
-
-            let teacher = '未指定';
-            const teacherMatch = item.log.match(/\[(.*?)\]/);
-            if (teacherMatch && teacherMatch[1]!=='系統') teacher = teacherMatch[1];
-
-            document.getElementById('editName').value = item.name;
-            document.getElementById('editInquirer').value = item.inquirer || '';
-            document.getElementById('editCourse').value = item.course || '';
-            document.getElementById('editPhone').value = item.phone || '';
-            document.getElementById('editTeacher').value = teacher;
-            document.getElementById('editReferrer').value = item.referrer || '';
-            document.getElementById('editStatusSelect').value = isEnrolled ? '已正式進班' : item.status;
-            document.getElementById('editLog').value = item.log.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
-
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        window.closeEditModal = function() { document.getElementById('editModal').style.display = 'none'; }
-        
-        window.saveEditModal = function() {
-            const list = isEditingEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
-            const item = list.find(x => x.id === window.currentEditingId);
-            if (item) {
-                item.name = document.getElementById('editName').value;
-                item.course = document.getElementById('editCourse').value;
-                item.phone = document.getElementById('editPhone').value;
-                item.teacher = document.getElementById('editTeacher').value;
-                item.referrer = document.getElementById('editReferrer').value;
-                const status = document.getElementById('editStatusSelect').value;
-                const newLogText = document.getElementById('editLog').value.replace(/\n/g, '<br>');
-                item.log = `[${item.teacher}] ` + newLogText;
-
-                if (!isEditingEnrolled && status === '已正式進班') {
-                    moveToEnrolledById(item.id);
-                } else {
-                    item.status = status;
-                    window.saveAdmissionCloud();
-                    renderAllViews();
-                }
-            }
-            closeEditModal();
-        }
-
-        window.moveToEnrolledById = function(id) {
-            const index = window.admissionData.tracking.findIndex(x => x.id === id);
-            if (index > -1 && confirm('確定要轉入正式進班嗎？')) {
-                const item = window.admissionData.tracking[index];
-                window.admissionData.tracking.splice(index, 1);
-                item.enrollDate = `${getFormattedTimestamp().split(' ')[0]} 轉入`;
-                item.status = "已正式進班";
-                window.admissionData.enrolled.push(item);
-                window.saveAdmissionCloud();
-                renderAllViews();
-                alert(`成功！${item.name} 已轉入正式進班名單。`);
-                closeEditModal();
-            }
-        }
-    </script>
-</body>
-</html>
