@@ -66,7 +66,7 @@
         .content-area.active { display: block; }
 
         /* 部門切換子頁籤 */
-        .sub-tabs { display: flex; border-bottom: 2px solid #E2E8F0; margin-bottom: 15px; gap: 5px; overflow-x: auto; }
+        .sub-tabs { display: flex; border-bottom: 2px solid #E2E8F0; margin-bottom: 15px; gap: 5px; overflow-x: auto; align-items: center; }
         .sub-tab-btn { padding: 10px 15px; background: transparent; border: none; font-size: 15px; font-weight: bold; color: #64748B; cursor: pointer; transition: 0.2s; border-radius: 8px 8px 0 0; white-space: nowrap; }
         .sub-tab-btn.active { color: var(--accent); border-bottom: 4px solid var(--accent); background: #EFF6FF; }
         .sub-tab-btn:hover { color: var(--primary); background: #F1F5F9; }
@@ -324,6 +324,12 @@
         <div class="sub-tabs">
             <button id="tabPrimary" class="sub-tab-btn active" onclick="switchDeptRecord('primary')">📘 國小部紀錄</button>
             <button id="tabJunior" class="sub-tab-btn" onclick="switchDeptRecord('junior')">📗 國中部紀錄</button>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 6px; padding: 4px 0;">
+                <label style="margin: 0; font-size: 13px; font-weight: bold; color: #1E40AF; white-space: nowrap;">🏫 快速查班級：</label>
+                <select id="manageClassFilter" onchange="renderRecords()" style="padding: 5px 8px; font-size: 13px; width: auto; min-width: 130px; border-color: #93C5FD; background: #EFF6FF; font-weight: bold;">
+                    <option value="">全部班級</option>
+                </select>
+            </div>
         </div>
 
         <!-- 國小部收費區塊 -->
@@ -793,6 +799,7 @@
             
             renderQuickItemConfigList();
             updateBatchPrintDropdown();
+            updateManageClassDropdown();
             renderRecords();
         } catch (e) {
             console.error("載入雲端資料失敗：", e);
@@ -876,6 +883,7 @@
 
             renderClassGrid();
             updateBatchPrintDropdown();
+            updateManageClassDropdown();
             updateUnpaidClassDropdown();
             if (document.getElementById('directory').classList.contains('active')) {
                 renderDirectoryInit();
@@ -885,6 +893,15 @@
             console.error("同步失敗：", e);
         }
     };
+
+    function updateManageClassDropdown() {
+        const select = document.getElementById('manageClassFilter');
+        if (!select) return;
+        const currentVal = select.value;
+        const classNames = window.config.classOrder;
+        select.innerHTML = '<option value="">全部班級</option>' + 
+            classNames.map(cls => `<option value="${cls}" ${cls === currentVal ? 'selected' : ''}>${cls}</option>`).join('');
+    }
 
     function updateUnpaidClassDropdown() {
         const select = document.getElementById('unpaidClassFilter');
@@ -1612,6 +1629,8 @@
 
     window.clearFilter = function() {
         document.getElementById('filterMonth').value = '';
+        const classFilter = document.getElementById('manageClassFilter');
+        if (classFilter) classFilter.value = '';
         renderRecords();
     }
 
@@ -1629,13 +1648,23 @@
 
     window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
+        const classFilterEl = document.getElementById('manageClassFilter');
+        const filterClass = classFilterEl ? classFilterEl.value : '';
         
         const primaryTbody = document.getElementById('primaryRecordTableBody');
         const juniorTbody = document.getElementById('juniorRecordTableBody');
         primaryTbody.innerHTML = '';
         juniorTbody.innerHTML = '';
         
-        let filteredBills = filterMonth ? window.bills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) : [...window.bills];
+        let filteredBills = [...window.bills];
+
+        if (filterMonth) {
+            filteredBills = filteredBills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth)));
+        }
+
+        if (filterClass) {
+            filteredBills = filteredBills.filter(b => b.className === filterClass);
+        }
         
         filteredBills.sort((a, b) => Number(a.isPaid) - Number(b.isPaid));
         
@@ -1690,10 +1719,10 @@
         });
 
         if (primaryCount === 0) {
-            primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px;">目前沒有國小部的繳費紀錄。</td></tr>`;
+            primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px;">目前沒有符合條件的國小部繳費紀錄。</td></tr>`;
         }
         if (juniorCount === 0) {
-            juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px;">目前沒有國中部的繳費紀錄。</td></tr>`;
+            juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px;">目前沒有符合條件的國中部繳費紀錄。</td></tr>`;
         }
         
         renderUnpaidTabLists();
