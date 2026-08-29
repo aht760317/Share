@@ -314,6 +314,7 @@
                     <select id="batchPrintClassSelect" style="padding: 6px; flex: 1; min-width: 130px;"></select>
                     <button class="btn-blue action-btn" style="padding: 6px 10px; font-size: 12px;" onclick="batchPrintNotices()">🖨️ 印該班未繳</button>
                     <button class="btn-green action-btn" style="padding: 6px 10px; font-size: 12px;" onclick="printSelectedCheckedNotices()">🖨️ 印勾選未繳</button>
+                    <button class="btn-purple action-btn" style="padding: 6px 10px; font-size: 12px; background: #059669;" onclick="printCombinedSelectedReceipts()">🖨️ 合併列印勾選收據</button>
                 </div>
             </div>
         </div>
@@ -1652,10 +1653,7 @@
             const isJr = window.isJuniorHigh(bill.className);
             const deptKey = isJr ? 'junior' : 'primary';
 
-            let checkboxHtml = '';
-            if (!bill.isPaid) {
-                checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bill.id}">`;
-            }
+            let checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bill.id}">`;
 
             let actionHtml = `<div class="action-cell">`;
             if(!bill.isPaid) {
@@ -1778,7 +1776,7 @@
     window.printSelectedCheckedNotices = function() {
         const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
         if (checkedBoxes.length === 0) {
-            alert('⚠️ 請先在左側表格勾選至少一位未繳費的學生！');
+            alert('⚠️ 請先在左側表格勾選至少一位學生！');
             return;
         }
 
@@ -1802,6 +1800,30 @@
         });
 
         document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
+    };
+
+    window.printCombinedSelectedReceipts = function() {
+        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
+        if (checkedBoxes.length < 2) {
+            alert('⚠️ 請至少勾選兩位學生（例如兄弟姊妹）以合併列印在同一張收據上！');
+            return;
+        }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(b.id));
+
+        if (targetBills.length === 0) {
+            alert('⚠️ 找不到所選的單據！');
+            return;
+        }
+
+        // 組合合併列印內容 (家長收執聯 + 存根聯)
+        const combinedHtml = getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
+            '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+            getCombinedReceiptHtml(targetBills, true, '存根聯');
+
+        document.getElementById('printArea').innerHTML = combinedHtml;
         window.print();
     };
 
@@ -2220,6 +2242,91 @@
             html += refundPolicyHtml;
         } else {
             html += `<div style="margin-top: 10px; font-size: 12px; color: #444;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    window.getCombinedReceiptHtml = function(bills, isReceipt, copyLabel) {
+        let combinedItemsHtml = '';
+        let grandTotal = 0;
+        let studentNamesArr = [];
+        let classNamesArr = [];
+        let periodStrsArr = [];
+
+        let globalIdx = 1;
+        bills.forEach(bill => {
+            studentNamesArr.push(bill.studentName);
+            if (!classNamesArr.includes(bill.className)) classNamesArr.push(bill.className);
+            if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
+            else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
+
+            grandTotal += bill.total;
+
+            combinedItemsHtml += `<tr><td colspan="3" style="background:#f7f7f7; font-weight:bold; font-size:12px; padding:3px 6px;">【${bill.className} - ${bill.studentName}】</td></tr>`;
+            bill.items.forEach(item => {
+                combinedItemsHtml += `
+                    <tr>
+                        <td style="text-align:center;">${globalIdx++}</td>
+                        <td>${item.name} (${bill.studentName})</td>
+                        <td style="text-align:right;">${item.amount.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        });
+
+        const displayClass = classNamesArr.join('、');
+        const displayNames = studentNamesArr.join('、');
+        const displayPeriod = periodStrsArr.join(' / ');
+
+        const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
+            <div style="margin-top: 5px; font-size: 7px; line-height: 1.15; border-top: 1px solid #000; padding-top: 2px; color: #222;">
+                <strong>【退費規定】</strong><br>
+                補習班學生繳納費用後，因故離班者，應依下列規定辦理退費：<br>
+                一、學生自繳納費用後，於實際上課日前離班者，預繳費用在全期費用總額百分之十以下者，得不予退還(但所收取之百分之十部分逾新臺幣一千元者，仍應退還)；超過百分之十者，其超過部份，應全數退還。<br>
+                二、補習班實際開課期間未逾全期三分之一者，應退還已繳全期費用之半數。<br>
+                三、補習班實際開課期間已達全期二分之一者，所收取之費用得不予退還。<br>
+                四、補習班所收取之代辦費應全額退還。但已購置成品者，發給成品。<br>
+                五、學生依服務契規定，以分期付款繳納學費者，其各期退費規定，依前四款規定辦理。<br>
+                補習班因故未能開班授課時，除應於原定開課日十日前通知學生，並於班址明顯之處公告外，並應於原定開課日起七日內全額退還學生已繳納之費用。已開班者，應依未能授課時間之比例乘以實際繳納金額，辦理退費。<br>
+                前二項繳納費用以全期實際約定繳納金額為準，不得扣除補習班訂定之報名費或其他收費項目。
+            </div>
+        ` : '';
+
+        let html = `
+            <div class="receipt-box">
+                ${isReceipt ? '<div class="watermark">繳費完成</div>' : ''}
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                    <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                    <div style="flex: 1; text-align: center;">
+                        <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
+                        <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
+                    </div>
+                    ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 2px solid #333; padding: 2px 4px; border-radius: 4px; font-weight: bold; white-space: nowrap; display: inline-block;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
+                </div>
+                <div style="text-align:center; font-size:16px; font-weight:bold; margin-bottom:8px; letter-spacing:1px;">${isReceipt ? '合併繳費收據明細單' : '合併繳費通知單'}</div>
+                <div class="receipt-header">
+                    <div>班級：<strong>${displayClass}</strong></div>
+                    <div>姓名：<strong>${displayNames}</strong></div>
+                    <div>收費期間：<strong style="color:var(--accent);">${displayPeriod}</strong></div>
+                </div>
+                <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:10%;">項次</th>
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:65%;">項目名稱 (學生)</th>
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:25%;">金額</th>
+                        </tr>
+                    </thead>
+                    <tbody>${combinedItemsHtml}</tbody>
+                </table>
+                <div class="receipt-total">總計 : $ ${grandTotal.toLocaleString()} 元</div>
+        `;
+
+        if(isReceipt) {
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 40px;">收款經手人：<strong>${window.config.handler}</strong></div></div>`;
+            html += refundPolicyHtml;
         }
 
         html += `</div>`;
