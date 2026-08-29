@@ -466,8 +466,11 @@
                 <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeHistoryDetailModal()">&times;</button>
             </div>
             <div id="historyDetailContent" style="font-size: 0.92rem; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 0.4rem; border: 1px solid var(--border-color); margin-bottom: 1rem;"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <button type="button" id="unapproveBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem;" onclick="unapproveCase()">🔓 主任退回重批 (移回待批考)</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                    <button type="button" id="unapproveBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem;" onclick="unapproveCase()">🔓 主任退回重批 (移回待批考)</button>
+                    <button type="button" id="deleteApprovedBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem; background-color: #991B1B;" onclick="deleteApprovedCase()">🗑️ 徹底刪除此紀錄</button>
+                </div>
                 <button type="button" class="btn btn-sm btn-secondary" style="margin-left: auto; font-size: 0.85rem;" onclick="closeHistoryDetailModal()">關閉</button>
             </div>
         </div>
@@ -1533,10 +1536,13 @@
             document.getElementById('historyDetailContent').innerHTML = detailHtml;
 
             const unapproveBtn = document.getElementById('unapproveBtn');
+            const deleteApprovedBtn = document.getElementById('deleteApprovedBtn');
             if (currentBridgeRole === 'director') {
                 unapproveBtn.style.display = 'inline-block';
+                deleteApprovedBtn.style.display = 'inline-block';
             } else {
                 unapproveBtn.style.display = 'none';
+                deleteApprovedBtn.style.display = 'none';
             }
 
             document.getElementById('historyDetailModal').style.display = 'flex';
@@ -1561,6 +1567,19 @@
                     closeAllHistoryModal();
                     alert('已成功將該筆案件退回至主任批考端！');
                 }
+            }
+        }
+
+        window.deleteApprovedCase = function() {
+            if (!currentActiveHistoryItem) return;
+            if (confirm(`⚠️ 警告：確定要徹底刪除學生「${currentActiveHistoryItem.studentName}」的這筆已結案紀錄嗎？刪除後將無法復原！`)) {
+                window.admissionData.bridgeIssues = window.admissionData.bridgeIssues.filter(i => i.id !== currentActiveHistoryItem.id);
+                window.saveAdmissionCloud();
+                renderBridgeTable();
+                closeHistoryDetailModal();
+                closeHistoryModal();
+                closeAllHistoryModal();
+                alert('已成功徹底刪除該筆已結案紀錄！');
             }
         }
 
