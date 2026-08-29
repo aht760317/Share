@@ -134,23 +134,16 @@
             cursor: pointer;
         }
 
-        /* ✨ 亮亮的黃色按鈕動畫 */
-        @keyframes pulseYellowGlow {
-            0% { background-color: #F59E0B; box-shadow: 0 0 5px rgba(245, 158, 11, 0.6); color: white; }
-            50% { background-color: #FDE047; box-shadow: 0 0 15px rgba(253, 224, 71, 1); color: #1F2937; transform: scale(1.03); }
-            100% { background-color: #F59E0B; box-shadow: 0 0 5px rgba(245, 158, 11, 0.6); color: white; }
-        }
-        .btn-glowing-yellow {
-            animation: pulseYellowGlow 2s infinite;
-            font-weight: 800;
+        /* 穩定舒適的明亮黃色按鈕 */
+        .btn-solid-yellow {
+            background-color: #F59E0B;
+            color: white;
+            font-weight: 700;
             border: none;
-            transition: all 0.2s;
+            transition: opacity 0.2s;
         }
-        .btn-glowing-yellow:hover {
-            animation: none;
-            background-color: #FBBF24;
-            color: #1F2937;
-            transform: scale(1.05);
+        .btn-solid-yellow:hover {
+            opacity: 0.85;
         }
 
         @media(min-width: 768px) {
@@ -203,12 +196,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="color: var(--accent-color);">資料匯入日期</th>
+                                <th style="color: var(--accent-color);">問班日期與時間</th>
                                 <th>學生姓名</th>
                                 <th>詢問者</th>
                                 <th>詢問課程</th>
                                 <th>聯絡電話</th>
-                                <th>聯絡資訊 / 備註</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -424,7 +416,7 @@
         window.getDoc = getDoc;
 
         window.admissionData = {
-            newInquiries: [],
+            inquiries: [],
             tracking: [],
             enrolled: [],
             referrerBonus: {}
@@ -435,8 +427,7 @@
                 const docSnap = await getDoc(doc(db, "settings", "admissionSystemData"));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // 接收新網頁寫入的 newInquiries 陣列，如果舊的系統是用 inquiries 變數，這裡做兼容處理
-                    window.admissionData.newInquiries = data.newInquiries || data.inquiries || []; 
+                    window.admissionData.inquiries = data.inquiries || [];
                     window.admissionData.tracking = data.tracking || [];
                     window.admissionData.enrolled = data.enrolled || [];
                     window.admissionData.referrerBonus = data.referrerBonus || {};
@@ -464,7 +455,6 @@
 
         window.saveAdmissionCloud = async function() {
             try {
-                // 存回雲端時統一名稱為 newInquiries
                 await setDoc(doc(db, "settings", "admissionSystemData"), window.admissionData);
                 checkNewInquiriesAlert();
             } catch (e) {
@@ -479,7 +469,7 @@
         let currentEditingElement = null; 
         let activeNotifyElement = null;
         let isEditingEnrolled = false; 
-        let trackingSortableInstance = null; 
+        let trackingSortableInstance = null;
 
         function getFormattedTimestamp() {
             const now = new Date();
@@ -504,32 +494,28 @@
 
         function checkNewInquiriesAlert() {
             const alertBox = document.getElementById('newInquiryAlert');
-            if (window.admissionData.newInquiries && window.admissionData.newInquiries.length > 0) {
+            if (window.admissionData.inquiries && window.admissionData.inquiries.length > 0) {
                 alertBox.style.display = 'block';
             } else {
                 alertBox.style.display = 'none';
             }
         }
 
-        // 模擬按鈕產生的資料
         window.simulateNewInquiry = function() {
             const now = new Date();
-            const askTime = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const askTime = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             
             const newInq = {
                 id: Date.now(),
+                askDate: askTime,
                 name: "陳小弟 (模擬資料)",
-                inquirer: "家長(線上表單)",
+                inquirer: "陳爸爸",
                 course: "國一數學",
-                phone: "0987-654321",
-                trialDate: "未定",
-                teacher: "未指定",
-                status: "初次諮詢",
-                log: `<strong style="color:#2563EB;">[系統自動帶入]</strong> ${askTime} - 透過官網招生專區填單。<br>➤ 方便聯絡時間：<span style="color:#D97706;font-weight:bold;">皆可</span><br>➤ 就讀學校：雲林國中`
+                phone: "0987-654321"
             };
             
-            if(!window.admissionData.newInquiries) window.admissionData.newInquiries = [];
-            window.admissionData.newInquiries.push(newInq);
+            if(!window.admissionData.inquiries) window.admissionData.inquiries = [];
+            window.admissionData.inquiries.push(newInq);
             window.saveAdmissionCloud();
             renderAllViews();
         }
@@ -545,30 +531,22 @@
             const tbody = document.getElementById('inquiryTableBody');
             tbody.innerHTML = '';
 
-            if (!window.admissionData.newInquiries || window.admissionData.newInquiries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">目前沒有新同學問班資料</td></tr>`;
+            if (!window.admissionData.inquiries || window.admissionData.inquiries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">目前沒有新同學問班資料</td></tr>`;
                 return;
             }
 
-            window.admissionData.newInquiries.forEach(item => {
-                // 從 log 裡面萃取時間跟備註
-                let dateStr = '未記錄';
-                let noteHtml = item.log;
-                
-                const timeMatch = item.log.match(/\]\s*([\d\/]+\s[\d:]+)\s-/);
-                if(timeMatch) dateStr = timeMatch[1];
-
+            window.admissionData.inquiries.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--accent-color); font-weight: 600; font-size: 0.95rem;">${dateStr}</td>
+                    <td style="color: var(--accent-color); font-weight: 600; font-size: 0.95rem;">${item.askDate || '未記錄'}</td>
                     <td style="font-size: 1.05rem;"><strong>${item.name}</strong></td>
                     <td>${item.inquirer || '未提供'}</td>
                     <td>${item.course || '未提供'}</td>
-                    <td><strong style="color: var(--warning-color); font-size: 1.05rem;">${item.phone || '未提供'}</strong></td>
-                    <td style="font-size: 0.85rem; color: #4B5563;">${noteHtml}</td>
+                    <td>${item.phone || '未提供'}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="processNewInquiry(${item.id})" style="margin-bottom: 0.3rem;">轉入追蹤 ➔</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteInquiry(${item.id})">🗑️ 刪除</button>
+                        <button class="btn btn-sm btn-primary" onclick="processNewInquiry(${item.id})">轉入追蹤 ➔</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteInquiry(${item.id})" style="margin-left: 0.3rem;">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -576,16 +554,24 @@
         }
 
         window.processNewInquiry = function(id) {
-            const index = window.admissionData.newInquiries.findIndex(x => x.id === id);
+            const index = window.admissionData.inquiries.findIndex(x => x.id === id);
             if (index > -1) {
-                const inq = window.admissionData.newInquiries[index];
+                const inq = window.admissionData.inquiries[index];
+                const newItem = {
+                    id: Date.now(),
+                    name: inq.name,
+                    inquirer: inq.inquirer || '',
+                    referrer: '',
+                    course: inq.course || '',
+                    phone: inq.phone || '',
+                    trialDate: '',
+                    teacher: '未指定',
+                    status: '初次諮詢',
+                    log: `<strong style="color:var(--accent-color);">[系統]</strong> ${getFormattedTimestamp()} - 從新問班系統匯入建立`
+                };
                 
-                // 這裡會保留原本系統打進來的 log (含時間、學校)，並加上一句轉入紀錄
-                inq.log += `<br><span style="color:var(--success-color); font-weight:500;">[${getFormattedTimestamp()} 老師已將此筆資料轉入追蹤清單]</span>`;
-
-                window.admissionData.tracking.push(inq);
-                window.admissionData.newInquiries.splice(index, 1);
-                
+                window.admissionData.tracking.push(newItem);
+                window.admissionData.inquiries.splice(index, 1);
                 window.saveAdmissionCloud();
                 renderAllViews();
                 
@@ -595,8 +581,8 @@
         }
 
         window.deleteInquiry = function(id) {
-            if (confirm("確定要直接刪除這筆新問班資料嗎？(刪除後無法恢復)")) {
-                window.admissionData.newInquiries = window.admissionData.newInquiries.filter(x => x.id !== id);
+            if (confirm("確定要直接刪除這筆新問班資料嗎？")) {
+                window.admissionData.inquiries = window.admissionData.inquiries.filter(x => x.id !== id);
                 window.saveAdmissionCloud();
                 renderAllViews();
             }
@@ -621,7 +607,7 @@
                         <div class="block-title">
                             <span style="font-size: 1.5rem;">📌</span> 
                             <strong class="s-name">${item.name}</strong>
-                            <button class="btn btn-glowing-yellow" style="margin-left: 0.75rem; padding: 0.35rem 0.75rem; font-size: 0.95rem; border-radius: 4px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
+                            <button class="btn btn-solid-yellow" style="margin-left: 0.75rem; padding: 0.35rem 0.75rem; font-size: 0.95rem; border-radius: 4px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
                             <span class="badge badge-line s-status" style="margin-left: 0.5rem;">${item.status}</span>
                         </div>
                         <div class="block-top-actions">
@@ -706,9 +692,7 @@
             let defaultTeacher = '';
             if (logEl) {
                 const tMatch = logEl.innerHTML.match(/\[(.*?)\]/);
-                if (tMatch && tMatch[1] !== '系統' && tMatch[1] !== '系統自動帶入') {
-                    defaultTeacher = tMatch[1].replace('老師', '');
-                }
+                if (tMatch) defaultTeacher = tMatch[1].replace('系統', '');
             }
             document.getElementById('notifyTeacherName').value = defaultTeacher.trim();
             document.getElementById('notifyCustomText').value = '';
@@ -758,9 +742,7 @@
 
             let teacher = '未指定';
             const teacherMatch = item.log.match(/\[(.*?)\]/);
-            if (teacherMatch && teacherMatch[1] !== '系統自動帶入') {
-                teacher = teacherMatch[1];
-            }
+            if (teacherMatch) teacher = teacherMatch[1];
 
             document.getElementById('editName').value = item.name;
             document.getElementById('editInquirer').value = item.inquirer || '';
@@ -811,6 +793,12 @@
             let log = document.getElementById('editLog').value.trim().replace(/\n/g, '<br>');
 
             if(!name) { alert('學生姓名不能為空！'); return; }
+
+            if (log.includes('[')) {
+                log = log.replace(/\[.*?\]/, `[${teacher}]`);
+            } else {
+                log = `[${teacher}] ` + log;
+            }
 
             const sourceList = isEditingEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
             const itemIndex = sourceList.findIndex(x => x.id === window.currentEditingId);
@@ -1000,9 +988,7 @@
                 let teacherName = '未指定老師';
                 if (item.log) {
                     const tMatch = item.log.match(/\[(.*?)\]/);
-                    if (tMatch && tMatch[1] !== '系統自動帶入' && tMatch[1] !== '系統') {
-                        teacherName = tMatch[1].trim();
-                    }
+                    if (tMatch) teacherName = tMatch[1].trim();
                 }
 
                 if (!teacherMap[teacherName]) {
