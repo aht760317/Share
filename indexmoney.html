@@ -88,7 +88,7 @@
         .category-filter-btn:hover { background: #F1F5F9; }
         .category-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* 快捷按鈕區 (修改為一行顯示、字體加大) */
+        /* 快捷按鈕區 (一行顯示、字體加大) */
         .quick-btn { padding: 10px 14px; background: #E0E7FF; border: 1px solid #A5B4FC; border-radius: 8px; font-weight: bold; color: #3730A3; transition: 0.2s; text-align: center; cursor: grab; user-select: none; flex: 1 1 30%; min-width: 100px; display: flex; justify-content: space-between; align-items: center; }
         .quick-btn:active { cursor: grabbing; }
         .quick-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -280,6 +280,13 @@
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">月報表：</label>
                     <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;">
                     <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="printMonthlyReport()">🖨️ 印月報表</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; border-top: 1px dashed #FCD34D; padding-top: 8px; margin-top: 4px;">
+                    <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">區間報表：</label>
+                    <input type="date" id="rangeReportStart" style="padding: 5px; width: auto;">
+                    <span style="font-weight:bold; color:#B45309; font-size:13px;">至</span>
+                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;">
+                    <button class="btn-select" style="background:#B45309; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="printRangeReport()">🖨️ 印區間報表</button>
                 </div>
             </div>
         </div>
@@ -743,6 +750,8 @@
             document.getElementById('filterMonth').value = getCurrentMonthStr();
             document.getElementById('dailyReportDate').value = getCurrentDateStr();
             document.getElementById('monthlyReportMonth').value = getCurrentMonthStr();
+            document.getElementById('rangeReportStart').value = getCurrentDateStr();
+            document.getElementById('rangeReportEnd').value = getCurrentDateStr();
             
             const today = getCurrentDateStr();
             document.getElementById('billStartDate').value = today;
@@ -1996,6 +2005,74 @@
                     <tbody>${tableRows}</tbody>
                 </table>
                 <div class="report-total">當月實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+            </div>
+        `;
+        document.getElementById('printArea').innerHTML = html;
+        window.print();
+    }
+
+    window.printRangeReport = function() {
+        const startVal = document.getElementById('rangeReportStart').value;
+        const endVal = document.getElementById('rangeReportEnd').value;
+        if(!startVal || !endVal) { alert('請完整選擇起訖日期！'); return; }
+        if(startVal > endVal) { alert('開始日期不能大於結束日期！'); return; }
+
+        const targetBills = window.bills.filter(b => {
+            if(!b.isPaid) return false;
+            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+            return pDate >= startVal && pDate <= endVal;
+        });
+
+        if(targetBills.length === 0) { alert(`系統中找不到 ${startVal} 至 ${endVal} 區間內的繳費結帳紀錄！`); return; }
+
+        targetBills.sort((a, b) => {
+            const dateA = a.paidDate || parseLegacyDateToIso(a.date);
+            const dateB = b.paidDate || parseLegacyDateToIso(b.date);
+            return dateA.localeCompare(dateB);
+        });
+
+        let totalRevenue = 0;
+        let tableRows = targetBills.map((bill, idx) => {
+            totalRevenue += bill.total;
+            const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
+            let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+            const displayMonth = bill.periodStr || bill.yearMonth;
+            return `
+                <tr>
+                    <td style="text-align:center;">${idx + 1}</td>
+                    <td style="text-align:center;">${pDate}</td>
+                    <td>${bill.className}</td>
+                    <td><strong>${bill.studentName}</strong></td>
+                    <td style="text-align:center; font-size:13px;">${displayMonth}</td>
+                    <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
+                    <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const html = `
+            <div class="report-box">
+                <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">自訂區間收費明細表</div>
+                <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                    <span>統計區間：<strong>${startVal} ~ ${endVal}</strong></span>
+                    <span>列印時間：${new Date().toLocaleString()}</span>
+                </div>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th style="width:5%;">項次</th>
+                            <th style="width:12%;">繳費日期</th>
+                            <th style="width:15%;">班級</th>
+                            <th style="width:13%;">學生姓名</th>
+                            <th style="width:15%;">單據期間</th>
+                            <th style="width:25%;">繳費明細</th>
+                            <th style="width:15%;">實收金額</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div class="report-total">區間實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+                <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
             </div>
         `;
         document.getElementById('printArea').innerHTML = html;
