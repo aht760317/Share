@@ -639,7 +639,7 @@
                                 <th style="width:130px;">電話 2</th>
                                 <th style="width:130px;">電話 3</th>
                                 <th style="width:180px;">補習課程</th>
-                                <th style="width:165px;">操作</th>
+                                <th style="width:175px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="masterStudentTableBody"></tbody>
@@ -1525,6 +1525,13 @@
         renderMasterStudentsTable();
     };
 
+    window.openStudentContactLog = function(studentName, courseName) {
+        const encodedName = encodeURIComponent(studentName || '');
+        const encodedCourse = encodeURIComponent(courseName || '');
+        const url = `https://aht760317.github.io/Share/ClassLog.html?student=${encodedName}&course=${encodedCourse}&tab=contact`;
+        window.open(url, '_blank');
+    };
+
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const deptKey = window.state.currentDeptView;
@@ -1581,6 +1588,9 @@
             const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
             const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
             const formatPlainPhone = (p) => (!p || !p.number || p.number.trim() === '') ? `<span style="color:#bbb;">-</span>` : `<div class="phone-plain-cell"><b>${p.label}:</b> ${p.number}</div>`;
+            
+            // 決定預設帶入的課程名稱（優先採用目前篩選的班級，若無則取該生選修的第一堂課）
+            const matchedCourse = filterClass || (stuCourses.length > 0 ? stuCourses[0] : '');
 
             html += `
                 <tr>
@@ -1597,7 +1607,7 @@
                         <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
                             <button class="btn btn-warning" style="padding:4px 7px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
                             <button class="btn btn-primary" style="padding:4px 7px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
-                            <button class="btn btn-purple" style="padding:4px 7px; font-size:12px;" onclick="window.open('https://aht760317.github.io/Share/ClassLog.html?student=' + encodeURIComponent('${stu.name}'), '_blank')">📔 日誌</button>
+                            <button class="btn btn-purple" style="padding:4px 7px; font-size:12px;" onclick="openStudentContactLog('${stu.name}', '${matchedCourse}')">📞 電聯</button>
                         </div>
                     </td>
                 </tr>
