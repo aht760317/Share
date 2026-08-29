@@ -421,7 +421,7 @@
         </div>
     </div>
 
-    <!-- 統一的學生資料編輯 Modal (支援多筆聯繫紀錄新增) -->
+    <!-- 統一的學生資料編輯 Modal (支援多筆聯繫紀錄新增與下拉式多筆有意願課程) -->
     <div id="editModal" class="modal">
         <div class="modal-content" style="max-width: 680px;">
             <div class="modal-header"><span id="editModalTitle" style="font-size: 1.05rem;">✏️ 記錄通知與完善招生資料</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeEditModal()">&times;</button></div>
@@ -435,13 +435,18 @@
                         <label>詢問者</label>
                         <input type="text" id="editInquirer">
                     </div>
+                    
+                    <!-- 有意願課程 (支援下拉式選單複選 + 按 + 增加) -->
                     <div class="form-block-item" style="grid-column: span 2; background: #FEF3C7; border-color: #F59E0B;">
-                        <label style="color: #B45309;">有意願課程 (支援複選與自訂勾選)</label>
-                        <div id="courseCheckboxesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.4rem; margin-bottom: 0.5rem; background: #FFF; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem;">
-                            <!-- 動態生成課程複選框 -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="color: #B45309; margin-bottom: 0;">有意願課程 (可按 + 增加多科)</label>
+                            <button type="button" class="btn btn-sm" style="background-color: #D97706; color: white; padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="appendCourseSelectRow()">➕ 增加課程</button>
                         </div>
-                        <input type="text" id="editCourse" placeholder="或直接手動輸入有意願課程..." style="background: #FFF;">
+                        <div id="courseSelectsContainer" style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem;"></div>
+                        <!-- 隱藏實際儲存的欄位，供後端/儲存邏輯讀取 -->
+                        <input type="hidden" id="editCourse">
                     </div>
+
                     <div class="form-block-item">
                         <label>聯絡電話</label>
                         <input type="text" id="editPhone">
@@ -724,10 +729,21 @@
         let activeBonusRecordKey = null;
 
         const AVAILABLE_COURSES = [
-            "小兒童英文班", "大兒童英文班", "國中英文班", "全民英檢班",
-            "小一正音班", "安親課輔班", "國小數學班", "國小英文班", "國小作文班",
-            "國中國文(帝都國文)", "國中數學班", "國中英文班", "國中自然班",
-            "寒暑假冬夏令營", "國三會考班(全科)"
+            "小兒童英文班（中班到小二）",
+            "大兒童英文班（小三以上同學）",
+            "國中英文班",
+            "全民英檢班",
+            "小一正音班",
+            "安親課輔班",
+            "國小數學班",
+            "國小英文班",
+            "國小作文班",
+            "國中國文 (帝都國文)",
+            "國中數學班",
+            "國中英文班",
+            "國中自然班",
+            "寒暑假冬夏令營",
+            "國三會考班（全科）"
         ];
 
         function getFormattedTimestamp() {
@@ -859,7 +875,6 @@
             document.getElementById('editName').value = inq.name;
             document.getElementById('editInquirer').value = inq.inquirer || '';
             document.getElementById('editReferrer').value = '';
-            document.getElementById('editCourse').value = inq.course || '';
             document.getElementById('editPhone').value = inq.phone || '';
             document.getElementById('editDate').value = '';
             document.getElementById('editTeacher').value = '';
@@ -867,7 +882,9 @@
             document.getElementById('editLogDisplay').innerHTML = `[系統] ${getFormattedTimestamp()} - 從新問班系統匯入建立`;
             document.getElementById('newContactsContainer').innerHTML = '';
 
-            buildCourseCheckboxes(inq.course || '');
+            // 建立多筆下拉課程選單
+            buildCourseSelects(inq.course || '');
+
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -1040,29 +1057,44 @@
             alert('獎金發放紀錄已成功儲存！');
         }
 
-        function buildCourseCheckboxes(currentSelectedCourses) {
-            const container = document.getElementById('courseCheckboxesContainer');
+        // 建立課程下拉選單列
+        function buildCourseSelects(courseString) {
+            const container = document.getElementById('courseSelectsContainer');
             container.innerHTML = '';
-            
-            // 將目前已選的課程字串轉為陣列 (以逗號或頓號分隔)
-            const selectedList = currentSelectedCourses ? currentSelectedCourses.split(/[,，、]\s*/).map(s => s.trim()) : [];
 
-            AVAILABLE_COURSES.forEach(course => {
-                const isChecked = selectedList.includes(course);
-                const label = document.createElement('label');
-                label.style.cssText = "display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; cursor: pointer; font-weight: 500;";
-                label.innerHTML = `
-                    <input type="checkbox" class="course-chk" value="${course}" ${isChecked ? 'checked' : ''} onchange="syncCheckboxesToInput()" style="width: 14px; height: 14px; cursor: pointer;">
-                    ${course}
-                `;
-                container.appendChild(label);
+            // 將原本儲存的課程字串 (如 "國中英文班, 安親課輔班") 拆解為陣列
+            let courses = courseString ? courseString.split(/[,，、]\s*/).map(s => s.trim()).filter(Boolean) : [];
+            if (courses.length === 0) courses = ['']; // 預設至少顯示一行
+
+            courses.forEach(c => {
+                addCourseSelectRow(c);
             });
         }
 
-        window.syncCheckboxesToInput = function() {
-            const checkboxes = document.querySelectorAll('.course-chk:checked');
-            const selectedArr = Array.from(checkboxes).map(chk => chk.value);
-            document.getElementById('editCourse').value = selectedArr.join(', ');
+        window.addCourseSelectRow = function(selectedValue = '') {
+            const container = document.getElementById('courseSelectsContainer');
+            const rowId = 'course_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+            let optionsHtml = `<option value="">-- 請選擇有意願課程 --</option>`;
+            AVAILABLE_COURSES.forEach(c => {
+                const selected = (c === selectedValue) ? 'selected' : '';
+                optionsHtml += `<option value="${c}" ${selected}>${c}</option>`;
+            });
+
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.style.cssText = "display: flex; gap: 0.4rem; align-items: center;";
+            div.innerHTML = `
+                <select class="course-select-item" style="flex: 1; padding: 0.45rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; background: #FFF;">
+                    ${optionsHtml}
+                </select>
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background: var(--danger-color); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">❌</button>
+            `;
+            container.appendChild(div);
+        }
+
+        window.appendCourseSelectRow = function() {
+            addCourseSelectRow('');
         }
 
         window.openEditModalById = function(id, isEnrolled) {
@@ -1080,7 +1112,6 @@
             document.getElementById('editName').value = item.name;
             document.getElementById('editInquirer').value = item.inquirer || '';
             document.getElementById('editReferrer').value = item.referrer || '';
-            document.getElementById('editCourse').value = item.course || '';
             document.getElementById('editPhone').value = item.phone || '';
             document.getElementById('editDate').value = item.trialDate && item.trialDate !== '未定' && !item.trialDate.includes('轉入') ? item.trialDate : '';
             document.getElementById('editTeacher').value = teacher === '系統' ? '' : teacher;
@@ -1088,7 +1119,7 @@
             document.getElementById('editLogDisplay').innerHTML = item.log;
             document.getElementById('newContactsContainer').innerHTML = '';
 
-            buildCourseCheckboxes(item.course || '');
+            buildCourseSelects(item.course || '');
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -1138,11 +1169,18 @@
             const name = document.getElementById('editName').value.trim();
             const inquirer = document.getElementById('editInquirer').value.trim();
             const referrer = document.getElementById('editReferrer').value.trim();
-            const course = document.getElementById('editCourse').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
             let date = document.getElementById('editDate').value || '未定';
             const teacher = document.getElementById('editTeacher').value.trim();
             const status = document.getElementById('editStatusSelect').value;
+
+            // 收集所有下拉選單選中的課程
+            const courseSelects = document.querySelectorAll('.course-select-item');
+            let courseArr = [];
+            courseSelects.forEach(sel => {
+                if (sel.value) courseArr.push(sel.value);
+            });
+            const course = courseArr.join(', ');
 
             if(!name) { alert('姓名不能為空！'); return; }
 
@@ -1695,7 +1733,7 @@
         window.submitBridgeReviewAction = function(actionStatus) {
             const id = document.getElementById('bridgeReviewId').value;
             const comment = document.getElementById('bridgeDirectorCommentInput').value;
-            const item = window.admissionData.bridgeIssues.find(i => id);
+            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
             if (item) {
                 item.directorComment = comment;
                 item.directorReviewedAt = new Date().toLocaleString('zh-TW', { hour12: false });
