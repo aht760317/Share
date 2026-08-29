@@ -303,7 +303,8 @@
                                 <th>編號 / 時間</th>
                                 <th>學生與班別</th>
                                 <th>家長與分類</th>
-                                <th>負責老師 / 處理老師</th>
+                                <th>負責老師</th>
+                                <th>處理老師</th>
                                 <th>問題描述</th>
                                 <th>處理狀況 / 解決方案</th>
                                 <th>目前狀態</th>
@@ -317,7 +318,7 @@
                 </div>
             </div>
 
-            <!-- 老師端：新增家長問題表單 (放在最下方，淡淡粉紅色背景) -->
+            <!-- 老師端：新增家長問題表單 (放置於最下方，淡淡粉紅色背景) -->
             <div class="card" id="newBridgeIssueCard" style="background-color: #FFF1F2; border: 1.5px solid #FECDD3;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                     <h3 style="color: #BE123C; margin-bottom: 0;">📝 登記新的家長問題 / 老師反應</h3>
@@ -351,8 +352,8 @@
                             </select>
                         </div>
                         <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">負責處理老師</label>
-                            <input type="text" id="bridgeAssignedTeacher" required placeholder="例如：王老師 / 陳老師">
+                            <label style="color: #9F1239;">負責老師</label>
+                            <input type="text" id="bridgeAssignedTeacher" required placeholder="例如：王老師">
                         </div>
                     </div>
                     <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF; margin-bottom: 1.25rem;">
@@ -401,7 +402,7 @@
         <div id="enrolledTab" class="tab-content">
             <div class="card">
                 <h3>🎓 已正式進班同學名單總表</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">主任確定學生已進班繳費後，可在此表格點擊「🎁 設定推薦獎金」來分配獎金比率。</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">主任確定學生已進班繳費後，可在此表格點擊「設定推薦獎金」來分配獎金比率。</p>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -457,6 +458,25 @@
             </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
                 <button type="button" class="btn btn-sm btn-secondary" onclick="closeHistoryModal()">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 檢視已結案歷史詳細內容的放大視窗 (Modal) -->
+    <div id="historyDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <span>📖 已結案歷史紀錄詳情</span>
+                <button style="background:none; border:none; font-size:1.25rem; cursor:pointer;" onclick="closeHistoryDetailModal()">&times;</button>
+            </div>
+            <div id="historyDetailContent" style="font-size: 1.1rem; line-height: 1.8; background: #F8FAFC; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                <!-- 詳細內容展開 -->
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" id="unapproveBtn" class="btn btn-sm btn-danger" style="display: none;" onclick="unapproveCase()">🔓 解除此結案 (退回處理中)</button>
+                <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="closeHistoryDetailModal()">關閉</button>
+                </div>
             </div>
         </div>
     </div>
@@ -715,6 +735,7 @@
         let isEditingEnrolled = false; 
         let trackingSortableInstance = null;
         let currentBridgeRole = 'teacher';
+        let currentActiveHistoryItem = null;
 
         function getFormattedTimestamp() {
             const now = new Date();
@@ -780,26 +801,26 @@
             const randomNum = String(Math.floor(Math.random() * 900) + 100);
             const newBridge = {
                 id: `ISSUE-${dateStr}-${randomNum}`,
-                studentName: '林小美',
+                studentName: '吳典恩',
                 className: '佳音英語斗六校',
-                parentName: '林媽媽',
-                issueCategory: '生活常規',
-                issueContent: '反應放學時段家長接送區秩序有點混亂，希望能協助引導。',
+                parentName: '吳爸爸',
+                issueCategory: '課業學習',
+                issueContent: '家長反映最近英文單字測驗成績退步，希望能了解背單字的方法。',
                 reportedAt: now.toLocaleString('zh-TW', { hour12: false }),
                 reportedBy: '雅鴻老師',
-                assignedTeacher: '王老師',
-                solverName: '',
-                teacherSolution: '',
-                teacherSubmittedAt: '',
-                status: 'pending',
-                directorComment: '',
-                directorReviewedAt: ''
+                assignedTeacher: '未指定',
+                solverName: '吳雅鴻',
+                teacherSolution: '已與家長電話聯繫說明，並安排週二放學後進行 15 分鐘單字特訓與記憶法指導。',
+                teacherSubmittedAt: '2026-08-28 17:00',
+                status: 'approved',
+                directorComment: '已通過結案',
+                directorReviewedAt: '2026-08-28 18:00'
             };
             if(!window.admissionData.bridgeIssues) window.admissionData.bridgeIssues = [];
             window.admissionData.bridgeIssues.unshift(newBridge);
             window.saveAdmissionCloud();
             renderAllViews();
-            alert('已成功模擬新增一筆安心橋家長反應事項！');
+            alert('已成功模擬新增一筆已結案歷史紀錄（測試學生：吳典恩）！');
         }
 
         function renderAllViews() {
@@ -961,7 +982,7 @@
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <button class="btn btn-sm btn-warning" onclick="openEditModalById(${item.id}, true)">✏️ 修改資料</button>
                             <button class="btn btn-sm ${store.paid ? 'btn-success' : 'btn-solid-yellow'}" onclick="openReferrerRecordModal('${recordKey}', '${item.name}', '${hasReferrer ? item.referrer : '未填寫推薦人'}', '${item.course}')">
-                                🎁 ${store.paid ? '獎金已發放' : '設定推薦獎金'}
+                                🎁 設定推薦獎金
                             </button>
                         </div>
                     </td>
@@ -1375,10 +1396,8 @@
                     <td><strong>${item.id}</strong><br><small style="color:var(--text-muted);">${item.reportedAt}</small></td>
                     <td><strong>${item.studentName}</strong><br><small style="color:var(--text-muted);">${item.className}</small></td>
                     <td>${item.parentName}<br><span class="badge" style="background:#f1f5f9; color:#475569; margin-top:4px;">${item.issueCategory}</span></td>
-                    <td>
-                        <div><strong>負責：</strong><span style="color:var(--accent-color);">${item.assignedTeacher || '未指定'}</span></div>
-                        <div><strong>處理：</strong><span style="color:var(--success-color);">${item.solverName || '未填寫'}</span></div>
-                    </td>
+                    <td><strong style="color:var(--accent-color);">${item.assignedTeacher || '未指定'}</strong></td>
+                    <td><strong style="color:var(--success-color);">${item.solverName || '未填寫'}</strong></td>
                     <td style="max-width: 220px; word-break: break-all;">${item.issueContent}</td>
                     <td style="max-width: 250px; word-break: break-all;">
                         ${item.teacherSolution ? `<strong style="color:var(--accent-color);">方案：</strong>${item.teacherSolution}<br>` : '<span style="color:var(--text-muted);">尚未填寫方案</span>'}
@@ -1391,7 +1410,7 @@
             });
 
             if (tbody.innerHTML === '') {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 1.1rem;">目前沒有符合條件的尚未結案事件</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 1.1rem;">目前沒有符合條件的尚未結案事件</td></tr>`;
             }
 
             document.getElementById('statPendingSummary').innerText = `斗六佳音 ${joyPending} 件 ｜ 斗六顧德 ${gudePending} 件`;
@@ -1430,21 +1449,86 @@
                 return;
             }
 
-            let html = `<h4 style="color: var(--accent-color); margin-bottom: 0.5rem; font-size: 1rem;">📖 「${query}」 的歷史已結案 (${matched.length} 筆)：</h4>`;
+            let html = `<h4 style="color: var(--accent-color); margin-bottom: 0.75rem; font-size: 1.05rem;">📖 「${query}」 的歷史已結案 (${matched.length} 筆)：</h4>`;
+            
             matched.forEach((item, idx) => {
+                const escapedContent = encodeURIComponent(JSON.stringify(item));
                 html += `
-                    <div style="background: #FFF; border-left: 3px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.95rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                            <strong>#${idx+1} [${item.issueCategory}] 班別：${item.className}</strong>
+                    <div onclick="openHistoryDetail('${escapedContent}')" style="background: #FFF; border: 1.5px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.85rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#2563EB'" onmouseout="this.style.borderColor='#CBD5E1'">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem; font-size: 0.95rem; font-weight: 700; color: var(--primary-color);">
+                            <span>#${idx+1} [${item.issueCategory}] 班別：${item.className}</span>
                             <span style="color: var(--text-muted); font-size: 0.85rem;">回報時間：${item.reportedAt}</span>
                         </div>
-                        <p style="margin-bottom: 0.3rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
-                        <p style="margin-bottom: 0.3rem; color: var(--accent-color);"><strong>處理老師：</strong>${item.solverName || '未填寫'} (負責：${item.assignedTeacher || '未指定'})<br><strong>處理方案：</strong>${item.teacherSolution || '無'}</p>
-                        <p style="color: var(--success-color);"><strong>主任批語/結案指示：</strong>${item.directorComment || '已通過結案'}</p>
+                        <p style="margin-bottom: 0.3rem; font-size: 0.95rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
+                        <p style="margin-bottom: 0.3rem; color: var(--accent-color); font-size: 0.95rem;"><strong>處理老師：</strong>${item.solverName || '未填寫'} (負責：${item.assignedTeacher || '未指定'})<br><strong>處理方案：</strong>${item.teacherSolution || '無'}</p>
+                        <p style="color: var(--success-color); font-size: 0.95rem;"><strong>主任批語/結案指示：</strong>${item.directorComment || '已通過結案'}</p>
+                        <div style="text-align: right; margin-top: 0.5rem;"><span style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看完整大畫面 ➔</span></div>
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        // 點擊卡片跳出大畫面檢視（主任身分才顯示解除結案按鈕）
+        window.openHistoryDetail = function(encodedItem) {
+            const item = JSON.parse(decodeURIComponent(encodedItem));
+            currentActiveHistoryItem = item;
+
+            const detailHtml = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div><strong>案件編號：</strong> ${item.id}</div>
+                    <div><strong>回報時間：</strong> ${item.reportedAt}</div>
+                    <div><strong>學生姓名：</strong> ${item.studentName}</div>
+                    <div><strong>班別分校：</strong> ${item.className}</div>
+                    <div><strong>家長稱謂：</strong> ${item.parentName}</div>
+                    <div><strong>問題分類：</strong> ${item.issueCategory}</div>
+                    <div><strong>負責老師：</strong> ${item.assignedTeacher || '未指定'}</div>
+                    <div><strong>實際處理老師：</strong> ${item.solverName || '未填寫'}</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong style="color: var(--accent-color); font-size: 1.1rem;">📝 家長問題描述與訴求：</strong>
+                    <div style="background: #FFF; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.3rem;">${item.issueContent}</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong style="color: var(--success-color); font-size: 1.1rem;">✍️ 老師處理方案：</strong>
+                    <div style="background: #FFF; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.3rem;">${item.teacherSolution || '無'}</div>
+                </div>
+                <div>
+                    <strong style="color: var(--primary-color); font-size: 1.1rem;">👨‍⚖️ 主任結案批語與指示：</strong>
+                    <div style="background: #FFF; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.3rem; color: var(--success-color); font-weight: 600;">${item.directorComment || '已通過結案'}</div>
+                </div>
+            `;
+            document.getElementById('historyDetailContent').innerHTML = detailHtml;
+
+            const unapproveBtn = document.getElementById('unapproveBtn');
+            if (currentBridgeRole === 'director') {
+                unapproveBtn.style.display = 'inline-block';
+            } else {
+                unapproveBtn.style.display = 'none';
+            }
+
+            document.getElementById('historyDetailModal').style.display = 'flex';
+        }
+
+        window.closeHistoryDetailModal = function() {
+            document.getElementById('historyDetailModal').style.display = 'none';
+            currentActiveHistoryItem = null;
+        }
+
+        window.unapproveCase = function() {
+            if (!currentActiveHistoryItem) return;
+            if (confirm(`⚠️ 確定要將學生「${currentActiveHistoryItem.studentName}」的這筆已結案歷史解除嗎？解除後將退回至尚未進班追蹤清單中。`)) {
+                const target = window.admissionData.bridgeIssues.find(i => i.id === currentActiveHistoryItem.id);
+                if (target) {
+                    target.status = 'processing';
+                    target.directorComment = '【系統】主任已解除此案結案，退回重新處理。';
+                    window.saveAdmissionCloud();
+                    renderBridgeTable();
+                    closeHistoryDetailModal();
+                    closeHistoryModal();
+                    alert('已成功解除該筆歷史結案，案件已退回至尚未進班清單！');
+                }
+            }
         }
 
         window.openBridgeSolveModal = function(id) {
