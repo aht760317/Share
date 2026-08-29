@@ -83,6 +83,10 @@
                         <h4 class="font-bold text-slate-800 text-lg">✍️ 國小作文班</h4>
                         <p class="text-slate-600 text-sm mt-2">引導架構與修辭技巧，讓孩子不再怕寫作文，言之有物。</p>
                     </div>
+                    <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
+                        <h4 class="font-bold text-slate-800 text-lg">🏕️ 寒暑假營隊</h4>
+                        <p class="text-slate-600 text-sm mt-2">豐富多元的主題課程、手作實驗與活動，讓孩子放下3C，度過充實又快樂的假期時光！</p>
+                    </div>
                 </div>
             </div>
 
@@ -190,6 +194,9 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-1">就讀學校 <span class="text-red-500">*</span></label>
                             <select name="school" id="schoolSelect" onchange="checkSchoolOther(this)" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition">
                                 <option value="">-- 請選擇孩子的學校 --</option>
+                                <optgroup label="【幼兒園】">
+                                    <option value="幼稚園">幼稚園（自行輸入）</option>
+                                </optgroup>
                                 <optgroup label="【國小區】">
                                     <option value="斗六國小">斗六國小</option>
                                     <option value="鎮南國小">鎮南國小</option>
@@ -219,9 +226,9 @@
                             </select>
                         </div>
                         
-                        <!-- 自行輸入學校的欄位 -->
+                        <!-- 自行輸入學校的欄位 (含幼稚園) -->
                         <div id="otherSchoolDiv" class="hidden md:col-span-2">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">請輸入學校名稱 <span class="text-red-500">*</span></label>
+                            <label id="otherSchoolLabel" class="block text-sm font-semibold text-slate-700 mb-1">請輸入學校名稱 <span class="text-red-500">*</span></label>
                             <input type="text" name="other_school" id="otherSchoolInput" placeholder="請填寫學校名稱" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition">
                         </div>
                     </div>
@@ -300,15 +307,24 @@
         <p class="text-xs text-slate-500">© 2026 斗六顧德文理補習班. All rights reserved.</p>
     </footer>
 
-    <!-- JavaScript 處理「其他」學校的動態顯示與驗證 -->
+    <!-- JavaScript 處理「其他」與「幼稚園」學校的動態顯示與驗證 -->
     <script>
         function checkSchoolOther(select) {
             const otherDiv = document.getElementById('otherSchoolDiv');
             const otherInput = document.getElementById('otherSchoolInput');
+            const otherLabel = document.getElementById('otherSchoolLabel');
             
-            if (select.value === '其他') {
+            if (select.value === '其他' || select.value === '幼稚園') {
                 otherDiv.classList.remove('hidden');
                 otherInput.setAttribute('required', 'required');
+                
+                if (select.value === '幼稚園') {
+                    otherLabel.innerHTML = '請輸入幼稚園名稱 <span class="text-red-500">*</span>';
+                    otherInput.placeholder = '請填寫幼稚園名稱';
+                } else {
+                    otherLabel.innerHTML = '請輸入學校名稱 <span class="text-red-500">*</span>';
+                    otherInput.placeholder = '請填寫學校名稱';
+                }
             } else {
                 otherDiv.classList.add('hidden');
                 otherInput.removeAttribute('required');
@@ -353,7 +369,8 @@
                 const grade = document.querySelector('select[name="grade"]').value;
                 
                 const schoolSelect = document.getElementById('schoolSelect').value;
-                const finalSchool = schoolSelect === '其他' ? document.getElementById('otherSchoolInput').value : schoolSelect;
+                // 如果是其他或幼稚園，就抓取輸入框的數值
+                const finalSchool = (schoolSelect === '其他' || schoolSelect === '幼稚園') ? document.getElementById('otherSchoolInput').value : schoolSelect;
 
                 // 組合打勾的課程
                 const checkboxes = document.querySelectorAll('input[name="courses"]:checked');
