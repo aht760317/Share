@@ -160,17 +160,6 @@
             cursor: pointer;
         }
 
-        .btn-solid-yellow {
-            background-color: #F59E0B;
-            color: white;
-            font-weight: 700;
-            border: none;
-            transition: opacity 0.2s;
-        }
-        .btn-solid-yellow:hover {
-            opacity: 0.85;
-        }
-
         /* 整合後的單一統計列 */
         .single-stats-bar {
             background: white;
@@ -386,7 +375,7 @@
         <div id="enrolledTab" class="tab-content">
             <div class="card">
                 <h3>🎓 已正式進班同學名單總表</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">主任確定學生已進班繳費後，可在此表格點擊「設定推薦獎金」來分配獎金比率。</p>
+                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">主任確定學生已進班繳費後，可在此表格勾選「已發放獎金」來完成紀錄。</p>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -397,7 +386,7 @@
                                 <th>進班日期</th>
                                 <th>狀態</th>
                                 <th>追蹤紀錄歷程 / 介紹人</th>
-                                <th>操作與推薦獎金設定</th>
+                                <th>操作與獎金狀態</th>
                             </tr>
                         </thead>
                         <tbody id="enrolledTableBody" style="font-size: 0.9rem;"></tbody>
@@ -469,7 +458,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                 <div style="display: flex; gap: 0.4rem; align-items: center;">
                     <button type="button" id="unapproveBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem;" onclick="unapproveCase()">🔓 主任退回重批 (移回待批考)</button>
-                    <button type="button" id="deleteApprovedBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem; background-color: #991B1B;" onclick="deleteApprovedCase()">🗑️ 刪除案件</button>
+                    <button type="button" id="deleteApprovedBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem; background-color: #991B1B;" onclick="deleteApprovedCase()">🗑️ 徹底刪除此紀錄</button>
                 </div>
                 <button type="button" class="btn btn-sm btn-secondary" style="margin-left: auto; font-size: 0.85rem;" onclick="closeHistoryDetailModal()">關閉</button>
             </div>
@@ -566,18 +555,6 @@
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- 推薦人獎金管理細節互動視窗 -->
-    <div id="referrerDetailModal" class="modal">
-        <div class="modal-content" style="max-width: 580px;">
-            <div class="modal-header"><span id="referrerModalTitle" style="font-size: 1.05rem;">🎁 推薦人與獎金分配管理</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeReferrerModal()">&times;</button></div>
-            <div id="referrerModalBody" style="margin-bottom: 1rem;"></div>
-            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem;" onclick="closeReferrerModal()">取消</button>
-                <button type="button" class="btn btn-sm btn-success" style="font-size: 0.85rem;" onclick="saveReferrerModalData()">確認儲存</button>
-            </div>
         </div>
     </div>
 
@@ -955,14 +932,12 @@
                 return;
             }
             window.admissionData.enrolled.forEach((item, index) => {
-                const recordKey = `enrolled_${index}_${item.name}`;
+                // 改用 item.id 確保排序變化時不會影響獎金狀態讀取
+                const recordKey = `enrolled_id_${item.id}`;
                 if (!window.admissionData.referrerBonus[recordKey]) {
                     window.admissionData.referrerBonus[recordKey] = {
                         paid: false,
-                        date: '',
-                        total: 1000,
-                        refR: 70,
-                        teacherR: 30
+                        date: ''
                     };
                 }
                 const store = window.admissionData.referrerBonus[recordKey];
@@ -972,7 +947,6 @@
                 tr.innerHTML = `
                     <td>
                         <strong class="s-name" style="font-size: 0.95rem;">${item.name}</strong>
-                        <button class="edit-icon-btn" onclick="openEditModalById(${item.id}, true)" title="修改資料">✏️</button>
                     </td>
                     <td><span>${item.course}</span></td>
                     <td><span>${item.phone}</span></td>
@@ -985,14 +959,31 @@
                     <td>
                         <div style="display: flex; flex-direction: column; gap: 0.4rem;">
                             <button class="btn btn-sm btn-warning" onclick="openEditModalById(${item.id}, true)" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">✏️ 修改資料</button>
-                            <button class="btn btn-sm ${store.paid ? 'btn-success' : 'btn-solid-yellow'}" onclick="openReferrerRecordModal('${recordKey}', '${item.name}', '${hasReferrer ? item.referrer : '未填寫推薦人'}', '${item.course}')" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
-                                🎁 設定推薦獎金
-                            </button>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: ${store.paid ? 'var(--success-color)' : 'var(--text-muted)'}; margin-top: 0.25rem;">
+                                <input type="checkbox" onchange="toggleBonusPaid('${recordKey}', this.checked)" ${store.paid ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
+                                已發放獎金 ${store.paid && store.date ? `<span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">(${store.date})</span>` : ''}
+                            </label>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        window.toggleBonusPaid = function(recordKey, isChecked) {
+            if (!window.admissionData.referrerBonus[recordKey]) {
+                window.admissionData.referrerBonus[recordKey] = { paid: false, date: '' };
+            }
+            window.admissionData.referrerBonus[recordKey].paid = isChecked;
+            if (isChecked) {
+                const now = new Date();
+                const dStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+                window.admissionData.referrerBonus[recordKey].date = dStr;
+            } else {
+                window.admissionData.referrerBonus[recordKey].date = '';
+            }
+            window.saveAdmissionCloud();
+            renderEnrolledTable(); 
         }
 
         window.openNotifyModalById = function(id) {
@@ -1166,86 +1157,6 @@
                 renderAllViews();
                 alert('已移至正式進班！');
             }
-        }
-
-        window.openReferrerRecordModal = function(recordKey, studentName, referrerName, courseName) {
-            if (!window.admissionData.referrerBonus[recordKey]) {
-                window.admissionData.referrerBonus[recordKey] = {
-                    paid: false,
-                    date: '',
-                    total: 1000,
-                    refR: 70,
-                    teacherR: 30
-                };
-            }
-            let store = window.admissionData.referrerBonus[recordKey];
-            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}]`;
-
-            let html = `
-                <div style="background: #F8FAFC; padding: 0.65rem; border-radius: 5px; border: 1px solid var(--border-color); font-size: 0.85rem;">
-                    <p style="margin-bottom: 0.4rem;"><strong>學生：</strong> ${studentName} ｜ <strong>課程：</strong> ${courseName}</p>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.6rem;">
-                        <div>
-                            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">總獎金</label>
-                            <input type="number" id="modalTotalAmount" value="${store.total}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.35rem; font-size:0.85rem;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">推薦人%</label>
-                            <input type="number" id="modalRefRatio" value="${store.refR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.35rem; font-size:0.85rem;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">老師%</label>
-                            <input type="number" id="modalTeacherRatio" value="${store.teacherR}" oninput="calculateSingleBonusPreview()" style="width:100%; padding:0.35rem; font-size:0.85rem;">
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.6rem;">
-                        <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem;">
-                            <input type="checkbox" id="modalPaidCheck" ${store.paid ? 'checked' : ''} style="width: 16px; height: 16px;"> <strong>已發放</strong>
-                        </label>
-                        <div style="display: flex; align-items: center; gap: 0.3rem;">
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">日期：</span>
-                            <input type="date" id="modalPaidDate" value="${store.date}" style="padding: 0.25rem; font-size: 0.85rem;">
-                        </div>
-                    </div>
-                    <div id="bonusPreviewResult" style="margin-top: 0.6rem; font-size: 0.85rem; font-weight: 700; color: var(--success-color);"></div>
-                </div>
-            `;
-
-            document.getElementById('referrerModalBody').innerHTML = html;
-            document.getElementById('referrerDetailModal').style.display = 'flex';
-            window.activeRecordKey = recordKey;
-            calculateSingleBonusPreview();
-        }
-
-        window.calculateSingleBonusPreview = function() {
-            const total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
-            const refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
-            const teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
-            const refAmt = (total * refR / 100).toFixed(0);
-            const teacherAmt = (total * teacherR / 100).toFixed(0);
-            document.getElementById('bonusPreviewResult').innerHTML = `💡 試算：推薦人實領 $${refAmt} ｜ 負責老師實領 $${teacherAmt}`;
-        }
-
-        window.saveReferrerModalData = function() {
-            const key = window.activeRecordKey;
-            if (key) {
-                if (!window.admissionData.referrerBonus[key]) {
-                    window.admissionData.referrerBonus[key] = {};
-                }
-                window.admissionData.referrerBonus[key].paid = document.getElementById('modalPaidCheck').checked;
-                window.admissionData.referrerBonus[key].date = document.getElementById('modalPaidDate').value;
-                window.admissionData.referrerBonus[key].total = parseFloat(document.getElementById('modalTotalAmount').value) || 0;
-                window.admissionData.referrerBonus[key].refR = parseFloat(document.getElementById('modalRefRatio').value) || 0;
-                window.admissionData.referrerBonus[key].teacherR = parseFloat(document.getElementById('modalTeacherRatio').value) || 0;
-                window.saveAdmissionCloud();
-            }
-            document.getElementById('referrerDetailModal').style.display = 'none';
-            renderEnrolledTable();
-            alert('獎金設定已儲存！');
-        }
-
-        window.closeReferrerModal = function() {
-            document.getElementById('referrerDetailModal').style.display = 'none';
         }
 
         function updateTeacherRanking() {
@@ -1450,14 +1361,17 @@
                 approvedList.forEach((item, idx) => {
                     const escapedContent = encodeURIComponent(JSON.stringify(item));
                     html += `
-                        <div onclick="openHistoryDetail('${escapedContent}')" style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#2563EB'" onmouseout="this.style.borderColor='#CBD5E1'">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                                <span>#${idx+1} [${item.issueCategory}] ${item.className} - ${item.studentName}</span>
-                                <span style="color: var(--text-muted); font-size: 0.78rem;">${item.reportedAt}</span>
+                        <div style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; transition: all 0.2s; position: relative;">
+                            <div onclick="openHistoryDetail('${escapedContent}')" style="cursor: pointer;" onmouseover="this.parentElement.style.borderColor='#2563EB'" onmouseout="this.parentElement.style.borderColor='#CBD5E1'">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
+                                    <span>#${idx+1} [${item.issueCategory}] ${item.className} - ${item.studentName}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.78rem;">${item.reportedAt}</span>
+                                </div>
+                                <p style="font-size: 0.85rem; margin-bottom: 0.15rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
+                                <p style="font-size: 0.8rem; color: var(--accent-color);"><strong>處理老師：</strong>${item.solverName || '未填寫'} (負責：${item.assignedTeacher || '未指定'})</p>
+                                <div style="text-align: right; margin-top: 0.3rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看大畫面 ➔</span></div>
                             </div>
-                            <p style="font-size: 0.85rem; margin-bottom: 0.15rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
-                            <p style="font-size: 0.8rem; color: var(--accent-color);"><strong>處理老師：</strong>${item.solverName || '未填寫'} (負責：${item.assignedTeacher || '未指定'})</p>
-                            <div style="text-align: right; margin-top: 0.3rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看大畫面 ➔</span></div>
+                            ${currentBridgeRole === 'director' ? `<button onclick="quickDeleteApprovedCase('${item.id}', '${item.studentName}')" style="position: absolute; bottom: 0.75rem; left: 0.75rem; background: var(--danger-color); color: white; border: none; padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 3px; cursor: pointer;">🗑️ 刪除紀錄</button>` : ''}
                         </div>
                     `;
                 });
@@ -1492,17 +1406,37 @@
             matched.forEach((item, idx) => {
                 const escapedContent = encodeURIComponent(JSON.stringify(item));
                 html += `
-                    <div onclick="openHistoryDetail('${escapedContent}')" style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#2563EB'" onmouseout="this.style.borderColor='#CBD5E1'">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                            <span>#${idx+1} [${item.issueCategory}] 分校：${item.className}</span>
-                            <span style="color: var(--text-muted); font-size: 0.78rem;">回報時間：${item.reportedAt}</span>
+                    <div style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; transition: all 0.2s; position: relative;">
+                        <div onclick="openHistoryDetail('${escapedContent}')" style="cursor: pointer;" onmouseover="this.parentElement.style.borderColor='#2563EB'" onmouseout="this.parentElement.style.borderColor='#CBD5E1'">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
+                                <span>#${idx+1} [${item.issueCategory}] 分校：${item.className}</span>
+                                <span style="color: var(--text-muted); font-size: 0.78rem;">回報時間：${item.reportedAt}</span>
+                            </div>
+                            <p style="margin-bottom: 0.2rem; font-size: 0.85rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
+                            <div style="text-align: right; margin-top: 0.3rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看完整大畫面 ➔</span></div>
                         </div>
-                        <p style="margin-bottom: 0.2rem; font-size: 0.85rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
-                        <div style="text-align: right; margin-top: 0.3rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看完整大畫面 ➔</span></div>
+                        ${currentBridgeRole === 'director' ? `<button onclick="quickDeleteApprovedCase('${item.id}', '${item.studentName}')" style="position: absolute; bottom: 0.75rem; left: 0.75rem; background: var(--danger-color); color: white; border: none; padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 3px; cursor: pointer;">🗑️ 刪除紀錄</button>` : ''}
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        window.quickDeleteApprovedCase = function(id, studentName) {
+            if (confirm(`⚠️ 警告：確定要徹底刪除學生「${studentName}」的這筆已結案紀錄嗎？刪除後將無法復原！`)) {
+                window.admissionData.bridgeIssues = window.admissionData.bridgeIssues.filter(i => i.id !== id);
+                window.saveAdmissionCloud();
+                renderBridgeTable();
+                
+                // 重新渲染畫面上的彈跳視窗
+                if (document.getElementById('allHistoryModal').style.display === 'flex') {
+                    openAllHistoryModal();
+                } else if (document.getElementById('historyModal').style.display === 'flex') {
+                    searchApprovedBridgeStudent();
+                }
+                
+                alert('已成功徹底刪除該筆已結案紀錄！');
+            }
         }
 
         window.openHistoryDetail = function(encodedItem) {
