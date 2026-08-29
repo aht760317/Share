@@ -304,32 +304,35 @@
             </div>
         </div>
 
-        <div class="filter-bar">
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 250px;">
-                    <label style="margin:0; font-size:13px;">📅 查詢月份：</label>
+        <!-- 篩選列：第一排為查詢月份與快速查班級，第二排為批次列印按鈕組 -->
+        <div class="filter-bar" style="flex-direction: column; align-items: stretch; gap: 12px;">
+            <!-- 第一排：查詢與篩選條件 (放在一起) -->
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: white; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="margin: 0; font-size: 13px; font-weight: bold; color: #334155; white-space: nowrap;">📅 查詢月份：</label>
                     <input type="month" id="filterMonth" onchange="renderRecords()" style="padding: 6px; width: auto;">
-                    <button class="btn-select active" style="padding: 6px 12px; font-size:13px;" onclick="clearFilter()">全部</button>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 2; min-width: 300px; justify-content: flex-end;">
-                    <label style="margin:0; color: #1E40AF; font-weight: bold; font-size:13px;">🏫 批次列印：</label>
-                    <select id="batchPrintClassSelect" style="padding: 6px; flex: 1; min-width: 130px;"></select>
-                    <button class="btn-blue action-btn" style="padding: 6px 10px; font-size: 12px;" onclick="batchPrintNotices()">🖨️ 印該班未繳</button>
-                    <button class="btn-green action-btn" style="padding: 6px 10px; font-size: 12px;" onclick="printSelectedCheckedNotices()">🖨️ 印勾選未繳</button>
-                    <button class="btn-purple action-btn" style="padding: 6px 10px; font-size: 12px; background: #059669;" onclick="printCombinedSelectedReceipts()">🖨️ 合併列印勾選收據</button>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="margin: 0; font-size: 13px; font-weight: bold; color: #1E40AF; white-space: nowrap;">🏫 快速查班級：</label>
+                    <select id="filterClassSelect" onchange="renderRecords()" style="padding: 6px; width: auto; min-width: 140px; font-weight: bold; background: #EFF6FF; border-color: #93C5FD;"></select>
                 </div>
+
+                <button class="btn-select active" style="padding: 6px 14px; font-size: 13px;" onclick="clearFilter()">🔄 清除全部篩選</button>
+            </div>
+
+            <!-- 第二排：批次列印按鈕組 (往下移動，獨立成組) -->
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="color: #1E40AF; font-weight: bold; font-size: 13px; white-space: nowrap;">🖨️ 批次列印：</span>
+                <button class="btn-blue action-btn" style="padding: 7px 12px; font-size: 12px;" onclick="batchPrintNotices()">🖨️ 印該班未繳</button>
+                <button class="btn-green action-btn" style="padding: 7px 12px; font-size: 12px;" onclick="printSelectedCheckedNotices()">🖨️ 印勾選未繳</button>
+                <button class="btn-purple action-btn" style="padding: 7px 12px; font-size: 12px; background: #059669;" onclick="printCombinedSelectedReceipts()">🖨️ 合併列印勾選收據</button>
             </div>
         </div>
 
         <div class="sub-tabs">
             <button id="tabPrimary" class="sub-tab-btn active" onclick="switchDeptRecord('primary')">📘 國小部紀錄</button>
             <button id="tabJunior" class="sub-tab-btn" onclick="switchDeptRecord('junior')">📗 國中部紀錄</button>
-            <div style="margin-left: auto; display: flex; align-items: center; gap: 6px; padding: 4px 0;">
-                <label style="margin: 0; font-size: 13px; font-weight: bold; color: #1E40AF; white-space: nowrap;">🏫 快速查班級：</label>
-                <select id="manageClassFilter" onchange="renderRecords()" style="padding: 5px 8px; font-size: 13px; width: auto; min-width: 130px; border-color: #93C5FD; background: #EFF6FF; font-weight: bold;">
-                    <option value="">全部班級</option>
-                </select>
-            </div>
         </div>
 
         <!-- 國小部收費區塊 -->
@@ -798,8 +801,8 @@
             document.getElementById('billEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
             
             renderQuickItemConfigList();
-            updateBatchPrintDropdown();
-            updateManageClassDropdown();
+            updateClassFilterDropdown();
+            updateUnpaidClassDropdown();
             renderRecords();
         } catch (e) {
             console.error("載入雲端資料失敗：", e);
@@ -882,8 +885,7 @@
             window.studentDetails = syncedDetails;
 
             renderClassGrid();
-            updateBatchPrintDropdown();
-            updateManageClassDropdown();
+            updateClassFilterDropdown();
             updateUnpaidClassDropdown();
             if (document.getElementById('directory').classList.contains('active')) {
                 renderDirectoryInit();
@@ -894,8 +896,8 @@
         }
     };
 
-    function updateManageClassDropdown() {
-        const select = document.getElementById('manageClassFilter');
+    function updateClassFilterDropdown() {
+        const select = document.getElementById('filterClassSelect');
         if (!select) return;
         const currentVal = select.value;
         const classNames = window.config.classOrder;
@@ -1629,16 +1631,9 @@
 
     window.clearFilter = function() {
         document.getElementById('filterMonth').value = '';
-        const classFilter = document.getElementById('manageClassFilter');
+        const classFilter = document.getElementById('filterClassSelect');
         if (classFilter) classFilter.value = '';
         renderRecords();
-    }
-
-    window.updateBatchPrintDropdown = function() {
-        const select = document.getElementById('batchPrintClassSelect');
-        const classNames = window.config.classOrder;
-        select.innerHTML = '<option value="">請選擇班級...</option>' + 
-            classNames.map(cls => `<option value="${cls}">${cls}</option>`).join('');
     }
 
     window.toggleSelectAll = function(dept, masterCheckbox) {
@@ -1648,7 +1643,7 @@
 
     window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
-        const classFilterEl = document.getElementById('manageClassFilter');
+        const classFilterEl = document.getElementById('filterClassSelect');
         const filterClass = classFilterEl ? classFilterEl.value : '';
         
         const primaryTbody = document.getElementById('primaryRecordTableBody');
@@ -2427,15 +2422,20 @@
 
     window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
-        const targetClass = document.getElementById('batchPrintClassSelect').value;
+        const targetClass = document.getElementById('filterClassSelect').value;
 
-        if(!filterMonth) { alert('請先在左方選擇查詢年月！'); return; }
-        if(!targetClass) { alert('請先選擇要列印的班級！'); return; }
+        if(!targetClass) { 
+            alert('請先在上方「🏫 快速查班級」選取要列印的班級！'); 
+            return; 
+        }
 
-        const targetBills = window.bills.filter(b => (b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth))) && b.className === targetClass && !b.isPaid);
+        let targetBills = window.bills.filter(b => b.className === targetClass && !b.isPaid);
+        if (filterMonth) {
+            targetBills = targetBills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth)));
+        }
 
         if(targetBills.length === 0) {
-            alert(`在選定區間內，【${targetClass}】目前沒有未繳費的單據可供列印！`);
+            alert(`【${targetClass}】目前沒有未繳費的單據可供列印！`);
             return;
         }
 
