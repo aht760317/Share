@@ -149,7 +149,8 @@
                 <p class="text-slate-500 mt-3">請填寫基本資料並勾選想了解的班級，我們將有專人盡快與您聯繫！</p>
             </div>
 
-            <form action="https://formspree.io/f/xlgppvye" method="POST" class="space-y-8 max-w-3xl mx-auto">
+            <!-- 取代 Formspree，改為綁定內部系統 API -->
+            <form id="inquiryForm" class="space-y-8 max-w-3xl mx-auto">
                 
                 <!-- 1. 學生與聯絡資訊 -->
                 <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner">
@@ -158,7 +159,7 @@
                         填寫聯絡與就讀學校資訊
                     </h3>
                     <div class="grid md:grid-cols-2 gap-5">
-                        <!-- 將原來的家長姓名改為學生名字 -->
+                        <!-- 學生名字 -->
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">學生名字 <span class="text-red-500">*</span></label>
                             <input type="text" name="student_name" required placeholder="請輸入學生姓名" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition">
@@ -282,7 +283,7 @@
 
                 <!-- 提交按鈕 -->
                 <div class="pt-6 text-center">
-                    <button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 px-12 rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2 mx-auto text-lg">
+                    <button type="submit" id="submitBtn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 px-12 rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2 mx-auto text-lg">
                         <span>📤 確認送出問班資料</span>
                     </button>
                     <p class="text-sm text-slate-500 mt-4">👉 送出後我們將由專人盡快與您聯繫並提供詳細課表與優惠</p>
@@ -316,5 +317,105 @@
         }
     </script>
 
+    <!-- Firebase 雲端資料庫整合 (寫入您的 admissionSystemData) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 與您管理系統完全相同的 Firebase 設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+            authDomain: "my-project-9999-479215.firebaseapp.com",
+            projectId: "my-project-9999-479215",
+            storageBucket: "my-project-9999-479215.firebasestorage.app",
+            messagingSenderId: "1020162825898",
+            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 綁定表單提交事件
+        document.getElementById('inquiryForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // 阻止原本的頁面跳轉
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // 讓按鈕顯示傳送中並防止重複點擊
+            submitBtn.innerHTML = '<span>⏳ 雲端連線傳送中...</span>';
+            submitBtn.disabled = true;
+
+            try {
+                // 1. 蒐集表單資料
+                const studentName = document.querySelector('input[name="student_name"]').value;
+                const phone = document.querySelector('input[name="phone"]').value;
+                const grade = document.querySelector('select[name="grade"]').value;
+                
+                const schoolSelect = document.getElementById('schoolSelect').value;
+                const finalSchool = schoolSelect === '其他' ? document.getElementById('otherSchoolInput').value : schoolSelect;
+
+                // 組合打勾的課程
+                const checkboxes = document.querySelectorAll('input[name="courses"]:checked');
+                let coursesArr = [];
+                checkboxes.forEach(cb => coursesArr.push(cb.value));
+                const finalCourse = coursesArr.length > 0 ? (grade + "｜" + coursesArr.join('、')) : grade;
+
+                // 2. 建立時間戳記
+                const now = new Date();
+                const month = now.getMonth() + 1;
+                const day = now.getDate();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const timestamp = `${month}/${day} ${hours}:${minutes}`;
+
+                // 3. 建立符合您「管理系統」格式的資料
+                const newTrackingRecord = {
+                    id: Date.now(),
+                    name: studentName,
+                    inquirer: "家長(線上表單)", 
+                    referrer: "", 
+                    course: finalCourse,
+                    phone: phone,
+                    trialDate: "未定",
+                    teacher: "未指定",
+                    status: "初次諮詢",
+                    log: `<strong style="color:#2563EB;">[系統自動帶入]</strong> ${timestamp} - 透過官網招生專區填單。就讀學校：${finalSchool}`
+                };
+
+                // 4. 從 Firebase 抓取現有的系統資料 (admissionSystemData)
+                const docRef = doc(db, "settings", "admissionSystemData");
+                const docSnap = await getDoc(docRef);
+                
+                let admissionData = { tracking: [], enrolled: [], referrerBonus: {} };
+                if (docSnap.exists()) {
+                    admissionData = docSnap.data();
+                }
+
+                // 5. 將新名單加入追蹤區塊 (tracking) 中
+                if (!admissionData.tracking) {
+                    admissionData.tracking = [];
+                }
+                admissionData.tracking.push(newTrackingRecord);
+
+                // 6. 覆寫存回 Firebase 雲端
+                await setDoc(docRef, admissionData);
+
+                // 7. 完成後的動作
+                alert("問班資料已成功送出！我們將有專人盡快與您聯繫。");
+                
+                document.getElementById('inquiryForm').reset();
+                document.getElementById('otherSchoolDiv').classList.add('hidden'); // 把其他的欄位收起來
+
+            } catch (error) {
+                console.error("同步雲端失敗：", error);
+                alert("資料送出失敗，請確認網路狀態，或直接來電補習班洽詢！");
+            } finally {
+                // 恢復按鈕狀態
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
