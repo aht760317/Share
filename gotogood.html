@@ -351,7 +351,7 @@
         <div id="newInquiryTab" class="tab-content">
             <div class="card">
                 <h3>✨ 新同學問班列表 (待處理)</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">家長填寫表單後，資料會優先匯入至此。點擊「轉入追蹤」後，即可在「尚未進班」看板完善資料。</p>
+                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">家長填寫表單後，資料會優先匯入至此。點擊「轉入追蹤」後，必須填寫負責老師才能順利轉入「尚未進班」追蹤看板。</p>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -421,10 +421,10 @@
         </div>
     </div>
 
-    <!-- 統一的學生資料編輯 Modal (用於「完善資料」與「已通知」) -->
+    <!-- 轉入追蹤與完善資料時必填「負責追蹤老師」的 Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><span id="editModalTitle" style="font-size: 1.05rem;">✏️ 完善學生招生資料</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeEditModal()">&times;</button></div>
+            <div class="modal-header"><span id="editModalTitle" style="font-size: 1.05rem;">✏️ 記錄通知與完善招生資料</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeEditModal()">&times;</button></div>
             <form id="editForm">
                 <div class="form-blocks-grid">
                     <div class="form-block-item">
@@ -456,9 +456,9 @@
                             <option value="已正式進班">已正式進班</option>
                         </select>
                     </div>
-                    <div class="form-block-item">
-                        <label>負責追蹤老師</label>
-                        <input type="text" id="editTeacher">
+                    <div class="form-block-item" style="border: 2px solid var(--accent-color); background: #EFF6FF;">
+                        <label style="color: var(--accent-color);">負責追蹤老師 (必填)</label>
+                        <input type="text" id="editTeacher" required placeholder="例如：陳老師 (轉入必填)">
                     </div>
                     <div class="form-block-item">
                         <label>推薦人</label>
@@ -820,7 +820,7 @@
                     <td>${item.course || '未提供'}</td>
                     <td>${item.phone || '未提供'}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="confirmProcessNewInquiry(${item.id}, '${item.name}')">轉入追蹤 ➔</button>
+                        <button class="btn btn-sm btn-primary" onclick="openInquiryToTrackingModal(${item.id})">轉入追蹤 ➔</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteInquiry(${item.id})" style="margin-left: 0.25rem;">🗑️</button>
                     </td>
                 `;
@@ -828,35 +828,26 @@
             });
         }
 
-        window.confirmProcessNewInquiry = function(id, name) {
-            if (confirm(`確定要將新同學「${name}」轉入尚未進班追蹤區塊嗎？`)) {
-                processNewInquiry(id);
-            }
-        }
+        window.openInquiryToTrackingModal = function(id) {
+            const inq = window.admissionData.inquiries.find(x => x.id === id);
+            if (!inq) return;
 
-        window.processNewInquiry = function(id) {
-            const index = window.admissionData.inquiries.findIndex(x => x.id === id);
-            if (index > -1) {
-                const inq = window.admissionData.inquiries[index];
-                const newItem = {
-                    id: Date.now(),
-                    name: inq.name,
-                    inquirer: inq.inquirer || '',
-                    referrer: '',
-                    course: inq.course || '',
-                    phone: inq.phone || '',
-                    trialDate: '',
-                    teacher: '未指定',
-                    status: '初次諮詢',
-                    log: `<strong style="color:var(--accent-color);">[系統]</strong> ${getFormattedTimestamp()} - 從新問班系統匯入建立`
-                };
-                window.admissionData.tracking.push(newItem);
-                window.admissionData.inquiries.splice(index, 1);
-                window.saveAdmissionCloud();
-                renderAllViews();
-                alert('已成功將新問班資料轉入「尚未進班」追蹤區塊！');
-                document.querySelector('.tab-btn[onclick*="trackingTab"]').click();
-            }
+            // 暫時建立一個假 ID 進行編輯，確認填寫負責老師後再正式存入 tracking
+            window.currentEditingId = id;
+            isEditingEnrolled = false;
+
+            document.getElementById('editModalTitle').innerText = '✏️ 記錄通知與完善招生資料 (轉入追蹤)';
+            document.getElementById('editName').value = inq.name;
+            document.getElementById('editInquirer').value = inq.inquirer || '';
+            document.getElementById('editReferrer').value = '';
+            document.getElementById('editCourse').value = inq.course || '';
+            document.getElementById('editPhone').value = inq.phone || '';
+            document.getElementById('editDate').value = '';
+            document.getElementById('editTeacher').value = '';
+            document.getElementById('editStatusSelect').value = '初次諮詢';
+            document.getElementById('editLog').value = `[系統] ${getFormattedTimestamp()} - 從新問班系統匯入建立`;
+
+            document.getElementById('editModal').style.display = 'flex';
         }
 
         window.deleteInquiry = function(id) {
@@ -1082,11 +1073,18 @@
             const course = document.getElementById('editCourse').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
             let date = document.getElementById('editDate').value || '未定';
-            const teacher = document.getElementById('editTeacher').value.trim() || '未指定';
+            const teacher = document.getElementById('editTeacher').value.trim();
             const status = document.getElementById('editStatusSelect').value;
             let log = document.getElementById('editLog').value.trim().replace(/\n/g, '<br>');
 
             if(!name) { alert('姓名不能為空！'); return; }
+
+            // 檢查負責追蹤老師是否空白（特別是從新問班轉入或編輯時）
+            if (!teacher || teacher === '未指定') {
+                alert('⚠️ 為了教學行政管理，負責追蹤老師為必填欄位，請務必填寫！');
+                document.getElementById('editTeacher').focus();
+                return;
+            }
 
             if (log.includes('[')) {
                 log = log.replace(/\[.*?\]/, `[${teacher}]`);
@@ -1094,6 +1092,35 @@
                 log = `[${teacher}] ` + log;
             }
 
+            // 判斷當前編輯的對象是從 inquiries 轉入，還是原本就在 tracking / enrolled 裡面
+            const inquiryIndex = window.admissionData.inquiries.findIndex(x => x.id === window.currentEditingId);
+
+            if (inquiryIndex > -1) {
+                // 從新問班轉入的流程
+                const inq = window.admissionData.inquiries[inquiryIndex];
+                const newItem = {
+                    id: Date.now(),
+                    name: name,
+                    inquirer: inquirer,
+                    referrer: referrer,
+                    course: course,
+                    phone: phone,
+                    trialDate: date,
+                    teacher: teacher,
+                    status: status,
+                    log: log
+                };
+                window.admissionData.tracking.push(newItem);
+                window.admissionData.inquiries.splice(inquiryIndex, 1);
+                window.saveAdmissionCloud();
+                renderAllViews();
+                closeEditModal();
+                alert('已成功將新問班資料轉入「尚未進班」追蹤區塊！');
+                document.querySelector('.tab-btn[onclick*="trackingTab"]').click();
+                return;
+            }
+
+            // 一般編輯儲存流程
             const sourceList = isEditingEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
             const itemIndex = sourceList.findIndex(x => x.id === window.currentEditingId);
 
