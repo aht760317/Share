@@ -421,7 +421,7 @@
         </div>
     </div>
 
-    <!-- 統一的學生資料編輯 Modal (支援多筆聯繫紀錄新增與下拉式多筆有意願課程) -->
+    <!-- 統一的學生資料編輯 Modal (支援多筆聯繫紀錄新增與下拉式多筆有意願課程，並具備退回按鈕) -->
     <div id="editModal" class="modal">
         <div class="modal-content" style="max-width: 680px;">
             <div class="modal-header"><span id="editModalTitle" style="font-size: 1.05rem;">✏️ 記錄通知與完善招生資料</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeEditModal()">&times;</button></div>
@@ -443,7 +443,6 @@
                             <button type="button" class="btn btn-sm" style="background-color: #D97706; color: white; padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="appendCourseSelectRow()">➕ 增加課程</button>
                         </div>
                         <div id="courseSelectsContainer" style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem;"></div>
-                        <!-- 隱藏實際儲存的欄位，供後端/儲存邏輯讀取 -->
                         <input type="hidden" id="editCourse">
                     </div>
 
@@ -480,10 +479,7 @@
                         <label style="margin-bottom: 0;">追蹤紀錄歷程與多次聯繫</label>
                         <button type="button" class="btn btn-sm btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.78rem;" onclick="appendNewContactRow()">➕ 增加聯繫紀錄</button>
                     </div>
-                    <!-- 歷史固定歷程顯示 (唯讀) -->
                     <div id="editLogDisplay" style="background: #FFF; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; margin-bottom: 0.6rem; max-height: 120px; overflow-y: auto;"></div>
-                    
-                    <!-- 動態增加新聯繫紀錄的容器 -->
                     <div id="newContactsContainer" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
                 </div>
 
@@ -491,6 +487,7 @@
                 <div style="display: flex; gap: 0.4rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem;" onclick="deleteStudentRecord()">🗑️ 刪除</button>
                     <div style="display: flex; gap: 0.4rem;">
+                        <button type="button" id="returnToTrackingBtn" class="btn btn-sm btn-warning" style="display: none; font-size: 0.85rem; color: white;" onclick="returnStudentToTracking()">↩️ 退回尚未進班</button>
                         <button type="button" class="btn btn-sm" style="background-color: var(--text-muted); font-size: 0.85rem;" onclick="closeEditModal()">取消</button>
                         <button type="button" class="btn btn-sm btn-success" style="font-size: 0.85rem;" onclick="saveEditModal()">儲存</button>
                     </div>
@@ -882,8 +879,10 @@
             document.getElementById('editLogDisplay').innerHTML = `[系統] ${getFormattedTimestamp()} - 從新問班系統匯入建立`;
             document.getElementById('newContactsContainer').innerHTML = '';
 
-            // 建立多筆下拉課程選單
             buildCourseSelects(inq.course || '');
+
+            // 正式進班才顯示退回按鈕，轉入追蹤時隱藏
+            document.getElementById('returnToTrackingBtn').style.display = 'none';
 
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -1057,14 +1056,12 @@
             alert('獎金發放紀錄已成功儲存！');
         }
 
-        // 建立課程下拉選單列
         function buildCourseSelects(courseString) {
             const container = document.getElementById('courseSelectsContainer');
             container.innerHTML = '';
 
-            // 將原本儲存的課程字串 (如 "國中英文班, 安親課輔班") 拆解為陣列
             let courses = courseString ? courseString.split(/[,，、]\s*/).map(s => s.trim()).filter(Boolean) : [];
-            if (courses.length === 0) courses = ['']; // 預設至少顯示一行
+            if (courses.length === 0) courses = [''];
 
             courses.forEach(c => {
                 addCourseSelectRow(c);
@@ -1120,7 +1117,36 @@
             document.getElementById('newContactsContainer').innerHTML = '';
 
             buildCourseSelects(item.course || '');
+
+            // 若在正式進班名單點擊修改，顯示「退回尚未進班」按鈕；若在尚未進班點擊則隱藏
+            const returnBtn = document.getElementById('returnToTrackingBtn');
+            if (isEnrolled) {
+                returnBtn.style.display = 'inline-block';
+            } else {
+                returnBtn.style.display = 'none';
+            }
+
             document.getElementById('editModal').style.display = 'flex';
+        }
+
+        // 點擊退回按鈕將學員從正式進班移回尚未進班
+        window.returnStudentToTracking = function() {
+            if (!window.currentEditingId || !isEditingEnrolled) return;
+            const enrolledIndex = window.admissionData.enrolled.findIndex(x => x.id === window.currentEditingId);
+            if (enrolledIndex > -1) {
+                const item = window.admissionData.enrolled[enrolledIndex];
+                if (confirm(`⚠️ 確定要將「${item.name}」退回至尚未進班追蹤區塊嗎？`)) {
+                    window.admissionData.enrolled.splice(enrolledIndex, 1);
+                    item.status = '試聽完成持續追蹤';
+                    const timestamp = getFormattedTimestamp();
+                    item.log += `<br><span style="color:var(--warning-color);">[${timestamp} 主任退回尚未進班]</span>`;
+                    window.admissionData.tracking.push(item);
+                    window.saveAdmissionCloud();
+                    renderAllViews();
+                    closeEditModal();
+                    alert('已成功將學員退回至尚未進班追蹤區塊！');
+                }
+            }
         }
 
         // 動態新增一次聯繫紀錄列
