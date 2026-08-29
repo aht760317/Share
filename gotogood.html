@@ -412,18 +412,31 @@
                 </form>
             </div>
 
-            <!-- 問題清單表格 -->
+            <!-- 新增：歷史已結案案件查詢與新老師交接專區 -->
+            <div class="card" style="background: #F8FAFC; border: 1.5px dashed var(--accent-color);">
+                <h3>🔍 查詢學生已結案歷史問題 (新老師交接專區)</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">輸入學生姓名，即可快速調閱該生過去所有經主任審核通過的處理紀錄與親師對話，幫助新接手老師迅速掌握狀況！</p>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem;">
+                    <input type="text" id="bridgeSearchStudentInput" placeholder="請輸入學生姓名 (例如：吳典恩)..." style="flex: 1; min-width: 240px; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem; background: #fff;">
+                    <button type="button" class="btn btn-sm" style="background-color: var(--accent-color); padding: 0.65rem 1.25rem;" onclick="searchApprovedBridgeStudent()">🔍 查詢學生歷史</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="clearBridgeSearch()" style="padding: 0.65rem 1rem;">顯示全部未結案</button>
+                </div>
+                <div id="bridgeSearchResultContainer" style="display: none; background: #fff; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+                    <!-- 查詢結果動態生成 -->
+                </div>
+            </div>
+
+            <!-- 尚未結案清單表格 -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                    <h3 style="margin-bottom: 0;">📋 安心橋問題回報與處理追蹤清單</h3>
+                    <h3 style="margin-bottom: 0;">📋 安心橋尚未結案追蹤清單 (處理中 / 待批考)</h3>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">狀態篩選：</label>
                         <select id="bridgeFilterStatus" onchange="renderBridgeTable()" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
-                            <option value="all">全部狀態</option>
+                            <option value="all">全部尚未結案</option>
                             <option value="pending">待處理</option>
                             <option value="processing">處理中</option>
                             <option value="pending_review">待主任批考</option>
-                            <option value="approved">已結案(批考通過)</option>
                             <option value="rejected">已退回</option>
                         </select>
                     </div>
@@ -796,7 +809,7 @@
 
             const newBridge = {
                 id: `ISSUE-${dateStr}-${randomNum}`,
-                studentName: '林小美 (模擬回報)',
+                studentName: '林小美',
                 className: '斗六顧德補習班',
                 parentName: '林媽媽',
                 issueCategory: '生活常規',
@@ -1214,7 +1227,7 @@
         window.openReferrerRecordModal = function(recordKey, studentName, referrerName, courseName) {
             let store = window.admissionData.referrerBonus[recordKey];
 
-            document.getElementById('referrerModalTitle শক্তির字眼').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}] 之獎金管理`;
+            document.getElementById('referrerModalTitle').innerText = `🎁 推薦人：${referrerName} 介紹 [${studentName}] 之獎金管理`;
 
             let html = `
                 <div style="margin-bottom: 1rem; background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
@@ -1394,6 +1407,10 @@
                 if (item.status === 'pending_review') reviewCount++;
                 if (item.status === 'approved') approvedCount++;
 
+                // 只顯示尚未結案的項目 (排除 approved)
+                if (item.status === 'approved') return;
+
+                // 狀態篩選
                 if (filterStatus !== 'all' && item.status !== filterStatus) return;
 
                 let badgeHtml = '';
@@ -1401,7 +1418,6 @@
                     case 'pending': badgeHtml = '<span class="badge badge-pending">待處理</span>'; break;
                     case 'processing': badgeHtml = '<span class="badge badge-processing">處理中</span>'; break;
                     case 'pending_review': badgeHtml = '<span class="badge badge-review">待主任批考</span>'; break;
-                    case 'approved': badgeHtml = '<span class="badge badge-approved">已結案(通過)</span>'; break;
                     case 'rejected': badgeHtml = '<span class="badge badge-rejected">已退回</span>'; break;
                 }
 
@@ -1411,8 +1427,6 @@
                         actionHtml += `<button class="btn btn-sm" onclick="openBridgeSolveModal('${item.id}')">填寫處理</button>`;
                     } else if (item.status === 'pending_review') {
                         actionHtml += `<span style="color:var(--text-muted); font-size:0.85rem;">等待主任審核中</span>`;
-                    } else {
-                        actionHtml += `<span style="color:var(--success-color); font-size:0.85rem;">已結案完畢</span>`;
                     }
                 } else { // Director role
                     if (item.status === 'pending_review') {
@@ -1438,10 +1452,57 @@
                 tbody.appendChild(tr);
             });
 
+            if (tbody.innerHTML === '') {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">目前沒有符合條件的尚未結案事件</td></tr>`;
+            }
+
             document.getElementById('bridgeStatActive').innerText = activeCount;
             document.getElementById('bridgeStatReview').innerText = reviewCount;
             document.getElementById('bridgeStatApproved').innerText = approvedCount;
             checkAlerts();
+        }
+
+        // 新老師交接專區：查詢學生已結案歷史問題
+        window.searchApprovedBridgeStudent = function() {
+            const query = document.getElementById('bridgeSearchStudentInput').value.trim();
+            const container = document.getElementById('bridgeSearchResultContainer');
+            if (!query) {
+                alert('請輸入要查詢的學生姓名！');
+                return;
+            }
+
+            const issues = window.admissionData.bridgeIssues || [];
+            // 找出該學生且狀態為 approved (已結案批考通過) 的歷史紀錄
+            const matched = issues.filter(i => i.studentName.includes(query) && i.status === 'approved');
+
+            container.style.display = 'block';
+            if (matched.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 10px;">找不到 「${query}」 的已結案歷史紀錄。</p>`;
+                return;
+            }
+
+            let html = `<h4 style="color: var(--accent-color); margin-bottom: 0.75rem;">📖 「${query}」 的歷史已結案紀錄 (${matched.length} 筆)：</h4>`;
+            matched.forEach((item, idx) => {
+                html += `
+                    <div style="background: #F8FAFC; border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.95rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <strong>#${idx+1} [${item.issueCategory}] 班別：${item.className}</strong>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">回報時間：${item.reportedAt}</span>
+                        </div>
+                        <p style="margin-bottom: 0.3rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
+                        <p style="margin-bottom: 0.3rem; color: var(--accent-color);"><strong>老師處理方案：</strong>${item.teacherSolution || '無'}</p>
+                        <p style="color: var(--success-color); font-weight: 600;"><strong>主任批語/結案指示：</strong>${item.directorComment || '已通過結案'}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.clearBridgeSearch = function() {
+            document.getElementById('bridgeSearchStudentInput').value = '';
+            document.getElementById('bridgeSearchResultContainer').style.display = 'none';
+            document.getElementById('bridgeSearchResultContainer').innerHTML = '';
+            renderBridgeTable();
         }
 
         window.openBridgeSolveModal = function(id) {
@@ -1481,7 +1542,7 @@
 
         window.submitBridgeReviewAction = function(actionStatus) {
             const id = document.getElementById('bridgeReviewId').value;
-            const comment = document.getElementById('bridgeDirectorCommentInput').value;
+            const comment = document.getElementById('bridgeDirectorCommentInput5'].value || document.getElementById('bridgeDirectorCommentInput').value;
 
             const item = window.admissionData.bridgeIssues.find(i => i.id === id);
             if (item) {
@@ -1491,7 +1552,7 @@
                 window.saveAdmissionCloud();
                 closeBridgeModal('bridgeReviewModal');
                 renderBridgeTable();
-                alert(actionStatus === 'approved' ? '已完成批考並正式結案！' : '已將案件退回給老師修正。');
+                alert(actionStatus === 'approved' ? '已完成批考並正式結案！已自動歸檔至歷史查詢區。' : '已將案件退回給老師修正。');
             }
         }
 
