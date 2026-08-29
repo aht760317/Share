@@ -663,7 +663,7 @@
 <!-- 引入 Firebase 程式碼與自動同步邏輯 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -1526,7 +1526,7 @@
             displayPeriod = yMonth;
         }
 
-        // 檢查是否已有相同學生且相同期間的未繳費單據，若有則直接合併項目
+        // 自動合併相同學生且相同收費期間的未繳費單據
         const existingBill = window.bills.find(b => !b.isPaid && b.studentName === window.currentStudent && (b.periodStr === displayPeriod || b.yearMonth === yMonth));
 
         if (existingBill) {
@@ -2171,6 +2171,15 @@
             </tr>
         `).join('');
 
+        const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
+            <div style="margin-top: 8px; font-size: 8.5px; line-height: 1.2; border-top: 1px solid #000; padding-top: 4px; color: #333;">
+                <strong>【退費規定】</strong>補習班學生繳納費用後，因故離班者，應依下列規定辦理退費：<br>
+                1. 實際上課日前離班，預繳在全期10%以下者不退(逾1,000元者退還)，超過10%者全數退還。<br>
+                2. 實際開課未逾全期1/3者，退還半數；已達1/2者不予退還。<br>
+                3. 代辦費應全額退還(已購置成品者發給成品)。因故未能開班者全額退還。
+            </div>
+        ` : '';
+
         let html = `
             <div class="receipt-box">
                 ${isReceipt ? '<div class="watermark">繳費完成</div>' : ''}
@@ -2191,9 +2200,9 @@
                 <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr style="background: #f0f0f0;">
-                            <th style="border: 1px solid #000; padding: 5px 8px; width:10%;">項次</th>
-                            <th style="border: 1px solid #000; padding: 5px 8px; width:65%;">項目名稱</th>
-                            <th style="border: 1px solid #000; padding: 5px 8px; width:25%;">金額</th>
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:10%;">項次</th>
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:65%;">項目名稱</th>
+                            <th style="border: 1px solid #000; padding: 4px 6px; width:25%;">金額</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
@@ -2203,6 +2212,7 @@
 
         if(isReceipt) {
             html += `<div class="stamp-area"><div>家長簽名：___________________</div><div>收款經手人：<strong>${window.config.handler}</strong></div></div>`;
+            html += refundPolicyHtml;
         } else {
             html += `<div style="margin-top: 10px; font-size: 12px; color: #444;">備註：請家長確認明細無誤後，將費用交由學生帶回補習班，謝謝您的配合。</div>`;
         }
