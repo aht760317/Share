@@ -305,7 +305,7 @@
                             <th style="width:105px;">單據年月</th>
                             <th>班級 / 姓名</th>
                             <th style="width:90px;">總金額</th>
-                            <th style="width:75px; text-align:center;">狀態</th>
+                            <th style="width:115px; text-align:center;">狀態 / 繳費日期</th>
                             <th style="width:190px;">操作</th>
                         </tr>
                     </thead>
@@ -324,7 +324,7 @@
                             <th style="width:150px;">單據區間</th>
                             <th>班級 / 姓名</th>
                             <th style="width:90px;">總金額</th>
-                            <th style="width:75px; text-align:center;">狀態</th>
+                            <th style="width:115px; text-align:center;">狀態 / 繳費日期</th>
                             <th style="width:190px;">操作</th>
                         </tr>
                     </thead>
@@ -875,16 +875,6 @@
         } catch (e) { console.error(e); }
     }
 
-    window.verifyAndDelete = function(actionDescription, callback) {
-        const pwd = prompt(`🔒 系統安全防護\n您正在執行「${actionDescription}」\n請輸入安全密碼以繼續 (0618)：`);
-        if (pwd === null) return;
-        if (pwd === '0618') {
-            callback();
-        } else {
-            alert('❌ 密碼錯誤！動作已取消。');
-        }
-    }
-
     window.getCurrentMonthStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1238,7 +1228,7 @@
         document.getElementById('quickItemModal').style.display = 'flex';
     }
 
-    window.saveQuickItemFromModal = function() {
+    window.saveQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
         const name = document.getElementById('modalQuickItemNameInput').value.trim();
         const priceVal = document.getElementById('modalQuickItemPriceInput').value;
@@ -1246,24 +1236,22 @@
 
         if (!name) { alert('項目名稱不能為空！'); return; }
 
-        verifyAndDelete(`修改快捷項目「${window.quickItems[index].name}」`, async () => {
-            window.quickItems[index] = { name, price };
-            await saveQuickItemsToCloud();
-            renderQuickItemConfigList();
-            closeModal('quickItemModal');
-            alert('✏️ 快捷項目修改成功！');
-        });
+        window.quickItems[index] = { name, price };
+        await saveQuickItemsToCloud();
+        renderQuickItemConfigList();
+        closeModal('quickItemModal');
+        alert('✏️ 快捷項目修改成功！');
     }
 
-    window.deleteQuickItemFromModal = function() {
+    window.deleteQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
         const itemName = window.quickItems[index].name;
-        verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
+        if (confirm(`確定要刪除快捷項目「${itemName}」嗎？`)) {
             window.quickItems.splice(index, 1);
             await saveQuickItemsToCloud();
             renderQuickItemConfigList();
             closeModal('quickItemModal');
-        });
+        }
     }
 
     window.renderClassGrid = function() {
@@ -1569,7 +1557,14 @@
         let juniorCount = 0;
 
         filteredBills.forEach(bill => {
-            const statusHtml = bill.isPaid ? `<span class="status-badge status-paid">✅ 已繳</span>` : `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+            let statusHtml = '';
+            if (bill.isPaid) {
+                const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
+                statusHtml = `<span class="status-badge status-paid">✅ 已繳</span><br><span style="font-size:11px; color:#047857; font-weight:bold; white-space:nowrap;">${pDate}</span>`;
+            } else {
+                statusHtml = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+            }
+
             const displayMonth = bill.periodStr || bill.yearMonth;
             
             const isJr = window.isJuniorHigh(bill.className);
@@ -1850,35 +1845,32 @@
     }
 
     window.cancelPayment = async function(firestoreId, id) {
-        verifyAndDelete(`取消繳費紀錄`, async () => {
-            const bill = window.bills.find(b => b.id === id);
-            if(bill) {
-                bill.isPaid = false;
-                bill.paidDate = null;
-                try {
-                    await setDoc(doc(db, "bills", firestoreId), {
-                        id: bill.id,
-                        date: bill.date,
-                        yearMonth: bill.yearMonth,
-                        periodStr: bill.periodStr,
-                        className: bill.className,
-                        studentName: bill.studentName,
-                        items: bill.items,
-                        total: bill.total,
-                        isPaid: false,
-                        paidDate: null
-                    });
-                    renderRecords();
-                    alert('已成功取消繳費，恢復為「未繳費」狀態！');
-                } catch (e) {
-                    console.error(e);
-                }
+        const bill = window.bills.find(b => b.id === id);
+        if(bill) {
+            bill.isPaid = false;
+            bill.paidDate = null;
+            try {
+                await setDoc(doc(db, "bills", firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: false,
+                    paidDate: null
+                });
+                renderRecords();
+            } catch (e) {
+                console.error(e);
             }
-        });
+        }
     }
 
-    window.promptDeleteBill = function(firestoreId, id, studentName) {
-        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
+    window.promptDeleteBill = async function(firestoreId, id, studentName) {
+        if (confirm(`確定要刪除學生「${studentName}」的繳費紀錄嗎？`)) {
             try {
                 await deleteDoc(doc(db, "bills", firestoreId));
                 window.bills = window.bills.filter(b => b.id !== id);
@@ -1886,7 +1878,7 @@
             } catch (e) {
                 console.error(e);
             }
-        });
+        }
     }
 
     window.openReportModal = function(type) {
@@ -1927,15 +1919,15 @@
                         <span>報表日期：<strong>${dateVal}</strong></span>
                         <span>列印時間：${new Date().toLocaleString()}</span>
                     </div>
-                    <table class="report-table">
+                    <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                         <thead>
-                            <tr>
-                                <th style="width:5%;">項次</th>
-                                <th style="width:16%;">班級</th>
-                                <th style="width:14%;">學生姓名</th>
-                                <th style="width:20%;">繳費單期間</th>
-                                <th style="width:30%;">繳費明細</th>
-                                <th style="width:15%;">實收金額</th>
+                            <tr style="background: #f0f0f0;">
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:8%;">項次</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:20%;">班級</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">學生姓名</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:22%;">繳費單期間</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:20%;">繳費明細</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">實收金額</th>
                             </tr>
                         </thead>
                         <tbody>${tableRows}</tbody>
@@ -1988,16 +1980,16 @@
                         <span>報表月份：<strong>${monthVal}</strong></span>
                         <span>列印時間：${new Date().toLocaleString()}</span>
                     </div>
-                    <table class="report-table">
+                    <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                         <thead>
-                            <tr>
-                                <th style="width:5%;">項次</th>
-                                <th style="width:12%;">繳費日期</th>
-                                <th style="width:15%;">班級</th>
-                                <th style="width:13%;">學生姓名</th>
-                                <th style="width:15%;">單據期間</th>
-                                <th style="width:25%;">繳費明細</th>
-                                <th style="width:15%;">實收金額</th>
+                            <tr style="background: #f0f0f0;">
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:7%;">項次</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">繳費日期</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:18%;">班級</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:13%;">學生姓名</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:17%;">單據期間</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">繳費明細</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">實收金額</th>
                             </tr>
                         </thead>
                         <tbody>${tableRows}</tbody>
@@ -2051,16 +2043,16 @@
                         <span>統計區間：<strong>${startVal} ~ ${endVal}</strong></span>
                         <span>列印時間：${new Date().toLocaleString()}</span>
                     </div>
-                    <table class="report-table">
+                    <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                         <thead>
-                            <tr>
-                                <th style="width:5%;">項次</th>
-                                <th style="width:12%;">繳費日期</th>
-                                <th style="width:15%;">班級</th>
-                                <th style="width:13%;">學生姓名</th>
-                                <th style="width:15%;">單據期間</th>
-                                <th style="width:25%;">繳費明細</th>
-                                <th style="width:15%;">實收金額</th>
+                            <tr style="background: #f0f0f0;">
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:7%;">項次</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">繳費日期</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:18%;">班級</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:13%;">學生姓名</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:17%;">單據期間</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">繳費明細</th>
+                                <th style="border: 1px solid #000; padding: 6px 8px; width:15%;">實收金額</th>
                             </tr>
                         </thead>
                         <tbody>${tableRows}</tbody>
@@ -2109,9 +2101,13 @@
                     <div>姓名：<strong>${bill.studentName}</strong></div>
                     <div>收費期間：<strong style="color:var(--accent);">${displayMonth}</strong></div>
                 </div>
-                <table class="receipt-table">
+                <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                     <thead>
-                        <tr><th style="width:10%;">項次</th><th style="width:65%;">項目名稱</th><th style="width:25%;">金額</th></tr>
+                        <tr style="background: #f0f0f0;">
+                            <th style="border: 1px solid #000; padding: 5px 8px; width:10%;">項次</th>
+                            <th style="border: 1px solid #000; padding: 5px 8px; width:65%;">項目名稱</th>
+                            <th style="border: 1px solid #000; padding: 5px 8px; width:25%;">金額</th>
+                        </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
                 </table>
