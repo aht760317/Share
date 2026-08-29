@@ -359,7 +359,7 @@
                                 <th style="color: var(--accent-color);">問班日期與時間</th>
                                 <th>學生姓名</th>
                                 <th>詢問者</th>
-                                <th>詢問課程</th>
+                                <th>詢問課程 (家長勾選)</th>
                                 <th>聯絡電話</th>
                                 <th>操作</th>
                             </tr>
@@ -435,9 +435,12 @@
                         <label>詢問者</label>
                         <input type="text" id="editInquirer">
                     </div>
-                    <div class="form-block-item">
-                        <label>有意願課程</label>
-                        <input type="text" id="editCourse">
+                    <div class="form-block-item" style="grid-column: span 2; background: #FEF3C7; border-color: #F59E0B;">
+                        <label style="color: #B45309;">有意願課程 (支援複選與自訂勾選)</label>
+                        <div id="courseCheckboxesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.4rem; margin-bottom: 0.5rem; background: #FFF; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem;">
+                            <!-- 動態生成課程複選框 -->
+                        </div>
+                        <input type="text" id="editCourse" placeholder="或直接手動輸入有意願課程..." style="background: #FFF;">
                     </div>
                     <div class="form-block-item">
                         <label>聯絡電話</label>
@@ -720,6 +723,13 @@
         let currentActiveHistoryItem = null;
         let activeBonusRecordKey = null;
 
+        const AVAILABLE_COURSES = [
+            "小兒童英文班", "大兒童英文班", "國中英文班", "全民英檢班",
+            "小一正音班", "安親課輔班", "國小數學班", "國小英文班", "國小作文班",
+            "國中國文(帝都國文)", "國中數學班", "國中英文班", "國中自然班",
+            "寒暑假冬夏令營", "國三會考班(全科)"
+        ];
+
         function getFormattedTimestamp() {
             const now = new Date();
             const month = now.getMonth() + 1;
@@ -769,7 +779,7 @@
                 askDate: askTime,
                 name: "陳小弟",
                 inquirer: "陳爸爸",
-                course: "國一數學",
+                course: "國中英文班, 安親課輔班",
                 phone: "0987-654321"
             };
             if(!window.admissionData.inquiries) window.admissionData.inquiries = [];
@@ -827,7 +837,7 @@
                     <td style="color: var(--accent-color); font-weight: 600; font-size: 0.88rem;">${item.askDate || '未記錄'}</td>
                     <td style="font-size: 0.95rem;"><strong>${item.name}</strong></td>
                     <td>${item.inquirer || '未提供'}</td>
-                    <td>${item.course || '未提供'}</td>
+                    <td><span style="color: var(--accent-color); font-weight: 600;">${item.course || '未提供'}</span></td>
                     <td>${item.phone || '未提供'}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="openInquiryToTrackingModal(${item.id})">轉入追蹤 ➔</button>
@@ -857,6 +867,7 @@
             document.getElementById('editLogDisplay').innerHTML = `[系統] ${getFormattedTimestamp()} - 從新問班系統匯入建立`;
             document.getElementById('newContactsContainer').innerHTML = '';
 
+            buildCourseCheckboxes(inq.course || '');
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -1029,6 +1040,31 @@
             alert('獎金發放紀錄已成功儲存！');
         }
 
+        function buildCourseCheckboxes(currentSelectedCourses) {
+            const container = document.getElementById('courseCheckboxesContainer');
+            container.innerHTML = '';
+            
+            // 將目前已選的課程字串轉為陣列 (以逗號或頓號分隔)
+            const selectedList = currentSelectedCourses ? currentSelectedCourses.split(/[,，、]\s*/).map(s => s.trim()) : [];
+
+            AVAILABLE_COURSES.forEach(course => {
+                const isChecked = selectedList.includes(course);
+                const label = document.createElement('label');
+                label.style.cssText = "display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; cursor: pointer; font-weight: 500;";
+                label.innerHTML = `
+                    <input type="checkbox" class="course-chk" value="${course}" ${isChecked ? 'checked' : ''} onchange="syncCheckboxesToInput()" style="width: 14px; height: 14px; cursor: pointer;">
+                    ${course}
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        window.syncCheckboxesToInput = function() {
+            const checkboxes = document.querySelectorAll('.course-chk:checked');
+            const selectedArr = Array.from(checkboxes).map(chk => chk.value);
+            document.getElementById('editCourse').value = selectedArr.join(', ');
+        }
+
         window.openEditModalById = function(id, isEnrolled) {
             isEditingEnrolled = isEnrolled;
             const list = isEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
@@ -1052,6 +1088,7 @@
             document.getElementById('editLogDisplay').innerHTML = item.log;
             document.getElementById('newContactsContainer').innerHTML = '';
 
+            buildCourseCheckboxes(item.course || '');
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -1658,7 +1695,7 @@
         window.submitBridgeReviewAction = function(actionStatus) {
             const id = document.getElementById('bridgeReviewId').value;
             const comment = document.getElementById('bridgeDirectorCommentInput').value;
-            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
+            const item = window.admissionData.bridgeIssues.find(i => id);
             if (item) {
                 item.directorComment = comment;
                 item.directorReviewedAt = new Date().toLocaleString('zh-TW', { hour12: false });
