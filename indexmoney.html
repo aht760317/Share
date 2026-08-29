@@ -180,33 +180,19 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; box-sizing: border-box; }
         .modal-box { background: white; padding: 15px; border-radius: 10px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
-        /* 列印樣式 */
+        /* 列印樣式優化：表格與區塊排版，允許一頁多印緊湊排列 */
         @media screen { .print-only { display: none; } }
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; padding: 0; margin: 0; }
             
-            .receipt-box { border: 2px solid #000; padding: 15px 25px; width: 100%; max-width: 18cm; margin: 0 auto; box-sizing: border-box; position: relative; page-break-inside: avoid; background: white !important; font-size: 14px; }
-            .receipt-title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
-            .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 10px; line-height: 1.4; color: #555 !important; }
-            .receipt-header { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #000; }
-            .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-            .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 6px 10px; font-size: 14px; }
-            .receipt-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
-            .receipt-total { text-align: right; font-size: 18px; font-weight: bold; padding-top: 6px; }
-            .stamp-area { display: flex; justify-content: space-between; margin-top: 20px; font-size: 15px; align-items: flex-end; }
-            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 90px; color: rgba(0, 0, 0, 0.04); border: 6px solid rgba(0, 0, 0, 0.04); padding: 15px; font-weight: bold; z-index: -1; pointer-events: none; }
-            
-            .cut-line { text-align: center; font-size: 13px; color: #666; margin: 10px auto; border-top: 1px dashed #666; padding-top: 10px; width: 18cm; font-weight: bold; page-break-inside: avoid; }
-            .page-break { page-break-after: always; display: block; height: 0; border: none; margin: 0; padding: 0; }
-            
-            .report-box { padding: 20px; width: 100%; box-sizing: border-box; }
-            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; page-break-inside: auto; }
+            .report-box { padding: 10px; width: 100%; box-sizing: border-box; page-break-inside: auto; }
+            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; }
             .report-table tr { page-break-inside: avoid; page-break-after: auto; }
-            .report-table th, .report-table td { border: 1px solid #000; padding: 8px; font-size: 15px; }
+            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 5px 6px; font-size: 12px; }
             .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
-            .report-total { text-align: right; font-size: 22px; font-weight: bold; padding-top: 10px; border-top: 2px solid #000; }
+            .report-total { text-align: right; font-size: 15px; font-weight: bold; padding-top: 6px; border-top: 2px solid #000; }
         }
     </style>
 </head>
@@ -273,19 +259,19 @@
             <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">當日報表：</label>
-                    <input type="date" id="dailyReportDate" style="padding: 5px; width: auto;" onchange="openReportModal('daily')">
+                    <input type="date" id="dailyReportDate" style="padding: 5px; width: auto;">
                     <button class="btn-select" style="background:#F59E0B; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('daily')">🔍 查詢當日報表</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">當月報表：</label>
-                    <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;" onchange="openReportModal('monthly')">
+                    <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;">
                     <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('monthly')">🔍 查詢當月報表</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">區間報表：</label>
                     <input type="date" id="rangeReportStart" style="padding: 5px; width: auto;">
                     <span style="font-weight:bold; color:#B45309; font-size:13px;">至</span>
-                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;" onchange="openReportModal('range')">
+                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;">
                     <button class="btn-select" style="background:#B45309; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('range')">🔍 查詢區間報表</button>
                 </div>
             </div>
@@ -614,7 +600,7 @@
 
 <!-- 彈出視窗：報表預覽 Modal -->
 <div id="reportPreviewModal" class="modal-overlay" style="display: none;">
-    <div class="modal-box" style="max-width: 750px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-box" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
         <h3 style="margin-top:0; color: var(--primary); font-size: 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:8px;">
             <span>📊 財務報表查詢預覽</span>
             <button type="button" class="btn-select" style="padding: 4px 8px; font-size: 12px;" onclick="closeModal('reportPreviewModal')">✕</button>
@@ -622,7 +608,7 @@
         <div id="reportPreviewContent" style="margin: 10px 0;"></div>
         <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:10px;">
             <button class="btn-select" onclick="closeModal('reportPreviewModal')">關閉</button>
-            <button class="btn-add" style="width: auto; padding: 8px 16px; background: var(--accent);" onclick="window.print()">🖨️ 列印報表</button>
+            <button class="btn-add" style="width: auto; padding: 8px 16px; background: var(--accent);" onclick="printReportModal()">🖨️ 列印報表</button>
         </div>
     </div>
 </div>
@@ -2092,17 +2078,11 @@
         document.getElementById('reportPreviewModal').style.display = 'flex';
     };
 
-    window.printDailyReport = function() {
-        window.openReportModal('daily');
-    }
-
-    window.printMonthlyReport = function() {
-        window.openReportModal('monthly');
-    }
-
-    window.printRangeReport = function() {
-        window.openReportModal('range');
-    }
+    window.printReportModal = function() {
+        const content = document.getElementById('reportPreviewContent').innerHTML;
+        document.getElementById('printArea').innerHTML = content;
+        window.print();
+    };
 
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
         const displayMonth = bill.periodStr || bill.yearMonth;
