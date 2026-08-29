@@ -273,20 +273,20 @@
             <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">當日報表：</label>
-                    <input type="date" id="dailyReportDate" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#F59E0B; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="printDailyReport()">🖨️ 印日報表</button>
+                    <input type="date" id="dailyReportDate" style="padding: 5px; width: auto;" onchange="openReportModal('daily')">
+                    <button class="btn-select" style="background:#F59E0B; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('daily')">🔍 查詢當日報表</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">當月報表：</label>
-                    <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="printMonthlyReport()">🖨️ 印月報表</button>
+                    <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;" onchange="openReportModal('monthly')">
+                    <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('monthly')">🔍 查詢當月報表</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="font-weight:bold; color:#B45309; margin:0; font-size:13px;">區間報表：</label>
                     <input type="date" id="rangeReportStart" style="padding: 5px; width: auto;">
                     <span style="font-weight:bold; color:#B45309; font-size:13px;">至</span>
-                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#B45309; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="printRangeReport()">🖨️ 印區間報表</button>
+                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;" onchange="openReportModal('range')">
+                    <button class="btn-select" style="background:#B45309; color:white; border:none; padding: 6px 12px; font-weight:bold; font-size:13px;" onclick="openReportModal('range')">🔍 查詢區間報表</button>
                 </div>
             </div>
         </div>
@@ -608,6 +608,21 @@
         <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:10px;">
             <button class="btn-select" onclick="closeModal('billPreviewModal')">關閉</button>
             <button class="btn-add" style="width: auto; padding: 8px 16px; background: var(--accent);" onclick="printFromPreview()">🖨️ 直接列印</button>
+        </div>
+    </div>
+</div>
+
+<!-- 彈出視窗：報表預覽 Modal -->
+<div id="reportPreviewModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 750px; max-height: 90vh; overflow-y: auto;">
+        <h3 style="margin-top:0; color: var(--primary); font-size: 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:8px;">
+            <span>📊 財務報表查詢預覽</span>
+            <button type="button" class="btn-select" style="padding: 4px 8px; font-size: 12px;" onclick="closeModal('reportPreviewModal')">✕</button>
+        </h3>
+        <div id="reportPreviewContent" style="margin: 10px 0;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:10px;">
+            <button class="btn-select" onclick="closeModal('reportPreviewModal')">關閉</button>
+            <button class="btn-add" style="width: auto; padding: 8px 16px; background: var(--accent);" onclick="window.print()">🖨️ 列印報表</button>
         </div>
     </div>
 </div>
@@ -1891,194 +1906,202 @@
         });
     }
 
-    window.printDailyReport = function() {
-        const dateVal = document.getElementById('dailyReportDate').value;
-        if(!dateVal) { alert('請選擇報表日期！'); return; }
+    window.openReportModal = function(type) {
+        let html = '';
+        if (type === 'daily') {
+            const dateVal = document.getElementById('dailyReportDate').value;
+            if(!dateVal) { alert('請選擇報表日期！'); return; }
 
-        const targetBills = window.bills.filter(b => {
-            if(!b.isPaid) return false;
-            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
-            return pDate === dateVal;
-        });
+            const targetBills = window.bills.filter(b => {
+                if(!b.isPaid) return false;
+                const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+                return pDate === dateVal;
+            });
 
-        if(targetBills.length === 0) { alert(`系統中找不到 ${dateVal} 當天繳費結帳的紀錄！`); return; }
+            if(targetBills.length === 0) { alert(`系統中找不到 ${dateVal} 當天繳費結帳的紀錄！`); return; }
 
-        let totalRevenue = 0;
-        let tableRows = targetBills.map((bill, idx) => {
-            totalRevenue += bill.total;
-            let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-            const displayMonth = bill.periodStr || bill.yearMonth;
-            return `
-                <tr>
-                    <td style="text-align:center;">${idx + 1}</td>
-                    <td>${bill.className}</td>
-                    <td><strong>${bill.studentName}</strong></td>
-                    <td style="text-align:center; font-size:14px;">${displayMonth}</td>
-                    <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
-                    <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
-                </tr>
-            `;
-        }).join('');
+            let totalRevenue = 0;
+            let tableRows = targetBills.map((bill, idx) => {
+                totalRevenue += bill.total;
+                let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                const displayMonth = bill.periodStr || bill.yearMonth;
+                return `
+                    <tr>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td>${bill.className}</td>
+                        <td><strong>${bill.studentName}</strong></td>
+                        <td style="text-align:center; font-size:14px;">${displayMonth}</td>
+                        <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
+                        <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
 
-        const html = `
-            <div class="report-box">
-                <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">每日收費明細表</div>
-                <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
-                    <span>報表日期：<strong>${dateVal}</strong></span>
-                    <span>列印時間：${new Date().toLocaleString()}</span>
+            html = `
+                <div class="report-box">
+                    <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">每日收費明細表</div>
+                    <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                        <span>報表日期：<strong>${dateVal}</strong></span>
+                        <span>列印時間：${new Date().toLocaleString()}</span>
+                    </div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width:5%;">項次</th>
+                                <th style="width:16%;">班級</th>
+                                <th style="width:14%;">學生姓名</th>
+                                <th style="width:20%;">繳費單期間</th>
+                                <th style="width:30%;">繳費明細</th>
+                                <th style="width:15%;">實收金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div class="report-total">當日實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+                    <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
                 </div>
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th style="width:5%;">項次</th>
-                            <th style="width:16%;">班級</th>
-                            <th style="width:14%;">學生姓名</th>
-                            <th style="width:20%;">繳費單期間</th>
-                            <th style="width:30%;">繳費明細</th>
-                            <th style="width:15%;">實收金額</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tableRows}</tbody>
-                </table>
-                <div class="report-total">當日實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
-                <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
-            </div>
-        `;
-        document.getElementById('printArea').innerHTML = html;
-        window.print();
+            `;
+        } else if (type === 'monthly') {
+            const monthVal = document.getElementById('monthlyReportMonth').value; 
+            if(!monthVal) { alert('請選擇報表月份！'); return; }
+
+            const targetBills = window.bills.filter(b => {
+                if(!b.isPaid) return false;
+                const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+                return pDate.startsWith(monthVal);
+            });
+
+            if(targetBills.length === 0) { alert(`系統中找不到 ${monthVal} 這個月繳費結帳的紀錄！`); return; }
+
+            targetBills.sort((a, b) => {
+                const dateA = a.paidDate || parseLegacyDateToIso(a.date);
+                const dateB = b.paidDate || parseLegacyDateToIso(b.date);
+                return dateA.localeCompare(dateB);
+            });
+
+            let totalRevenue = 0;
+            let tableRows = targetBills.map((bill, idx) => {
+                totalRevenue += bill.total;
+                const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
+                let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                const displayMonth = bill.periodStr || bill.yearMonth;
+                return `
+                    <tr>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td style="text-align:center;">${pDate}</td>
+                        <td>${bill.className}</td>
+                        <td><strong>${bill.studentName}</strong></td>
+                        <td style="text-align:center; font-size:13px;">${displayMonth}</td>
+                        <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
+                        <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            html = `
+                <div class="report-box">
+                    <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">每月收費總結表</div>
+                    <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                        <span>報表月份：<strong>${monthVal}</strong></span>
+                        <span>列印時間：${new Date().toLocaleString()}</span>
+                    </div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width:5%;">項次</th>
+                                <th style="width:12%;">繳費日期</th>
+                                <th style="width:15%;">班級</th>
+                                <th style="width:13%;">學生姓名</th>
+                                <th style="width:15%;">單據期間</th>
+                                <th style="width:25%;">繳費明細</th>
+                                <th style="width:15%;">實收金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div class="report-total">當月實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+                </div>
+            `;
+        } else if (type === 'range') {
+            const startVal = document.getElementById('rangeReportStart').value;
+            const endVal = document.getElementById('rangeReportEnd').value;
+            if(!startVal || !endVal) { alert('請完整選擇起訖日期！'); return; }
+            if(startVal > endVal) { alert('開始日期不能大於結束日期！'); return; }
+
+            const targetBills = window.bills.filter(b => {
+                if(!b.isPaid) return false;
+                const pDate = b.paidDate || parseLegacyDateToIso(b.date);
+                return pDate >= startVal && pDate <= endVal;
+            });
+
+            if(targetBills.length === 0) { alert(`系統中找不到 ${startVal} 至 ${endVal} 區間內的繳費結帳紀錄！`); return; }
+
+            targetBills.sort((a, b) => {
+                const dateA = a.paidDate || parseLegacyDateToIso(a.date);
+                const dateB = b.paidDate || parseLegacyDateToIso(b.date);
+                return dateA.localeCompare(dateB);
+            });
+
+            let totalRevenue = 0;
+            let tableRows = targetBills.map((bill, idx) => {
+                totalRevenue += bill.total;
+                const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
+                let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                const displayMonth = bill.periodStr || bill.yearMonth;
+                return `
+                    <tr>
+                        <td style="text-align:center;">${idx + 1}</td>
+                        <td style="text-align:center;">${pDate}</td>
+                        <td>${bill.className}</td>
+                        <td><strong>${bill.studentName}</strong></td>
+                        <td style="text-align:center; font-size:13px;">${displayMonth}</td>
+                        <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
+                        <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            html = `
+                <div class="report-box">
+                    <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">自訂區間收費明細表</div>
+                    <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
+                        <span>統計區間：<strong>${startVal} ~ ${endVal}</strong></span>
+                        <span>列印時間：${new Date().toLocaleString()}</span>
+                    </div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width:5%;">項次</th>
+                                <th style="width:12%;">繳費日期</th>
+                                <th style="width:15%;">班級</th>
+                                <th style="width:13%;">學生姓名</th>
+                                <th style="width:15%;">單據期間</th>
+                                <th style="width:25%;">繳費明細</th>
+                                <th style="width:15%;">實收金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div class="report-total">區間實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
+                    <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
+                </div>
+            `;
+        }
+
+        document.getElementById('reportPreviewContent').innerHTML = html;
+        document.getElementById('reportPreviewModal').style.display = 'flex';
+    };
+
+    window.printDailyReport = function() {
+        window.openReportModal('daily');
     }
 
     window.printMonthlyReport = function() {
-        const monthVal = document.getElementById('monthlyReportMonth').value; 
-        if(!monthVal) { alert('請選擇報表月份！'); return; }
-
-        const targetBills = window.bills.filter(b => {
-            if(!b.isPaid) return false;
-            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
-            return pDate.startsWith(monthVal);
-        });
-
-        if(targetBills.length === 0) { alert(`系統中找不到 ${monthVal} 這個月繳費結帳的紀錄！`); return; }
-
-        targetBills.sort((a, b) => {
-            const dateA = a.paidDate || parseLegacyDateToIso(a.date);
-            const dateB = b.paidDate || parseLegacyDateToIso(b.date);
-            return dateA.localeCompare(dateB);
-        });
-
-        let totalRevenue = 0;
-        let tableRows = targetBills.map((bill, idx) => {
-            totalRevenue += bill.total;
-            const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
-            let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-            const displayMonth = bill.periodStr || bill.yearMonth;
-            return `
-                <tr>
-                    <td style="text-align:center;">${idx + 1}</td>
-                    <td style="text-align:center;">${pDate}</td>
-                    <td>${bill.className}</td>
-                    <td><strong>${bill.studentName}</strong></td>
-                    <td style="text-align:center; font-size:13px;">${displayMonth}</td>
-                    <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
-                    <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
-                </tr>
-            `;
-        }).join('');
-
-        const html = `
-            <div class="report-box">
-                <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">每月收費總結表</div>
-                <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
-                    <span>報表月份：<strong>${monthVal}</strong></span>
-                    <span>列印時間：${new Date().toLocaleString()}</span>
-                </div>
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th style="width:5%;">項次</th>
-                            <th style="width:12%;">繳費日期</th>
-                            <th style="width:15%;">班級</th>
-                            <th style="width:13%;">學生姓名</th>
-                            <th style="width:15%;">單據期間</th>
-                            <th style="width:25%;">繳費明細</th>
-                            <th style="width:15%;">實收金額</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tableRows}</tbody>
-                </table>
-                <div class="report-total">當月實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
-            </div>
-        `;
-        document.getElementById('printArea').innerHTML = html;
-        window.print();
+        window.openReportModal('monthly');
     }
 
     window.printRangeReport = function() {
-        const startVal = document.getElementById('rangeReportStart').value;
-        const endVal = document.getElementById('rangeReportEnd').value;
-        if(!startVal || !endVal) { alert('請完整選擇起訖日期！'); return; }
-        if(startVal > endVal) { alert('開始日期不能大於結束日期！'); return; }
-
-        const targetBills = window.bills.filter(b => {
-            if(!b.isPaid) return false;
-            const pDate = b.paidDate || parseLegacyDateToIso(b.date);
-            return pDate >= startVal && pDate <= endVal;
-        });
-
-        if(targetBills.length === 0) { alert(`系統中找不到 ${startVal} 至 ${endVal} 區間內的繳費結帳紀錄！`); return; }
-
-        targetBills.sort((a, b) => {
-            const dateA = a.paidDate || parseLegacyDateToIso(a.date);
-            const dateB = b.paidDate || parseLegacyDateToIso(b.date);
-            return dateA.localeCompare(dateB);
-        });
-
-        let totalRevenue = 0;
-        let tableRows = targetBills.map((bill, idx) => {
-            totalRevenue += bill.total;
-            const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
-            let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-            const displayMonth = bill.periodStr || bill.yearMonth;
-            return `
-                <tr>
-                    <td style="text-align:center;">${idx + 1}</td>
-                    <td style="text-align:center;">${pDate}</td>
-                    <td>${bill.className}</td>
-                    <td><strong>${bill.studentName}</strong></td>
-                    <td style="text-align:center; font-size:13px;">${displayMonth}</td>
-                    <td style="font-size:14px; line-height:1.4;">${itemDetails}</td>
-                    <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
-                </tr>
-            `;
-        }).join('');
-
-        const html = `
-            <div class="report-box">
-                <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:15px;">自訂區間收費明細表</div>
-                <div style="font-size:16px; margin-bottom: 10px; display:flex; justify-content:space-between;">
-                    <span>統計區間：<strong>${startVal} ~ ${endVal}</strong></span>
-                    <span>列印時間：${new Date().toLocaleString()}</span>
-                </div>
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th style="width:5%;">項次</th>
-                            <th style="width:12%;">繳費日期</th>
-                            <th style="width:15%;">班級</th>
-                            <th style="width:13%;">學生姓名</th>
-                            <th style="width:15%;">單據期間</th>
-                            <th style="width:25%;">繳費明細</th>
-                            <th style="width:15%;">實收金額</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tableRows}</tbody>
-                </table>
-                <div class="report-total">區間實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
-                <div style="margin-top: 40px; text-align:right; font-size:18px;">櫃檯經手人簽名：_____________________</div>
-            </div>
-        `;
-        document.getElementById('printArea').innerHTML = html;
-        window.print();
+        window.openReportModal('range');
     }
 
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
