@@ -223,6 +223,10 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; }
         .btn-submit { width: 100%; background: var(--success); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 15px; }
 
+        /* 學生性別專屬淡淡底色樣式 */
+        .row-male { background-color: #F0F6FF !important; }
+        .row-female { background-color: #FFF1F6 !important; }
+
         /* 標籤樣式 */
         .student-boy { background: #EFF6FF !important; border-color: #93C5FD !important; color: #1E40AF !important; }
         .student-girl { background: #FDF2F8 !important; border-color: #F9A8D4 !important; color: #BE185D !important; }
@@ -445,12 +449,11 @@
                 justify-content: center;
             }
 
-            /* 學生通訊錄卡片化優化 */
+            /* 學生通訊錄卡片化優化 (支援男女生淡淡底色) */
             #directoryContent .data-table { display: block !important; }
             #directoryContent .data-table tbody { display: block !important; }
             #directoryContent .data-table tr {
                 display: block !important;
-                background: #FFFFFF;
                 border: 1px solid var(--border);
                 border-radius: 8px;
                 padding: 10px 12px;
@@ -465,6 +468,7 @@
                 padding: 4px 0 !important;
                 font-size: 13px;
                 text-align: right;
+                background: transparent !important;
             }
             #directoryContent .data-table td:before {
                 content: attr(data-label);
@@ -841,7 +845,6 @@
                 <button class="category-filter-btn" onclick="filterDirectoryClasses('junior', this)">📗 國中</button>
             </div>
             
-            <!-- 改為簡潔俐落的下拉選單 -->
             <div style="display: flex; gap: 8px; align-items: center; background: #F1F5F9; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
                 <label style="margin: 0; white-space: nowrap; color: #1E40AF; font-size: 13px;">🏫 選擇班級：</label>
                 <select id="directoryClassSelect" onchange="showDirectoryClass(this.value)" style="padding: 6px 10px; font-weight: bold; background: white; border-color: #93C5FD; font-size: 14px;"></select>
@@ -1445,7 +1448,9 @@
             students.forEach(stu => {
                 const key = className + '_' + stu;
                 const d = window.studentDetails[key] || {};
-                const genderIcon = d.gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
+                const gender = d.gender || 'male';
+                const rowClass = gender === 'female' ? 'row-female' : 'row-male';
+                const genderIcon = gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
                 const c1n = d.contact1Name || '聯絡人1';
                 const c1p = d.contact1Phone || '';
                 const c2n = d.contact2Name || '聯絡人2';
@@ -1457,7 +1462,7 @@
                 
                 const noteHtml = noteText ? `<div class="note-toggle" title="點擊展開/收合" onclick="this.classList.toggle('expanded')">📄 ${noteText}</div>` : '<span style="color:#CBD5E1; font-size:12px;">無</span>';
 
-                html += `<tr>
+                html += `<tr class="${rowClass}">
                     <td data-label="學生姓名">${genderIcon}<span class="student-link" title="點擊修改資料" onclick="loadStudentProfile('${className}', '${stu}')">${stu}</span></td>
                     <td data-label="學校/班級" style="color:#64748B; font-size:13px;">${schoolInfo || '未設定'}</td>
                     <td data-label="${c1n}">${c1p ? `<a href="tel:${c1p}" style="color:var(--accent); text-decoration:none; font-weight:bold;">📞 ${c1p}</a>` : '無'}</td>
