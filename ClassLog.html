@@ -203,23 +203,24 @@
             color: #0369a1;
         }
 
-        /* 學生操作精簡雙按鈕列 */
-        .student-actions-inline {
+        /* 學生操作兩行大按鈕樣式 */
+        .student-actions-stacked {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 6px;
-            margin-top: 6px;
+            margin-top: 10px;
             width: 100%;
         }
-        .student-actions-inline .btn {
-            flex: 1;
-            padding: 5px 4px;
-            font-size: 11.5px;
-            white-space: nowrap;
+        .student-actions-stacked .btn {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13.5px;
+            font-weight: bold;
             text-align: center;
-            border-radius: 4px;
+            border-radius: 6px;
             margin: 0;
-            line-height: 1.2;
+            line-height: 1.3;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         @media (max-width: 767px) {
@@ -602,10 +603,10 @@
                     <table class="mobile-card-table" id="profile-table">
                         <thead>
                             <tr>
-                                <th width="22%">學生姓名</th>
+                                <th width="24%">學生姓名</th>
                                 <th width="22%">該科出席與請假狀況 (點擊可修改)</th>
-                                <th width="25%">該科考試成績紀錄 (點擊可修改)</th>
-                                <th width="31%">該科備註與親師電聯 QA</th>
+                                <th width="24%">該科考試成績紀錄 (點擊可修改)</th>
+                                <th width="30%">該科備註與親師電聯 QA</th>
                             </tr>
                         </thead>
                         <tbody id="profile-students-tbody">
@@ -948,7 +949,7 @@
             students: [],
             historyLogs: [],
             selectedClassForProfile: null,
-            expandedStudents: {} // 記錄各學生的區塊是否展開：{ [studentId]: { att: bool, score: bool, note: bool } }
+            expandedStudents: {}
         };
 
         window.pendingActionCallback = null;
@@ -1293,10 +1294,12 @@
                 html += `
                     <tr data-firestore-id="${s.firestoreId}">
                         <td data-label="學生資訊">
-                            <b style="font-size:16px; color:var(--primary);">${s.name}</b>
-                            <div style="font-size:12.5px; color:#555; margin-top:2px;">${s.school || '-'} ｜ ${s.studentClass || ''}</div>
-                            <div style="font-size:12.5px; color:#64748b; margin-top:2px;">📞 ${firstPhone}</div>
-                            <div class="student-actions-inline">
+                            <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+                                <b style="font-size:17px; color:var(--primary);">${s.name}</b>
+                                <span style="font-size:15px; font-weight:bold; color:#0369a1; letter-spacing:0.5px;">📞 ${firstPhone}</span>
+                            </div>
+                            <div style="font-size:13px; color:#555; margin-top:3px;">${s.school || '-'} ｜ ${s.studentClass || ''}</div>
+                            <div class="student-actions-stacked">
                                 <button class="btn btn-warning" onclick="generateParentLogForStudent('${s.firestoreId}', '${className}')">📋 家長日誌</button>
                                 <button class="btn btn-primary" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                             </div>
