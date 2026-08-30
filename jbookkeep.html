@@ -13,6 +13,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
       font-size: 15px;
       -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.3s ease;
     }
 
     @media screen and (max-width: 768px) {
@@ -45,32 +46,32 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
   <!-- 頂部導覽列 (電腦版) -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40 no-print">
+  <header id="main-header" class="bg-slate-900 text-white shadow-md sticky top-0 z-40 no-print transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
       <div class="flex items-center space-x-3">
-        <div class="bg-indigo-600 p-2 rounded-lg text-white">
-          <i class="fa-solid fa-school text-lg"></i>
+        <div id="header-icon-box" class="bg-indigo-600 p-2 rounded-lg text-white transition-colors duration-300">
+          <i id="header-campus-icon" class="fa-solid fa-school text-lg"></i>
         </div>
         <div>
           <span class="font-bold text-base md:text-lg tracking-wide block" id="header-campus-title">文理 財務系統</span>
-          <div class="flex items-center space-x-1 -mt-0.5">
-            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-[11px] text-emerald-400 font-medium">雙部門獨立核算 (24H制)</span>
+          <div class="flex items-center space-x-1.5 -mt-0.5">
+            <span id="header-status-dot" class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="header-sub-badge" class="text-[11px] text-emerald-400 font-medium">雙部門獨立核算 (24H制)</span>
           </div>
         </div>
       </div>
 
       <nav class="hidden md:flex space-x-2">
-        <button onclick="switchTab('wenli')" id="nav-wenli" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition bg-slate-800 text-white">
-          <i class="fa-solid fa-book-open mr-1 text-indigo-400"></i> 文理收支總攬
+        <button onclick="switchTab('wenli')" id="nav-wenli" class="nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-book-open mr-1.5 text-indigo-200"></i> 文理收支總攬
         </button>
-        <button onclick="switchTab('english')" id="nav-english" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
-          <i class="fa-solid fa-language mr-1 text-emerald-400"></i> 英文收支總攬
+        <button onclick="switchTab('english')" id="nav-english" class="nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center text-slate-300 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-language mr-1.5 text-emerald-400"></i> 英文收支總攬
         </button>
-        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
           <i class="fa-solid fa-sliders text-sky-400 mr-1"></i> 功能設定
         </button>
-        <button onclick="switchTab('adv-settings')" id="nav-adv-settings" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+        <button onclick="switchTab('adv-settings')" id="nav-adv-settings" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
           <i class="fa-solid fa-gear text-amber-400 mr-1"></i> 系統設定
         </button>
       </nav>
@@ -116,6 +117,24 @@
 
     <!-- 1. 文理收支總攬 / 英文收支總攬 -->
     <section id="sec-dashboard" class="tab-content space-y-4 sm:space-y-6">
+
+      <!-- 部門醒目橫幅提示 (切換時顯著提醒) -->
+      <div id="department-indicator-banner" class="no-print p-3 sm:p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all duration-300 bg-indigo-50 border-indigo-200 text-indigo-900">
+        <div class="flex items-center space-x-2.5">
+          <span id="dept-indicator-badge" class="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-600 text-white tracking-wider">
+            📘 文理部門
+          </span>
+          <span id="dept-indicator-text" class="text-xs sm:text-sm font-bold">
+            當前檢視：【文理補習班】獨立財務帳本 (與顧德系統自動連動)
+          </span>
+        </div>
+        <div class="hidden sm:flex items-center text-xs font-bold text-slate-500 space-x-1">
+          <span>切換部門：</span>
+          <button onclick="switchTab('wenli')" class="hover:underline text-indigo-600">文理</button>
+          <span>/</span>
+          <button onclick="switchTab('english')" class="hover:underline text-emerald-600">英文</button>
+        </div>
+      </div>
 
       <!-- 控制列 1：報表模式 -->
       <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
@@ -818,10 +837,53 @@
       }, (error) => console.error("英文支出同步失敗：", error));
     }
 
+    // 動態更新頂部與介面主題色，營造強烈的部門切換視覺感
+    function updateCampusTheme(campus) {
+      const header = document.getElementById('main-header');
+      const iconBox = document.getElementById('header-icon-box');
+      const campusIcon = document.getElementById('header-campus-icon');
+      const statusDot = document.getElementById('header-status-dot');
+      const subBadge = document.getElementById('header-sub-badge');
+      
+      const banner = document.getElementById('department-indicator-banner');
+      const bannerBadge = document.getElementById('dept-indicator-badge');
+      const bannerText = document.getElementById('dept-indicator-text');
+
+      if (campus === 'wenli') {
+        // 文理：靛藍色系
+        header.className = "bg-slate-900 text-white shadow-md sticky top-0 z-40 no-print transition-colors duration-300";
+        iconBox.className = "bg-indigo-600 p-2 rounded-lg text-white transition-colors duration-300";
+        campusIcon.className = "fa-solid fa-school text-lg";
+        statusDot.className = "inline-block w-2 h-2 rounded-full bg-indigo-400 animate-pulse";
+        subBadge.className = "text-[11px] text-indigo-300 font-medium";
+        subBadge.innerText = "文理部門獨立核算 (顧德雲端連動)";
+
+        banner.className = "no-print p-3 sm:p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all duration-300 bg-indigo-50 border-indigo-200 text-indigo-950";
+        bannerBadge.className = "px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-600 text-white tracking-wider shadow-sm";
+        bannerBadge.innerHTML = '<i class="fa-solid fa-book-open mr-1"></i> 文理部門';
+        bannerText.innerText = "當前檢視：【文理補習班】獨立財務帳本 (與顧德系統自動連動)";
+      } else {
+        // 英文：翡翠綠色系
+        header.className = "bg-emerald-950 text-white shadow-md sticky top-0 z-40 no-print transition-colors duration-300";
+        iconBox.className = "bg-emerald-600 p-2 rounded-lg text-white transition-colors duration-300";
+        campusIcon.className = "fa-solid fa-language text-lg";
+        statusDot.className = "inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse";
+        subBadge.className = "text-[11px] text-emerald-300 font-medium";
+        subBadge.innerText = "英文分校獨立核算 (佳音英語)";
+
+        banner.className = "no-print p-3 sm:p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all duration-300 bg-emerald-50 border-emerald-300 text-emerald-950";
+        bannerBadge.className = "px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-600 text-white tracking-wider shadow-sm";
+        bannerBadge.innerHTML = '<i class="fa-solid fa-language mr-1"></i> 英文分校';
+        bannerText.innerText = "當前檢視：【英文分校 / 佳音英語】獨立財務帳本";
+      }
+    }
+
     window.renderDashboard = function() {
       const isWenli = state.currentCampus === 'wenli';
       const campusTitle = isWenli ? '文理' : '英文';
       const schoolPrintName = isWenli ? '文理短期補習班' : '英語分校 (英文)';
+
+      updateCampusTheme(state.currentCampus);
 
       document.getElementById('header-campus-title').innerText = `${campusTitle} 財務系統`;
       document.getElementById('print-school-name').innerText = schoolPrintName;
@@ -1194,16 +1256,21 @@
         document.getElementById(`sec-${tabId}`).classList.remove('hidden');
       }
       
+      // 導覽按鈕選中反饋樣式
       document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-slate-800', 'text-white');
-        btn.classList.add('text-slate-300');
+        btn.className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800 flex items-center";
       });
-      const activeNav = document.getElementById(`nav-${tabId}`);
-      if (activeNav) {
-        activeNav.classList.add('bg-slate-800', 'text-white');
-        activeNav.classList.remove('text-slate-300');
+      
+      if (tabId === 'wenli') {
+        document.getElementById('nav-wenli').className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center bg-indigo-600 text-white shadow-md";
+      } else if (tabId === 'english') {
+        document.getElementById('nav-english').className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center bg-emerald-600 text-white shadow-md";
+      } else {
+        const activeNav = document.getElementById(`nav-${tabId}`);
+        if (activeNav) activeNav.className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center bg-slate-800 text-white";
       }
 
+      // 手機端導覽切換反饋
       document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
         btn.classList.remove('text-indigo-400', 'text-emerald-400', 'font-bold');
         btn.classList.add('text-slate-400');
