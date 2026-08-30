@@ -247,11 +247,9 @@
             .header { padding: 12px 14px; }
             .header h1 { font-size: 18px; }
             
-            /* 表單在手機端全寬 */
             .form-row { flex-direction: column; align-items: stretch; gap: 8px; }
             .form-row > div { width: 100% !important; }
             
-            /* 紀錄表格轉為自適應卡片流 */
             .data-table, .data-table thead, .data-table tbody, .data-table th, .data-table tr, .data-table td {
                 display: block;
             }
@@ -308,12 +306,10 @@
                 font-size: 13px;
             }
 
-            /* 快捷收費按鈕手機改 2 欄 */
             .quick-btn { flex: 1 1 calc(50% - 6px); min-width: auto; padding: 10px 8px; }
             .quick-btn span { font-size: 14px; }
             .quick-btn small { font-size: 13px; }
 
-            /* 未繳費查詢卡片優化 */
             .unpaid-card {
                 background: white;
                 border: 1px solid var(--border);
@@ -333,7 +329,6 @@
             .unpaid-card-actions .action-btn { flex: 1; }
         }
 
-        /* 列印媒體查詢 */
         @media screen { .print-only { display: none; } }
         @media print {
             .no-print { display: none !important; }
@@ -405,23 +400,25 @@
 
     <!-- 頁籤 1：繳費紀錄管理 -->
     <div id="manage" class="content-area active">
+        <!-- 結帳財務報表列印 (整合成單一行下拉選單) -->
         <div class="finance-bar">
-            <h4 style="margin-top: 0; color: #92400E; border-bottom: 1px dashed #FCD34D; padding-bottom: 8px; font-size:15px;">📊 結帳財務報表列印 (對帳專用)</h4>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <input type="date" id="dailyReportDate" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#F59E0B; color:white; border:none; padding: 6px 10px; font-size:13px;" onclick="openReportModal('daily')">🔍 日報表</button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: bold; color: #92400E; font-size: 14px; white-space: nowrap;">📊 結帳財務報表：</span>
+                
+                <!-- 報表模式下拉選單 -->
+                <select id="reportModeSelect" onchange="handleReportModeChange()" style="padding: 6px 10px; width: auto; font-weight: bold; color: #92400E; background: white; border-color: #FCD34D;">
+                    <option value="daily">📅 查詢當日報表</option>
+                    <option value="monthly">📆 查詢當月報表</option>
+                    <option value="range">⏳ 查詢區間報表</option>
+                </select>
+
+                <!-- 日期選擇容器 (依據下拉選單動態切換) -->
+                <div id="reportDateInputContainer" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <input type="date" id="dailyReportDate" style="padding: 5px 8px; width: auto;">
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <input type="month" id="monthlyReportMonth" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 10px; font-size:13px;" onclick="openReportModal('monthly')">🔍 月報表</button>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <input type="date" id="rangeReportStart" style="padding: 5px; width: auto;">
-                    <span style="font-weight:bold; color:#B45309; font-size:12px;">至</span>
-                    <input type="date" id="rangeReportEnd" style="padding: 5px; width: auto;">
-                    <button class="btn-select" style="background:#B45309; color:white; border:none; padding: 6px 10px; font-size:13px;" onclick="openReportModal('range')">🔍 區間報表</button>
-                </div>
+
+                <!-- 查詢列印按鈕 -->
+                <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 14px; font-weight:bold; font-size:13px;" onclick="executeSelectedReport()">🔍 查詢報表</button>
             </div>
         </div>
 
@@ -820,6 +817,32 @@
     let jQuickSortable = null;
     let oQuickSortable = null;
 
+    // 動態切換報表日期選單
+    window.handleReportModeChange = function() {
+        const mode = document.getElementById('reportModeSelect').value;
+        const container = document.getElementById('reportDateInputContainer');
+        if (!container) return;
+
+        if (mode === 'daily') {
+            container.innerHTML = `<input type="date" id="dailyReportDate" style="padding: 5px 8px; width: auto;" value="${getCurrentDateStr()}">`;
+        } else if (mode === 'monthly') {
+            container.innerHTML = `<input type="month" id="monthlyReportMonth" style="padding: 5px 8px; width: auto;" value="${getCurrentMonthStr()}">`;
+        } else if (mode === 'range') {
+            const today = getCurrentDateStr();
+            container.innerHTML = `
+                <input type="date" id="rangeReportStart" style="padding: 5px 8px; width: auto;" value="${today}">
+                <span style="font-weight:bold; color:#B45309; font-size:12px;">至</span>
+                <input type="date" id="rangeReportEnd" style="padding: 5px 8px; width: auto;" value="${today}">
+            `;
+        }
+    };
+
+    // 執行選取的報表查詢
+    window.executeSelectedReport = function() {
+        const mode = document.getElementById('reportModeSelect').value;
+        openReportModal(mode);
+    };
+
     window.isOtherItem = function(name) {
         return (name.includes('(') && name.includes(')')) || (name.includes('（') && name.includes('）'));
     }
@@ -893,10 +916,6 @@
 
             document.getElementById('billMonth').value = getCurrentMonthStr();
             document.getElementById('filterMonth').value = getCurrentMonthStr();
-            document.getElementById('dailyReportDate').value = getCurrentDateStr();
-            document.getElementById('monthlyReportMonth').value = getCurrentMonthStr();
-            document.getElementById('rangeReportStart').value = getCurrentDateStr();
-            document.getElementById('rangeReportEnd').value = getCurrentDateStr();
             
             const today = getCurrentDateStr();
             document.getElementById('billStartDate').value = today;
@@ -904,6 +923,7 @@
             endDateObj.setMonth(endDateObj.getMonth() + 3); 
             document.getElementById('billEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
             
+            handleReportModeChange();
             renderQuickItemConfigList();
             updateClassFilterDropdown();
             updateUnpaidClassDropdown();
@@ -2155,7 +2175,8 @@
     window.openReportModal = function(type) {
         let html = '';
         if (type === 'daily') {
-            const dateVal = document.getElementById('dailyReportDate').value;
+            const dateInput = document.getElementById('dailyReportDate');
+            const dateVal = dateInput ? dateInput.value : '';
             if(!dateVal) { alert('請選擇報表日期！'); return; }
 
             const targetBills = window.bills.filter(b => {
@@ -2208,7 +2229,8 @@
                 </div>
             `;
         } else if (type === 'monthly') {
-            const monthVal = document.getElementById('monthlyReportMonth').value; 
+            const monthInput = document.getElementById('monthlyReportMonth');
+            const monthVal = monthInput ? monthInput.value : ''; 
             if(!monthVal) { alert('請選擇報表月份！'); return; }
 
             const targetBills = window.bills.filter(b => {
@@ -2269,8 +2291,10 @@
                 </div>
             `;
         } else if (type === 'range') {
-            const startVal = document.getElementById('rangeReportStart').value;
-            const endVal = document.getElementById('rangeReportEnd').value;
+            const startInput = document.getElementById('rangeReportStart');
+            const endInput = document.getElementById('rangeReportEnd');
+            const startVal = startInput ? startInput.value : '';
+            const endVal = endInput ? endInput.value : '';
             if(!startVal || !endVal) { alert('請完整選擇起訖日期！'); return; }
             if(startVal > endVal) { alert('開始日期不能大於結束日期！'); return; }
 
