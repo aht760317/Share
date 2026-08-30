@@ -224,16 +224,6 @@
             .grid-3 { grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         }
 
-        .class-btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
-        .btn-care { background: #e0f2fe; border: 2px solid #0284c7; color: #0369a1; padding: 8px 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13.5px; transition: 0.2s; }
-        .btn-care.active, .btn-care:hover { background: #0284c7; color: white; }
-        
-        .btn-elementary { background: #e8f5e9; border: 2px solid #2e7d32; color: #1b5e20; padding: 8px 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13.5px; transition: 0.2s; }
-        .btn-elementary.active, .btn-elementary:hover { background: #2e7d32; color: white; }
-        
-        .btn-junior { background: #fef3c7; border: 2px solid #d97706; color: #b45309; padding: 8px 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13.5px; transition: 0.2s; }
-        .btn-junior.active, .btn-junior:hover { background: #d97706; color: white; }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; backdrop-filter: blur(2px); }
         .modal-box { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
 
@@ -525,7 +515,7 @@
         <section id="student-profiles" class="section-content">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 14px;">
-                    <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (點擊下方班級按鈕精準分流查詢)</h3></div>
+                    <div><h3 style="margin:0;">👥 各班學生日誌與通訊 (選擇下方分部下拉快速篩選)</h3></div>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <label style="font-size:14px; font-weight:bold; margin:0; color:var(--primary);">📅 日期區間：</label>
                         <input type="date" id="profile-filter-start" style="width:145px; margin:0; padding:5px;" onchange="renderProfileStudents()" title="起始日期"> ～ 
@@ -535,19 +525,39 @@
                     </div>
                 </div>
                 
-                <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; margin-bottom: 12px;">
-                    <h5 style="color: #b45309; margin: 0 0 10px 0; font-size: 15px; border-bottom: 1px dashed #fde68a; padding-bottom: 6px;">📙 國中部班級</h5>
-                    <div class="class-btn-group" id="class-buttons-junior" style="margin-bottom:0;"></div>
-                </div>
-
-                <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 15px; border-radius: 8px;">
-                    <h5 style="color: #16a34a; margin: 0 0 10px 0; font-size: 15px; border-bottom: 1px dashed #86efac; padding-bottom: 6px;">📘 國小部與課輔部班級</h5>
-                    <div class="class-btn-group" id="class-buttons-elem-care" style="margin-bottom:0;"></div>
+                <!-- 簡約三大部門下拉選擇區 -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 10px; margin-bottom: 15px;">
+                    <div class="grid-3" style="gap: 15px; margin: 0;">
+                        <div>
+                            <label style="font-weight: bold; color: #b45309; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                📙 國中部班級：
+                            </label>
+                            <select id="profile-select-junior" onchange="onClassSelectChange('junior')" style="margin: 0;">
+                                <option value="">-- 請選擇國中班級 --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; color: #16a34a; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                📘 國小部班級：
+                            </label>
+                            <select id="profile-select-elementary" onchange="onClassSelectChange('elementary')" style="margin: 0;">
+                                <option value="">-- 請選擇國小班級 --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; color: #0284c7; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                🏢 課輔安親班：
+                            </label>
+                            <select id="profile-select-care" onchange="onClassSelectChange('care')" style="margin: 0;">
+                                <option value="">-- 請選擇課輔班級 --</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="card">
-                <h4 id="current-viewing-class-title" style="color:var(--primary); margin-top:0;">請先選擇上方班級按鈕</h4>
+                <h4 id="current-viewing-class-title" style="color:var(--primary); margin-top:0;">請先由上方下拉選單選擇班級</h4>
                 <div class="table-responsive">
                     <table class="mobile-card-table" id="profile-table">
                         <thead>
@@ -559,7 +569,7 @@
                             </tr>
                         </thead>
                         <tbody id="profile-students-tbody">
-                            <tr><td colspan="4" style="text-align:center; color:#777;">請先選擇上方班級按鈕</td></tr>
+                            <tr><td colspan="4" style="text-align:center; color:#777;">請先由上方下拉選單選擇班級</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -959,7 +969,7 @@
                 window.renderLogStudents('junior');
                 window.renderLogStudents('elementary');
                 window.renderLogStudents('care');
-                window.renderClassButtons();
+                window.renderClassDropdowns();
                 window.renderHistoryLogs();
                 window.renderPendingTodoPanels();
                 window.renderAllLogsQuery();
@@ -989,7 +999,7 @@
             });
 
             window.updateCourseDropdowns();
-            window.renderClassButtons();
+            window.renderClassDropdowns();
             window.renderPendingTodoPanels();
 
             if(sectionId === 'teaching-logs-junior') window.renderLogStudents('junior');
@@ -1020,41 +1030,70 @@
             });
         };
 
-        window.renderClassButtons = function() {
-            const junGroup = document.getElementById('class-buttons-junior');
-            const elemCareGroup = document.getElementById('class-buttons-elem-care');
-            if (!junGroup || !elemCareGroup) return;
+        // 渲染三大部門班級下拉選單
+        window.renderClassDropdowns = function() {
+            const selJunior = document.getElementById('profile-select-junior');
+            const selElem = document.getElementById('profile-select-elementary');
+            const selCare = document.getElementById('profile-select-care');
+            if (!selJunior || !selElem || !selCare) return;
 
-            const junList = window.state.courses.junior || [];
-            junGroup.innerHTML = junList.map(c => {
-                const name = typeof c === 'object' ? c.name : c;
-                const active = window.state.selectedClassForProfile === name ? 'active' : '';
-                return `<button class="btn-junior ${active}" onclick="selectProfileClass('${name}')">🏫 ${name}</button>`;
-            }).join('') || '<span style="color:#888; font-size:13px;">尚未建立國中部班級</span>';
+            const buildOptions = (list, placeholder) => {
+                let opts = `<option value="">${placeholder}</option>`;
+                (list || []).forEach(c => {
+                    const name = typeof c === 'object' ? c.name : c;
+                    opts += `<option value="${name}">${name}</option>`;
+                });
+                return opts;
+            };
 
-            const elemList = window.state.courses.elementary || [];
-            const careList = window.state.courses.care || [];
-            
-            let elemCareHtml = elemList.map(c => {
-                const name = typeof c === 'object' ? c.name : c;
-                const active = window.state.selectedClassForProfile === name ? 'active' : '';
-                return `<button class="btn-elementary ${active}" onclick="selectProfileClass('${name}')">📘 ${name}</button>`;
-            }).join('');
+            selJunior.innerHTML = buildOptions(window.state.courses.junior, '-- 請選擇國中班級 --');
+            selElem.innerHTML = buildOptions(window.state.courses.elementary, '-- 請選擇國小班級 --');
+            selCare.innerHTML = buildOptions(window.state.courses.care, '-- 請選擇課輔班級 --');
 
-            elemCareHtml += careList.map(c => {
-                const name = typeof c === 'object' ? c.name : c;
-                const active = window.state.selectedClassForProfile === name ? 'active' : '';
-                return `<button class="btn-care ${active}" onclick="selectProfileClass('${name}')">🏢 ${name}</button>`;
-            }).join('');
-
-            elemCareGroup.innerHTML = elemCareHtml || '<span style="color:#888; font-size:13px;">尚未建立國小或課輔班級</span>';
+            // 保持當前選中的班級
+            const cur = window.state.selectedClassForProfile;
+            if (cur) {
+                if ([...selJunior.options].some(o => o.value === cur)) {
+                    selJunior.value = cur;
+                    selElem.value = '';
+                    selCare.value = '';
+                } else if ([...selElem.options].some(o => o.value === cur)) {
+                    selElem.value = cur;
+                    selJunior.value = '';
+                    selCare.value = '';
+                } else if ([...selCare.options].some(o => o.value === cur)) {
+                    selCare.value = cur;
+                    selJunior.value = '';
+                    selElem.value = '';
+                }
+            }
         };
 
-        window.selectProfileClass = function(className) {
-            window.state.selectedClassForProfile = className;
-            window.renderClassButtons();
+        // 下拉切換互斥聯動控制
+        window.onClassSelectChange = function(selectedDept) {
+            const depts = ['junior', 'elementary', 'care'];
+            const curSelect = document.getElementById(`profile-select-${selectedDept}`);
+            const chosenClass = curSelect ? curSelect.value : '';
+
+            depts.forEach(d => {
+                if (d !== selectedDept) {
+                    const otherSelect = document.getElementById(`profile-select-${d}`);
+                    if (otherSelect) otherSelect.value = '';
+                }
+            });
+
+            window.state.selectedClassForProfile = chosenClass || null;
             window.renderProfileStudents();
         };
+
+        // 兼容跳轉與通用設定
+        window.selectProfileClass = function(className) {
+            window.state.selectedClassForProfile = className;
+            window.renderClassDropdowns();
+            window.renderProfileStudents();
+        };
+
+        window.renderClassButtons = window.renderClassDropdowns;
 
         window.clearProfileDateFilter = function() {
             document.getElementById('profile-filter-start').value = '';
@@ -1070,8 +1109,8 @@
             const filterEnd = document.getElementById('profile-filter-end')?.value || '';
 
             if (!className) {
-                if (title) title.innerText = "請先點擊上方班級按鈕查詢學生";
-                if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777; padding:20px;">請先選擇上方任一班級按鈕</td></tr>`;
+                if (title) title.innerText = "請先由上方下拉選單選擇班級";
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777; padding:20px;">請先由上方下拉選單選擇班級</td></tr>`;
                 return;
             }
 
