@@ -35,7 +35,7 @@
 
         .container { max-width: 1420px; margin: 15px auto; padding: 0 12px; }
 
-        /* 手機版：底部固定導覽列 */
+        /* 手機版：底部固定導覽列 (五個 Tab 調整平均寬度) */
         @media(max-width: 767px) {
             body {
                 padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 20px) + 15px) !important;
@@ -53,15 +53,15 @@
                 display: flex;
                 justify-content: space-around;
                 align-items: flex-start;
-                padding: 6px 4px env(safe-area-inset-bottom, 6px);
+                padding: 6px 2px env(safe-area-inset-bottom, 6px);
                 margin: 0;
-                gap: 4px;
+                gap: 2px;
             }
             .tab-btn {
                 flex: 1;
                 height: 52px;
-                font-size: 11px;
-                padding: 4px 2px;
+                font-size: 10px;
+                padding: 4px 1px;
                 border-radius: 8px;
                 background: transparent;
                 color: #64748b;
@@ -69,14 +69,14 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 3px;
+                gap: 2px;
                 border: none;
                 line-height: 1.1;
                 font-weight: 600;
                 transition: all 0.2s ease;
             }
             .tab-btn .tab-icon {
-                font-size: 18px;
+                font-size: 16px;
                 line-height: 1;
             }
             .tab-btn.active {
@@ -105,11 +105,11 @@
             }
             .tab-btn {
                 flex: 1;
-                padding: 13px 16px;
+                padding: 13px 12px;
                 border: 2px solid #e2e8f0;
                 border-radius: 10px;
                 background: #f8fafc;
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: bold;
                 cursor: pointer;
                 color: var(--primary);
@@ -117,7 +117,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 8px;
+                gap: 6px;
             }
             .tab-btn:hover {
                 background: #f1f5f9;
@@ -129,7 +129,7 @@
                 border-color: var(--accent);
                 box-shadow: 0 4px 15px rgba(52, 152, 219, 0.35);
             }
-            .tab-btn .tab-icon { font-size: 16px; }
+            .tab-btn .tab-icon { font-size: 15px; }
             .sync-controls { width: auto; }
             .container { padding: 0 15px; margin: 25px auto; }
             header { padding: 16px 24px; }
@@ -224,13 +224,11 @@
         th { background: #f1f3f5; color: var(--primary); font-weight: bold; }
         .holiday-col { background: #fff3cd !important; color: #856404; font-weight: bold; }
 
-        /* 男女同學行背景色優化 (淡淡的顏色區分) */
         tr.gender-male { background-color: #f8fbfe; }
         tr.gender-female { background-color: #fdf7fa; }
         tr.gender-male:hover { background-color: #eff6ff; }
         tr.gender-female:hover { background-color: #fce7f3; }
 
-        /* 操作按鈕同行優化 */
         .action-btn-group {
             display: inline-flex;
             gap: 4px;
@@ -249,7 +247,6 @@
         #studentTableSection table th { font-size: 13.5px; padding: 10px 5px; }
         #studentTableSection table td { font-size: 13px; padding: 8px 5px; }
 
-        /* 手機版學生名冊卡片樣式 */
         .student-master-card {
             background: #ffffff;
             border: 1.5px solid #cbd5e1;
@@ -412,6 +409,10 @@
             <span class="tab-icon">📱</span>
             <span>今日點名</span>
         </button>
+        <button class="tab-btn" onclick="switchTab('absent-alert')">
+            <span class="tab-icon">🚨</span>
+            <span>還沒點名/未到</span>
+        </button>
         <button class="tab-btn" onclick="switchTab('sheet')">
             <span class="tab-icon">🖨️</span>
             <span>點名表生成</span>
@@ -428,6 +429,19 @@
 
     <!-- 1. 今日點名與日誌成績 -->
     <div id="tab-rollcall">
+        <!-- 未到與未點名提醒看板（首頁頂部即時顯示） -->
+        <div class="card no-print" id="homeAlertBanner" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #f59e0b; padding: 14px; margin-bottom: 15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <h4 style="color: #92400e; font-size: 15px; margin:0; display:flex; align-items:center; gap:6px;">
+                    📢 櫃檯即時提醒：今日尚有學生未到班或班級尚未完成點名
+                </h4>
+                <button class="btn btn-warning" style="padding:4px 10px; font-size:12px; color:#000;" onclick="switchTab('absent-alert')">查看詳細未到/未點名名冊 🔍</button>
+            </div>
+            <div id="homeAlertContent" style="margin-top: 8px; font-size: 13.5px; color: #78350f; line-height: 1.5;">
+                正在載入提醒資訊...
+            </div>
+        </div>
+
         <div class="card no-print">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
                 <h3 id="currentDayText" style="color:var(--primary); font-size:17px;">📅 今日課堂清單</h3>
@@ -489,6 +503,24 @@
                     <tbody id="paperTableBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- 1.5 尚未點名 / 未到提醒專區 (新增的 Tab) -->
+    <div id="tab-absent-alert" style="display:none;">
+        <div class="card" style="border-top: 4px solid var(--danger);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                <div>
+                    <h3 style="color:var(--primary); font-size:18px;">🚨 櫃檯專用：今日尚未到班學員與未點名班級清單</h3>
+                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。</p>
+                </div>
+                <div>
+                    <label style="font-weight:bold; font-size:13px;">檢視日期：</label>
+                    <input type="date" id="alertDateInput" onchange="renderAbsentAlertTab()" style="padding:6px 8px; border-radius:6px; border:1px solid #cbd5e1; margin:0; width:auto;">
+                </div>
+            </div>
+
+            <div id="alertTabContainer"></div>
         </div>
     </div>
 
@@ -625,18 +657,18 @@
                     </div>
                 </div>
 
-                <!-- 畢業班專屬：出生年份區間查詢 Bar -->
-                <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                <!-- 畢業班專屬：出生年份區間查詢 Bar (標題與篩選在同一行) -->
+                <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                        <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 畢業/離班學員清單 ｜ 出生年份區間篩選：</span>
-                        <select id="gradStartYear" class="select-styled" style="width:110px; margin:0; padding:6px; font-size:13px;" onchange="renderMasterStudentsTable()">
+                        <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 畢業/離班學員清單 ｜ 出生年份：</span>
+                        <select id="gradStartYear" class="select-styled" style="width:100px; margin:0; padding:5px; font-size:13px;" onchange="renderMasterStudentsTable()">
                             <option value="">起始年份</option>
                         </select>
                         <span style="font-size:13px; font-weight:bold;">至</span>
-                        <select id="gradEndYear" class="select-styled" style="width:110px; margin:0; padding:6px; font-size:13px;" onchange="renderMasterStudentsTable()">
+                        <select id="gradEndYear" class="select-styled" style="width:100px; margin:0; padding:5px; font-size:13px;" onchange="renderMasterStudentsTable()">
                             <option value="">結束年份</option>
                         </select>
-                        <button class="btn btn-outline" style="padding:6px 10px; font-size:12px;" onclick="clearGradFilter()">清除年份</button>
+                        <button class="btn btn-outline" style="padding:5px 8px; font-size:12px;" onclick="clearGradFilter()">清除</button>
                     </div>
                     <div id="graduatedCountBadge" style="font-size:13px; font-weight:bold; color:var(--primary);">共 0 人</div>
                 </div>
@@ -948,6 +980,7 @@
     window.onload = function() {
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('rollDateInput').value = today;
+        document.getElementById('alertDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
         initGradYearDropdowns();
         initDropdowns();
@@ -1044,6 +1077,7 @@
             renderSheetCourseDropdown();
             renderHolidayList();
             renderCourseConfigList();
+            updateHomeAlertBanner();
         } catch (e) {
             console.error("載入資料失敗：", e);
         }
@@ -1052,6 +1086,7 @@
     window.switchTab = function(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-rollcall').style.display = tab === 'rollcall' ? 'block' : 'none';
+        document.getElementById('tab-absent-alert').style.display = tab === 'absent-alert' ? 'block' : 'none';
         document.getElementById('tab-sheet').style.display = tab === 'sheet' ? 'block' : 'none';
         document.getElementById('tab-course-config').style.display = tab === 'course-config' ? 'block' : 'none';
         document.getElementById('tab-students-master').style.display = tab === 'students-master' ? 'block' : 'none';
@@ -1059,8 +1094,12 @@
         if (tab === 'rollcall') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             renderCourseCards();
-        } else if (tab === 'sheet') {
+            updateHomeAlertBanner();
+        } else if (tab === 'absent-alert') {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            renderAbsentAlertTab();
+        } else if (tab === 'sheet') {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
             renderSheetCourseDropdown();
             if (!window.state.selectedSheetCourse) {
                 const all = getAllCoursesList();
@@ -1069,12 +1108,12 @@
                 generateCustomSheet();
             }
         } else if (tab === 'course-config') {
-            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.querySelectorAll('.tab-btn')[3].classList.add('active');
             renderConfigFilterButtons();
             renderCourseConfigList();
             renderHolidayList();
         } else {
-            document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            document.querySelectorAll('.tab-btn')[4].classList.add('active');
             initDropdowns();
             renderMasterStudentsTable();
         }
@@ -1884,6 +1923,7 @@
 
     window.onDateChange = function() {
         renderCourseCards();
+        updateHomeAlertBanner();
         if (window.state.currentCourse) selectCourse(window.state.currentCourse.name);
     };
 
@@ -2053,7 +2093,9 @@
         document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名單`;
         document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 教師：${c.teacher || '老師'} | 應到：${courseStudents.length} 人 | 實到：${presentCount} 人`;
         document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="7" style="padding:12px; color:#888;">此班級目前無在籍學生</td></tr>`;
-    }
+        
+        updateHomeAlertBanner();
+    };
 
     window.setAttendance = function(key, status) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
@@ -2061,6 +2103,7 @@
         window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
         localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
         renderStudentList();
+        updateHomeAlertBanner();
     };
 
     window.saveScore = function(key, val) {
@@ -2083,6 +2126,7 @@
         });
         localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
         renderStudentList();
+        updateHomeAlertBanner();
     };
 
     window.confirmRollCallAndSync = function() {
@@ -2096,6 +2140,134 @@
         alert(`✅ 點名確認成功！即將跳轉至【${courseName}】點名表生成總表。`);
         switchTab('sheet');
         selectSheetCourse(courseName);
+        updateHomeAlertBanner();
+    };
+
+    // 計算指定日期下今日排課班級中，未到班與未點名狀態的邏輯
+    function getAbsentAndUncheckedSummary(dateStr) {
+        const curDate = new Date(dateStr);
+        const dayIdx = curDate.getDay();
+        const curDayName = WEEK_NAMES[dayIdx];
+        const allCourses = getAllCoursesList();
+        const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+
+        let unassignedClasses = []; // 尚未有點名動作的班級
+        let absentStudentsList = []; // 已經點名但狀態為未到/請假的學生，或今日有排課但還沒點名的班級學員
+
+        todayCourses.forEach(c => {
+            const courseStudents = window.state.students.filter(s => {
+                const arr = getStudentCoursesArray(s);
+                return arr.includes(c.name) && s.status !== 'graduated';
+            });
+
+            let hasAnyCheck = false;
+            courseStudents.forEach(stu => {
+                const key = `${dateStr}_${c.name}_${stu.name}`;
+                const rec = window.state.attendanceData[key];
+                if (rec && (rec.status === '出席' || rec.status === '請假')) {
+                    hasAnyCheck = true;
+                    if (rec.status === '請假' || rec.status === '未到') {
+                        absentStudentsList.push({ student: stu, courseName: c.name, status: rec.status });
+                    }
+                } else {
+                    // 尚未有點名記錄的學生視為未到班/未點名
+                    absentStudentsList.push({ student: stu, courseName: c.name, status: '尚未點名' });
+                }
+            });
+
+            if (!hasAnyCheck && courseStudents.length > 0) {
+                unassignedClasses.push(c.name);
+            }
+        });
+
+        return { todayCourses, unassignedClasses, absentStudentsList };
+    }
+
+    function updateHomeAlertBanner() {
+        const dateStr = document.getElementById('rollDateInput').value;
+        const summary = getAbsentAndUncheckedSummary(dateStr);
+        const banner = document.getElementById('homeAlertBanner');
+        const content = document.getElementById('homeAlertContent');
+        if (!banner || !content) return;
+
+        const unCheckedCount = summary.unassignedClasses.length;
+        const unPresentStudents = summary.absentStudentsList.filter(item => item.status === '尚未點名' || item.status === '請假').length;
+
+        if (unCheckedCount === 0 && unPresentStudents === 0) {
+            banner.style.background = 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
+            banner.style.border = '2px solid #22c55e';
+            content.innerHTML = `<span style="color: #166534; font-weight: bold;">🌟 太棒了！今日所有排課班級皆已完成點名，且無學員缺席或未到！</span>`;
+        } else {
+            banner.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
+            banner.style.border = '2px solid #f59e0b';
+            content.innerHTML = `
+                <div>📌 <b>尚有未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
+                <div style="margin-top:3px;">📌 <b>尚有尚未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${unPresentStudents} 人次 (請至「還沒點名/未到」專區確認)</span></div>
+            `;
+        }
+    }
+
+    window.renderAbsentAlertTab = function() {
+        const dateStr = document.getElementById('alertDateInput').value;
+        const summary = getAbsentAndUncheckedSummary(dateStr);
+        const container = document.getElementById('alertTabContainer');
+        if (!container) return;
+
+        let html = `<div style="margin-top:10px;">`;
+
+        // 1. 尚未點名班級區塊
+        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班)</h4>`;
+        if (summary.unassignedClasses.length === 0) {
+            html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px; margin-bottom:15px;">✔ 今日所有排課班級皆已有老師進行點名作業！</p>`;
+        } else {
+            html += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">`;
+            summary.unassignedClasses.forEach(cName => {
+                html += `<div style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13.5px;">🏫 ${cName} (尚未點名)</div>`;
+            });
+            html += `</div>`;
+        }
+
+        // 2. 學生未到 / 請假 / 未點名清單
+        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px; margin-top:20px;">👥 今日各班尚未到班 / 請假 / 未點名學員名冊</h4>`;
+        
+        let actionableStudents = summary.absentStudentsList.filter(item => item.status === '尚未點名' || item.status === '請假');
+
+        if (actionableStudents.length === 0) {
+            html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px;">🌟 今日今日所有學生皆已順利出席點名！</p>`;
+        } else {
+            html += `<table>
+                <thead>
+                    <tr>
+                        <th style="width:40px;">序</th>
+                        <th style="width:110px;">學生姓名</th>
+                        <th style="width:130px;">所屬班級</th>
+                        <th style="width:110px;">就讀學校</th>
+                        <th style="width:130px;">家長電話</th>
+                        <th style="width:90px;">點名狀態</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            actionableStudents.forEach((item, idx) => {
+                const stu = item.student;
+                const phone = getParentPhone(stu);
+                let badgeStyle = item.status === '請假' ? 'background:#fef3c7; color:#b45309; border:1px solid #f59e0b;' : 'background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;';
+
+                html += `<tr>
+                    <td><b>${idx + 1}</b></td>
+                    <td><b style="color:var(--primary);">${stu.name}</b></td>
+                    <td><span class="course-tag">${item.courseName}</span></td>
+                    <td>${stu.school || '-'}</td>
+                    <td style="font-size:12.5px;">${phone}</td>
+                    <td><span style="padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; ${badgeStyle}">${item.status}</span></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+        }
+
+        html += `</div>`;
+        container.innerHTML = html;
     };
 
     window.onSheetCourseChanged = function() {
