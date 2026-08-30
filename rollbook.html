@@ -626,12 +626,19 @@
                 </div>
 
                 <!-- 畢業班專屬：出生年份區間查詢 Bar -->
-                <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 出生年份區間篩選：</span>
-                    <input type="number" id="gradStartYear" placeholder="起始年份 (例:2012)" style="width:130px; margin:0; padding:6px; font-size:13px;" oninput="renderMasterStudentsTable()">
-                    <span style="font-size:13px; font-weight:bold;">至</span>
-                    <input type="number" id="gradEndYear" placeholder="結束年份 (例:2015)" style="width:130px; margin:0; padding:6px; font-size:13px;" oninput="renderMasterStudentsTable()">
-                    <button class="btn btn-outline" style="padding:6px 10px; font-size:12px;" onclick="clearGradFilter()">清除年份</button>
+                <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 畢業/離班學員清單 ｜ 出生年份區間篩選：</span>
+                        <select id="gradStartYear" class="select-styled" style="width:110px; margin:0; padding:6px; font-size:13px;" onchange="renderMasterStudentsTable()">
+                            <option value="">起始年份</option>
+                        </select>
+                        <span style="font-size:13px; font-weight:bold;">至</span>
+                        <select id="gradEndYear" class="select-styled" style="width:110px; margin:0; padding:6px; font-size:13px;" onchange="renderMasterStudentsTable()">
+                            <option value="">結束年份</option>
+                        </select>
+                        <button class="btn btn-outline" style="padding:6px 10px; font-size:12px;" onclick="clearGradFilter()">清除年份</button>
+                    </div>
+                    <div id="graduatedCountBadge" style="font-size:13px; font-weight:bold; color:var(--primary);">共 0 人</div>
                 </div>
 
                 <!-- 手機版自適應卡片容器 -->
@@ -942,11 +949,27 @@
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('rollDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
+        initGradYearDropdowns();
         initDropdowns();
         renderCourseFilterButtons();
         renderConfigFilterButtons();
         initCloudData();
     };
+
+    function initGradYearDropdowns() {
+        const startSel = document.getElementById('gradStartYear');
+        const endSel = document.getElementById('gradEndYear');
+        if (!startSel || !endSel) return;
+
+        const currentYear = new Date().getFullYear();
+        let optionsHtml = '<option value="">不限年份</option>';
+        for (let y = currentYear; y >= currentYear - 25; y--) {
+            optionsHtml += `<option value="${y}">${y} 年</option>`;
+        }
+
+        startSel.innerHTML = optionsHtml;
+        endSel.innerHTML = optionsHtml;
+    }
 
     function checkPassword(promptText = "🔒 系統安全驗證，請輸入管理密碼：") {
         const input = prompt(promptText);
@@ -1393,7 +1416,6 @@
         }
     };
 
-    // 瀏覽學生詳細檔案彈窗
     window.openViewStudentModal = function(firestoreId) {
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
@@ -1442,6 +1464,7 @@
         const cardContainer = document.getElementById('masterStudentCardContainer');
         const tableWrapper = document.getElementById('masterStudentTableWrapper');
         const gradFilterBar = document.getElementById('graduatedFilterBar');
+        const gradCountBadge = document.getElementById('graduatedCountBadge');
         
         const deptKey = window.state.currentDeptView;
         const filterClass = window.state.currentFilterClass;
@@ -1504,6 +1527,7 @@
         else titleDesc = `目前學生名冊 (${filterClass || (deptKey==='care'?'課輔部':(deptKey==='elementary'?'國小部':'國中部'))})`;
 
         document.getElementById('studentListTitle').innerText = `${titleDesc} - 共 ${filtered.length} 人`;
+        if (gradCountBadge) gradCountBadge.innerText = `共 ${filtered.length} 人`;
 
         if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
