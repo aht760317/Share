@@ -142,11 +142,27 @@
         .modal-content { background: white; padding: 1.25rem; border-radius: 0.5rem; width: 100%; max-width: 680px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
         .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
         
-        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
+        /* 表單三欄排版樣式 */
+        .form-three-col-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-three-col-row {
+                grid-template-columns: 1fr;
+                gap: 0.65rem;
+            }
+        }
+
         .form-block-item { background: #F8FAFC; border: 1.2px solid var(--border-color); border-radius: 0.4rem; padding: 0.75rem; }
         .form-block-item label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.35rem; }
         .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem; background: #ffffff; cursor: text; }
         .form-block-item select { height: 40px; }
+
+        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
 
         @keyframes pulseAlert {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
@@ -258,7 +274,7 @@
                 </div>
             </div>
 
-            <!-- 單一統計列 (單行呈現 + 待處理紅色、已退回藍色) -->
+            <!-- 單一統計列 -->
             <div class="single-stats-bar">
                 <div class="stat-item">
                     <span style="font-weight: 700; color: var(--danger-color);">待處理</span>
@@ -314,41 +330,33 @@
             </div>
 
             <!-- 老師端：新增家長問題表單 -->
-            <div class="card" id="newBridgeIssueCard" style="background-color: #FFF1F2; border: 1.2px solid #FECDD3;">
+            <div class="card" id="newBridgeIssueCard" style="background-color: #FFF1F2; border: 1.5px solid #FECDD3; padding: 1.1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <h3 style="color: #BE123C; margin-bottom: 0; font-size: 1.1rem;">📝 登記新的家長問題 / 老師反應</h3>
+                    <h3 style="color: #1E3A8A; margin-bottom: 0; font-size: 1.1rem; font-weight: 700;">📝 登記新的家長問題 / 老師反應</h3>
                     <div style="display: flex; gap: 0.4rem; align-items: center;">
                         <button type="button" class="btn btn-sm" style="background-color: #2563EB; color: white; font-size: 0.78rem; padding: 0.3rem 0.55rem;" onclick="openHistoryModal()">🔍 查詢已結案歷史</button>
                         <button type="button" class="btn btn-sm" style="background-color: #0F172A; color: white; font-size: 0.78rem; padding: 0.3rem 0.55rem;" onclick="openAllHistoryModal()">📚 全部歷史檔案</button>
                     </div>
                 </div>
                 <form id="bridgeIssueForm" onsubmit="handleBridgeFormSubmit(event)">
-                    <!-- 依序：分校別 -> 班級 -> 學生姓名 -> 家長稱謂 -> 問題分類 -> 負責老師 -->
-                    <div class="form-blocks-grid">
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">分校別</label>
-                            <select id="bridgeClassName" required>
+                    <!-- 第一行：分校別、詢問/就讀班級、問題分類 -->
+                    <div class="form-three-col-row">
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">分校別</label>
+                            <select id="bridgeClassName" required style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
                                 <option value="顧德補習班">顧德補習班</option>
                                 <option value="佳音英語斗六校">佳音英語斗六校</option>
                             </select>
                         </div>
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">詢問/就讀班級 (點名表開課班級)</label>
-                            <select id="bridgeStudentClass" required>
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">詢問/就讀班級</label>
+                            <select id="bridgeStudentClass" required style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
                                 <option value="">載入班級中...</option>
                             </select>
                         </div>
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">學生姓名</label>
-                            <input type="text" id="bridgeStudentName" required placeholder="例如：吳典恩">
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">家長稱謂</label>
-                            <input type="text" id="bridgeParentName" required placeholder="例如：吳爸爸">
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">問題分類</label>
-                            <select id="bridgeIssueCategory">
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">問題分類</label>
+                            <select id="bridgeIssueCategory" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
                                 <option value="課業學習">課業學習</option>
                                 <option value="生活常規">生活常規</option>
                                 <option value="行政收費">行政收費</option>
@@ -356,16 +364,29 @@
                                 <option value="其他">其他</option>
                             </select>
                         </div>
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">負責老師</label>
-                            <input type="text" id="bridgeAssignedTeacher" required placeholder="例如：王老師">
+                    </div>
+
+                    <!-- 第二行：學生姓名、家長稱謂、負責老師 -->
+                    <div class="form-three-col-row">
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">學生姓名</label>
+                            <input type="text" id="bridgeStudentName" required placeholder="例如：吳典恩" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
+                        </div>
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">家長稱謂</label>
+                            <input type="text" id="bridgeParentName" required placeholder="例如：吳爸爸" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
+                        </div>
+                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
+                            <label style="color: #1E3A8A; font-weight: 700;">負責老師</label>
+                            <input type="text" id="bridgeAssignedTeacher" required placeholder="例如：王老師" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
                         </div>
                     </div>
-                    <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF; margin-bottom: 1rem;">
-                        <label style="color: #9F1239;">家長提出的問題描述與訴求</label>
-                        <textarea id="bridgeIssueContent" required rows="2" placeholder="請詳細記錄家長反應的狀況..."></textarea>
+
+                    <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF; margin-bottom: 1rem;">
+                        <label style="color: #1E3A8A; font-weight: 700;">家長提出的問題描述與訴求</label>
+                        <textarea id="bridgeIssueContent" required rows="2" placeholder="請詳細記錄家長反應的狀況..." style="background-color: #FFFFFF; color: #000000; font-weight: 500;"></textarea>
                     </div>
-                    <button type="submit" class="btn" style="background-color: #E11D48; color: white; padding: 0.6rem; font-size: 0.9rem;">送出問題單至安心橋</button>
+                    <button type="submit" class="btn" style="background-color: #E11D48; color: white; padding: 0.6rem; font-size: 0.9rem; font-weight: 700;">送出問題單至安心橋</button>
                 </form>
             </div>
         </div>
