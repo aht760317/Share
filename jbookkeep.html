@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>斗六分校 - 收支帳務管理系統</title>
+  <title>斗六分校 - 收支帳務管理系統 (雲端同步版)</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 圖示 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
@@ -12,6 +14,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
+  <!-- 頂部導覽列 -->
   <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
       <div class="flex items-center space-x-3">
@@ -20,10 +23,14 @@
         </div>
         <div>
           <span class="font-bold text-lg tracking-wide block">斗六分校 財務系統</span>
-          <span class="text-xs text-slate-400 block -mt-1">Accounting & Finance</span>
+          <div class="flex items-center space-x-1 -mt-0.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs text-emerald-400 font-medium">學費雲端即時同步中</span>
+          </div>
         </div>
       </div>
 
+      <!-- 導覽標籤 -->
       <nav class="flex space-x-2">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition bg-slate-800 text-white">
           <i class="fa-solid fa-chart-pie mr-1"></i> 收支總覽
@@ -38,12 +45,15 @@
     </div>
   </header>
 
+  <!-- 主內容區 -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
+    <!-- 1. 收支總覽 (Dashboard) -->
     <section id="sec-dashboard" class="tab-content space-y-6">
+      <!-- 統計卡片 -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">當月總收入</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">當月總收入 (含已收學費)</div>
           <div id="stat-total-income" class="text-2xl font-bold text-emerald-600">NT$ 0</div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -60,16 +70,17 @@
         </div>
       </div>
 
+      <!-- 收入管理 / 支出管理 快捷大按鈕區 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button onclick="openModal('income')" class="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-700 transition transform active:scale-[0.99]">
           <div class="text-left">
             <div class="text-lg font-bold flex items-center">
               <i class="fa-solid fa-circle-arrow-down mr-2 text-xl"></i> 收入管理
             </div>
-            <div class="text-xs text-emerald-100 mt-1">點擊新增學費、餐費、教材費等收入項目</div>
+            <div class="text-xs text-emerald-100 mt-1">學費收款已自動雲端匯入，點此可記其他零星收入</div>
           </div>
           <span class="bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm">
-            <i class="fa-solid fa-plus mr-1"></i> 新增收入
+            <i class="fa-solid fa-plus mr-1"></i> 新增自訂收入
           </span>
         </button>
 
@@ -78,7 +89,7 @@
             <div class="text-lg font-bold flex items-center">
               <i class="fa-solid fa-circle-arrow-up mr-2 text-xl"></i> 支出管理
             </div>
-            <div class="text-xs text-rose-100 mt-1">點擊新增薪資、房租、水電、廣告、文具等支出項目</div>
+            <div class="text-xs text-rose-100 mt-1">登記水電、薪資、房租、廣告費、勞健保、獎金、文具等</div>
           </div>
           <span class="bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm">
             <i class="fa-solid fa-plus mr-1"></i> 新增支出
@@ -86,36 +97,44 @@
         </button>
       </div>
 
+      <!-- 收支流水帳列表 -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold text-slate-800 flex items-center">
-            <i class="fa-solid fa-clock-rotate-left mr-2 text-indigo-600"></i> 近期收支明細表
-          </h2>
-          <button onclick="exportCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition flex items-center">
-            <i class="fa-solid fa-file-csv mr-1.5 text-emerald-600"></i> 匯出報表 (CSV)
-          </button>
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center">
+              <i class="fa-solid fa-clock-rotate-left mr-2 text-indigo-600"></i> 近期收支明細表
+            </h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">包含雲端同步學費</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="exportCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition flex items-center">
+              <i class="fa-solid fa-file-csv mr-1.5 text-emerald-600"></i> 匯出報表 (CSV)
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
-                <th class="py-3 px-4">建立時間</th>
+                <th class="py-3 px-4">建立/入帳時間</th>
                 <th class="py-3 px-4">類別</th>
                 <th class="py-3 px-4">摘要</th>
                 <th class="py-3 px-4">說明</th>
                 <th class="py-3 px-4 text-right">金額 (NTD)</th>
-                <th class="py-3 px-4">備註</th>
+                <th class="py-3 px-4">備註 / 來源</th>
                 <th class="py-3 px-4 text-center">操作</th>
               </tr>
             </thead>
             <tbody id="transaction-list" class="divide-y divide-slate-100">
-              </tbody>
+              <!-- 動態生成 -->
+            </tbody>
           </table>
         </div>
       </div>
     </section>
 
+    <!-- 2. 功能設定 (Settings) -->
     <section id="sec-settings" class="tab-content hidden space-y-6">
       <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
@@ -126,7 +145,7 @@
             <h3 class="text-sm font-semibold text-emerald-700 mb-2">收入常見摘要</h3>
             <ul id="setting-income-list" class="space-y-1 mb-3 text-sm"></ul>
             <div class="flex space-x-2">
-              <input type="text" id="new-inc-cat" placeholder="新增收入摘要 (如: 寒假營隊費)..." class="border rounded-lg p-1.5 text-xs flex-1">
+              <input type="text" id="new-inc-cat" placeholder="新增收入摘要..." class="border rounded-lg p-1.5 text-xs flex-1">
               <button onclick="addCategory('income')" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700">新增</button>
             </div>
           </div>
@@ -134,7 +153,7 @@
             <h3 class="text-sm font-semibold text-rose-700 mb-2">支出常見摘要</h3>
             <ul id="setting-expense-list" class="space-y-1 mb-3 text-sm"></ul>
             <div class="flex space-x-2">
-              <input type="text" id="new-exp-cat" placeholder="新增支出摘要 (如: 冷氣清洗)..." class="border rounded-lg p-1.5 text-xs flex-1">
+              <input type="text" id="new-exp-cat" placeholder="新增支出摘要..." class="border rounded-lg p-1.5 text-xs flex-1">
               <button onclick="addCategory('expense')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg hover:bg-rose-700">新增</button>
             </div>
           </div>
@@ -142,6 +161,7 @@
       </div>
     </section>
 
+    <!-- 3. 系統設定 (Advanced Settings) -->
     <section id="sec-adv-settings" class="tab-content hidden space-y-6">
       <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
@@ -153,10 +173,12 @@
             <input type="text" value="斗六分校" disabled class="w-full bg-slate-100 border rounded-lg p-2 text-sm text-slate-500">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">資料重置</label>
-            <button onclick="clearAllData()" class="px-4 py-2 border border-rose-300 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold transition">
-              <i class="fa-solid fa-trash-can mr-1"></i> 清空所有記帳明細
-            </button>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
+            <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1 text-slate-600">
+              <div>專案 ID：<span class="font-mono font-bold">my-project-9999-479215</span></div>
+              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (自動同步已繳項目)</span></div>
+              <div>自訂支出集合：<span class="font-mono font-bold text-rose-600">expenses (雲端儲存)</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -164,6 +186,7 @@
 
   </main>
 
+  <!-- 填寫彈出視窗 (Modal) -->
   <div id="record-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all">
       <div id="modal-header" class="px-6 py-4 flex justify-between items-center text-white bg-emerald-600">
@@ -207,12 +230,12 @@
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">說明</label>
-          <input type="text" id="entry-desc" placeholder="例如：王小明 國小英文班 9-11月學費 或 7-8月夏季電費" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <input type="text" id="entry-desc" placeholder="例如：7-8月夏季電費、兼職老師鐘點" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">備註</label>
-          <textarea id="entry-note" rows="2" placeholder="例如：收據編號 #1001、匯款帳號後五碼 12345" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+          <textarea id="entry-note" rows="2" placeholder="例如：發票號碼、轉帳帳號末五碼" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
         </div>
 
         <div class="flex justify-end space-x-3 pt-2">
@@ -227,7 +250,23 @@
     </div>
   </div>
 
-  <script>
+  <!-- Firebase 模組與資料即時同步邏輯 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+      authDomain: "my-project-9999-479215.firebaseapp.com",
+      projectId: "my-project-9999-479215",
+      storageBucket: "my-project-9999-479215.firebasestorage.app",
+      messagingSenderId: "1020162825898",
+      appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     // 預設分類
     const defaultIncomeSummaries = ["學費", "餐費", "教材費", "其他收入"];
     const defaultExpenseSummaries = [
@@ -235,27 +274,204 @@
       "勞健保", "獎金", "廣告費", "文具費", "雜項與維護"
     ];
 
-    // 初始化狀態
     let state = {
-      transactions: JSON.parse(localStorage.getItem('dl_records_v2')) || [],
-      incomeCategories: JSON.parse(localStorage.getItem('dl_inc_cat_v2')) || defaultIncomeSummaries,
-      expenseCategories: JSON.parse(localStorage.getItem('dl_exp_cat_v2')) || defaultExpenseSummaries
+      customTransactions: [], // 手動記帳（支出、非學費收入）
+      syncedTuitionRecords: [], // 從 bills 自動同步的已繳項目
+      incomeCategories: JSON.parse(localStorage.getItem('dl_inc_cat_v3')) || defaultIncomeSummaries,
+      expenseCategories: JSON.parse(localStorage.getItem('dl_exp_cat_v3')) || defaultExpenseSummaries
     };
 
+    // 頁面初始化
     document.addEventListener('DOMContentLoaded', () => {
       renderCategories();
-      renderDashboard();
+      initFirebaseSync();
     });
 
     // 取得當前時間字串 (YYYY-MM-DDTHH:mm)
-    function getCurrentDateTimeLocal() {
+    window.getCurrentDateTimeLocal = function() {
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       return now.toISOString().slice(0, 16);
+    };
+
+    // 監聽雲端資料庫
+    function initFirebaseSync() {
+      // 1. 即時監聽學費帳單 (bills) -> 只要是已繳 (isPaid === true) 就自動轉為收入明細
+      onSnapshot(collection(db, "bills"), (snapshot) => {
+        const tuitionList = [];
+        snapshot.forEach((docSnap) => {
+          const bill = docSnap.data();
+          if (bill.isPaid) {
+            // 繳費時間處理
+            let pTime = bill.paidDate || bill.date || new Date().toISOString().split('T')[0];
+            if (pTime.length === 10) pTime += "T12:00"; // 補足時間格式
+
+            const period = bill.periodStr || bill.yearMonth || '';
+
+            // 拆解單據內的每筆細項（學費、餐費、折扣等）
+            if (Array.isArray(bill.items) && bill.items.length > 0) {
+              bill.items.forEach((item, idx) => {
+                let cat = "學費";
+                const itemName = item.name || '';
+                if (itemName.includes('餐費')) cat = "餐費";
+                else if (itemName.includes('教材') || itemName.includes('書本')) cat = "教材費";
+                else if (itemName.includes('車費') || itemName.includes('交通')) cat = "交通費";
+                else if (itemName.includes('優惠') || itemName.includes('折抵') || item.amount < 0) cat = "學費折抵";
+
+                tuitionList.push({
+                  id: `bill_${docSnap.id}_${idx}`,
+                  firestoreId: docSnap.id,
+                  type: 'income',
+                  isTuitionSync: true, // 標記為雲端學費同步
+                  createdAt: pTime,
+                  summary: cat,
+                  amount: item.amount,
+                  desc: `${bill.className} - ${bill.studentName} (${item.name})`,
+                  note: `學費系統自動同步 (期間: ${period})`
+                });
+              });
+            } else {
+              // 若無細項，直接以整張單總額顯示
+              tuitionList.push({
+                id: `bill_${docSnap.id}`,
+                firestoreId: docSnap.id,
+                type: 'income',
+                isTuitionSync: true,
+                createdAt: pTime,
+                summary: "學費",
+                amount: bill.total || 0,
+                desc: `${bill.className} - ${bill.studentName} (全額收費)`,
+                note: `學費系統自動同步 (期間: ${period})`
+              });
+            }
+          }
+        });
+
+        state.syncedTuitionRecords = tuitionList;
+        renderDashboard();
+      }, (error) => {
+        console.error("學費即時同步失敗：", error);
+      });
+
+      // 2. 即時監聽日常支出與手動帳務 (expenses 集合)
+      onSnapshot(collection(db, "expenses"), (snapshot) => {
+        const expList = [];
+        snapshot.forEach((docSnap) => {
+          expList.push({ firestoreDocId: docSnap.id, ...docSnap.data() });
+        });
+        state.customTransactions = expList;
+        renderDashboard();
+      }, (error) => {
+        console.error("自訂支出同步失敗：", error);
+      });
     }
 
+    // 渲染總覽與流水帳
+    window.renderDashboard = function() {
+      // 合併「雲端學費已繳記錄」與「手動記帳（支出/其他收入）」
+      const allRecords = [...state.syncedTuitionRecords, ...state.customTransactions];
+      
+      // 依建立時間排序（新到舊）
+      allRecords.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      let totalInc = 0;
+      let totalExp = 0;
+
+      const tbody = document.getElementById('transaction-list');
+      tbody.innerHTML = '';
+
+      if (allRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">目前尚無收支明細</td></tr>`;
+      } else {
+        allRecords.forEach(t => {
+          if (t.type === 'income') totalInc += Number(t.amount);
+          if (t.type === 'expense') totalExp += Number(t.amount);
+
+          const isIncome = t.type === 'income';
+          const formattedDate = (t.createdAt || '').replace('T', ' ');
+
+          // 判斷是否為自動同步的學費
+          const sourceBadge = t.isTuitionSync
+            ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="fa-solid fa-cloud mr-1"></i>學費連動</span>`
+            : `<span class="text-slate-400 text-xs">${t.note || '-'}</span>`;
+
+          const actionBtn = t.isTuitionSync
+            ? `<span class="text-slate-300 text-xs" title="此紀錄由學費管理系統自動維護">-</span>`
+            : `<button onclick="deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition text-xs" title="刪除明細"><i class="fa-solid fa-trash"></i></button>`;
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+          tr.innerHTML = `
+            <td class="py-3 px-4 text-slate-500 text-xs font-mono">${formattedDate}</td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${isIncome ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                ${isIncome ? '收入' : '支出'}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-semibold text-slate-800">${t.summary}</td>
+            <td class="py-3 px-4 text-slate-600">${t.desc}</td>
+            <td class="py-3 px-4 text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">
+              ${isIncome ? '+' : '-'} NT$ ${Number(t.amount).toLocaleString()}
+            </td>
+            <td class="py-3 px-4">${sourceBadge}</td>
+            <td class="py-3 px-4 text-center">${actionBtn}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      const netProfit = totalInc - totalExp;
+      const profitRate = totalInc > 0 ? ((netProfit / totalInc) * 100).toFixed(1) : 0;
+
+      document.getElementById('stat-total-income').innerText = `NT$ ${totalInc.toLocaleString()}`;
+      document.getElementById('stat-total-expense').innerText = `NT$ ${totalExp.toLocaleString()}`;
+      document.getElementById('stat-net-profit').innerText = `NT$ ${netProfit.toLocaleString()}`;
+      document.getElementById('stat-profit-rate').innerText = `${profitRate}%`;
+    };
+
+    // 表單提交儲存（寫入 Firebase expenses 集合）
+    window.handleFormSubmit = async function(event) {
+      event.preventDefault();
+      const type = document.getElementById('entry-type').value;
+      const createdAt = document.getElementById('entry-time').value;
+      const summary = document.getElementById('entry-summary').value.trim();
+      const amount = parseFloat(document.getElementById('entry-amount').value);
+      const desc = document.getElementById('entry-desc').value.trim();
+      const note = document.getElementById('entry-note').value.trim();
+
+      const newRecord = {
+        type,
+        createdAt,
+        summary,
+        amount,
+        desc: desc || "-",
+        note: note || "-",
+        isTuitionSync: false
+      };
+
+      try {
+        await addDoc(collection(db, "expenses"), newRecord);
+        closeModal();
+      } catch (e) {
+        console.error("儲存紀錄失敗：", e);
+        alert("儲存至雲端失敗，請稍後再試。");
+      }
+    };
+
+    // 刪除自訂支出紀錄
+    window.deleteCustomTransaction = async function(firestoreDocId) {
+      if (!firestoreDocId) return;
+      if (!confirm("確定要刪除這筆收支紀錄嗎？")) return;
+      try {
+        await deleteDoc(doc(db, "expenses", firestoreDocId));
+      } catch (e) {
+        console.error("刪除失敗：", e);
+        alert("刪除失敗，請稍後再試。");
+      }
+    };
+
     // 打開填寫框框 (Modal)
-    function openModal(type) {
+    window.openModal = function(type) {
       const modal = document.getElementById('record-modal');
       const header = document.getElementById('modal-header');
       const title = document.getElementById('modal-title');
@@ -283,109 +499,21 @@
 
       document.getElementById('entry-summary').value = '';
       modal.classList.remove('hidden');
-    }
+    };
 
-    // 關閉 Modal
-    function closeModal() {
+    window.closeModal = function() {
       document.getElementById('record-modal').classList.add('hidden');
-    }
+    };
 
-    // 快速選擇摘要連動
-    function onSummarySelectChange() {
+    window.onSummarySelectChange = function() {
       const selectVal = document.getElementById('entry-summary-select').value;
       if (selectVal) {
         document.getElementById('entry-summary').value = selectVal;
       }
-    }
-
-    // 提交儲存表單
-    function handleFormSubmit(event) {
-      event.preventDefault();
-      const type = document.getElementById('entry-type').value;
-      const createdAt = document.getElementById('entry-time').value;
-      const summary = document.getElementById('entry-summary').value.trim();
-      const amount = parseFloat(document.getElementById('entry-amount').value);
-      const desc = document.getElementById('entry-desc').value.trim();
-      const note = document.getElementById('entry-note').value.trim();
-
-      const record = {
-        id: Date.now(),
-        type,
-        createdAt,
-        summary,
-        amount,
-        desc: desc || "-",
-        note: note || "-"
-      };
-
-      state.transactions.unshift(record);
-      localStorage.setItem('dl_records_v2', JSON.stringify(state.transactions));
-
-      closeModal();
-      renderDashboard();
-    }
-
-    // 刪除紀錄
-    function deleteTransaction(id) {
-      if (!confirm("確定要刪除這筆收支紀錄嗎？")) return;
-      state.transactions = state.transactions.filter(t => t.id !== id);
-      localStorage.setItem('dl_records_v2', JSON.stringify(state.transactions));
-      renderDashboard();
-    }
-
-    // 渲染總覽與流水帳
-    function renderDashboard() {
-      let totalInc = 0;
-      let totalExp = 0;
-
-      const tbody = document.getElementById('transaction-list');
-      tbody.innerHTML = '';
-
-      if (state.transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">目前尚無收支明細，請點擊上方按鈕開始記帳</td></tr>`;
-      } else {
-        state.transactions.forEach(t => {
-          if (t.type === 'income') totalInc += t.amount;
-          if (t.type === 'expense') totalExp += t.amount;
-
-          const isIncome = t.type === 'income';
-          const formattedDate = t.createdAt.replace('T', ' ');
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-          tr.innerHTML = `
-            <td class="py-3 px-4 text-slate-500 text-xs">${formattedDate}</td>
-            <td class="py-3 px-4">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${isIncome ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                ${isIncome ? '收入' : '支出'}
-              </span>
-            </td>
-            <td class="py-3 px-4 font-semibold text-slate-800">${t.summary}</td>
-            <td class="py-3 px-4 text-slate-600">${t.desc}</td>
-            <td class="py-3 px-4 text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">
-              ${isIncome ? '+' : '-'} NT$ ${t.amount.toLocaleString()}
-            </td>
-            <td class="py-3 px-4 text-slate-400 text-xs">${t.note}</td>
-            <td class="py-3 px-4 text-center">
-              <button onclick="deleteTransaction(${t.id})" class="text-slate-300 hover:text-rose-600 transition text-xs">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-
-      const netProfit = totalInc - totalExp;
-      const profitRate = totalInc > 0 ? ((netProfit / totalInc) * 100).toFixed(1) : 0;
-
-      document.getElementById('stat-total-income').innerText = `NT$ ${totalInc.toLocaleString()}`;
-      document.getElementById('stat-total-expense').innerText = `NT$ ${totalExp.toLocaleString()}`;
-      document.getElementById('stat-net-profit').innerText = `NT$ ${netProfit.toLocaleString()}`;
-      document.getElementById('stat-profit-rate').innerText = `${profitRate}%`;
-    }
+    };
 
     // 切換分頁
-    function switchTab(tabId) {
+    window.switchTab = function(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('bg-slate-800', 'text-white');
@@ -396,10 +524,10 @@
       const activeNav = document.getElementById(`nav-${tabId}`);
       activeNav.classList.add('bg-slate-800', 'text-white');
       activeNav.classList.remove('text-slate-300');
-    }
+    };
 
-    // 渲染分類設定
-    function renderCategories() {
+    // 類別設定管理
+    window.renderCategories = function() {
       const incList = document.getElementById('setting-income-list');
       const expList = document.getElementById('setting-expense-list');
 
@@ -416,58 +544,53 @@
           <button onclick="removeCategory('expense', ${i})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-xmark"></i></button>
         </li>
       `).join('');
-    }
+    };
 
-    function addCategory(type) {
+    window.addCategory = function(type) {
       const input = document.getElementById(type === 'income' ? 'new-inc-cat' : 'new-exp-cat');
       const val = input.value.trim();
       if (!val) return;
 
       if (type === 'income') {
         state.incomeCategories.push(val);
-        localStorage.setItem('dl_inc_cat_v2', JSON.stringify(state.incomeCategories));
+        localStorage.setItem('dl_inc_cat_v3', JSON.stringify(state.incomeCategories));
       } else {
         state.expenseCategories.push(val);
-        localStorage.setItem('dl_exp_cat_v2', JSON.stringify(state.expenseCategories));
+        localStorage.setItem('dl_exp_cat_v3', JSON.stringify(state.expenseCategories));
       }
       input.value = '';
       renderCategories();
-    }
+    };
 
-    function removeCategory(type, index) {
+    window.removeCategory = function(type, index) {
       if (type === 'income') {
         state.incomeCategories.splice(index, 1);
-        localStorage.setItem('dl_inc_cat_v2', JSON.stringify(state.incomeCategories));
+        localStorage.setItem('dl_inc_cat_v3', JSON.stringify(state.incomeCategories));
       } else {
         state.expenseCategories.splice(index, 1);
-        localStorage.setItem('dl_exp_cat_v2', JSON.stringify(state.expenseCategories));
+        localStorage.setItem('dl_exp_cat_v3', JSON.stringify(state.expenseCategories));
       }
       renderCategories();
-    }
+    };
 
-    // 匯出 CSV
-    function exportCSV() {
-      if (state.transactions.length === 0) return alert("目前無明細可匯出！");
-      let csvContent = "\uFEFF建立時間,收支類別,摘要,說明,金額,備註\n";
-      state.transactions.forEach(t => {
-        csvContent += `"${t.createdAt.replace('T', ' ')}","${t.type === 'income' ? '收入' : '支出'}","${t.summary}","${t.desc}",${t.amount},"${t.note}"\n`;
+    // 匯出 CSV 報表
+    window.exportCSV = function() {
+      const allRecords = [...state.syncedTuitionRecords, ...state.customTransactions];
+      if (allRecords.length === 0) return alert("目前無明細可匯出！");
+
+      allRecords.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      let csvContent = "\uFEFF入帳/建立時間,收支類別,摘要,說明,金額,備註\n";
+      allRecords.forEach(t => {
+        csvContent += `"${(t.createdAt || '').replace('T', ' ')}","${t.type === 'income' ? '收入' : '支出'}","${t.summary}","${t.desc}",${t.amount},"${t.note}"\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `斗六分校_收支帳務明細_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `斗六分校_收支明細表_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
-    }
-
-    // 清空資料
-    function clearAllData() {
-      if (confirm("⚠️ 確定要清除所有記帳資料嗎？此動作無法復原！")) {
-        state.transactions = [];
-        localStorage.removeItem('dl_records_v2');
-        renderDashboard();
-      }
-    }
+    };
   </script>
 </body>
 </html>
