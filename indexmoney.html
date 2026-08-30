@@ -834,13 +834,18 @@
             </div>
         </div>
         
-        <div style="margin-bottom: 10px;" class="no-print">
+        <div style="margin-bottom: 12px;" class="no-print">
             <div class="category-filter-group" id="directoryCategoryFilter">
                 <button class="category-filter-btn active" onclick="filterDirectoryClasses('all', this)">全部</button>
                 <button class="category-filter-btn" onclick="filterDirectoryClasses('primary', this)">📘 國小/課輔</button>
                 <button class="category-filter-btn" onclick="filterDirectoryClasses('junior', this)">📗 國中</button>
             </div>
-            <div id="directoryClassGrid" class="btn-grid"></div>
+            
+            <!-- 改為簡潔俐落的下拉選單 -->
+            <div style="display: flex; gap: 8px; align-items: center; background: #F1F5F9; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <label style="margin: 0; white-space: nowrap; color: #1E40AF; font-size: 13px;">🏫 選擇班級：</label>
+                <select id="directoryClassSelect" onchange="showDirectoryClass(this.value)" style="padding: 6px 10px; font-weight: bold; background: white; border-color: #93C5FD; font-size: 14px;"></select>
+            </div>
         </div>
 
         <div id="studentProfileSection" class="no-print" style="display: none; background: #FFFBEB; padding: 12px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 12px;">
@@ -1374,8 +1379,8 @@
     }
 
     window.renderDirectoryInit = function() {
-        const grid = document.getElementById('directoryClassGrid');
-        grid.innerHTML = '';
+        const select = document.getElementById('directoryClassSelect');
+        select.innerHTML = '';
 
         let filteredOrder = window.config.classOrder;
         const cat = window.directoryFilterCategory || 'all';
@@ -1385,24 +1390,11 @@
             filteredOrder = filteredOrder.filter(cls => !window.isJuniorHigh(cls));
         }
 
-        const btnAll = document.createElement('button');
-        btnAll.className = `btn-select ${window.currentDirectoryClass === 'all' ? 'active' : ''}`;
-        btnAll.innerText = '全校總覽';
-        btnAll.onclick = () => showDirectoryClass('all');
-        grid.appendChild(btnAll);
-
+        let html = `<option value="all">全校總覽 (${filteredOrder.length} 個班級)</option>`;
         filteredOrder.forEach(cls => {
-            const btn = document.createElement('button');
-            const classColor = getClassCategoryStyle(cls);
-            btn.className = `btn-select ${classColor} ${cls === window.currentDirectoryClass ? 'active' : ''}`;
-            btn.innerText = cls;
-            btn.onclick = () => showDirectoryClass(cls);
-            grid.appendChild(btn);
+            html += `<option value="${cls}" ${cls === window.currentDirectoryClass ? 'selected' : ''}>${cls}</option>`;
         });
-
-        if (filteredOrder.length === 0) {
-            grid.innerHTML += '<div style="color:#94A3B8; padding: 10px;">目前尚無此分類班級</div>';
-        }
+        select.innerHTML = html;
 
         showDirectoryClass(window.currentDirectoryClass);
     }
@@ -1410,12 +1402,10 @@
     window.showDirectoryClass = function(cls) {
         window.currentDirectoryClass = cls;
         
-        document.querySelectorAll('#directoryClassGrid .btn-select').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.innerText === cls || (cls === 'all' && btn.innerText === '全校總覽')) {
-                btn.classList.add('active');
-            }
-        });
+        const select = document.getElementById('directoryClassSelect');
+        if (select && select.value !== cls) {
+            select.value = cls;
+        }
 
         const container = document.getElementById('directoryContent');
         let html = '';
