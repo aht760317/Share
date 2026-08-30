@@ -62,7 +62,7 @@
         /* 手機版專屬樣式：自動將導覽列置底固定 */
         @media (max-width: 768px) {
             body {
-                padding-bottom: 5.5rem; /* 預留底部選單空間防遮擋 */
+                padding-bottom: 5.5rem;
             }
             .tab-nav {
                 position: fixed;
@@ -323,11 +323,8 @@
                     </div>
                 </div>
                 <form id="bridgeIssueForm" onsubmit="handleBridgeFormSubmit(event)">
+                    <!-- 依序：分校別 -> 班級 -> 學生姓名 -> 家長稱謂 -> 問題分類 -> 負責老師 -->
                     <div class="form-blocks-grid">
-                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">學生姓名</label>
-                            <input type="text" id="bridgeStudentName" required placeholder="例如：吳典恩">
-                        </div>
                         <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
                             <label style="color: #9F1239;">分校別</label>
                             <select id="bridgeClassName" required>
@@ -336,25 +333,14 @@
                             </select>
                         </div>
                         <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
-                            <label style="color: #9F1239;">詢問/就讀班級 (點名表班級)</label>
+                            <label style="color: #9F1239;">詢問/就讀班級 (點名表開課班級)</label>
                             <select id="bridgeStudentClass" required>
-                                <option value="">-- 請選擇班級 --</option>
-                                <option value="小兒童英文班（中班到小二）">小兒童英文班（中班到小二）</option>
-                                <option value="大兒童英文班（小三以上同學）">大兒童英文班（小三以上同學）</option>
-                                <option value="國中英文班">國中英文班</option>
-                                <option value="全民英檢班">全民英檢班</option>
-                                <option value="小一正音班">小一正音班</option>
-                                <option value="安親課輔班">安親課輔班</option>
-                                <option value="國小數學班">國小數學班</option>
-                                <option value="國小英文班">國小英文班</option>
-                                <option value="國小作文班">國小作文班</option>
-                                <option value="國中國文 (帝都國文)">國中國文 (帝都國文)</option>
-                                <option value="國中數學班">國中數學班</option>
-                                <option value="國中自然班">國中自然班</option>
-                                <option value="寒暑假冬夏令營">寒暑假冬夏令營</option>
-                                <option value="國三會考班（全科）">國三會考班（全科）</option>
-                                <option value="其他班級 / 尚未入班">其他班級 / 尚未入班</option>
+                                <option value="">載入班級中...</option>
                             </select>
+                        </div>
+                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
+                            <label style="color: #9F1239;">學生姓名</label>
+                            <input type="text" id="bridgeStudentName" required placeholder="例如：吳典恩">
                         </div>
                         <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
                             <label style="color: #9F1239;">家長稱謂</label>
@@ -702,6 +688,16 @@
 
         async function initAdmissionCloud() {
             try {
+                // 優先讀取點名表開課班級
+                try {
+                    const rollDoc = await getDoc(doc(db, "settings", "rollbookData"));
+                    if (rollDoc.exists() && rollDoc.data().classes) {
+                        window.rollbookClasses = rollDoc.data().classes.map(c => typeof c === 'string' ? c : (c.name || c.className)).filter(Boolean);
+                    }
+                } catch(err) {
+                    console.log("讀取點名表雲端班級略過：", err);
+                }
+
                 const docSnap = await getDoc(doc(db, "settings", "admissionSystemData"));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -726,9 +722,11 @@
                         }
                     ];
                 }
+                loadRollbookClassOptions();
                 renderAllViews();
             } catch (e) {
                 console.error("載入招生雲端資料失敗：", e);
+                loadRollbookClassOptions();
             }
         }
 
@@ -783,6 +781,45 @@
             "國三會考班（全科）"
         ];
 
+        // 自動動態同步點名表 (rollbook.html) 的所有班級
+        function loadRollbookClassOptions() {
+            const selectEl = document.getElementById('bridgeStudentClass');
+            if (!selectEl) return;
+
+            let classList = [];
+
+            // 1. 優先從點名表 LocalStorage 抓取
+            try {
+                const localClasses = localStorage.getItem('rollbook_classes') || localStorage.getItem('classesData') || localStorage.getItem('rollbookClasses');
+                if (localClasses) {
+                    const parsed = JSON.parse(localClasses);
+                    if (Array.isArray(parsed)) {
+                        classList = parsed.map(c => typeof c === 'string' ? c : (c.name || c.className)).filter(Boolean);
+                    }
+                }
+            } catch(e) {}
+
+            // 2. 若無則從 Firebase 點名表集合或預設課程抓取
+            if (!classList || classList.length === 0) {
+                if (window.rollbookClasses && window.rollbookClasses.length > 0) {
+                    classList = window.rollbookClasses;
+                } else {
+                    classList = AVAILABLE_COURSES;
+                }
+            }
+
+            // 去除重複班級
+            classList = Array.from(new Set(classList));
+
+            let html = '<option value="">-- 請選擇班級 --</option>';
+            classList.forEach(cls => {
+                html += `<option value="${cls}">${cls}</option>`;
+            });
+            html += `<option value="其他班級 / 尚未入班">其他班級 / 尚未入班</option>`;
+
+            selectEl.innerHTML = html;
+        }
+
         function getFormattedTimestamp() {
             const now = new Date();
             const month = now.getMonth() + 1;
@@ -801,6 +838,7 @@
             if (tabId === 'enrolledTab') {
                 renderEnrolledTable();
             } else if (tabId === 'bridgeTab') {
+                loadRollbookClassOptions();
                 renderBridgeTable();
             }
         }
@@ -1605,9 +1643,9 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; font-size: 0.88rem;">
                     <div><strong>編號：</strong> ${item.id}</div>
                     <div><strong>回報時間：</strong> ${item.reportedAt}</div>
-                    <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>分校：</strong> ${item.className}</div>
                     <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
+                    <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>家長：</strong> ${item.parentName}</div>
                     <div><strong>分類：</strong> ${item.issueCategory}</div>
                     <div><strong>負責：</strong> ${item.assignedTeacher || '未指定'}</div>
@@ -1687,9 +1725,9 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.4rem; font-size: 0.88rem;">
                     <div><strong>編號：</strong> ${item.id}</div>
                     <div><strong>時間：</strong> ${item.reportedAt}</div>
-                    <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>分校：</strong> ${item.className}</div>
                     <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
+                    <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>家長：</strong> ${item.parentName}</div>
                     <div><strong>分類：</strong> ${item.issueCategory}</div>
                 </div>
