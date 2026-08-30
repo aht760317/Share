@@ -224,6 +224,68 @@
 
         h3.section-title { color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-top: 20px; font-size: 17px; }
 
+        /* ================= 💻 電腦版未繳費名單：一行單行式排版與立體分隔 ================= */
+        .unpaid-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-left: 4px solid #EF4444;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .unpaid-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            border-color: #CBD5E1;
+            border-left-color: #DC2626;
+        }
+        .unpaid-card-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+        }
+        .unpaid-period-badge {
+            font-size: 12px;
+            color: #475569;
+            font-weight: 600;
+            background: #F1F5F9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #E2E8F0;
+        }
+        .unpaid-student-title {
+            font-size: 15px;
+            color: #334155;
+            font-weight: 500;
+        }
+        .unpaid-student-title strong {
+            font-size: 16px;
+            color: #0F172A;
+        }
+        .unpaid-amount-tag {
+            font-size: 16px;
+            color: var(--danger);
+            font-weight: 900;
+            margin-left: auto;
+            padding-right: 15px;
+        }
+        .unpaid-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         /* 彈出視窗 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
@@ -310,19 +372,26 @@
             .quick-btn span { font-size: 14px; }
             .quick-btn small { font-size: 13px; }
 
+            /* 手機版未繳費名單轉為卡片 */
             .unpaid-card {
-                background: white;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-                padding: 12px;
-                margin-bottom: 10px;
-                display: flex;
                 flex-direction: column;
+                align-items: stretch;
                 gap: 8px;
+                padding: 12px;
+            }
+            .unpaid-card-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                white-space: normal;
+            }
+            .unpaid-amount-tag {
+                margin-left: 0;
+                padding-right: 0;
+                align-self: flex-start;
             }
             .unpaid-card-actions {
-                display: flex;
-                gap: 6px;
+                width: 100%;
                 border-top: 1px dashed var(--border);
                 padding-top: 8px;
             }
@@ -400,24 +469,20 @@
 
     <!-- 頁籤 1：繳費紀錄管理 -->
     <div id="manage" class="content-area active">
-        <!-- 結帳財務報表列印 (整合成單一行下拉選單) -->
         <div class="finance-bar">
             <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <span style="font-weight: bold; color: #92400E; font-size: 14px; white-space: nowrap;">📊 結帳財務報表：</span>
                 
-                <!-- 報表模式下拉選單 -->
                 <select id="reportModeSelect" onchange="handleReportModeChange()" style="padding: 6px 10px; width: auto; font-weight: bold; color: #92400E; background: white; border-color: #FCD34D;">
                     <option value="daily">📅 查詢當日報表</option>
                     <option value="monthly">📆 查詢當月報表</option>
                     <option value="range">⏳ 查詢區間報表</option>
                 </select>
 
-                <!-- 日期選擇容器 (依據下拉選單動態切換) -->
                 <div id="reportDateInputContainer" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <input type="date" id="dailyReportDate" style="padding: 5px 8px; width: auto;">
                 </div>
 
-                <!-- 查詢列印按鈕 -->
                 <button class="btn-select" style="background:#D97706; color:white; border:none; padding: 6px 14px; font-weight:bold; font-size:13px;" onclick="executeSelectedReport()">🔍 查詢報表</button>
             </div>
         </div>
@@ -486,7 +551,7 @@
         </div>
     </div>
 
-    <!-- 頁籤 2：未繳費查詢 -->
+    <!-- 頁籤 2：未繳費查詢 (優化排版) -->
     <div id="unpaid" class="content-area">
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
         <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
@@ -504,14 +569,14 @@
             </div>
         </div>
 
-        <div style="border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; margin-bottom: 15px;">
-            <div style="background:#FEF2F2; color:#991B1B; padding: 10px 12px; font-weight:bold;">📘 國小部 - 未繳費名單</div>
-            <div style="padding: 10px;" id="tabPrimaryUnpaidListBody"></div>
+        <div style="border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; margin-bottom: 18px; background: #FFF7F7;">
+            <div style="background:#FEF2F2; color:#991B1B; padding: 10px 14px; font-weight:bold; border-bottom: 1px solid #FECACA; font-size: 15px;">📘 國小部 - 未繳費名單</div>
+            <div style="padding: 12px;" id="tabPrimaryUnpaidListBody"></div>
         </div>
 
-        <div style="border: 2px solid #D8B4FE; border-radius: 8px; overflow: hidden;">
-            <div style="background:#F3E8FF; color:#7E22CE; padding: 10px 12px; font-weight:bold;">📗 國中部 - 未繳費名單</div>
-            <div style="padding: 10px;" id="tabJuniorUnpaidListBody"></div>
+        <div style="border: 2px solid #D8B4FE; border-radius: 8px; overflow: hidden; background: #FAF5FF;">
+            <div style="background:#F3E8FF; color:#7E22CE; padding: 10px 14px; font-weight:bold; border-bottom: 1px solid #D8B4FE; font-size: 15px;">📗 國中部 - 未繳費名單</div>
+            <div style="padding: 12px;" id="tabJuniorUnpaidListBody"></div>
         </div>
     </div>
 
@@ -1840,6 +1905,7 @@
         renderUnpaidTabLists();
     }
 
+    // 渲染未繳費名單 (電腦版單行流暢排列，手機版自適應卡片)
     window.renderUnpaidTabLists = function() {
         const primaryContainer = document.getElementById('tabPrimaryUnpaidListBody');
         const juniorContainer = document.getElementById('tabJuniorUnpaidListBody');
@@ -1863,16 +1929,16 @@
         const juniorUnpaid = unpaidBills.filter(b => window.isJuniorHigh(b.className));
 
         const buildHtml = (list) => {
-            if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:15px 0; font-size:14px; text-align:center;">🎉 無未繳費名單</div>';
+            if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:18px 0; font-size:14px; text-align:center;">🎉 目前無任何未繳費名單</div>';
             return list.map(bill => {
                 const periodText = bill.periodStr || bill.yearMonth || '';
                 return `
                     <div class="unpaid-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                            <span style="font-size: 15px; font-weight: bold; color: #1E293B;">${bill.className} - <strong style="font-size:16px;">${bill.studentName}</strong></span>
-                            <span style="font-size: 15px; color: var(--danger); font-weight: 900;">$${bill.total.toLocaleString()}</span>
+                        <div class="unpaid-card-info">
+                            <span class="unpaid-period-badge">📅 ${periodText}</span>
+                            <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong></span>
+                            <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
                         </div>
-                        <div style="font-size: 12px; color: #64748B;">📅 期間：${periodText}</div>
                         <div class="unpaid-card-actions">
                             <button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id}, 'notice')">🖨️ 印單據</button>
                             <button class="action-btn btn-green" onclick="openBillPreviewModal(${bill.id}, 'receipt')">🖨️ 印收據</button>
