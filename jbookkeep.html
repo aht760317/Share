@@ -347,7 +347,7 @@
             <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
             <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1.5 text-slate-600">
               <div>專案 ID：<span class="font-mono font-bold text-slate-800">my-project-9999-479215</span></div>
-              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (已繳自動同步)</span></div>
+              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (固定連動【文理】收支)</span></div>
               <div>文理支出：<span class="font-mono font-bold text-rose-600">expenses_wenli</span></div>
               <div>英文支出：<span class="font-mono font-bold text-rose-600">expenses_english</span></div>
             </div>
@@ -722,7 +722,7 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽學費
+      // 1. 監聽顧德繳費系統 (bills) - 全數固定歸入「文理」收入
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const tuitionList = [];
         snapshot.forEach((docSnap) => {
@@ -732,9 +732,7 @@
             if (pTime.length === 10) pTime += "T12:00";
 
             const period = bill.periodStr || bill.yearMonth || '';
-            const cls = bill.className || '';
-            const isEng = cls.includes('英文') || cls.includes('英語') || cls.includes('佳音') || cls.includes('English');
-            const campusKey = isEng ? 'english' : 'wenli';
+            const campusKey = 'wenli'; // 🔒 固定鎖定為文理
 
             if (Array.isArray(bill.items) && bill.items.length > 0) {
               bill.items.forEach((item, idx) => {
@@ -757,7 +755,7 @@
                   summary: cat,
                   amount: item.amount,
                   desc: `${bill.className} - ${bill.studentName} (${item.name})`,
-                  note: `學費系統自動連動 (收費期間: ${period})`
+                  note: `顧德繳費系統自動連動 (收費期間: ${period})`
                 });
               });
             } else {
@@ -773,7 +771,7 @@
                 summary: "學費",
                 amount: bill.total || 0,
                 desc: `${bill.className} - ${bill.studentName}`,
-                note: `學費系統自動連動 (收費期間: ${period})`
+                note: `顧德繳費系統自動連動 (收費期間: ${period})`
               });
             }
           }
@@ -781,7 +779,7 @@
 
         state.syncedTuitionRecords = tuitionList;
         renderDashboard();
-      }, (error) => console.error("學費同步失敗：", error));
+      }, (error) => console.error("顧德學費同步失敗：", error));
 
       // 2. 監聽文理支出
       onSnapshot(collection(db, "expenses_wenli"), (snapshot) => {
@@ -953,7 +951,7 @@
           const formatted24HTime = formatTime24HDisplay(t.createdAt, true);
           const time24HOnly = formatTime24HDisplay(t.createdAt, false);
           const actionBtn = t.isTuitionSync
-            ? `<span class="text-slate-300 text-xs" title="學費系統連動">-</span>`
+            ? `<span class="text-slate-300 text-xs" title="顧德繳費系統連動">-</span>`
             : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="刪除"><i class="fa-solid fa-trash text-xs"></i></button>`;
 
           const tr = document.createElement('tr');
@@ -976,7 +974,7 @@
               <div class="flex items-center space-x-1.5 mb-1">
                 <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">${t.summary}</span>
                 <span class="text-xs text-slate-500 font-mono font-semibold">${time24HOnly}</span>
-                ${t.isTuitionSync ? '<span class="text-[9px] bg-indigo-50 text-indigo-600 font-bold px-1.5 py-0.2 rounded border border-indigo-100">學費連動</span>' : ''}
+                ${t.isTuitionSync ? '<span class="text-[9px] bg-indigo-50 text-indigo-600 font-bold px-1.5 py-0.2 rounded border border-indigo-100">顧德連動</span>' : ''}
               </div>
               <div class="text-sm font-bold text-slate-900 truncate">${t.desc}</div>
               <div class="text-[11px] text-slate-400 truncate mt-0.5">${t.note || '無備註'}</div>
@@ -1082,7 +1080,7 @@
       document.getElementById('detail-desc').innerText = item.desc || '-';
       document.getElementById('detail-note').innerText = item.note || '無備註資訊';
       document.getElementById('detail-time').innerText = (item.createdAt || '').replace('T', ' ');
-      document.getElementById('detail-source').innerText = item.isTuitionSync ? '學費管理系統 (雲端連動)' : '人工櫃檯登記';
+      document.getElementById('detail-source').innerText = item.isTuitionSync ? '顧德繳費系統 (雲端連動)' : '人工櫃檯登記';
 
       document.getElementById('detail-modal').classList.remove('hidden');
     };
