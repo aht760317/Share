@@ -506,7 +506,7 @@
         </div>
     </div>
 
-    <!-- 1.5 尚未點名 / 未到提醒專區 (支援櫃檯填寫原因與連絡結果) -->
+    <!-- 1.5 尚未點名 / 未到提醒專區 -->
     <div id="tab-absent-alert" style="display:none;">
         <div class="card" style="border-top: 4px solid var(--danger);">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
@@ -1115,6 +1115,13 @@
     }
 
     window.switchTab = function(tab) {
+        // 如果切換到學生總覽，進行密碼驗證
+        if (tab === 'students-master') {
+            if (!checkPassword("🔒 進入學生總覽需輸入管理密碼：")) {
+                return;
+            }
+        }
+
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-rollcall').style.display = tab === 'rollcall' ? 'block' : 'none';
         document.getElementById('tab-absent-alert').style.display = tab === 'absent-alert' ? 'block' : 'none';
@@ -2315,7 +2322,6 @@
         container.innerHTML = html;
     };
 
-    // 開啟櫃檯填寫原因彈窗
     window.openAbsentReasonModal = function(dateStr, courseName, studentName, phone, currentStatus, currentReason) {
         document.getElementById('modalDateStr').value = dateStr;
         document.getElementById('modalCourseName').value = courseName;
@@ -2331,7 +2337,6 @@
         document.getElementById('absentReasonModal').style.display = 'flex';
     };
 
-    // 儲存櫃檯填寫的原因與連絡結果
     window.saveAbsentReasonModal = function() {
         const dateStr = document.getElementById('modalDateStr').value;
         const courseName = document.getElementById('modalCourseName').value;
