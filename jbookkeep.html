@@ -51,29 +51,29 @@
     <!-- 1. 收支總覽 (Dashboard) -->
     <section id="sec-dashboard" class="tab-content space-y-6">
 
-      <!-- 時間維度篩選器 (三種下拉/輸入模式) -->
+      <!-- 時間維度篩選器 (支援年月日到年月日) -->
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
           <div class="flex items-center space-x-2">
             <i class="fa-solid fa-filter text-indigo-600"></i>
-            <span class="text-sm font-bold text-slate-700">查詢範圍：</span>
+            <span class="text-sm font-bold text-slate-700">查詢模式：</span>
             <select id="filter-mode" onchange="onFilterModeChange()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-semibold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="range">📅 自訂起訖日期 (年月日 至 年月日)</option>
               <option value="monthly">📆 單一月份查詢</option>
-              <option value="range">📅 自訂區間查詢 (幾月到幾月)</option>
               <option value="daily">☀️ 指定單日查詢</option>
               <option value="all">🌐 全部歷史紀錄</option>
             </select>
           </div>
 
-          <!-- 模式 1: 自訂區間 (range) -->
-          <div id="filter-input-range" class="hidden items-center space-x-2">
-            <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-            <span class="text-sm text-slate-400 font-bold">至</span>
-            <input type="date" id="filter-end-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          <!-- 模式 1: 自訂年月日區間 (range) -->
+          <div id="filter-input-range" class="flex items-center space-x-2">
+            <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+            <span class="text-sm text-slate-500 font-bold">至</span>
+            <input type="date" id="filter-end-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
           </div>
 
           <!-- 模式 2: 單一月份 (monthly) -->
-          <div id="filter-input-monthly" class="flex items-center space-x-2">
+          <div id="filter-input-monthly" class="hidden items-center space-x-2">
             <input type="month" id="filter-month" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
           </div>
 
@@ -83,23 +83,23 @@
           </div>
         </div>
 
-        <div class="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1.5 rounded-lg" id="filter-summary-badge">
-          目前顯示：本月帳務
+        <div class="text-xs text-slate-600 font-semibold bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg" id="filter-summary-badge">
+          目前顯示：自訂日期範圍
         </div>
       </div>
 
       <!-- 統計卡片 -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選區間總收入</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選期間總收入</div>
           <div id="stat-total-income" class="text-2xl font-bold text-emerald-600">NT$ 0</div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選區間總支出</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選期間總支出</div>
           <div id="stat-total-expense" class="text-2xl font-bold text-rose-600">NT$ 0</div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選區間營業淨利</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">所選期間營業淨利</div>
           <div id="stat-net-profit" class="text-2xl font-bold text-indigo-600">NT$ 0</div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -115,7 +115,7 @@
             <div class="text-lg font-bold flex items-center">
               <i class="fa-solid fa-circle-arrow-down mr-2 text-xl"></i> 收入管理
             </div>
-            <div class="text-xs text-emerald-100 mt-1">學費收款已自動雲端匯入，點此可記其他零星收入</div>
+            <div class="text-xs text-emerald-100 mt-1">學費收款已自動雲端匯入，點此可記其他自訂收入</div>
           </div>
           <span class="bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm">
             <i class="fa-solid fa-plus mr-1"></i> 新增自訂收入
@@ -145,7 +145,7 @@
             <span id="record-count-badge" class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">0 筆明細</span>
           </div>
           <button onclick="exportCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition flex items-center">
-            <i class="fa-solid fa-file-csv mr-1.5 text-emerald-600"></i> 匯出當前範圍報表 (CSV)
+            <i class="fa-solid fa-file-csv mr-1.5 text-emerald-600"></i> 匯出此期間報表 (CSV)
           </button>
         </div>
 
@@ -209,7 +209,7 @@
             <input type="text" value="斗六分校" disabled class="w-full bg-slate-100 border rounded-lg p-2 text-sm text-slate-500">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫連線狀態</label>
             <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1 text-slate-600">
               <div>專案 ID：<span class="font-mono font-bold">my-project-9999-479215</span></div>
               <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (已繳自動同步)</span></div>
@@ -286,7 +286,7 @@
     </div>
   </div>
 
-  <!-- Firebase 模組與資料即時同步邏輯 -->
+  <!-- Firebase 模組與即時同步 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -312,22 +312,22 @@
     let state = {
       customTransactions: [], 
       syncedTuitionRecords: [],
-      filteredRecords: [], // 當前篩選出的紀錄
+      filteredRecords: [],
       incomeCategories: JSON.parse(localStorage.getItem('dl_inc_cat_v3')) || defaultIncomeSummaries,
       expenseCategories: JSON.parse(localStorage.getItem('dl_exp_cat_v3')) || defaultExpenseSummaries
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 預設日期控制項初始值
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
 
-      document.getElementById('filter-month').value = `${yyyy}-${mm}`;
-      document.getElementById('filter-day').value = `${yyyy}-${mm}-${dd}`;
+      // 預設起訖年月日為當月 1 號到當天
       document.getElementById('filter-start-date').value = `${yyyy}-${mm}-01`;
       document.getElementById('filter-end-date').value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('filter-month').value = `${yyyy}-${mm}`;
+      document.getElementById('filter-day').value = `${yyyy}-${mm}-${dd}`;
 
       renderCategories();
       initFirebaseSync();
@@ -342,22 +342,26 @@
     // 切換篩選模式 UI
     window.onFilterModeChange = function() {
       const mode = document.getElementById('filter-mode').value;
-      document.getElementById('filter-input-range').classList.add('hidden');
-      document.getElementById('filter-input-range').classList.remove('flex');
-      document.getElementById('filter-input-monthly').classList.add('hidden');
-      document.getElementById('filter-input-monthly').classList.remove('flex');
-      document.getElementById('filter-input-daily').classList.add('hidden');
-      document.getElementById('filter-input-daily').classList.remove('flex');
+      const rangeEl = document.getElementById('filter-input-range');
+      const monthEl = document.getElementById('filter-input-monthly');
+      const dayEl = document.getElementById('filter-input-daily');
+
+      rangeEl.classList.add('hidden');
+      rangeEl.classList.remove('flex');
+      monthEl.classList.add('hidden');
+      monthEl.classList.remove('flex');
+      dayEl.classList.add('hidden');
+      dayEl.classList.remove('flex');
 
       if (mode === 'range') {
-        document.getElementById('filter-input-range').classList.remove('hidden');
-        document.getElementById('filter-input-range').classList.add('flex');
+        rangeEl.classList.remove('hidden');
+        rangeEl.classList.add('flex');
       } else if (mode === 'monthly') {
-        document.getElementById('filter-input-monthly').classList.remove('hidden');
-        document.getElementById('filter-input-monthly').classList.add('flex');
+        monthEl.classList.remove('hidden');
+        monthEl.classList.add('flex');
       } else if (mode === 'daily') {
-        document.getElementById('filter-input-daily').classList.remove('hidden');
-        document.getElementById('filter-input-daily').classList.add('flex');
+        dayEl.classList.remove('hidden');
+        dayEl.classList.add('flex');
       }
       renderDashboard();
     };
@@ -450,11 +454,7 @@
 
       let filtered = [];
 
-      if (mode === 'monthly') {
-        const selMonth = document.getElementById('filter-month').value;
-        filtered = allRecords.filter(r => (r.yearMonth === selMonth || (r.createdAt && r.createdAt.startsWith(selMonth))));
-        badge.innerText = `目前顯示：${selMonth || '未選擇'} 月份帳務`;
-      } else if (mode === 'range') {
+      if (mode === 'range') {
         const start = document.getElementById('filter-start-date').value;
         const end = document.getElementById('filter-end-date').value;
         filtered = allRecords.filter(r => {
@@ -464,7 +464,11 @@
           if (!start && end) return d <= end;
           return d >= start && d <= end;
         });
-        badge.innerText = `目前顯示：${start} ~ ${end} 區間帳務`;
+        badge.innerText = `目前顯示：${start || '開始日'} 至 ${end || '結束日'}`;
+      } else if (mode === 'monthly') {
+        const selMonth = document.getElementById('filter-month').value;
+        filtered = allRecords.filter(r => (r.yearMonth === selMonth || (r.createdAt && r.createdAt.startsWith(selMonth))));
+        badge.innerText = `目前顯示：${selMonth || '未選擇'} 月份帳務`;
       } else if (mode === 'daily') {
         const selDay = document.getElementById('filter-day').value;
         filtered = allRecords.filter(r => (r.dateOnly === selDay || (r.createdAt && r.createdAt.startsWith(selDay))));
