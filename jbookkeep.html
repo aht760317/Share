@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>斗六分校 - 當日收支財務管理系統</title>
+  <title>斗六分校 - 收支財務管理系統</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome 圖示 -->
@@ -38,7 +38,7 @@
           <span class="font-bold text-lg tracking-wide block">斗六分校 財務系統</span>
           <div class="flex items-center space-x-1 -mt-0.5">
             <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-xs text-emerald-400 font-medium">當日學費與收支即時連動</span>
+            <span class="text-xs text-emerald-400 font-medium">學費雲端即時連動</span>
           </div>
         </div>
       </div>
@@ -64,9 +64,9 @@
     <!-- 列印專用報表抬頭 -->
     <div class="hidden print-header">
       <h1 class="text-xl font-bold tracking-wider">雲林縣私立文聖文理短期補習班 (斗六分校)</h1>
-      <h2 class="text-base font-semibold mt-1">每日營運收支結算表</h2>
+      <h2 class="text-base font-semibold mt-1" id="print-report-title">營運收支結算表</h2>
       <div class="flex justify-between text-xs mt-2 border-b pb-1 border-black">
-        <span id="print-range-text">結算日期：</span>
+        <span id="print-range-text">統計範圍：</span>
         <span id="print-date-text">列印時間：</span>
       </div>
     </div>
@@ -74,25 +74,42 @@
     <!-- 1. 收支總覽 (Dashboard) -->
     <section id="sec-dashboard" class="tab-content space-y-6">
 
-      <!-- 頂部控制列：自動認定當日 + 切換日期 + 列印按鈕 -->
+      <!-- 頂部控制列：四大報表模式下拉選單 -->
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 no-print">
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
           <div class="flex items-center space-x-2">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              <i class="fa-solid fa-calendar-day mr-1 text-indigo-600"></i> 當日財報模式
-            </span>
-            <label class="text-sm font-bold text-slate-700 ml-1">查看日期：</label>
-            <input type="date" id="filter-target-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-slate-50 text-indigo-900">
-            <button onclick="resetToToday()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition" title="返回今日">
-              回到今天
-            </button>
+            <i class="fa-solid fa-filter text-indigo-600"></i>
+            <label class="text-sm font-bold text-slate-700">報表模式：</label>
+            <select id="filter-mode" onchange="onFilterModeChange()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-900">
+              <option value="daily" selected>☀️ 1. 當日報表</option>
+              <option value="monthly">📆 2. 當月報表</option>
+              <option value="range">📅 3. 區間報表 (幾年幾月幾日 到 幾年幾月幾日)</option>
+              <option value="all">🌐 4. 全部報表</option>
+            </select>
+          </div>
+
+          <!-- 模式 1: 當日報表日期選擇器 -->
+          <div id="input-daily" class="flex items-center space-x-2">
+            <input type="date" id="filter-day" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
+          </div>
+
+          <!-- 模式 2: 當月報表月份選擇器 -->
+          <div id="input-monthly" class="hidden items-center space-x-2">
+            <input type="month" id="filter-month" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
+          </div>
+
+          <!-- 模式 3: 區間選擇 (幾年幾月幾日 到 幾年幾月幾日) -->
+          <div id="input-range" class="hidden items-center space-x-2">
+            <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+            <span class="text-sm text-slate-500 font-bold">至</span>
+            <input type="date" id="filter-end-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
           </div>
         </div>
 
         <div class="flex items-center space-x-2">
           <!-- 列印按鈕 -->
           <button onclick="printReport()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow transition flex items-center">
-            <i class="fa-solid fa-print mr-1.5"></i> 列印當日財務表
+            <i class="fa-solid fa-print mr-1.5"></i> 列印財務表
           </button>
           <button onclick="exportCSV()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition flex items-center" title="匯出 CSV">
             <i class="fa-solid fa-file-csv mr-1 text-emerald-600"></i> 匯出
@@ -100,22 +117,22 @@
         </div>
       </div>
 
-      <!-- 當日統計卡片 -->
+      <!-- 統計卡片 -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 print-card">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">本日總收入</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間總收入</div>
           <div id="stat-total-income" class="text-xl md:text-2xl font-bold text-emerald-600">NT$ 0</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">本日總支出</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間總支出</div>
           <div id="stat-total-expense" class="text-xl md:text-2xl font-bold text-rose-600">NT$ 0</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">本日營運淨利</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間營運淨利</div>
           <div id="stat-net-profit" class="text-xl md:text-2xl font-bold text-indigo-600">NT$ 0</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">本日淨利率</div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">淨利率</div>
           <div id="stat-profit-rate" class="text-xl md:text-2xl font-bold text-slate-700">0%</div>
         </div>
       </div>
@@ -125,7 +142,6 @@
 
         <!-- 左邊：收入管理 -->
         <div class="bg-white rounded-xl border border-emerald-200 shadow-sm flex flex-col overflow-hidden print-col">
-          <!-- 頂部區塊 -->
           <div class="p-4 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
             <div>
               <h2 class="text-base font-bold text-emerald-900 flex items-center">
@@ -138,7 +154,6 @@
             </button>
           </div>
 
-          <!-- 收入明細表格 -->
           <div class="overflow-x-auto flex-1 p-2">
             <table class="w-full text-xs text-left print-table">
               <thead class="bg-slate-50 text-slate-500 uppercase">
@@ -156,16 +171,14 @@
             </table>
           </div>
 
-          <!-- 收入合計底部 -->
           <div class="p-3 bg-emerald-50/50 border-t border-emerald-100 flex justify-between items-center text-xs font-bold">
-            <span class="text-emerald-900">本日收入合計</span>
+            <span class="text-emerald-900">收入合計</span>
             <span id="income-subtotal" class="text-emerald-600 text-sm">NT$ 0</span>
           </div>
         </div>
 
         <!-- 右邊：支出管理 -->
         <div class="bg-white rounded-xl border border-rose-200 shadow-sm flex flex-col overflow-hidden print-col">
-          <!-- 頂部區塊 -->
           <div class="p-4 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
             <div>
               <h2 class="text-base font-bold text-rose-900 flex items-center">
@@ -178,7 +191,6 @@
             </button>
           </div>
 
-          <!-- 支出明細表格 -->
           <div class="overflow-x-auto flex-1 p-2">
             <table class="w-full text-xs text-left print-table">
               <thead class="bg-slate-50 text-slate-500 uppercase">
@@ -196,9 +208,8 @@
             </table>
           </div>
 
-          <!-- 支出合計底部 -->
           <div class="p-3 bg-rose-50/50 border-t border-rose-100 flex justify-between items-center text-xs font-bold">
-            <span class="text-rose-900">本日支出合計</span>
+            <span class="text-rose-900">支出合計</span>
             <span id="expense-subtotal" class="text-rose-600 text-sm">NT$ 0</span>
           </div>
         </div>
@@ -405,7 +416,6 @@
       expenseCategories: JSON.parse(localStorage.getItem('dl_exp_cat_v3')) || defaultExpenseSummaries
     };
 
-    // 取得當天日期 YYYY-MM-DD
     function getTodayDateStr() {
       const now = new Date();
       const yyyy = now.getFullYear();
@@ -414,18 +424,26 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
+    function getCurrentMonthStr() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      return `${yyyy}-${mm}`;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      // 預設鎖定為今日日期
-      document.getElementById('filter-target-date').value = getTodayDateStr();
+      // 預設日期控制項初始值
+      const today = getTodayDateStr();
+      const month = getCurrentMonthStr();
+
+      document.getElementById('filter-day').value = today;
+      document.getElementById('filter-month').value = month;
+      document.getElementById('filter-start-date').value = `${month}-01`;
+      document.getElementById('filter-end-date').value = today;
 
       renderCategories();
       initFirebaseSync();
     });
-
-    window.resetToToday = function() {
-      document.getElementById('filter-target-date').value = getTodayDateStr();
-      renderDashboard();
-    };
 
     window.getCurrentDateTimeLocal = function() {
       const now = new Date();
@@ -433,8 +451,35 @@
       return now.toISOString().slice(0, 16);
     };
 
+    // 切換 4 大下拉模式
+    window.onFilterModeChange = function() {
+      const mode = document.getElementById('filter-mode').value;
+      const dailyEl = document.getElementById('input-daily');
+      const monthlyEl = document.getElementById('input-monthly');
+      const rangeEl = document.getElementById('input-range');
+
+      dailyEl.classList.add('hidden');
+      dailyEl.classList.remove('flex');
+      monthlyEl.classList.add('hidden');
+      monthlyEl.classList.remove('flex');
+      rangeEl.classList.add('hidden');
+      rangeEl.classList.remove('flex');
+
+      if (mode === 'daily') {
+        dailyEl.classList.remove('hidden');
+        dailyEl.classList.add('flex');
+      } else if (mode === 'monthly') {
+        monthlyEl.classList.remove('hidden');
+        monthlyEl.classList.add('flex');
+      } else if (mode === 'range') {
+        rangeEl.classList.remove('hidden');
+        rangeEl.classList.add('flex');
+      }
+      renderDashboard();
+    };
+
     function initFirebaseSync() {
-      // 1. 即時監聽學費 (bills)
+      // 1. 監聽學費
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const tuitionList = [];
         snapshot.forEach((docSnap) => {
@@ -461,6 +506,7 @@
                   isTuitionSync: true,
                   createdAt: pTime,
                   dateOnly: pTime.substring(0, 10),
+                  yearMonth: pTime.substring(0, 7),
                   summary: cat,
                   amount: item.amount,
                   desc: `${bill.className} - ${bill.studentName} (${item.name})`,
@@ -475,6 +521,7 @@
                 isTuitionSync: true,
                 createdAt: pTime,
                 dateOnly: pTime.substring(0, 10),
+                yearMonth: pTime.substring(0, 7),
                 summary: "學費",
                 amount: bill.total || 0,
                 desc: `${bill.className} - ${bill.studentName}`,
@@ -488,7 +535,7 @@
         renderDashboard();
       }, (error) => console.error("學費同步失敗：", error));
 
-      // 2. 即時監聽支出與自訂帳務 (expenses)
+      // 2. 監聽支出與自訂帳務
       onSnapshot(collection(db, "expenses"), (snapshot) => {
         const expList = [];
         snapshot.forEach((docSnap) => {
@@ -497,7 +544,8 @@
           expList.push({
             firestoreDocId: docSnap.id,
             ...data,
-            dateOnly: pTime.substring(0, 10)
+            dateOnly: pTime.substring(0, 10),
+            yearMonth: pTime.substring(0, 7)
           });
         });
         state.customTransactions = expList;
@@ -505,18 +553,48 @@
       }, (error) => console.error("自訂支出同步失敗：", error));
     }
 
-    // 渲染當日數據與左右雙欄
+    // 渲染報表與左右雙欄
     window.renderDashboard = function() {
       const allRecords = [...state.syncedTuitionRecords, ...state.customTransactions];
-      const targetDate = document.getElementById('filter-target-date').value || getTodayDateStr();
+      const mode = document.getElementById('filter-mode').value;
+      let rangeDescription = "";
+      let titleDescription = "營運收支結算表";
 
-      document.getElementById('print-range-text').innerText = `結算日期：${targetDate}`;
+      let filtered = [];
+
+      if (mode === 'daily') {
+        const selDay = document.getElementById('filter-day').value || getTodayDateStr();
+        filtered = allRecords.filter(r => (r.dateOnly === selDay || (r.createdAt && r.createdAt.startsWith(selDay))));
+        rangeDescription = `${selDay} (當日)`;
+        titleDescription = `每日營運收支結算表 (${selDay})`;
+      } else if (mode === 'monthly') {
+        const selMonth = document.getElementById('filter-month').value || getCurrentMonthStr();
+        filtered = allRecords.filter(r => (r.yearMonth === selMonth || (r.createdAt && r.createdAt.startsWith(selMonth))));
+        rangeDescription = `${selMonth} (全月份)`;
+        titleDescription = `每月營運收支結算表 (${selMonth})`;
+      } else if (mode === 'range') {
+        const start = document.getElementById('filter-start-date').value;
+        const end = document.getElementById('filter-end-date').value;
+        filtered = allRecords.filter(r => {
+          const d = r.dateOnly || (r.createdAt ? r.createdAt.substring(0, 10) : '');
+          if (!start && !end) return true;
+          if (start && !end) return d >= start;
+          if (!start && end) return d <= end;
+          return d >= start && d <= end;
+        });
+        rangeDescription = `${start || '起始日'} 至 ${end || '結束日'}`;
+        titleDescription = `區間營運收支結算表 (${rangeDescription})`;
+      } else {
+        filtered = allRecords;
+        rangeDescription = `全部歷史累計`;
+        titleDescription = `全期營運收支總表`;
+      }
+
+      document.getElementById('print-report-title').innerText = titleDescription;
+      document.getElementById('print-range-text').innerText = `統計範圍：${rangeDescription}`;
       document.getElementById('print-date-text').innerText = `列印時間：${new Date().toLocaleString()}`;
 
-      // 只過濾出當天的紀錄
-      const filtered = allRecords.filter(r => (r.dateOnly === targetDate || (r.createdAt && r.createdAt.startsWith(targetDate))));
-
-      // 分流成收入與支出
+      // 分流收入與支出
       const incomeList = filtered.filter(r => r.type === 'income');
       const expenseList = filtered.filter(r => r.type === 'expense');
 
@@ -533,11 +611,11 @@
       const incTbody = document.getElementById('income-table-body');
       incTbody.innerHTML = '';
       if (incomeList.length === 0) {
-        incTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">今日尚無收入入帳</td></tr>`;
+        incTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">此範圍內尚無收入明細</td></tr>`;
       } else {
         incomeList.forEach((t, index) => {
           totalInc += Number(t.amount);
-          const formattedTime = (t.createdAt || '').substring(11, 16) || '當日';
+          const formattedTime = (t.createdAt || '').substring(5, 16).replace('T', ' ');
           const actionBtn = t.isTuitionSync
             ? `<span class="text-slate-300 text-[11px]" title="學費系統連動">-</span>`
             : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
@@ -560,11 +638,11 @@
       const expTbody = document.getElementById('expense-table-body');
       expTbody.innerHTML = '';
       if (expenseList.length === 0) {
-        expTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">今日尚無支出登記</td></tr>`;
+        expTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">此範圍內尚無支出明細</td></tr>`;
       } else {
         expenseList.forEach((t, index) => {
           totalExp += Number(t.amount);
-          const formattedTime = (t.createdAt || '').substring(11, 16) || '當日';
+          const formattedTime = (t.createdAt || '').substring(5, 16).replace('T', ' ');
           const actionBtn = `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
 
           const tr = document.createElement('tr');
@@ -593,7 +671,7 @@
       document.getElementById('stat-profit-rate').innerText = `${profitRate}%`;
     };
 
-    // 打開詳細資訊框框 (Detail Modal)
+    // 詳細資訊彈窗 (查看全部欄位)
     window.openDetailModal = function(type, index) {
       const item = type === 'income' ? state.filteredIncomes[index] : state.filteredExpenses[index];
       if (!item) return;
@@ -623,7 +701,7 @@
       document.getElementById('detail-desc').innerText = item.desc || '-';
       document.getElementById('detail-note').innerText = item.note || '無備註資訊';
       document.getElementById('detail-time').innerText = (item.createdAt || '').replace('T', ' ');
-      document.getElementById('detail-source').innerText = item.isTuitionSync ? '學費管理系統 (雲端同步)' : '人工櫃檯登記';
+      document.getElementById('detail-source').innerText = item.isTuitionSync ? '學費管理系統 (雲端連動)' : '人工櫃檯登記';
 
       document.getElementById('detail-modal').classList.remove('hidden');
     };
@@ -784,8 +862,7 @@
     window.exportCSV = function() {
       const incomes = state.filteredIncomes;
       const expenses = state.filteredExpenses;
-      const targetDate = document.getElementById('filter-target-date').value || getTodayDateStr();
-      if (incomes.length === 0 && expenses.length === 0) return alert("當日尚無明細可匯出！");
+      if (incomes.length === 0 && expenses.length === 0) return alert("目前查詢範圍尚無明細可匯出！");
 
       let csvContent = "\uFEFF入帳/建立時間,收支類別,摘要項目,說明,金額,發票號碼與備註\n";
       incomes.forEach(t => {
@@ -798,7 +875,7 @@
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `斗六分校_當日財務報表_${targetDate}.csv`;
+      link.download = `斗六分校_財務報表_${getTodayDateStr()}.csv`;
       link.click();
     };
   </script>
