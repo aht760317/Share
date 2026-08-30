@@ -35,7 +35,7 @@
 
         .container { max-width: 1420px; margin: 15px auto; padding: 0 12px; }
 
-        /* 手機版：底部固定導覽列 (五個 Tab 調整平均寬度) */
+        /* 手機版：底部固定導覽列 */
         @media(max-width: 767px) {
             body {
                 padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 20px) + 15px) !important;
@@ -506,13 +506,13 @@
         </div>
     </div>
 
-    <!-- 1.5 尚未點名 / 未到提醒專區 (新增的 Tab) -->
+    <!-- 1.5 尚未點名 / 未到提醒專區 (支援櫃檯填寫原因與連絡結果) -->
     <div id="tab-absent-alert" style="display:none;">
         <div class="card" style="border-top: 4px solid var(--danger);">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <div>
                     <h3 style="color:var(--primary); font-size:18px;">🚨 櫃檯專用：今日尚未到班學員與未點名班級清單</h3>
-                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。</p>
+                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。點擊「未點名」可直接登記原因與連絡結果。</p>
                 </div>
                 <div>
                     <label style="font-weight:bold; font-size:13px;">檢視日期：</label>
@@ -657,7 +657,7 @@
                     </div>
                 </div>
 
-                <!-- 畢業班專屬：出生年份區間查詢 Bar (標題與篩選在同一行) -->
+                <!-- 畢業班專屬：出生年份區間查詢 Bar -->
                 <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                         <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 畢業/離班學員清單 ｜ 出生年份：</span>
@@ -697,6 +697,37 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- 櫃檯導聯/未到原因登記彈窗 -->
+<div class="modal-overlay" id="absentReasonModal">
+    <div class="modal-box" style="max-width:520px;">
+        <h3 id="absentModalTitle" style="color:var(--primary); margin-bottom:12px; border-bottom:2px solid var(--accent); padding-bottom:6px; font-size:17px;">📞 櫃檯連絡與未到原因登記</h3>
+        <input type="hidden" id="modalDateStr">
+        <input type="hidden" id="modalCourseName">
+        <input type="hidden" id="modalStudentName">
+
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px; font-size:13.5px; line-height:1.5;">
+            <div>學生姓名：<b id="modalDisplayStuName" style="color:var(--primary);"></b></div>
+            <div>所屬班級：<b id="modalDisplayCourseName" style="color:var(--primary);"></b></div>
+            <div>家長電話：<b id="modalDisplayPhone" style="color:var(--accent);"></b></div>
+        </div>
+
+        <label style="font-size:13px; font-weight:bold;"><b>點名狀態更新：</b></label>
+        <select id="modalStatusSelect" class="select-styled" style="margin-bottom:10px;">
+            <option value="未到">🔴 尚未到班 (未到)</option>
+            <option value="請假">🟡 事假 / 病假 (請假)</option>
+            <option value="出席">🟢 已聯繫確認並出席 (出席)</option>
+        </select>
+
+        <label style="font-size:13px; font-weight:bold;"><b>未到原因 / 櫃檯連絡結果紀錄：</b></label>
+        <textarea id="modalReasonText" rows="4" style="resize:vertical; line-height:1.4;" placeholder="請輸入家長電話聯繫結果、未到原因（例：感冒請假、家長已告知搭車中...）"></textarea>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
+            <button class="btn btn-success" onclick="saveAbsentReasonModal()" style="padding:8px 16px; font-size:13px;">💾 儲存原因與連絡結果</button>
+            <button class="btn btn-outline" onclick="document.getElementById('absentReasonModal').style.display='none'" style="padding:8px 16px; font-size:13px;">取消</button>
         </div>
     </div>
 </div>
@@ -2056,6 +2087,7 @@
                     <div style="font-size:16px; font-weight:bold; color:var(--primary);">${stu.name}</div>
                     <div style="font-size:12px; color:#555; margin-top:2px;">
                         ${stu.school || '-'} | 電話：${phone}
+                        ${record.reason ? `<div style="color:#b91c1c; margin-top:3px;">📞 備註原因：${record.reason}</div>` : ''}
                     </div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-top:10px;">
@@ -2072,7 +2104,7 @@
 
             let statusText = `<span style="color:#999;">-</span>`;
             if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold; font-size:15px;">✔</span>`;
-            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:14px;">▲</span>`;
+            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:14px;">▲</span>${record.reason ? '<br><span style="font-size:7.5pt; color:#666;">('+record.reason+')</span>' : ''}`;
 
             paperRowsHtml += `
                 <tr>
@@ -2082,7 +2114,7 @@
                     <td style="font-size:8.5pt;">${phone}</td>
                     <td>${statusText}</td>
                     <td style="font-weight:bold; color:#0284c7;">${record.score !== undefined && record.score !== '' ? record.score + '分' : '-'}</td>
-                    <td></td>
+                    <td>${record.reason || ''}</td>
                 </tr>
             `;
         });
@@ -2122,7 +2154,7 @@
         });
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
-            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : '') };
+            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : ''), reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
         localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
         renderStudentList();
@@ -2143,7 +2175,6 @@
         updateHomeAlertBanner();
     };
 
-    // 計算指定日期下今日排課班級中，未到班與未點名狀態的邏輯
     function getAbsentAndUncheckedSummary(dateStr) {
         const curDate = new Date(dateStr);
         const dayIdx = curDate.getDay();
@@ -2151,8 +2182,8 @@
         const allCourses = getAllCoursesList();
         const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
 
-        let unassignedClasses = []; // 尚未有點名動作的班級
-        let absentStudentsList = []; // 已經點名但狀態為未到/請假的學生，或今日有排課但還沒點名的班級學員
+        let unassignedClasses = [];
+        let absentStudentsList = [];
 
         todayCourses.forEach(c => {
             const courseStudents = window.state.students.filter(s => {
@@ -2167,11 +2198,10 @@
                 if (rec && (rec.status === '出席' || rec.status === '請假')) {
                     hasAnyCheck = true;
                     if (rec.status === '請假' || rec.status === '未到') {
-                        absentStudentsList.push({ student: stu, courseName: c.name, status: rec.status });
+                        absentStudentsList.push({ student: stu, courseName: c.name, status: rec.status, reason: rec.reason || '' });
                     }
                 } else {
-                    // 尚未有點名記錄的學生視為未到班/未點名
-                    absentStudentsList.push({ student: stu, courseName: c.name, status: '尚未點名' });
+                    absentStudentsList.push({ student: stu, courseName: c.name, status: '尚未點名', reason: (rec ? rec.reason : '') || '' });
                 }
             });
 
@@ -2191,7 +2221,7 @@
         if (!banner || !content) return;
 
         const unCheckedCount = summary.unassignedClasses.length;
-        const unPresentStudents = summary.absentStudentsList.filter(item => item.status === '尚未點名' || item.status === '請假').length;
+        const unPresentStudents = summary.absentStudentsList.filter(item => item.status === '尚未點名' || item.status === '請假' || item.status === '未到').length;
 
         if (unCheckedCount === 0 && unPresentStudents === 0) {
             banner.style.background = 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
@@ -2202,7 +2232,7 @@
             banner.style.border = '2px solid #f59e0b';
             content.innerHTML = `
                 <div>📌 <b>尚有未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
-                <div style="margin-top:3px;">📌 <b>尚有尚未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${unPresentStudents} 人次 (請至「還沒點名/未到」專區確認)</span></div>
+                <div style="margin-top:3px;">📌 <b>尚有尚未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${unPresentStudents} 人次 (請至「還沒點名/未到」專區確認與填寫原因)</span></div>
             `;
         }
     }
@@ -2215,7 +2245,6 @@
 
         let html = `<div style="margin-top:10px;">`;
 
-        // 1. 尚未點名班級區塊
         html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班)</h4>`;
         if (summary.unassignedClasses.length === 0) {
             html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px; margin-bottom:15px;">✔ 今日所有排課班級皆已有老師進行點名作業！</p>`;
@@ -2227,23 +2256,23 @@
             html += `</div>`;
         }
 
-        // 2. 學生未到 / 請假 / 未點名清單
-        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px; margin-top:20px;">👥 今日各班尚未到班 / 請假 / 未點名學員名冊</h4>`;
+        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px; margin-top:20px;">👥 今日各班尚未到班 / 請假 / 未點名學員名冊 <span style="font-size:12px; color:#666; font-weight:normal;">(點擊狀態按鈕可直接登記原因與連絡結果)</span></h4>`;
         
-        let actionableStudents = summary.absentStudentsList.filter(item => item.status === '尚未點名' || item.status === '請假');
+        let actionableStudents = summary.absentStudentsList;
 
         if (actionableStudents.length === 0) {
-            html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px;">🌟 今日今日所有學生皆已順利出席點名！</p>`;
+            html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px;">🌟 今日所有學生皆已順利出席點名！</p>`;
         } else {
             html += `<table>
                 <thead>
                     <tr>
                         <th style="width:40px;">序</th>
-                        <th style="width:110px;">學生姓名</th>
+                        <th style="width:100px;">學生姓名</th>
                         <th style="width:130px;">所屬班級</th>
-                        <th style="width:110px;">就讀學校</th>
-                        <th style="width:130px;">家長電話</th>
-                        <th style="width:90px;">點名狀態</th>
+                        <th style="width:100px;">就讀學校</th>
+                        <th style="width:120px;">家長電話</th>
+                        <th style="width:110px;">點名狀態</th>
+                        <th style="width:200px;">未到原因 / 連絡結果紀錄</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -2251,7 +2280,18 @@
             actionableStudents.forEach((item, idx) => {
                 const stu = item.student;
                 const phone = getParentPhone(stu);
-                let badgeStyle = item.status === '請假' ? 'background:#fef3c7; color:#b45309; border:1px solid #f59e0b;' : 'background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;';
+                let badgeColor = '#b91c1c';
+                let badgeBg = '#fee2e2';
+                let badgeBorder = '#fca5a5';
+                if (item.status === '請假') {
+                    badgeColor = '#b45309';
+                    badgeBg = '#fef3c7';
+                    badgeBorder = '#f59e0b';
+                } else if (item.status === '出席') {
+                    badgeColor = '#15803d';
+                    badgeBg = '#dcfce7';
+                    badgeBorder = '#86efac';
+                }
 
                 html += `<tr>
                     <td><b>${idx + 1}</b></td>
@@ -2259,7 +2299,12 @@
                     <td><span class="course-tag">${item.courseName}</span></td>
                     <td>${stu.school || '-'}</td>
                     <td style="font-size:12.5px;">${phone}</td>
-                    <td><span style="padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; ${badgeStyle}">${item.status}</span></td>
+                    <td>
+                        <button class="btn" style="padding:4px 8px; font-size:12px; font-weight:bold; background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeBorder}; cursor:pointer;" onclick="openAbsentReasonModal('${dateStr}', '${item.courseName}', '${stu.name}', '${phone}', '${item.status}', '${item.reason.replace(/'/g, "\\'")}')">
+                            ${item.status} ✏️
+                        </button>
+                    </td>
+                    <td style="text-align:left; font-size:12.5px; color:#475569;">${item.reason ? `📝 ${item.reason}` : '<span style="color:#aaa;">(尚未填寫原因)</span>'}</td>
                 </tr>`;
             });
 
@@ -2268,6 +2313,47 @@
 
         html += `</div>`;
         container.innerHTML = html;
+    };
+
+    // 開啟櫃檯填寫原因彈窗
+    window.openAbsentReasonModal = function(dateStr, courseName, studentName, phone, currentStatus, currentReason) {
+        document.getElementById('modalDateStr').value = dateStr;
+        document.getElementById('modalCourseName').value = courseName;
+        document.getElementById('modalStudentName').value = studentName;
+
+        document.getElementById('modalDisplayStuName').innerText = studentName;
+        document.getElementById('modalDisplayCourseName').innerText = courseName;
+        document.getElementById('modalDisplayPhone').innerText = phone;
+
+        document.getElementById('modalStatusSelect').value = currentStatus === '尚未點名' ? '未到' : currentStatus;
+        document.getElementById('modalReasonText').value = currentReason || '';
+
+        document.getElementById('absentReasonModal').style.display = 'flex';
+    };
+
+    // 儲存櫃檯填寫的原因與連絡結果
+    window.saveAbsentReasonModal = function() {
+        const dateStr = document.getElementById('modalDateStr').value;
+        const courseName = document.getElementById('modalCourseName').value;
+        const studentName = document.getElementById('modalStudentName').value;
+        const newStatus = document.getElementById('modalStatusSelect').value;
+        const reasonText = document.getElementById('modalReasonText').value.trim();
+
+        const key = `${dateStr}_${courseName}_${studentName}`;
+        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
+
+        window.state.attendanceData[key].status = newStatus;
+        window.state.attendanceData[key].reason = reasonText;
+        if (!window.state.attendanceData[key].time && newStatus !== '未到') {
+            window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+
+        document.getElementById('absentReasonModal').style.display = 'none';
+        alert(`✅ 已成功儲存【${studentName}】的點名狀態與連絡結果！`);
+        renderAbsentAlertTab();
+        updateHomeAlertBanner();
     };
 
     window.onSheetCourseChanged = function() {
