@@ -182,6 +182,27 @@
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .grid-3 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         
+        /* 展開/收合切換按鈕樣式 */
+        .toggle-more-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0284c7;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 6px;
+            transition: 0.2s;
+        }
+        .toggle-more-btn:hover {
+            background: #e2e8f0;
+            color: #0369a1;
+        }
+
         @media (max-width: 767px) {
             .mobile-bottom-nav { display: flex; }
             .main-nav { display: none; }
@@ -907,7 +928,8 @@
             },
             students: [],
             historyLogs: [],
-            selectedClassForProfile: null
+            selectedClassForProfile: null,
+            expandedStudents: {} // 記錄各學生的區塊是否展開：{ [studentId]: { att: bool, score: bool, note: bool } }
         };
 
         window.pendingActionCallback = null;
@@ -1050,7 +1072,6 @@
             selElem.innerHTML = buildOptions(window.state.courses.elementary, '-- 請選擇國小班級 --');
             selCare.innerHTML = buildOptions(window.state.courses.care, '-- 請選擇課輔班級 --');
 
-            // 保持當前選中的班級
             const cur = window.state.selectedClassForProfile;
             if (cur) {
                 if ([...selJunior.options].some(o => o.value === cur)) {
@@ -1086,7 +1107,15 @@
             window.renderProfileStudents();
         };
 
-        // 兼容跳轉與通用設定
+        // 展開/收合切換函式
+        window.toggleSectionExpand = function(studentId, type) {
+            if (!window.state.expandedStudents[studentId]) {
+                window.state.expandedStudents[studentId] = { att: false, score: false, note: false };
+            }
+            window.state.expandedStudents[studentId][type] = !window.state.expandedStudents[studentId][type];
+            window.renderProfileStudents();
+        };
+
         window.selectProfileClass = function(className) {
             window.state.selectedClassForProfile = className;
             window.renderClassDropdowns();
@@ -1141,10 +1170,12 @@
                     firstPhone = s.phone;
                 }
                 
-                let attHtml = '';
-                let scoreHtml = '';
-                let noteHtml = '';
+                if (!window.state.expandedStudents[s.firestoreId]) {
+                    window.state.expandedStudents[s.firestoreId] = { att: false, score: false, note: false };
+                }
+                const expState = window.state.expandedStudents[s.firestoreId];
 
+                // 1. 篩選出該科出席日誌
                 const classLogs = (s.attendanceLogs || []).filter(l => {
                     const matchClass = (l.course === className || (!l.course && getStudentCoursesArray(s).length === 1));
                     let matchDate = true;
@@ -1153,41 +1184,92 @@
                     return matchClass && matchDate;
                 });
 
-                classLogs.slice(0, 15).forEach((l) => {
+                // 2. 出席狀況 (預設 5 筆)
+                let attItems = [];
+                classLogs.forEach((l) => {
                     const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
                     const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
                     const isAlert = l.status === '請假' || l.status === '曠課';
                     const makeupText = l.makeupDone ? `<span class="badge-success"> (已補課)</span>` : (isAlert ? `<span class="badge-danger"> (未補課)</span>` : '');
                     
-                    attHtml += `
+                    attItems.push(`
                         <div class="interactive-log-item" onclick="openMakeupModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆出缺勤紀錄">
                             ${courseTag}<b>${l.date}</b>: <u>${l.status}</u> ${makeupText}
                         </div>
-                    `;
+                    `);
+                });
 
+                let attHtml = '';
+                if (attItems.length > 0) {
+                    const isExp = expState.att;
+                    const visibleAtt = isExp ? attItems : attItems.slice(0, 5);
+                    attHtml = visibleAtt.join('');
+                    if (attItems.length > 5) {
+                        attHtml += `<button class="toggle-more-btn" onclick="toggleSectionExpand('${s.firestoreId}', 'att')">${isExp ? '▲ 收合紀錄' : `▼ 展開看全部 (共 ${attItems.length} 筆)`}</button>`;
+                    }
+                } else {
+                    attHtml = '<span style="color:#999; font-size:13px;">本科尚無此區間出席紀錄</span>';
+                }
+
+                // 3. 測驗成績 (預設 5 筆)
+                let scoreItems = [];
+                classLogs.forEach((l) => {
                     if (l.score !== null && l.score !== undefined && l.score !== '') {
+                        const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
+                        const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
                         const pass = l.passScore || 80;
                         const isFail = Number(l.score) < pass;
                         const retestText = l.retestDone ? `<span class="badge-success"> (已補考: ${l.retestScore || '及格'})</span>` : (isFail ? `<span class="badge-danger"> (須補考)</span>` : '');
-                        scoreHtml += `
+                        
+                        scoreItems.push(`
                             <div class="interactive-log-item" onclick="openRetestModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆考試成績">
                                 ${courseTag}<b>${l.date}</b>: <u><b>${l.score} 分</b></u> ${retestText}
                             </div>
-                        `;
+                        `);
                     }
+                });
 
+                let scoreHtml = '';
+                if (scoreItems.length > 0) {
+                    const isExp = expState.score;
+                    const visibleScore = isExp ? scoreItems : scoreItems.slice(0, 5);
+                    scoreHtml = visibleScore.join('');
+                    if (scoreItems.length > 5) {
+                        scoreHtml += `<button class="toggle-more-btn" onclick="toggleSectionExpand('${s.firestoreId}', 'score')">${isExp ? '▲ 收合成績' : `▼ 展開看全部 (共 ${scoreItems.length} 筆)`}</button>`;
+                    }
+                } else {
+                    scoreHtml = '<span style="color:#999; font-size:13px;">本科尚無此區間測驗紀錄</span>';
+                }
+
+                // 4. 課堂備註與親師電聯 QA (預設 5 筆)
+                let noteItems = [];
+                classLogs.forEach((l) => {
                     if (l.detail) {
-                        noteHtml += `<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆備註">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`;
+                        const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
+                        const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
+                        noteItems.push(`<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆備註">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`);
                     }
                 });
 
                 (s.callQAs || []).forEach((qa, qaIdx) => {
-                    noteHtml += `
+                    noteItems.push(`
                         <div class="call-qa-badge ${qa.status === 'unresolved' ? 'unresolved' : ''}" onclick="openCallQAModal('${s.firestoreId}', ${qaIdx})" title="點擊編輯此電聯紀錄">
                             📞 [${qa.date || '電聯'}] ${qa.author}問: ${qa.question} ｜ <b>答: ${qa.reply || '處理中'}</b> (${qa.status === 'unresolved' ? '⚠️ 追蹤中' : '✅ 已完成'})
                         </div>
-                    `;
+                    `);
                 });
+
+                let noteHtml = '';
+                if (noteItems.length > 0) {
+                    const isExp = expState.note;
+                    const visibleNotes = isExp ? noteItems : noteItems.slice(0, 5);
+                    noteHtml = visibleNotes.join('');
+                    if (noteItems.length > 5) {
+                        noteHtml += `<button class="toggle-more-btn" onclick="toggleSectionExpand('${s.firestoreId}', 'note')">${isExp ? '▲ 收合備註與QA' : `▼ 展開看全部 (共 ${noteItems.length} 筆)`}</button>`;
+                    }
+                } else {
+                    noteHtml = '<span style="color:#999; font-size:13px;">本科尚無此區間備註紀錄</span>';
+                }
 
                 html += `
                     <tr data-firestore-id="${s.firestoreId}">
@@ -1200,9 +1282,9 @@
                                 <button class="btn btn-small btn-primary" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                             </div>
                         </td>
-                        <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml || '<span style="color:#999; font-size:13px;">本科尚無此區間出席紀錄</span>'}</td>
-                        <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml || '<span style="color:#999; font-size:13px;">本科尚無此區間測驗紀錄</span>'}</td>
-                        <td data-label="該科備註與親師QA">${noteHtml || '<span style="color:#999; font-size:13px;">本科尚無此區間備註紀錄</span>'}</td>
+                        <td data-label="該科出缺勤紀錄 (點擊修改)">${attHtml}</td>
+                        <td data-label="該科成績紀錄 (點擊修改)">${scoreHtml}</td>
+                        <td data-label="該科備註與親師QA">${noteHtml}</td>
                     </tr>
                 `;
             });
