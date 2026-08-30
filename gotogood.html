@@ -142,7 +142,7 @@
         .modal-content { background: white; padding: 1.25rem; border-radius: 0.5rem; width: 100%; max-width: 680px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
         .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
         
-        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
+        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
         .form-block-item { background: #F8FAFC; border: 1.2px solid var(--border-color); border-radius: 0.4rem; padding: 0.75rem; }
         .form-block-item label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.35rem; }
         .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem; background: #ffffff; cursor: text; }
@@ -298,7 +298,7 @@
                         <thead>
                             <tr>
                                 <th>編號 / 時間</th>
-                                <th>分校</th>
+                                <th>分校 / 班級</th>
                                 <th>學生姓名</th>
                                 <th>家長與分類</th>
                                 <th>負責 / 處理老師</th>
@@ -333,6 +333,27 @@
                             <select id="bridgeClassName" required>
                                 <option value="顧德補習班">顧德補習班</option>
                                 <option value="佳音英語斗六校">佳音英語斗六校</option>
+                            </select>
+                        </div>
+                        <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
+                            <label style="color: #9F1239;">詢問/就讀班級 (點名表班級)</label>
+                            <select id="bridgeStudentClass" required>
+                                <option value="">-- 請選擇班級 --</option>
+                                <option value="小兒童英文班（中班到小二）">小兒童英文班（中班到小二）</option>
+                                <option value="大兒童英文班（小三以上同學）">大兒童英文班（小三以上同學）</option>
+                                <option value="國中英文班">國中英文班</option>
+                                <option value="全民英檢班">全民英檢班</option>
+                                <option value="小一正音班">小一正音班</option>
+                                <option value="安親課輔班">安親課輔班</option>
+                                <option value="國小數學班">國小數學班</option>
+                                <option value="國小英文班">國小英文班</option>
+                                <option value="國小作文班">國小作文班</option>
+                                <option value="國中國文 (帝都國文)">國中國文 (帝都國文)</option>
+                                <option value="國中數學班">國中數學班</option>
+                                <option value="國中自然班">國中自然班</option>
+                                <option value="寒暑假冬夏令營">寒暑假冬夏令營</option>
+                                <option value="國三會考班（全科）">國三會考班（全科）</option>
+                                <option value="其他班級 / 尚未入班">其他班級 / 尚未入班</option>
                             </select>
                         </div>
                         <div class="form-block-item" style="background-color: #FFF; border-color: #FDA4AF;">
@@ -1314,6 +1335,7 @@
                 id: `ISSUE-${dateStr}-${randomNum}`,
                 studentName: document.getElementById('bridgeStudentName').value,
                 className: document.getElementById('bridgeClassName').value,
+                studentClass: document.getElementById('bridgeStudentClass').value || '未選擇班級',
                 parentName: document.getElementById('bridgeParentName').value,
                 issueCategory: document.getElementById('bridgeIssueCategory').value,
                 assignedTeacher: document.getElementById('bridgeAssignedTeacher').value.trim() || '未指定',
@@ -1398,7 +1420,10 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><small style="font-size:0.78rem;">${item.reportedAt}</small><br><strong>${item.id}</strong></td>
-                    <td><strong style="color: var(--accent-color);">${item.className}</strong></td>
+                    <td>
+                        <strong style="color: var(--accent-color);">${item.className}</strong>
+                        ${item.studentClass ? `<br><span style="color: #64748b; font-size: 0.8rem; font-weight: 600;">[${item.studentClass}]</span>` : ''}
+                    </td>
                     <td><span style="font-size: 0.95rem; font-weight: 700;">${item.studentName}</span></td>
                     <td>${item.parentName}<br><span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:0.1rem 0.3rem;">${item.issueCategory}</span></td>
                     <td>
@@ -1459,7 +1484,7 @@
                             </div>
                             <div style="flex: 1; cursor: pointer;" onclick="openHistoryDetail('${escapedContent}')">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                                    <span>#${idx+1} [${item.issueCategory}] ${item.className} - ${item.studentName}</span>
+                                    <span>#${idx+1} [${item.issueCategory}] ${item.className} ${item.studentClass ? `(${item.studentClass})` : ''} - ${item.studentName}</span>
                                     <span style="color: var(--text-muted); font-size: 0.78rem;">${item.reportedAt}</span>
                                 </div>
                                 <p style="font-size: 0.85rem; margin-bottom: 0.15rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
@@ -1560,7 +1585,7 @@
                     <div style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; transition: all 0.2s; position: relative;">
                         <div onclick="openHistoryDetail('${escapedContent}')" style="cursor: pointer;" onmouseover="this.parentElement.style.borderColor='#2563EB'" onmouseout="this.parentElement.style.borderColor='#CBD5E1'">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                                <span>#${idx+1} [${item.issueCategory}] 分校：${item.className}</span>
+                                <span>#${idx+1} [${item.issueCategory}] 分校：${item.className} ${item.studentClass ? `(${item.studentClass})` : ''}</span>
                                 <span style="color: var(--text-muted); font-size: 0.78rem;">回報時間：${item.reportedAt}</span>
                             </div>
                             <p style="margin-bottom: 0.2rem; font-size: 0.85rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
@@ -1582,6 +1607,7 @@
                     <div><strong>回報時間：</strong> ${item.reportedAt}</div>
                     <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>分校：</strong> ${item.className}</div>
+                    <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
                     <div><strong>家長：</strong> ${item.parentName}</div>
                     <div><strong>分類：</strong> ${item.issueCategory}</div>
                     <div><strong>負責：</strong> ${item.assignedTeacher || '未指定'}</div>
@@ -1663,6 +1689,7 @@
                     <div><strong>時間：</strong> ${item.reportedAt}</div>
                     <div><strong>學生：</strong> ${item.studentName}</div>
                     <div><strong>分校：</strong> ${item.className}</div>
+                    <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
                     <div><strong>家長：</strong> ${item.parentName}</div>
                     <div><strong>分類：</strong> ${item.issueCategory}</div>
                 </div>
@@ -1714,7 +1741,7 @@
             const item = window.admissionData.bridgeIssues.find(i => i.id === id);
             if (!item) return;
             document.getElementById('bridgeReviewId').value = item.id;
-            document.getElementById('bridgeReviewModalInfo').innerHTML = `<strong>學生：</strong>${item.studentName} (${item.className})<br><strong>負責：</strong>${item.assignedTeacher || '未指定'} ｜ <strong>處理：</strong>${item.solverName || '未填'}<br><strong>訴求：</strong>${item.issueContent}<br><strong>方案：</strong>${item.teacherSolution || '無'}`;
+            document.getElementById('bridgeReviewModalInfo').innerHTML = `<strong>學生：</strong>${item.studentName} (${item.className} - ${item.studentClass || '未指定'})<br><strong>負責：</strong>${item.assignedTeacher || '未指定'} ｜ <strong>處理：</strong>${item.solverName || '未填'}<br><strong>訴求：</strong>${item.issueContent}<br><strong>方案：</strong>${item.teacherSolution || '無'}`;
             document.getElementById('bridgeDirectorCommentInput').value = item.directorComment || '';
             document.getElementById('bridgeReviewModal').style.display = 'flex';
         }
