@@ -262,11 +262,12 @@
         }
         .student-master-card-footer {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             justify-content: flex-end;
             margin-top: 10px;
             border-top: 1px dashed #e2e8f0;
             padding-top: 8px;
+            flex-wrap: wrap;
         }
 
         .paper-sheet {
@@ -289,51 +290,6 @@
         .modal-box {
             background: white; width: 100%; max-width: 800px; padding: 20px;
             border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
-        }
-
-        .dept-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 4px; }
-        .dept-btn {
-            padding: 8px 12px; border: 2px solid var(--border); background: #f8fafc;
-            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
-        }
-        .dept-btn.dragging { opacity: 0.4; border: 2px dashed #4f46e5; }
-        .dept-btn.active-allclasses { background: #e0e7ff; border-color: #4f46e5; color: #3730a3; }
-        .dept-btn.active-care { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
-        .dept-btn.active-elem { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
-        .dept-btn.active-jun { background: #fef3c7; border-color: #d97706; color: #b45309; }
-        .dept-btn.active-all { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
-
-        .dept-btn-fixed-grad {
-            padding: 8px 14px; font-size: 13px; border-radius: 8px;
-            background: #fdf4ff; border: 2px solid #d946ef; color: #a21caf; font-weight: bold; cursor: pointer; transition: 0.2s;
-            user-select: none; white-space: nowrap;
-        }
-        .dept-btn-fixed-grad:hover, .dept-btn-fixed-grad.active-grad {
-            background: #d946ef; color: white;
-        }
-
-        .class-overview-box {
-            background: #f8fafc; border: 2px solid #cbd5e1; padding: 12px 14px;
-            border-radius: 10px; margin-bottom: 15px;
-        }
-        .class-overview-title {
-            font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-        }
-
-        .draggable-class-container {
-            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-        }
-        .class-btn-pill {
-            padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.15s;
-            border: 1.5px solid #94a3b8; background: white; color: #334155; margin-bottom: 4px;
-            display: inline-flex; align-items: center; gap: 4px; user-select: none;
-        }
-        .class-btn-pill:hover, .class-btn-pill.active {
-            background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px);
-        }
-        .class-btn-pill.dragging {
-            opacity: 0.4; border: 2px dashed var(--accent); background: #e0f2fe;
         }
 
         .all-classes-manage-grid {
@@ -625,17 +581,33 @@
                 </div>
             </div>
 
-            <div class="dept-nav" id="deptNavContainer"></div>
-
-            <div class="class-overview-box" id="classOverviewBox">
-                <div class="class-overview-title">🏫 部門所屬班級：</div>
-                <div id="deptClassButtons" class="draggable-class-container"></div>
+            <!-- 改為下拉式選單設計區 -->
+            <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:12px 14px; border-radius:10px; margin-bottom:14px;">
+                <div class="grid-2" style="gap:10px;">
+                    <div>
+                        <label style="display:block; font-size:12.5px; font-weight:bold; color:var(--primary); margin-bottom:4px;">🏫 選擇檢視部門 / 總覽：</label>
+                        <select id="deptSelectDropdown" class="select-styled" onchange="onDeptDropdownChange(this.value)" style="margin:0; font-size:14px; padding:8px 12px;">
+                            <option value="allclasses">🏫 班級全覽 (管理專區)</option>
+                            <option value="care">🏢 課輔部</option>
+                            <option value="elementary">📘 國小部</option>
+                            <option value="junior">📙 國中部</option>
+                            <option value="all">🌟 全校學生</option>
+                            <option value="graduated">🎓 畢業班</option>
+                        </select>
+                    </div>
+                    <div id="classDropdownWrapper" style="display:none;">
+                        <label style="display:block; font-size:12.5px; font-weight:bold; color:var(--primary); margin-bottom:4px;">📚 選擇部門所屬班級：</label>
+                        <select id="classSelectDropdown" class="select-styled" onchange="onClassDropdownChange(this.value)" style="margin:0; font-size:14px; padding:8px 12px;">
+                            <!-- 動態載入班級 -->
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- 全校班級課程管理專區 -->
-            <div id="allClassesManageBox" style="display:none;" class="class-overview-box">
-                <div class="class-overview-title" style="color:#3730a3; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <span>🏫 全校班級課程管理專區 (可拖曳排序)：</span>
+            <div id="allClassesManageBox" style="display:none;" class="card" style="border:2px solid #cbd5e1;">
+                <div style="color:#3730a3; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                    <span style="font-weight:bold; font-size:15px;">🏫 全校班級課程管理專區：</span>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <div class="manage-cat-group" id="manageCatGroup">
                             <button class="manage-cat-btn active" data-cat="all" onclick="setManageCategory('all')">全部</button>
@@ -657,10 +629,19 @@
                     </div>
                 </div>
 
-                <!-- 手機版自適應卡片容器 (螢幕小於768px時顯示) -->
+                <!-- 畢業班專屬：出生年份區間查詢 Bar -->
+                <div id="graduatedFilterBar" style="display:none; background:#fdf4ff; border:1.5px solid #d946ef; padding:10px; border-radius:8px; margin-bottom:10px; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:13px; font-weight:bold; color:#a21caf;">🎓 出生年份區間篩選：</span>
+                    <input type="number" id="gradStartYear" placeholder="起始年份 (例:2012)" style="width:130px; margin:0; padding:6px; font-size:13px;" oninput="renderMasterStudentsTable()">
+                    <span style="font-size:13px; font-weight:bold;">至</span>
+                    <input type="number" id="gradEndYear" placeholder="結束年份 (例:2015)" style="width:130px; margin:0; padding:6px; font-size:13px;" oninput="renderMasterStudentsTable()">
+                    <button class="btn btn-outline" style="padding:6px 10px; font-size:12px;" onclick="clearGradFilter()">清除年份</button>
+                </div>
+
+                <!-- 手機版自適應卡片容器 -->
                 <div id="masterStudentCardContainer" style="display:none;"></div>
 
-                <!-- 電腦版維持傳統整齊表格 (螢幕大於768px時顯示) -->
+                <!-- 電腦版維持傳統整齊表格 -->
                 <div id="masterStudentTableWrapper" style="overflow-x:auto;">
                     <table>
                         <thead>
@@ -674,7 +655,7 @@
                                 <th style="width:130px;">電話 2</th>
                                 <th style="width:130px;">電話 3</th>
                                 <th style="width:180px;">補習課程</th>
-                                <th style="width:120px;">操作</th>
+                                <th style="width:150px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="masterStudentTableBody"></tbody>
@@ -699,6 +680,20 @@
             </div>
         </div>
         <div id="timetableContent" style="margin-top:12px;"></div>
+    </div>
+</div>
+
+<!-- 學生瀏覽檔案彈窗 (唯讀詳細檢視) -->
+<div class="modal-overlay" id="viewStudentModal">
+    <div class="modal-box" style="max-width:650px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:12px;">
+            <h3 id="viewModalTitle" style="color:var(--primary); font-size:18px; font-weight:bold;">👁️ 學生詳細學籍檔案</h3>
+            <button class="btn btn-outline" onclick="document.getElementById('viewStudentModal').style.display='none'" style="padding:4px 10px; font-size:12px;">關閉</button>
+        </div>
+        <div id="viewStudentContent" style="font-size:14px; color:#334155; line-height:1.6;"></div>
+        <div style="text-align:right; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
+            <button class="btn btn-primary" onclick="document.getElementById('viewStudentModal').style.display='none'" style="padding:7px 16px; font-size:13px;">確定</button>
+        </div>
     </div>
 </div>
 
@@ -917,14 +912,6 @@
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
-    const DEFAULT_DEPT_ORDER = [
-        { key: 'allclasses', label: '🏫 班級全覽' },
-        { key: 'care', label: '🏢 課輔部' },
-        { key: 'elementary', label: '📘 國小部' },
-        { key: 'junior', label: '📙 國中部' },
-        { key: 'all', label: '🌟 全校學生' }
-    ];
-
     const DEFAULT_FILTER_ORDER = [
         { key: 'today', label: '📅 今日全部' },
         { key: 'junior', label: '📙 今日國中' },
@@ -951,7 +938,6 @@
         manageCategory: 'all',
         configDeptFilter: 'all',
         selectedSheetCourse: null,
-        deptOrder: JSON.parse(localStorage.getItem('gude_dept_order_v2')) || DEFAULT_DEPT_ORDER,
         filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER,
         configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER
     };
@@ -960,7 +946,7 @@
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('rollDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
-        renderDeptNavButtons();
+        initDropdowns();
         renderCourseFilterButtons();
         renderConfigFilterButtons();
         initCloudData();
@@ -1031,11 +1017,10 @@
                 });
             });
 
-            renderDeptNavButtons();
+            initDropdowns();
             renderCourseFilterButtons();
             renderConfigFilterButtons();
             renderMasterStudentsTable();
-            renderDeptClassButtons();
             renderCourseCards();
             renderSheetCourseDropdown();
             renderHolidayList();
@@ -1071,168 +1056,66 @@
             renderHolidayList();
         } else {
             document.querySelectorAll('.tab-btn')[3].classList.add('active');
-            renderDeptNavButtons();
+            initDropdowns();
             renderMasterStudentsTable();
-            renderDeptClassButtons();
         }
     };
 
-    function renderDeptNavButtons() {
-        const navContainer = document.getElementById('deptNavContainer');
-        if (!navContainer) return;
-        navContainer.innerHTML = '';
-
-        window.state.deptOrder.forEach((dept, index) => {
-            const btn = document.createElement('div');
-            btn.className = 'dept-btn';
-            btn.draggable = true;
-            btn.dataset.deptKey = dept.key;
-            btn.dataset.deptIndex = index;
-
-            if (dept.key === window.state.currentDeptView) {
-                if (dept.key === 'allclasses') btn.classList.add('active-allclasses');
-                if (dept.key === 'care') btn.classList.add('active-care');
-                if (dept.key === 'elementary') btn.classList.add('active-elem');
-                if (dept.key === 'junior') btn.classList.add('active-jun');
-                if (dept.key === 'all') btn.classList.add('active-all');
-            } else if (dept.key === 'all') {
-                btn.style.borderColor = '#8b5cf6';
-                btn.style.color = '#6d28d9';
-                btn.style.background = '#f5f3ff';
-            }
-
-            btn.innerHTML = `<span class="drag-handle">⠿</span> ${dept.label}`;
-
-            btn.onclick = (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                switchDept(dept.key);
-            };
-
-            btn.addEventListener('dragstart', handleDeptDragStart);
-            btn.addEventListener('dragover', handleDeptDragOver);
-            btn.addEventListener('drop', handleDeptDrop);
-            btn.addEventListener('dragend', handleDeptDragEnd);
-
-            navContainer.appendChild(btn);
-        });
-
-        const gradBtn = document.createElement('button');
-        gradBtn.className = `dept-btn-fixed-grad ${window.state.currentDeptView === 'graduated' ? 'active-grad' : ''}`;
-        gradBtn.innerText = '🎓 畢業班';
-        gradBtn.onclick = () => switchDept('graduated');
-        navContainer.appendChild(gradBtn);
+    function initDropdowns() {
+        const deptSel = document.getElementById('deptSelectDropdown');
+        if (deptSel) deptSel.value = window.state.currentDeptView;
+        updateClassDropdownOptions();
     }
 
-    let draggedDeptItem = null;
-    function handleDeptDragStart(e) { draggedDeptItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleDeptDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    function handleDeptDrop(e) {
-        e.stopPropagation();
-        if (draggedDeptItem !== this && this.dataset && this.dataset.deptIndex !== undefined) {
-            const fromIndex = parseInt(draggedDeptItem.dataset.deptIndex);
-            const toIndex = parseInt(this.dataset.deptIndex);
-            const movedItem = window.state.deptOrder.splice(fromIndex, 1)[0];
-            window.state.deptOrder.splice(toIndex, 0, movedItem);
-            localStorage.setItem('gude_dept_order_v2', JSON.stringify(window.state.deptOrder));
-            renderDeptNavButtons();
-        }
-        return false;
-    }
-    function handleDeptDragEnd() { this.classList.remove('dragging'); draggedDeptItem = null; }
-
-    window.switchDept = function(deptKey) {
-        window.state.currentDeptView = deptKey;
+    window.onDeptDropdownChange = function(val) {
+        window.state.currentDeptView = val;
         window.state.currentFilterClass = null;
-        renderDeptNavButtons();
-        renderDeptClassButtons();
+        updateClassDropdownOptions();
         renderMasterStudentsTable();
     };
 
-    function renderDeptClassButtons() {
-        const container = document.getElementById('deptClassButtons');
-        const box = document.getElementById('classOverviewBox');
+    window.onClassDropdownChange = function(val) {
+        window.state.currentFilterClass = val === 'ALL' ? null : val;
+        renderMasterStudentsTable();
+    };
+
+    function updateClassDropdownOptions() {
+        const wrapper = document.getElementById('classDropdownWrapper');
+        const classSel = document.getElementById('classSelectDropdown');
         const manageBox = document.getElementById('allClassesManageBox');
         const studentTableSection = document.getElementById('studentTableSection');
-        if (!container || !box || !manageBox || !studentTableSection) return;
-
         const deptKey = window.state.currentDeptView;
 
+        if (!wrapper || !classSel || !manageBox || !studentTableSection) return;
+
         if (deptKey === 'allclasses') {
-            box.style.display = 'none';
+            wrapper.style.display = 'none';
             studentTableSection.style.display = 'none';
             manageBox.style.display = 'block';
             renderAllClassesManagementCards();
             return;
         }
 
-        studentTableSection.style.display = 'block';
         manageBox.style.display = 'none';
+        studentTableSection.style.display = 'block';
 
         if (deptKey === 'all' || deptKey === 'graduated') {
-            box.style.display = 'none';
+            wrapper.style.display = 'none';
             return;
         }
 
-        box.style.display = 'block';
+        wrapper.style.display = 'block';
         const list = window.state.courses[deptKey] || [];
-        container.innerHTML = '';
-
-        const allBtn = document.createElement('button');
-        allBtn.className = `class-btn-pill ${!window.state.currentFilterClass ? 'active' : ''}`;
-        allBtn.innerText = '全部班級';
-        allBtn.onclick = () => filterByClass(null);
-        container.appendChild(allBtn);
-
-        list.forEach((c, index) => {
+        classSel.innerHTML = `<option value="ALL">-- 全部班級 --</option>`;
+        list.forEach(c => {
             const cName = typeof c === 'object' ? c.name : c;
-            const isActive = window.state.currentFilterClass === cName;
-
-            const btn = document.createElement('div');
-            btn.className = `class-btn-pill ${isActive ? 'active' : ''}`;
-            btn.draggable = true;
-            btn.dataset.index = index;
-            btn.dataset.name = cName;
-
-            btn.innerHTML = `<span class="drag-handle">⠿</span> 🏫 ${cName}`;
-
-            btn.onclick = (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                filterByClass(cName);
-            };
-
-            btn.addEventListener('dragstart', handleDragStart);
-            btn.addEventListener('dragover', handleDragOver);
-            btn.addEventListener('drop', handleDrop);
-            btn.addEventListener('dragend', handleDragEnd);
-
-            container.appendChild(btn);
+            const opt = document.createElement('option');
+            opt.value = cName;
+            opt.innerText = `🏫 ${cName}`;
+            if (window.state.currentFilterClass === cName) opt.selected = true;
+            classSel.appendChild(opt);
         });
-
-        if (list.length === 0) {
-            container.innerHTML += `<span style="color:#888; font-size:12px;">該部門目前尚無班級課程。</span>`;
-        }
     }
-
-    let draggedItem = null;
-    function handleDragStart(e) { draggedItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    async function handleDrop(e) {
-        e.stopPropagation();
-        if (draggedItem !== this && this.dataset && this.dataset.index !== undefined) {
-            const fromIndex = parseInt(draggedItem.dataset.index);
-            const toIndex = parseInt(this.dataset.index);
-            const deptKey = window.state.currentDeptView;
-            const list = window.state.courses[deptKey];
-            const movedItem = list.splice(fromIndex, 1)[0];
-            list.splice(toIndex, 0, movedItem);
-            renderDeptClassButtons();
-            try {
-                await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            } catch (err) { console.error("排序儲存失敗", err); }
-        }
-        return false;
-    }
-    function handleDragEnd() { this.classList.remove('dragging'); draggedItem = null; }
 
     window.setManageCategory = function(cat) {
         window.state.manageCategory = cat;
@@ -1242,33 +1125,6 @@
         });
         renderAllClassesManagementCards();
     };
-
-    let draggedManageCard = null;
-    function handleManageCardDragStart(e) { draggedManageCard = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-    function handleManageCardDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-    async function handleManageCardDrop(e) {
-        e.stopPropagation();
-        if (draggedManageCard && draggedManageCard !== this) {
-            const fromDept = draggedManageCard.dataset.dept;
-            const fromIndex = parseInt(draggedManageCard.dataset.index);
-            const toDept = this.dataset.dept;
-            const toIndex = parseInt(this.dataset.index);
-
-            if (fromDept && toDept && window.state.courses[fromDept] && window.state.courses[toDept]) {
-                const movedItem = window.state.courses[fromDept].splice(fromIndex, 1)[0];
-                window.state.courses[toDept].splice(toIndex, 0, movedItem);
-                renderAllClassesManagementCards();
-                try {
-                    await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-                } catch (err) { console.error("排序儲存失敗", err); }
-            }
-        }
-        return false;
-    }
-    function handleManageCardDragEnd() {
-        if (draggedManageCard) draggedManageCard.classList.remove('dragging');
-        draggedManageCard = null;
-    }
 
     function renderAllClassesManagementCards() {
         const grid = document.getElementById('allClassesCardGrid');
@@ -1301,15 +1157,11 @@
 
                 const card = document.createElement('div');
                 card.className = 'class-manage-card';
-                card.draggable = true;
-                card.dataset.dept = deptKey;
-                card.dataset.index = cIndex;
 
                 card.innerHTML = `
                     <div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
-                            <span class="drag-handle" title="按住拖曳" style="font-size:13px; cursor:grab; padding:2px 6px; background:#f1f5f9; border-radius:4px;">⠿ 拖曳</span>
                         </div>
                         <div style="font-size:15px; font-weight:bold; color:var(--primary); margin:6px 0 3px;">🏫 ${cName}</div>
                         <div style="font-size:12px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
@@ -1320,12 +1172,6 @@
                         <button class="btn btn-warning" style="padding:4px 10px; font-size:12px; color:#000;" onclick="openEditClassModal('${deptKey}', decodeURIComponent('${encodeURIComponent(cName)}'), decodeURIComponent('${encodeURIComponent(cDay)}'), decodeURIComponent('${encodeURIComponent(cTime)}'), decodeURIComponent('${encodeURIComponent(cTeacher)}'))">⚙️ 管理班級</button>
                     </div>
                 `;
-
-                card.addEventListener('dragstart', handleManageCardDragStart);
-                card.addEventListener('dragover', handleManageCardDragOver);
-                card.addEventListener('drop', handleManageCardDrop);
-                card.addEventListener('dragend', handleManageCardDragEnd);
-
                 grid.appendChild(card);
             });
         });
@@ -1554,9 +1400,47 @@
         }
     };
 
-    window.filterByClass = function(className) {
-        window.state.currentFilterClass = className;
-        renderDeptClassButtons();
+    // 瀏覽學生詳細檔案彈窗
+    window.openViewStudentModal = function(firestoreId) {
+        const stu = window.state.students.find(s => s.firestoreId === firestoreId);
+        if (!stu) return;
+
+        document.getElementById('viewModalTitle').innerText = `👁️ 【${stu.name}】詳細學籍檔案`;
+        const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '-' };
+        const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '-' };
+        const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '-' };
+        const stuCourses = getStudentCoursesArray(stu).map(c => `<span class="course-tag">${c}</span>`).join('') || '未選班級';
+
+        let html = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <div><b>姓名：</b>${stu.name} (${stu.gender || '男'})</div>
+                <div><b>身分證字號：</b>${stu.idCard || '-'}</div>
+                <div><b>就讀學校：</b>${stu.school || '-'}</div>
+                <div><b>年級/座號：</b>${stu.studentClass || '-'}</div>
+                <div><b>生日：</b>${stu.birthday || '-'}</div>
+                <div><b>學籍狀態：</b>${stu.status === 'graduated' ? '<span style="color:#d946ef; font-weight:bold;">已畢業/離班</span>' : '<span style="color:#16a34a; font-weight:bold;">在籍就讀中</span>'}</div>
+            </div>
+            <div style="margin-top:10px; background:#fff; padding:12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <div style="font-weight:bold; color:var(--primary); margin-bottom:6px;">📞 聯絡電話：</div>
+                <div>▪ ${p1.label}：<b>${p1.number || '-'}</b></div>
+                <div>▪ ${p2.label}：<b>${p2.number || '-'}</b></div>
+                <div>▪ ${p3.label}：<b>${p3.number || '-'}</b></div>
+            </div>
+            <div style="margin-top:10px; background:#fff; padding:12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <div><b>爸爸職業：</b>${stu.fatherJob || '-'} ｜ <b>媽媽職業：</b>${stu.motherJob || '-'}</div>
+                <div style="margin-top:4px;"><b>健康狀況/過敏：</b>${stu.health || '-'}</div>
+                <div style="margin-top:4px;"><b>通訊地址：</b>${stu.address || '-'}</div>
+                <div style="margin-top:4px;"><b>修習課程：</b>${stuCourses}</div>
+                <div style="margin-top:4px;"><b>備註事項：</b>${stu.notes || '無'}</div>
+            </div>
+        `;
+        document.getElementById('viewStudentContent').innerHTML = html;
+        document.getElementById('viewStudentModal').style.display = 'flex';
+    };
+
+    window.clearGradFilter = function() {
+        document.getElementById('gradStartYear').value = '';
+        document.getElementById('gradEndYear').value = '';
         renderMasterStudentsTable();
     };
 
@@ -1564,12 +1448,19 @@
         const tbody = document.getElementById('masterStudentTableBody');
         const cardContainer = document.getElementById('masterStudentCardContainer');
         const tableWrapper = document.getElementById('masterStudentTableWrapper');
+        const gradFilterBar = document.getElementById('graduatedFilterBar');
         
         const deptKey = window.state.currentDeptView;
         const filterClass = window.state.currentFilterClass;
         const keyword = (document.getElementById('studentSearchInput').value || '').trim().toLowerCase();
 
         if (deptKey === 'allclasses') return;
+
+        if (deptKey === 'graduated') {
+            if (gradFilterBar) gradFilterBar.style.display = 'flex';
+        } else {
+            if (gradFilterBar) gradFilterBar.style.display = 'none';
+        }
 
         const deptClasses = (window.state.courses[deptKey] || []).map(c => typeof c === 'object' ? c.name : c);
 
@@ -1584,6 +1475,22 @@
                 return stuCourses.some(c => deptClasses.includes(c));
             }
         });
+
+        // 畢業班年份區間篩選
+        if (deptKey === 'graduated') {
+            const startYearVal = parseInt(document.getElementById('gradStartYear').value);
+            const endYearVal = parseInt(document.getElementById('gradEndYear').value);
+            if (!isNaN(startYearVal) || !isNaN(endYearVal)) {
+                filtered = filtered.filter(s => {
+                    if (!s.birthday) return false;
+                    const birthYear = parseInt(s.birthday.slice(0, 4));
+                    if (isNaN(birthYear)) return false;
+                    if (!isNaN(startYearVal) && birthYear < startYearVal) return false;
+                    if (!isNaN(endYearVal) && birthYear > endYearVal) return false;
+                    return true;
+                });
+            }
+        }
 
         filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hant'));
 
@@ -1612,7 +1519,6 @@
             return;
         }
 
-        // 判斷是否為手機畫面 (寬度小於 768px)，自動切換卡片式或表格式
         const isMobile = window.innerWidth < 768;
 
         if (isMobile) {
@@ -1647,8 +1553,9 @@
                                 <div style="margin-top:6px;"><b>📖 修習課程：</b><div>${coursesTags}</div></div>
                             </div>
                             <div class="student-master-card-footer">
-                                <button class="btn btn-warning" style="padding:5px 10px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
-                                <button class="btn btn-primary" style="padding:5px 10px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯檔案</button>
+                                <button class="btn btn-warning" style="padding:4px 8px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
+                                <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="openViewStudentModal('${stu.firestoreId}')">👁️ 瀏覽</button>
+                                <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
                             </div>
                         </div>
                     `;
@@ -1682,6 +1589,7 @@
                         <td>
                             <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
                                 <button class="btn btn-warning" style="padding:4px 8px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
+                                <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="openViewStudentModal('${stu.firestoreId}')">👁️ 瀏覽</button>
                                 <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
                             </div>
                         </td>
@@ -1692,7 +1600,6 @@
         }
     };
 
-    // 監聽螢幕大小改變，若從手機轉橫或轉直自動重新渲染總覽列表
     window.addEventListener('resize', () => {
         if (document.getElementById('tab-students-master').style.display !== 'none') {
             renderMasterStudentsTable();
