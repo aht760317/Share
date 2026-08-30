@@ -190,9 +190,6 @@
             display: grid; grid-template-columns: 1fr;
             gap: 12px; margin-top: 12px;
         }
-        @media(min-width: 640px) {
-            .student-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-        }
         .student-card {
             background: #fff; border: 1.5px solid var(--border); border-radius: 8px;
             padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
@@ -237,6 +234,40 @@
 
         #studentTableSection table th { font-size: 13.5px; padding: 10px 5px; }
         #studentTableSection table td { font-size: 13.5px; padding: 8px 5px; }
+
+        /* 手機版學生名冊卡片樣式 */
+        .student-master-card {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .student-master-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        .student-master-card-body {
+            font-size: 13.5px;
+            color: #334155;
+            line-height: 1.5;
+        }
+        .student-master-card-body div {
+            margin-bottom: 4px;
+        }
+        .student-master-card-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 8px;
+        }
 
         .paper-sheet {
             background: #ffffff; padding: 20px 15px; border-radius: 3px;
@@ -626,7 +657,11 @@
                     </div>
                 </div>
 
-                <div style="overflow-x:auto;">
+                <!-- 手機版自適應卡片容器 (螢幕小於768px時顯示) -->
+                <div id="masterStudentCardContainer" style="display:none;"></div>
+
+                <!-- 電腦版維持傳統整齊表格 (螢幕大於768px時顯示) -->
+                <div id="masterStudentTableWrapper" style="overflow-x:auto;">
                     <table>
                         <thead>
                             <tr>
@@ -1527,6 +1562,9 @@
 
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
+        const cardContainer = document.getElementById('masterStudentCardContainer');
+        const tableWrapper = document.getElementById('masterStudentTableWrapper');
+        
         const deptKey = window.state.currentDeptView;
         const filterClass = window.state.currentFilterClass;
         const keyword = (document.getElementById('studentSearchInput').value || '').trim().toLowerCase();
@@ -1570,40 +1608,96 @@
 
         if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
+            if (cardContainer) cardContainer.innerHTML = `<div style="padding:20px; color:#888; text-align:center; background:#fff; border-radius:8px; border:1px solid #cbd5e1;">目前查無學生資料。</div>`;
             return;
         }
 
-        let html = '';
-        filtered.forEach((stu, idx) => {
-            const stuCourses = getStudentCoursesArray(stu);
-            const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
-            const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
-            const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
-            const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
-            const formatPlainPhone = (p) => (!p || !p.number || p.number.trim() === '') ? `<span style="color:#bbb;">-</span>` : `<div class="phone-plain-cell"><b>${p.label}:</b> ${p.number}</div>`;
+        // 判斷是否為手機畫面 (寬度小於 768px)，自動切換卡片式或表格式
+        const isMobile = window.innerWidth < 768;
 
-            html += `
-                <tr>
-                    <td style="font-weight:bold;">${idx + 1}</td>
-                    <td><b style="color:var(--primary);">${stu.name}</b> <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px;">${stu.gender || '男'}</span></td>
-                    <td style="font-size:12.5px;">${stu.birthday || '-'}</td>
-                    <td style="font-weight:bold;">${stu.school || '-'}</td>
-                    <td style="font-size:12.5px;">${stu.studentClass || '-'}</td>
-                    <td>${formatPlainPhone(p1)}</td>
-                    <td>${formatPlainPhone(p2)}</td>
-                    <td>${formatPlainPhone(p3)}</td>
-                    <td style="text-align:left;"><div>${coursesTags}</div></td>
-                    <td>
-                        <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-                            <button class="btn btn-warning" style="padding:4px 8px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
-                            <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
+        if (isMobile) {
+            if (tableWrapper) tableWrapper.style.display = 'none';
+            if (cardContainer) {
+                cardContainer.style.display = 'block';
+                let cardsHtml = '';
+                filtered.forEach((stu, idx) => {
+                    const stuCourses = getStudentCoursesArray(stu);
+                    const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
+                    const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
+                    const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
+                    const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
+                    
+                    const formatPhoneText = (p) => (!p || !p.number || p.number.trim() === '') ? '' : `<div>📞 <b>${p.label}：</b><a href="tel:${p.number}" style="color:var(--accent); text-decoration:none;">${p.number}</a></div>`;
+
+                    cardsHtml += `
+                        <div class="student-master-card">
+                            <div class="student-master-card-header">
+                                <div>
+                                    <span style="font-size:12px; color:#888; font-weight:bold; margin-right:6px;">#${idx + 1}</span>
+                                    <b style="font-size:16px; color:var(--primary);">${stu.name}</b>
+                                    <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 5px; border-radius:3px; margin-left:4px;">${stu.gender || '男'}</span>
+                                </div>
+                                <div style="font-size:12.5px; color:#555;">🏫 ${stu.school || '-'} ${stu.studentClass || ''}</div>
+                            </div>
+                            <div class="student-master-card-body">
+                                <div>🎂 <b>生日：</b>${stu.birthday || '-'}</div>
+                                ${formatPhoneText(p1)}
+                                ${formatPhoneText(p2)}
+                                ${formatPhoneText(p3)}
+                                <div style="margin-top:6px;"><b>📖 修習課程：</b><div>${coursesTags}</div></div>
+                            </div>
+                            <div class="student-master-card-footer">
+                                <button class="btn btn-warning" style="padding:5px 10px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
+                                <button class="btn btn-primary" style="padding:5px 10px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯檔案</button>
+                            </div>
                         </div>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
+                    `;
+                });
+                cardContainer.innerHTML = cardsHtml;
+            }
+        } else {
+            if (cardContainer) cardContainer.style.display = 'none';
+            if (tableWrapper) tableWrapper.style.display = 'block';
+
+            let html = '';
+            filtered.forEach((stu, idx) => {
+                const stuCourses = getStudentCoursesArray(stu);
+                const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
+                const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
+                const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
+                const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
+                const formatPlainPhone = (p) => (!p || !p.number || p.number.trim() === '') ? `<span style="color:#bbb;">-</span>` : `<div class="phone-plain-cell"><b>${p.label}:</b> ${p.number}</div>`;
+
+                html += `
+                    <tr>
+                        <td style="font-weight:bold;">${idx + 1}</td>
+                        <td><b style="color:var(--primary);">${stu.name}</b> <span style="font-size:11px; background:${stu.gender==='女'?'#fce7f3':'#e0f2fe'}; color:${stu.gender==='女'?'#be185d':'#0369a1'}; padding:1px 4px; border-radius:3px;">${stu.gender || '男'}</span></td>
+                        <td style="font-size:12.5px;">${stu.birthday || '-'}</td>
+                        <td style="font-weight:bold;">${stu.school || '-'}</td>
+                        <td style="font-size:12.5px;">${stu.studentClass || '-'}</td>
+                        <td>${formatPlainPhone(p1)}</td>
+                        <td>${formatPlainPhone(p2)}</td>
+                        <td>${formatPlainPhone(p3)}</td>
+                        <td style="text-align:left;"><div>${coursesTags}</div></td>
+                        <td>
+                            <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+                                <button class="btn btn-warning" style="padding:4px 8px; font-size:12px; color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
+                                <button class="btn btn-primary" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${stu.firestoreId}')">✏️ 編輯</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
     };
+
+    // 監聽螢幕大小改變，若從手機轉橫或轉直自動重新渲染總覽列表
+    window.addEventListener('resize', () => {
+        if (document.getElementById('tab-students-master').style.display !== 'none') {
+            renderMasterStudentsTable();
+        }
+    });
 
     function getCourseOptionsHtml(selectedValue = "") {
         let html = `<option value="">-- 請選擇班級課程 --</option>`;
@@ -2150,7 +2244,6 @@
             return arr.includes(course.name) && s.status !== 'graduated';
         });
 
-        // 取得該班級設定的上課星期（例如：星期一、星期二... 或 星期一、星期二、星期三、星期四、星期五）
         const courseDaysStr = course.day || '';
         const targetWeekDays = WEEK_DAYS.filter(d => courseDaysStr.includes(d) || courseDaysStr.includes(d.replace('星期', '週')));
 
@@ -2158,10 +2251,8 @@
         let cur = new Date(startVal);
         const endDateObj = new Date(endVal);
 
-        // 依照日期逐天檢查，如果該天的星期符合該班級上課星期，就納入點名表直行
         while (cur <= endDateObj && dateList.length < 100) {
-            let dayIndex = cur.getDay(); // 0 是週日, 1 是週一... 6 是週六
-            // 轉換為 WEEK_DAYS 對應字串
+            let dayIndex = cur.getDay(); 
             let dayName = dayIndex === 0 ? '星期日' : WEEK_DAYS[dayIndex - 1];
 
             if (targetWeekDays.length === 0 || targetWeekDays.includes(dayName)) {
