@@ -2,14 +2,30 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>斗六分校 - 收支財務管理系統</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome 圖示 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 手機端排版微調 */
+    @media screen and (max-width: 768px) {
+      .desktop-table-view { display: none !important; }
+      .mobile-card-view { display: block !important; }
+      body { padding-bottom: 72px; }
+    }
+
+    @media screen and (min-width: 769px) {
+      .desktop-table-view { display: table !important; }
+      .mobile-card-view { display: none !important; }
+      .mobile-bottom-nav { display: none !important; }
+    }
     
     /* 列印專用樣式 */
     @media print {
@@ -17,7 +33,9 @@
       body { background: white !important; padding: 0 !important; color: black !important; }
       .print-container { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
       .print-grid { display: flex !important; flex-direction: row !important; gap: 15px !important; }
-      .print-col { flex: 1 !important; width: 50% !important; border: 1px solid #000 !important; border-radius: 4px !important; padding: 8px !important; }
+      .print-col { flex: 1 !important; width: 50% !important; border: 1px solid #000 !important; border-radius: 4px !important; padding: 8px !important; display: block !important; }
+      .desktop-table-view { display: table !important; }
+      .mobile-card-view { display: none !important; }
       .print-table th, .print-table td { border: 1px solid #000 !important; padding: 4px 6px !important; font-size: 11px !important; }
       .print-table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
       .print-header { display: block !important; text-align: center; margin-bottom: 15px; }
@@ -35,16 +53,16 @@
           <i class="fa-solid fa-school text-lg"></i>
         </div>
         <div>
-          <span class="font-bold text-lg tracking-wide block">斗六分校 財務系統</span>
+          <span class="font-bold text-base md:text-lg tracking-wide block">斗六分校 財務系統</span>
           <div class="flex items-center space-x-1 -mt-0.5">
             <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-xs text-emerald-400 font-medium">學費雲端即時連動</span>
+            <span class="text-[11px] text-emerald-400 font-medium">學費雲端即時連動</span>
           </div>
         </div>
       </div>
 
-      <!-- 導覽標籤 -->
-      <nav class="flex space-x-2">
+      <!-- 電腦版導覽標籤 -->
+      <nav class="hidden md:flex space-x-2">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition bg-slate-800 text-white">
           <i class="fa-solid fa-chart-pie mr-1"></i> 收支總覽
         </button>
@@ -58,8 +76,32 @@
     </div>
   </header>
 
+  <!-- 手機版專屬底部固定導覽列 -->
+  <nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-slate-900 text-white border-t border-slate-800 z-50 flex justify-around items-center h-16 px-2 no-print shadow-lg">
+    <button onclick="switchTab('dashboard')" id="m-nav-dashboard" class="flex flex-col items-center justify-center w-full py-1 text-emerald-400 font-bold">
+      <i class="fa-solid fa-chart-pie text-lg"></i>
+      <span class="text-[11px] mt-0.5">收支總覽</span>
+    </button>
+    <button onclick="openModal('income')" class="flex flex-col items-center justify-center w-full py-1 text-slate-400 hover:text-white">
+      <i class="fa-solid fa-circle-plus text-lg text-emerald-500"></i>
+      <span class="text-[11px] mt-0.5">記收入</span>
+    </button>
+    <button onclick="openModal('expense')" class="flex flex-col items-center justify-center w-full py-1 text-slate-400 hover:text-white">
+      <i class="fa-solid fa-circle-minus text-lg text-rose-500"></i>
+      <span class="text-[11px] mt-0.5">記支出</span>
+    </button>
+    <button onclick="switchTab('settings')" id="m-nav-settings" class="flex flex-col items-center justify-center w-full py-1 text-slate-400 hover:text-white">
+      <i class="fa-solid fa-sliders text-lg"></i>
+      <span class="text-[11px] mt-0.5">功能設定</span>
+    </button>
+    <button onclick="switchTab('adv-settings')" id="m-nav-adv-settings" class="flex flex-col items-center justify-center w-full py-1 text-slate-400 hover:text-white">
+      <i class="fa-solid fa-gear text-lg"></i>
+      <span class="text-[11px] mt-0.5">系統設定</span>
+    </button>
+  </nav>
+
   <!-- 主內容區 -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full print-container">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full print-container">
 
     <!-- 列印專用報表抬頭 -->
     <div class="hidden print-header">
@@ -72,90 +114,99 @@
     </div>
 
     <!-- 1. 收支總覽 (Dashboard) -->
-    <section id="sec-dashboard" class="tab-content space-y-6">
+    <section id="sec-dashboard" class="tab-content space-y-4 sm:space-y-6">
 
-      <!-- 頂部控制列：四大報表模式下拉選單 -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 no-print">
-        <div class="flex items-center space-x-3 flex-wrap gap-y-2">
-          <div class="flex items-center space-x-2">
+      <!-- 頂部控制列：模式選單（已精簡名稱） -->
+      <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+        <div class="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-y-2">
+          <div class="flex items-center space-x-1.5 sm:space-x-2 w-full sm:w-auto">
             <i class="fa-solid fa-filter text-indigo-600"></i>
-            <label class="text-sm font-bold text-slate-700">報表模式：</label>
-            <select id="filter-mode" onchange="onFilterModeChange()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-900">
+            <label class="text-xs sm:text-sm font-bold text-slate-700 shrink-0">報表模式：</label>
+            <select id="filter-mode" onchange="onFilterModeChange()" class="w-full sm:w-auto border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-900">
               <option value="daily" selected>☀️ 1. 當日報表</option>
               <option value="monthly">📆 2. 當月報表</option>
-              <option value="range">📅 3. 區間報表 (幾年幾月幾日 到 幾年幾月幾日)</option>
+              <option value="range">📅 3. 區間報表</option>
               <option value="all">🌐 4. 全部報表</option>
             </select>
           </div>
 
           <!-- 模式 1: 當日報表日期選擇器 -->
           <div id="input-daily" class="flex items-center space-x-2">
-            <input type="date" id="filter-day" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
+            <input type="date" id="filter-day" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
           </div>
 
           <!-- 模式 2: 當月報表月份選擇器 -->
           <div id="input-monthly" class="hidden items-center space-x-2">
-            <input type="month" id="filter-month" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
+            <input type="month" id="filter-month" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
           </div>
 
-          <!-- 模式 3: 區間選擇 (幾年幾月幾日 到 幾年幾月幾日) -->
-          <div id="input-range" class="hidden items-center space-x-2">
-            <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-            <span class="text-sm text-slate-500 font-bold">至</span>
-            <input type="date" id="filter-end-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+          <!-- 模式 3: 區間選擇 (年月日 至 年月日) -->
+          <div id="input-range" class="hidden items-center space-x-1.5 sm:space-x-2 flex-wrap">
+            <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+            <span class="text-xs text-slate-500 font-bold">至</span>
+            <input type="date" id="filter-end-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
           </div>
         </div>
 
-        <div class="flex items-center space-x-2">
-          <!-- 列印按鈕 -->
-          <button onclick="printReport()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow transition flex items-center">
+        <div class="flex items-center justify-end space-x-2">
+          <button onclick="printReport()" class="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition flex items-center">
             <i class="fa-solid fa-print mr-1.5"></i> 列印財務表
           </button>
-          <button onclick="exportCSV()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition flex items-center" title="匯出 CSV">
+          <button onclick="exportCSV()" class="px-3 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition flex items-center" title="匯出 CSV">
             <i class="fa-solid fa-file-csv mr-1 text-emerald-600"></i> 匯出
           </button>
         </div>
       </div>
 
-      <!-- 統計卡片 -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 print-card">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間總收入</div>
-          <div id="stat-total-income" class="text-xl md:text-2xl font-bold text-emerald-600">NT$ 0</div>
+      <!-- 統計數據卡片 -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 print-card">
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">期間總收入</div>
+          <div id="stat-total-income" class="text-lg sm:text-2xl font-black text-emerald-600 tracking-tight">NT$ 0</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間總支出</div>
-          <div id="stat-total-expense" class="text-xl md:text-2xl font-bold text-rose-600">NT$ 0</div>
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">期間總支出</div>
+          <div id="stat-total-expense" class="text-lg sm:text-2xl font-black text-rose-600 tracking-tight">NT$ 0</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期間營運淨利</div>
-          <div id="stat-net-profit" class="text-xl md:text-2xl font-bold text-indigo-600">NT$ 0</div>
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">期間營運淨利</div>
+          <div id="stat-net-profit" class="text-lg sm:text-2xl font-black text-indigo-600 tracking-tight">NT$ 0</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">淨利率</div>
-          <div id="stat-profit-rate" class="text-xl md:text-2xl font-bold text-slate-700">0%</div>
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">淨利率</div>
+          <div id="stat-profit-rate" class="text-lg sm:text-2xl font-black text-slate-700 tracking-tight">0%</div>
         </div>
       </div>
 
-      <!-- 左右雙欄：收入管理在一邊，支出管理在一邊 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 print-grid">
+      <!-- 手機端專屬：收入/支出快速切換分頁標籤 -->
+      <div class="flex md:hidden bg-slate-200 p-1 rounded-xl no-print">
+        <button onclick="switchMobileColumn('income')" id="m-btn-income" class="flex-1 py-2 text-center text-xs font-bold rounded-lg transition bg-white text-emerald-800 shadow-sm">
+          🟢 收入明細 (<span id="m-inc-count">0</span>)
+        </button>
+        <button onclick="switchMobileColumn('expense')" id="m-btn-expense" class="flex-1 py-2 text-center text-xs font-bold rounded-lg transition text-slate-600">
+          🔴 支出明細 (<span id="m-exp-count">0</span>)
+        </button>
+      </div>
 
-        <!-- 左邊：收入管理 -->
-        <div class="bg-white rounded-xl border border-emerald-200 shadow-sm flex flex-col overflow-hidden print-col">
-          <div class="p-4 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
+      <!-- 左右雙欄：收入管理在一邊，支出管理在一邊 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 print-grid">
+
+        <!-- 左欄：收入管理 -->
+        <div id="col-income" class="bg-white rounded-xl border border-emerald-200 shadow-sm flex flex-col overflow-hidden print-col">
+          <div class="p-3.5 sm:p-4 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
             <div>
-              <h2 class="text-base font-bold text-emerald-900 flex items-center">
-                <i class="fa-solid fa-circle-arrow-down mr-2 text-emerald-600"></i> 收入管理
+              <h2 class="text-sm sm:text-base font-bold text-emerald-900 flex items-center">
+                <i class="fa-solid fa-circle-arrow-down mr-1.5 sm:mr-2 text-emerald-600"></i> 收入管理
               </h2>
-              <p class="text-xs text-emerald-700 mt-0.5 no-print">💡 點擊任一列可查看發票/收據/完整說明</p>
+              <p class="text-[11px] text-emerald-700 mt-0.5 no-print">💡 點擊項目可查看發票/收據/完整說明</p>
             </div>
-            <button onclick="openModal('income')" class="no-print px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center">
-              <i class="fa-solid fa-plus mr-1"></i> 新增自訂收入
+            <button onclick="openModal('income')" class="no-print px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center shrink-0">
+              <i class="fa-solid fa-plus mr-1"></i> 新增收入
             </button>
           </div>
 
           <div class="overflow-x-auto flex-1 p-2">
-            <table class="w-full text-xs text-left print-table">
+            <table class="w-full text-xs text-left print-table desktop-table-view">
               <thead class="bg-slate-50 text-slate-500 uppercase">
                 <tr>
                   <th class="py-2 px-2.5">時間</th>
@@ -165,34 +216,34 @@
                   <th class="py-2 px-2.5 text-center no-print">操作</th>
                 </tr>
               </thead>
-              <tbody id="income-table-body" class="divide-y divide-slate-100">
-                <!-- 動態注入 -->
-              </tbody>
+              <tbody id="income-table-body" class="divide-y divide-slate-100"></tbody>
             </table>
+
+            <div id="income-mobile-list" class="mobile-card-view space-y-2 p-1"></div>
           </div>
 
-          <div class="p-3 bg-emerald-50/50 border-t border-emerald-100 flex justify-between items-center text-xs font-bold">
+          <div class="p-3 bg-emerald-50/60 border-t border-emerald-100 flex justify-between items-center text-xs font-bold">
             <span class="text-emerald-900">收入合計</span>
-            <span id="income-subtotal" class="text-emerald-600 text-sm">NT$ 0</span>
+            <span id="income-subtotal" class="text-emerald-600 text-sm sm:text-base font-black">NT$ 0</span>
           </div>
         </div>
 
-        <!-- 右邊：支出管理 -->
-        <div class="bg-white rounded-xl border border-rose-200 shadow-sm flex flex-col overflow-hidden print-col">
-          <div class="p-4 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
+        <!-- 右欄：支出管理 -->
+        <div id="col-expense" class="bg-white rounded-xl border border-rose-200 shadow-sm flex flex-col overflow-hidden print-col hidden md:flex">
+          <div class="p-3.5 sm:p-4 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
             <div>
-              <h2 class="text-base font-bold text-rose-900 flex items-center">
-                <i class="fa-solid fa-circle-arrow-up mr-2 text-rose-600"></i> 支出管理
+              <h2 class="text-sm sm:text-base font-bold text-rose-900 flex items-center">
+                <i class="fa-solid fa-circle-arrow-up mr-1.5 sm:mr-2 text-rose-600"></i> 支出管理
               </h2>
-              <p class="text-xs text-rose-700 mt-0.5 no-print">💡 點擊任一列可查看發票/收據/完整說明</p>
+              <p class="text-[11px] text-rose-700 mt-0.5 no-print">💡 點擊項目可查看發票/收據/完整說明</p>
             </div>
-            <button onclick="openModal('expense')" class="no-print px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center">
+            <button onclick="openModal('expense')" class="no-print px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center shrink-0">
               <i class="fa-solid fa-plus mr-1"></i> 新增支出
             </button>
           </div>
 
           <div class="overflow-x-auto flex-1 p-2">
-            <table class="w-full text-xs text-left print-table">
+            <table class="w-full text-xs text-left print-table desktop-table-view">
               <thead class="bg-slate-50 text-slate-500 uppercase">
                 <tr>
                   <th class="py-2 px-2.5">時間</th>
@@ -202,15 +253,15 @@
                   <th class="py-2 px-2.5 text-center no-print">操作</th>
                 </tr>
               </thead>
-              <tbody id="expense-table-body" class="divide-y divide-slate-100">
-                <!-- 動態注入 -->
-              </tbody>
+              <tbody id="expense-table-body" class="divide-y divide-slate-100"></tbody>
             </table>
+
+            <div id="expense-mobile-list" class="mobile-card-view space-y-2 p-1"></div>
           </div>
 
-          <div class="p-3 bg-rose-50/50 border-t border-rose-100 flex justify-between items-center text-xs font-bold">
+          <div class="p-3 bg-rose-50/60 border-t border-rose-100 flex justify-between items-center text-xs font-bold">
             <span class="text-rose-900">支出合計</span>
-            <span id="expense-subtotal" class="text-rose-600 text-sm">NT$ 0</span>
+            <span id="expense-subtotal" class="text-rose-600 text-sm sm:text-base font-black">NT$ 0</span>
           </div>
         </div>
 
@@ -218,26 +269,26 @@
     </section>
 
     <!-- 2. 功能設定 (Settings) -->
-    <section id="sec-settings" class="tab-content hidden space-y-6 no-print">
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-          <i class="fa-solid fa-list-check mr-2 text-sky-600"></i> 收支摘要分類常用清單
+    <section id="sec-settings" class="tab-content hidden space-y-4 sm:space-y-6 no-print">
+      <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4 flex items-center">
+          <i class="fa-solid fa-list-check mr-2 text-sky-600"></i> 收支常用摘要設定
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div>
-            <h3 class="text-sm font-semibold text-emerald-700 mb-2">收入常見摘要</h3>
-            <ul id="setting-income-list" class="space-y-1 mb-3 text-sm"></ul>
+            <h3 class="text-xs sm:text-sm font-semibold text-emerald-700 mb-2">收入常見摘要</h3>
+            <ul id="setting-income-list" class="space-y-1 mb-3 text-xs sm:text-sm"></ul>
             <div class="flex space-x-2">
               <input type="text" id="new-inc-cat" placeholder="新增收入摘要..." class="border rounded-lg p-1.5 text-xs flex-1">
-              <button onclick="addCategory('income')" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700">新增</button>
+              <button onclick="addCategory('income')" class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700">新增</button>
             </div>
           </div>
           <div>
-            <h3 class="text-sm font-semibold text-rose-700 mb-2">支出常見摘要</h3>
-            <ul id="setting-expense-list" class="space-y-1 mb-3 text-sm"></ul>
+            <h3 class="text-xs sm:text-sm font-semibold text-rose-700 mb-2">支出常見摘要</h3>
+            <ul id="setting-expense-list" class="space-y-1 mb-3 text-xs sm:text-sm"></ul>
             <div class="flex space-x-2">
               <input type="text" id="new-exp-cat" placeholder="新增支出摘要..." class="border rounded-lg p-1.5 text-xs flex-1">
-              <button onclick="addCategory('expense')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg hover:bg-rose-700">新增</button>
+              <button onclick="addCategory('expense')" class="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700">新增</button>
             </div>
           </div>
         </div>
@@ -245,20 +296,20 @@
     </section>
 
     <!-- 3. 系統設定 (Advanced Settings) -->
-    <section id="sec-adv-settings" class="tab-content hidden space-y-6 no-print">
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+    <section id="sec-adv-settings" class="tab-content hidden space-y-4 sm:space-y-6 no-print">
+      <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4 flex items-center">
           <i class="fa-solid fa-sliders mr-2 text-amber-500"></i> 分校與系統進階設定
         </h2>
         <div class="space-y-4 max-w-lg">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">當前營運分校</label>
-            <input type="text" value="斗六分校" disabled class="w-full bg-slate-100 border rounded-lg p-2 text-sm text-slate-500">
+            <input type="text" value="斗六分校" disabled class="w-full bg-slate-100 border rounded-lg p-2 text-xs sm:text-sm text-slate-500 font-bold">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫連線狀態</label>
-            <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1 text-slate-600">
-              <div>專案 ID：<span class="font-mono font-bold">my-project-9999-479215</span></div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
+            <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1.5 text-slate-600">
+              <div>專案 ID：<span class="font-mono font-bold text-slate-800">my-project-9999-479215</span></div>
               <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (已繳自動同步)</span></div>
               <div>支出集合：<span class="font-mono font-bold text-rose-600">expenses (雲端儲存)</span></div>
             </div>
@@ -270,10 +321,10 @@
   </main>
 
   <!-- 填寫彈出視窗 (新增記帳 Modal) -->
-  <div id="record-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 no-print">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all">
-      <div id="modal-header" class="px-6 py-4 flex justify-between items-center text-white bg-emerald-600">
-        <h3 id="modal-title" class="font-bold text-base flex items-center">
+  <div id="record-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-3 sm:p-4 no-print">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all max-h-[92vh] flex flex-col">
+      <div id="modal-header" class="px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-emerald-600 shrink-0">
+        <h3 id="modal-title" class="font-bold text-sm sm:text-base flex items-center">
           <i class="fa-solid fa-pen-to-square mr-2"></i> 填寫收入明細
         </h3>
         <button onclick="closeModal()" class="text-white/80 hover:text-white text-lg">
@@ -281,14 +332,14 @@
         </button>
       </div>
 
-      <form id="record-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+      <form id="record-form" onsubmit="handleFormSubmit(event)" class="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
         <input type="hidden" id="entry-type" value="income">
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
             建立時間 <span class="text-rose-500 font-bold">*</span>
           </label>
-          <input type="datetime-local" id="entry-time" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <input type="datetime-local" id="entry-time" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
         <div>
@@ -296,8 +347,8 @@
             摘要 <span class="text-rose-500 font-bold">*</span>
           </label>
           <div class="flex space-x-2">
-            <select id="entry-summary-select" onchange="onSummarySelectChange()" class="border border-slate-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-1/3 bg-slate-50"></select>
-            <input type="text" id="entry-summary" placeholder="或自行輸入摘要..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <select id="entry-summary-select" onchange="onSummarySelectChange()" class="border border-slate-300 rounded-lg px-2 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-2/5 bg-slate-50"></select>
+            <input type="text" id="entry-summary" placeholder="自訂摘要..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
           </div>
         </div>
 
@@ -306,26 +357,26 @@
             金額 <span class="text-rose-500 font-bold">*</span>
           </label>
           <div class="relative">
-            <span class="absolute left-3 top-2 text-slate-400 text-sm">NT$</span>
-            <input type="number" id="entry-amount" min="1" step="any" placeholder="例如：15000" required class="w-full border border-slate-300 rounded-lg pl-12 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold">
+            <span class="absolute left-3 top-2 text-slate-400 text-xs sm:text-sm">NT$</span>
+            <input type="number" id="entry-amount" min="1" step="any" placeholder="例如：15000" required class="w-full border border-slate-300 rounded-lg pl-10 sm:pl-12 pr-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">說明</label>
-          <input type="text" id="entry-desc" placeholder="例如：7-8月夏季電費、兼職老師鐘點" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <input type="text" id="entry-desc" placeholder="例如：7-8月夏季電費、兼職老師鐘點" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">備註 (發票號碼 / 帳號末碼 / 收據)</label>
-          <textarea id="entry-note" rows="2" placeholder="例如：發票號碼 AB-12345678、轉帳帳號末五碼 12345" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+          <textarea id="entry-note" rows="2" placeholder="例如：發票號碼 AB-12345678、轉帳帳號末五碼 12345" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
         </div>
 
-        <div class="flex justify-end space-x-3 pt-2">
-          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium rounded-lg transition">
+        <div class="flex justify-end space-x-2.5 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition">
             取消
           </button>
-          <button type="submit" id="modal-submit-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">
+          <button type="submit" id="modal-submit-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow transition">
             儲存紀錄
           </button>
         </div>
@@ -334,10 +385,10 @@
   </div>
 
   <!-- 明細詳細資訊彈出視窗 (查看資訊 Modal) -->
-  <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 no-print">
+  <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-3 sm:p-4 no-print">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
-      <div id="detail-header" class="px-6 py-4 flex justify-between items-center text-white bg-indigo-600">
-        <h3 id="detail-modal-title" class="font-bold text-base flex items-center">
+      <div id="detail-header" class="px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-indigo-600">
+        <h3 id="detail-modal-title" class="font-bold text-sm sm:text-base flex items-center">
           <i class="fa-solid fa-file-lines mr-2"></i> 收支明細詳細資訊
         </h3>
         <button onclick="closeDetailModal()" class="text-white/80 hover:text-white text-lg">
@@ -345,46 +396,46 @@
         </button>
       </div>
 
-      <div class="p-6 space-y-4 text-sm">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+      <div class="p-4 sm:p-6 space-y-3 text-xs sm:text-sm">
+        <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
           <span class="text-slate-500">收支類別</span>
           <span id="detail-type" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">收入</span>
         </div>
-        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
           <span class="text-slate-500">項目名稱</span>
-          <span id="detail-summary" class="font-bold text-slate-800 text-base">學費</span>
+          <span id="detail-summary" class="font-bold text-slate-800 text-sm sm:text-base">學費</span>
         </div>
-        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
           <span class="text-slate-500">金額</span>
-          <span id="detail-amount" class="text-lg font-bold text-emerald-600">NT$ 0</span>
+          <span id="detail-amount" class="text-base sm:text-lg font-black text-emerald-600">NT$ 0</span>
         </div>
-        <div class="flex justify-between items-start pb-3 border-b border-slate-100">
-          <span class="text-slate-500 w-24 flex-shrink-0">詳細說明</span>
-          <span id="detail-desc" class="font-medium text-slate-800 text-right">-</span>
+        <div class="flex justify-between items-start pb-2.5 border-b border-slate-100">
+          <span class="text-slate-500 w-20 shrink-0">詳細說明</span>
+          <span id="detail-desc" class="font-semibold text-slate-800 text-right">-</span>
         </div>
-        <div class="flex justify-between items-start pb-3 border-b border-slate-100">
-          <span class="text-slate-500 w-24 flex-shrink-0">備註/發票號碼</span>
-          <span id="detail-note" class="font-medium text-indigo-700 text-right bg-indigo-50/70 p-2 rounded-lg border border-indigo-100 w-full ml-2 break-all">-</span>
+        <div class="flex justify-between items-start pb-2.5 border-b border-slate-100">
+          <span class="text-slate-500 w-20 shrink-0">備註/發票</span>
+          <span id="detail-note" class="font-medium text-indigo-700 text-right bg-indigo-50/70 p-2 rounded-lg border border-indigo-100 w-full ml-2 break-all text-[11px] sm:text-xs">-</span>
         </div>
-        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-          <span class="text-slate-500">入帳/建立時間</span>
-          <span id="detail-time" class="font-mono text-slate-700">-</span>
+        <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
+          <span class="text-slate-500">入帳時間</span>
+          <span id="detail-time" class="font-mono text-slate-700 font-semibold text-xs">-</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">資料來源</span>
-          <span id="detail-source" class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">自訂手動登記</span>
+          <span id="detail-source" class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">自訂手動登記</span>
         </div>
       </div>
 
-      <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
-        <button type="button" onclick="closeDetailModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition">
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <button type="button" onclick="closeDetailModal()" class="px-4 py-1.5 sm:px-5 sm:py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition">
           關閉視窗
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase 模組與即時同步 -->
+  <!-- Firebase 模組與即時同步邏輯 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -412,6 +463,7 @@
       syncedTuitionRecords: [],
       filteredIncomes: [],
       filteredExpenses: [],
+      currentMobileTab: 'income',
       incomeCategories: JSON.parse(localStorage.getItem('dl_inc_cat_v3')) || defaultIncomeSummaries,
       expenseCategories: JSON.parse(localStorage.getItem('dl_exp_cat_v3')) || defaultExpenseSummaries
     };
@@ -432,7 +484,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 預設日期控制項初始值
       const today = getTodayDateStr();
       const month = getCurrentMonthStr();
 
@@ -451,7 +502,26 @@
       return now.toISOString().slice(0, 16);
     };
 
-    // 切換 4 大下拉模式
+    window.switchMobileColumn = function(col) {
+      state.currentMobileTab = col;
+      const colInc = document.getElementById('col-income');
+      const colExp = document.getElementById('col-expense');
+      const btnInc = document.getElementById('m-btn-income');
+      const btnExp = document.getElementById('m-btn-expense');
+
+      if (col === 'income') {
+        colInc.classList.remove('hidden');
+        colExp.classList.add('hidden');
+        btnInc.className = "flex-1 py-2 text-center text-xs font-bold rounded-lg transition bg-white text-emerald-800 shadow-sm";
+        btnExp.className = "flex-1 py-2 text-center text-xs font-bold rounded-lg transition text-slate-600";
+      } else {
+        colInc.classList.add('hidden');
+        colExp.classList.remove('hidden');
+        btnInc.className = "flex-1 py-2 text-center text-xs font-bold rounded-lg transition text-slate-600";
+        btnExp.className = "flex-1 py-2 text-center text-xs font-bold rounded-lg transition bg-white text-rose-800 shadow-sm";
+      }
+    };
+
     window.onFilterModeChange = function() {
       const mode = document.getElementById('filter-mode').value;
       const dailyEl = document.getElementById('input-daily');
@@ -479,7 +549,6 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽學費
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const tuitionList = [];
         snapshot.forEach((docSnap) => {
@@ -535,7 +604,6 @@
         renderDashboard();
       }, (error) => console.error("學費同步失敗：", error));
 
-      // 2. 監聽支出與自訂帳務
       onSnapshot(collection(db, "expenses"), (snapshot) => {
         const expList = [];
         snapshot.forEach((docSnap) => {
@@ -553,7 +621,6 @@
       }, (error) => console.error("自訂支出同步失敗：", error));
     }
 
-    // 渲染報表與左右雙欄
     window.renderDashboard = function() {
       const allRecords = [...state.syncedTuitionRecords, ...state.customTransactions];
       const mode = document.getElementById('filter-mode').value;
@@ -594,7 +661,6 @@
       document.getElementById('print-range-text').innerText = `統計範圍：${rangeDescription}`;
       document.getElementById('print-date-text').innerText = `列印時間：${new Date().toLocaleString()}`;
 
-      // 分流收入與支出
       const incomeList = filtered.filter(r => r.type === 'income');
       const expenseList = filtered.filter(r => r.type === 'expense');
 
@@ -604,21 +670,29 @@
       state.filteredIncomes = incomeList;
       state.filteredExpenses = expenseList;
 
+      document.getElementById('m-inc-count').innerText = incomeList.length;
+      document.getElementById('m-exp-count').innerText = expenseList.length;
+
       let totalInc = 0;
       let totalExp = 0;
 
-      // 渲染收入表格 (左欄)
+      // 渲染收入
       const incTbody = document.getElementById('income-table-body');
+      const incMobileList = document.getElementById('income-mobile-list');
       incTbody.innerHTML = '';
+      incMobileList.innerHTML = '';
+
       if (incomeList.length === 0) {
         incTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">此範圍內尚無收入明細</td></tr>`;
+        incMobileList.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs font-medium">此範圍內尚無收入明細</div>`;
       } else {
         incomeList.forEach((t, index) => {
           totalInc += Number(t.amount);
           const formattedTime = (t.createdAt || '').substring(5, 16).replace('T', ' ');
+          const timeOnly = (t.createdAt || '').substring(11, 16) || '當日';
           const actionBtn = t.isTuitionSync
             ? `<span class="text-slate-300 text-[11px]" title="學費系統連動">-</span>`
-            : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
+            : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
 
           const tr = document.createElement('tr');
           tr.className = "hover:bg-emerald-50/70 transition border-b border-slate-100 cursor-pointer group";
@@ -631,19 +705,44 @@
             <td class="py-2.5 px-2.5 text-center no-print">${actionBtn}</td>
           `;
           incTbody.appendChild(tr);
+
+          const card = document.createElement('div');
+          card.className = "bg-emerald-50/40 active:bg-emerald-100 border border-emerald-100 rounded-xl p-3 flex justify-between items-center transition";
+          card.onclick = () => openDetailModal('income', index);
+          card.innerHTML = `
+            <div class="flex-1 min-w-0 pr-2">
+              <div class="flex items-center space-x-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">${t.summary}</span>
+                <span class="text-[11px] text-slate-400 font-mono">${timeOnly}</span>
+                ${t.isTuitionSync ? '<span class="text-[9px] bg-indigo-50 text-indigo-600 font-bold px-1.5 py-0.2 rounded border border-indigo-100">學費連動</span>' : ''}
+              </div>
+              <div class="text-xs font-bold text-slate-800 truncate">${t.desc}</div>
+              <div class="text-[10px] text-slate-400 truncate mt-0.5">${t.note || '無備註'}</div>
+            </div>
+            <div class="text-right shrink-0 flex items-center space-x-2">
+              <span class="text-sm font-black text-emerald-600">+NT$ ${Number(t.amount).toLocaleString()}</span>
+              ${!t.isTuitionSync ? `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 p-1.5"><i class="fa-solid fa-trash text-xs"></i></button>` : ''}
+            </div>
+          `;
+          incMobileList.appendChild(card);
         });
       }
 
-      // 渲染支出表格 (右欄)
+      // 渲染支出
       const expTbody = document.getElementById('expense-table-body');
+      const expMobileList = document.getElementById('expense-mobile-list');
       expTbody.innerHTML = '';
+      expMobileList.innerHTML = '';
+
       if (expenseList.length === 0) {
         expTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">此範圍內尚無支出明細</td></tr>`;
+        expMobileList.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs font-medium">此範圍內尚無支出明細</div>`;
       } else {
         expenseList.forEach((t, index) => {
           totalExp += Number(t.amount);
           const formattedTime = (t.createdAt || '').substring(5, 16).replace('T', ' ');
-          const actionBtn = `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
+          const timeOnly = (t.createdAt || '').substring(11, 16) || '當日';
+          const actionBtn = `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
 
           const tr = document.createElement('tr');
           tr.className = "hover:bg-rose-50/70 transition border-b border-slate-100 cursor-pointer group";
@@ -656,6 +755,25 @@
             <td class="py-2.5 px-2.5 text-center no-print">${actionBtn}</td>
           `;
           expTbody.appendChild(tr);
+
+          const card = document.createElement('div');
+          card.className = "bg-rose-50/40 active:bg-rose-100 border border-rose-100 rounded-xl p-3 flex justify-between items-center transition";
+          card.onclick = () => openDetailModal('expense', index);
+          card.innerHTML = `
+            <div class="flex-1 min-w-0 pr-2">
+              <div class="flex items-center space-x-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 shrink-0">${t.summary}</span>
+                <span class="text-[11px] text-slate-400 font-mono">${timeOnly}</span>
+              </div>
+              <div class="text-xs font-bold text-slate-800 truncate">${t.desc}</div>
+              <div class="text-[10px] text-slate-400 truncate mt-0.5">${t.note || '無備註'}</div>
+            </div>
+            <div class="text-right shrink-0 flex items-center space-x-2">
+              <span class="text-sm font-black text-rose-600">-NT$ ${Number(t.amount).toLocaleString()}</span>
+              <button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 p-1.5"><i class="fa-solid fa-trash text-xs"></i></button>
+            </div>
+          `;
+          expMobileList.appendChild(card);
         });
       }
 
@@ -671,7 +789,6 @@
       document.getElementById('stat-profit-rate').innerText = `${profitRate}%`;
     };
 
-    // 詳細資訊彈窗 (查看全部欄位)
     window.openDetailModal = function(type, index) {
       const item = type === 'income' ? state.filteredIncomes[index] : state.filteredExpenses[index];
       if (!item) return;
@@ -682,19 +799,19 @@
       const titleEl = document.getElementById('detail-modal-title');
 
       if (item.type === 'income') {
-        header.className = "px-6 py-4 flex justify-between items-center text-white bg-emerald-600";
+        header.className = "px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-emerald-600";
         typeBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
         typeBadge.innerText = "收入項目";
-        amountEl.className = "text-lg font-bold text-emerald-600";
+        amountEl.className = "text-base sm:text-lg font-black text-emerald-600";
         amountEl.innerText = `+ NT$ ${Number(item.amount).toLocaleString()}`;
-        titleEl.innerHTML = `<i class="fa-solid fa-circle-arrow-down mr-2"></i> 收入明細詳細資訊`;
+        titleEl.innerHTML = `<i class="fa-solid fa-circle-arrow-down mr-2"></i> 收入詳細資訊`;
       } else {
-        header.className = "px-6 py-4 flex justify-between items-center text-white bg-rose-600";
+        header.className = "px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-rose-600";
         typeBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800";
         typeBadge.innerText = "支出項目";
-        amountEl.className = "text-lg font-bold text-rose-600";
+        amountEl.className = "text-base sm:text-lg font-black text-rose-600";
         amountEl.innerText = `- NT$ ${Number(item.amount).toLocaleString()}`;
-        titleEl.innerHTML = `<i class="fa-solid fa-circle-arrow-up mr-2"></i> 支出明細詳細資訊`;
+        titleEl.innerHTML = `<i class="fa-solid fa-circle-arrow-up mr-2"></i> 支出詳細資訊`;
       }
 
       document.getElementById('detail-summary').innerText = item.summary || '-';
@@ -710,12 +827,10 @@
       document.getElementById('detail-modal').classList.add('hidden');
     };
 
-    // 列印功能
     window.printReport = function() {
       window.print();
     };
 
-    // 表單提交儲存
     window.handleFormSubmit = async function(event) {
       event.preventDefault();
       const type = document.getElementById('entry-type').value;
@@ -744,7 +859,6 @@
       }
     };
 
-    // 刪除自訂紀錄
     window.deleteCustomTransaction = async function(firestoreDocId) {
       if (!firestoreDocId) return;
       if (!confirm("確定要刪除這筆收支紀錄嗎？")) return;
@@ -756,7 +870,6 @@
       }
     };
 
-    // 彈窗操作
     window.openModal = function(type) {
       const modal = document.getElementById('record-modal');
       const header = document.getElementById('modal-header');
@@ -772,14 +885,14 @@
       document.getElementById('entry-note').value = '';
 
       if (type === 'income') {
-        header.className = "px-6 py-4 flex justify-between items-center text-white bg-emerald-600";
+        header.className = "px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-emerald-600 shrink-0";
         title.innerHTML = `<i class="fa-solid fa-circle-plus mr-2"></i> 填寫自訂收入明細`;
-        submitBtn.className = "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition";
+        submitBtn.className = "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow transition";
         summarySelect.innerHTML = `<option value="">--快速選擇--</option>` + state.incomeCategories.map(c => `<option value="${c}">${c}</option>`).join('');
       } else {
-        header.className = "px-6 py-4 flex justify-between items-center text-white bg-rose-600";
+        header.className = "px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-rose-600 shrink-0";
         title.innerHTML = `<i class="fa-solid fa-circle-minus mr-2"></i> 填寫支出明細`;
-        submitBtn.className = "px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-lg shadow transition";
+        submitBtn.className = "px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow transition";
         summarySelect.innerHTML = `<option value="">--快速選擇--</option>` + state.expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('');
       }
 
@@ -800,18 +913,31 @@
 
     window.switchTab = function(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('bg-slate-800', 'text-white');
         btn.classList.add('text-slate-300');
       });
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add('bg-slate-800', 'text-white');
+        activeNav.classList.remove('text-slate-300');
+      }
+
+      document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
+        btn.classList.remove('text-emerald-400', 'font-bold');
+        btn.classList.add('text-slate-400');
+      });
+      const activeMNav = document.getElementById(`m-nav-${tabId}`);
+      if (activeMNav) {
+        activeMNav.classList.remove('text-slate-400');
+        activeMNav.classList.add('text-emerald-400', 'font-bold');
+      }
 
       document.getElementById(`sec-${tabId}`).classList.remove('hidden');
-      const activeNav = document.getElementById(`nav-${tabId}`);
-      activeNav.classList.add('bg-slate-800', 'text-white');
-      activeNav.classList.remove('text-slate-300');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 類別設定管理
     window.renderCategories = function() {
       const incList = document.getElementById('setting-income-list');
       const expList = document.getElementById('setting-expense-list');
@@ -858,7 +984,6 @@
       renderCategories();
     };
 
-    // 匯出 CSV
     window.exportCSV = function() {
       const incomes = state.filteredIncomes;
       const expenses = state.filteredExpenses;
