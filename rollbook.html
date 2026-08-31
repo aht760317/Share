@@ -512,7 +512,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <div>
                     <h3 style="color:var(--primary); font-size:18px;">🚨 櫃檯專用：今日尚未到班學員與未點名班級清單</h3>
-                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。點擊「未點名」可直接登記原因與連絡結果。</p>
+                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。點擊班級可直接檢視該班學生名冊並進行點名。</p>
                 </div>
                 <div>
                     <label style="font-weight:bold; font-size:13px;">檢視日期：</label>
@@ -824,7 +824,6 @@
                     </optgroup>
                     <option value="其他">其他（自行輸入）</option>
                 </select>
-                <!-- 自行輸入欄位（預設隱藏，選擇幼稚園或其他時自動顯示） -->
                 <input type="text" id="m_stu_school_custom" placeholder="請手動輸入學校名稱..." style="display:none; margin-top:6px;">
             </div>
             <div>
@@ -1032,7 +1031,7 @@
         students: [],
         holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
         currentCourse: null,
-        attendanceData: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}'),
+        attendanceData: {},
         courseFilterMode: 'today', 
         currentDeptView: 'care',
         currentFilterClass: null,
@@ -1135,6 +1134,13 @@
                 });
             });
 
+            const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
+            if (attendanceDoc.exists()) {
+                window.state.attendanceData = attendanceDoc.data().data || {};
+            } else {
+                window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+            }
+
             initDropdowns();
             renderCourseFilterButtons();
             renderConfigFilterButtons();
@@ -1146,6 +1152,15 @@
             updateHomeAlertBanner();
         } catch (e) {
             console.error("載入資料失敗：", e);
+        }
+    }
+
+    async function saveAttendanceToCloud() {
+        try {
+            await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
+        } catch (e) {
+            console.error("同步點名資料至雲端失敗：", e);
+            localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
         }
     }
 
@@ -1787,7 +1802,6 @@
         return list;
     }
 
-    // 學校下拉選單變更聯動事件：若選「幼稚園」或「其他」則顯示手動輸入框
     window.onSchoolSelectChange = function(val) {
         const customInput = document.getElementById('m_stu_school_custom');
         if (val === '幼稚園' || val === '其他') {
@@ -1842,12 +1856,10 @@
         document.getElementById('m_stu_gender').value = stu.gender || '男';
         document.getElementById('m_stu_idcard').value = stu.idCard || '';
 
-        // 學校下拉與自訂欄位處理
         const schoolSel = document.getElementById('m_stu_school');
         const schoolCustom = document.getElementById('m_stu_school_custom');
         const stuSchool = stu.school || '';
 
-        // 檢查該學校是否在選單內
         let foundInSelect = false;
         for (let opt of schoolSel.options) {
             if (opt.value === stuSchool) {
@@ -2226,7 +2238,7 @@
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
         window.state.attendanceData[key].status = (window.state.attendanceData[key].status === status) ? '未到' : status;
         window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
     };
@@ -2234,7 +2246,7 @@
     window.saveScore = function(key, val) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '出席' };
         window.state.attendanceData[key].score = val !== '' ? Number(val) : '';
-        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        saveAttendanceToCloud();
         renderStudentList();
     };
 
@@ -2249,7 +2261,7 @@
             const key = `${dateStr}_${c.name}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : ''), reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
-        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
     };
@@ -2260,7 +2272,7 @@
         if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
 
         const courseName = window.state.currentCourse.name;
-        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        saveAttendanceToCloud();
 
         alert(`✅ 點名確認成功！即將跳轉至【${courseName}】點名表生成總表。`);
         switchTab('sheet');
@@ -2330,6 +2342,12 @@
         }
     }
 
+    window.jumpToCourseRollCall = function(courseName) {
+        document.getElementById('rollDateInput').value = document.getElementById('alertDateInput').value;
+        switchTab('rollcall');
+        selectCourse(courseName);
+    };
+
     window.renderAbsentAlertTab = function() {
         const dateStr = document.getElementById('alertDateInput').value;
         const summary = getAbsentAndUncheckedSummary(dateStr);
@@ -2338,13 +2356,13 @@
 
         let html = `<div style="margin-top:10px;">`;
 
-        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班)</h4>`;
+        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班) <span style="font-size:12px; color:#666; font-weight:normal;">(點擊班級可直接前往該班點名)</span></h4>`;
         if (summary.unassignedClasses.length === 0) {
             html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px; margin-bottom:15px;">✔ 今日所有排課班級皆已有老師進行點名作業！</p>`;
         } else {
             html += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">`;
             summary.unassignedClasses.forEach(cName => {
-                html += `<div style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13.5px;">🏫 ${cName} (尚未點名)</div>`;
+                html += `<button class="btn" style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13.5px; cursor:pointer;" onclick="jumpToCourseRollCall('${cName}')">🏫 ${cName} (尚未點名) ➔</button>`;
             });
             html += `</div>`;
         }
@@ -2439,7 +2457,7 @@
             window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
         }
 
-        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        saveAttendanceToCloud();
 
         document.getElementById('absentReasonModal').style.display = 'none';
         alert(`✅ 已成功儲存【${studentName}】的點名狀態與連絡結果！`);
