@@ -512,7 +512,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <div>
                     <h3 style="color:var(--primary); font-size:18px;">🚨 櫃檯專用：今日尚未到班學員與未點名班級清單</h3>
-                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。點擊班級可直接檢視該班學生名冊並進行點名。</p>
+                    <p style="color:#666; font-size:13px; margin-top:3px;">協助櫃檯老師即時掌握今日尚未簽到或請假、以及尚未完成點名確認的班級。點擊班級可直接展開該班學生名冊進行點名與記錄。</p>
                 </div>
                 <div>
                     <label style="font-weight:bold; font-size:13px;">檢視日期：</label>
@@ -728,6 +728,24 @@
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
             <button class="btn btn-success" onclick="saveAbsentReasonModal()" style="padding:8px 16px; font-size:13px;">💾 儲存原因與連絡結果</button>
             <button class="btn btn-outline" onclick="document.getElementById('absentReasonModal').style.display='none'" style="padding:8px 16px; font-size:13px;">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 專屬班級快速點名彈窗（點擊未點名班級直接在當前分頁彈出） -->
+<div class="modal-overlay" id="quickRollModal">
+    <div class="modal-box" style="max-width:750px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:12px;">
+            <h3 id="quickRollModalTitle" style="color:var(--primary); font-size:18px; font-weight:bold;">🏫 班級快速點名</h3>
+            <button class="btn btn-outline" onclick="document.getElementById('quickRollModal').style.display='none'" style="padding:4px 10px; font-size:12px;">關閉</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+            <div id="quickRollStats" style="font-weight:bold; color:var(--primary); font-size:13.5px;"></div>
+            <button class="btn btn-primary" onclick="quickMarkAllModal()" style="padding:5px 12px; font-size:12.5px;">⚡ 此班全體到齊 (✔)</button>
+        </div>
+        <div id="quickRollStudentList" style="display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto; padding-right:4px;"></div>
+        <div style="text-align:right; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
+            <button class="btn btn-success" onclick="document.getElementById('quickRollModal').style.display='none'; renderAbsentAlertTab(); updateHomeAlertBanner();" style="padding:7px 16px; font-size:13px;">完成並關閉</button>
         </div>
     </div>
 </div>
@@ -1039,7 +1057,8 @@
         configDeptFilter: 'all',
         selectedSheetCourse: null,
         filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER,
-        configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER
+        configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER,
+        quickRollContext: { courseName: '', dateStr: '' }
     };
 
     window.onload = function() {
@@ -2241,6 +2260,9 @@
         saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
+        if (document.getElementById('quickRollModal').style.display === 'flex') {
+            renderQuickRollModal(window.state.quickRollContext.courseName, window.state.quickRollContext.dateStr);
+        }
     };
 
     window.saveScore = function(key, val) {
@@ -2248,6 +2270,9 @@
         window.state.attendanceData[key].score = val !== '' ? Number(val) : '';
         saveAttendanceToCloud();
         renderStudentList();
+        if (document.getElementById('quickRollModal').style.display === 'flex') {
+            renderQuickRollModal(window.state.quickRollContext.courseName, window.state.quickRollContext.dateStr);
+        }
     };
 
     window.quickMarkAll = function() {
@@ -2263,6 +2288,23 @@
         });
         saveAttendanceToCloud();
         renderStudentList();
+        updateHomeAlertBanner();
+    };
+
+    window.quickMarkAllModal = function() {
+        const dateStr = window.state.quickRollContext.dateStr;
+        const courseName = window.state.quickRollContext.courseName;
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(courseName) && s.status !== 'graduated';
+        });
+        courseStudents.forEach(stu => {
+            const key = `${dateStr}_${courseName}_${stu.name}`;
+            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : ''), reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
+        });
+        saveAttendanceToCloud();
+        renderQuickRollModal(courseName, dateStr);
+        renderAbsentAlertTab();
         updateHomeAlertBanner();
     };
 
@@ -2342,11 +2384,68 @@
         }
     }
 
-    window.jumpToCourseRollCall = function(courseName) {
-        document.getElementById('rollDateInput').value = document.getElementById('alertDateInput').value;
-        switchTab('rollcall');
-        selectCourse(courseName);
+    window.openQuickRollModal = function(courseName, dateStr) {
+        window.state.quickRollContext = { courseName, dateStr };
+        document.getElementById('quickRollModalTitle').innerText = `🏫 班級快速點名：【${courseName}】(${dateStr})`;
+        renderQuickRollModal(courseName, dateStr);
+        document.getElementById('quickRollModal').style.display = 'flex';
     };
+
+    function renderQuickRollModal(courseName, dateStr) {
+        const container = document.getElementById('quickRollStudentList');
+        const statsEl = document.getElementById('quickRollStats');
+        if (!container || !statsEl) return;
+
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(courseName) && s.status !== 'graduated';
+        });
+
+        let presentCount = 0;
+        let leaveCount = 0;
+        let html = '';
+
+        courseStudents.forEach((stu, idx) => {
+            const key = `${dateStr}_${courseName}_${stu.name}`;
+            const record = window.state.attendanceData[key] || { status: '未到', time: '', score: '' };
+            if (record.status === '出席') presentCount++;
+            if (record.status === '請假') leaveCount++;
+
+            const phone = getParentPhone(stu);
+            const isPresent = record.status === '出席';
+            const isLeave = record.status === '請假';
+
+            html += `
+                <div style="background:#fff; border:1.5px solid ${isPresent ? '#2ecc71' : (isLeave ? '#e74c3c' : '#cbd5e1')}; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-size:11.5px; color:#888; font-weight:bold;">#${idx+1}</span>
+                            <b style="font-size:15px; color:var(--primary); margin-left:4px;">${stu.name}</b>
+                            <span style="font-size:12px; color:#555; margin-left:8px;">🏫 ${stu.school || '-'}</span>
+                        </div>
+                        <div style="font-size:12px; color:#475569;">📞 ${phone}</div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
+                            ${isPresent ? '✔ 已出席' : '簽到 (✔)'}
+                        </button>
+                        <button class="btn btn-warning" style="padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
+                            ${isLeave ? '▲ 已請假' : '請假 (▲)'}
+                        </button>
+                        <input type="number" placeholder="成績" value="${record.score !== undefined ? record.score : ''}" style="width:70px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center; margin:0; font-size:13px;" onchange="saveScore('${key}', this.value)">
+                    </div>
+                    ${record.reason ? `<div style="font-size:12px; color:#b91c1c;">📝 備註原因：${record.reason}</div>` : ''}
+                </div>
+            `;
+        });
+
+        if (courseStudents.length === 0) {
+            html = `<p style="text-align:center; color:#888; padding:20px;">此班級目前無在籍學生。</p>`;
+        }
+
+        statsEl.innerText = `應到：${courseStudents.length} 人 ｜ 出席：${presentCount} 人 ｜ 請假：${leaveCount} 人`;
+        container.innerHTML = html;
+    }
 
     window.renderAbsentAlertTab = function() {
         const dateStr = document.getElementById('alertDateInput').value;
@@ -2356,13 +2455,13 @@
 
         let html = `<div style="margin-top:10px;">`;
 
-        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班) <span style="font-size:12px; color:#666; font-weight:normal;">(點擊班級可直接前往該班點名)</span></h4>`;
+        html += `<h4 style="color:var(--primary); font-size:15px; border-bottom:2px solid #cbd5e1; padding-bottom:6px; margin-bottom:10px;">🏫 今日尚無點名記錄的班級 (${summary.unassignedClasses.length}班) <span style="font-size:12px; color:#666; font-weight:normal;">(點擊班級可直接展開該班學生名冊進行點名)</span></h4>`;
         if (summary.unassignedClasses.length === 0) {
             html += `<p style="color:#16a34a; font-weight:bold; font-size:13.5px; margin-bottom:15px;">✔ 今日所有排課班級皆已有老師進行點名作業！</p>`;
         } else {
             html += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">`;
             summary.unassignedClasses.forEach(cName => {
-                html += `<button class="btn" style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13.5px; cursor:pointer;" onclick="jumpToCourseRollCall('${cName}')">🏫 ${cName} (尚未點名) ➔</button>`;
+                html += `<button class="btn" style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13.5px; cursor:pointer;" onclick="openQuickRollModal('${cName}', '${dateStr}')">🏫 ${cName} (尚未點名) ➔</button>`;
             });
             html += `</div>`;
         }
