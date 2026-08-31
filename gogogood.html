@@ -579,19 +579,22 @@
                         </div>
                     </div>
 
-                    <!-- 選擇部門後連動勾選該部門班級 -->
+                    <!-- 選擇部門後連動雲端勾選該部門班級 -->
                     <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
-                        <label style="color: var(--primary-navy); font-weight: 700; margin-bottom: 8px;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="color: var(--primary-navy); font-weight: 700; margin:0;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
+                            <button type="button" class="btn-sm" onclick="syncClassesFromRollbook()" style="background:#2563eb; color:#fff; border:none; padding:4px 10px;">🔄 雲端同步最新班級</button>
+                        </div>
                         <div style="margin-bottom: 12px;">
                             <select id="departmentSelect" class="form-control" onchange="filterClassesByDepartment()">
                                 <option value="ALL">全部部門 / 班別總覽</option>
-                                <option value="小學部">小學部 (美語、正音)</option>
-                                <option value="國中部">國中部 (數學、英文)</option>
-                                <option value="高中部">高中部 (特訓班)</option>
+                                <option value="care">課輔部</option>
+                                <option value="elementary">國小部</option>
+                                <option value="junior">國中部</option>
                             </select>
                         </div>
                         <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;">
-                            <!-- 動態渲染從 rollbook 抓取的班級核取方塊 -->
+                            <!-- 動態從 rollbook 雲端同步渲染 -->
                         </div>
                     </div>
 
@@ -771,58 +774,62 @@
         </footer>
     </div>
 
+    <!-- 導入 Firebase 模組以自動抓取 rollbook 雲端資料庫中的所有班級 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+            authDomain: "my-project-9999-479215.firebaseapp.com",
+            projectId: "my-project-9999-479215",
+            storageBucket: "my-project-9999-479215.firebasestorage.app",
+            messagingSenderId: "1020162825898",
+            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 將抓取到的雲端班級資料掛載到全域變數
+        window.cloudDepartmentsClasses = {
+            care: ["小四課後安親輔導班"],
+            elementary: ["小五數學培優班"],
+            junior: ["國二數學進階A班", "國三會考理化總複習"]
+        };
+
+        async function fetchCloudClassesFromRollbook() {
+            try {
+                const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
+                if (coursesDoc.exists()) {
+                    const data = coursesDoc.data().data || {};
+                    if (data.care) window.cloudDepartmentsClasses.care = data.care.map(c => typeof c === 'object' ? c.name : c);
+                    if (data.elementary) window.cloudDepartmentsClasses.elementary = data.elementary.map(c => typeof c === 'object' ? c.name : c);
+                    if (data.junior) window.cloudDepartmentsClasses.junior = data.junior.map(c => typeof c === 'object' ? c.name : c);
+                    console.log("✅ 成功從 rollbook 雲端同步最新班級清單！");
+                }
+            } catch (e) {
+                console.log("使用預設或本機班級資料架構。");
+            }
+            filterClassesByDepartment();
+        }
+
+        window.syncClassesFromRollbook = async function() {
+            alert("正在從雲端同步最新班級...");
+            await fetchCloudClassesFromRollbook();
+            alert("✅ 同步完成！選單已更新為最新班級。");
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCloudClassesFromRollbook();
+            checkLoginState();
+        });
+    </script>
+
     <script>
         const ADMIN_USER = "aht0317";
         const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
-
-        // 預設部門與班級分類資料庫 (未來可與 rollbook 自動同步或擴充)
-        const DEPARTMENT_CLASSES = {
-            "小學部": ["國小美語A班", "國小美語B班", "升小一正音班", "小學菁英安親班"],
-            "國中部": ["國中數學精熟班", "國中英文衝刺班", "國中理化特訓班"],
-            "高中部": ["高中英文特訓班", "高中數學進階班"]
-        };
-
-        // 自動從外部 rollbook 雲端系統同步班級清單的機制
-        async function syncClassesFromRollbook() {
-            try {
-                let response = await fetch('https://aht760317.github.io/Share/rollbook.html');
-                let htmlText = await response.text();
-                
-                // 解析頁面中可能存在的班級關鍵字或選項
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(htmlText, 'text/html');
-                let selects = doc.querySelectorAll('select option');
-                let foundClasses = [];
-                selects.forEach(opt => {
-                    let val = opt.textContent.trim();
-                    if (val && (val.includes('班') || val.includes('組')) && !foundClasses.includes(val)) {
-                        foundClasses.push(val);
-                    }
-                });
-
-                if (foundClasses.length > 0) {
-                    // 若有抓到則自動歸入自訂或預設部門
-                    foundClasses.forEach(cls => {
-                        if (cls.includes('小') || cls.includes('正音') || cls.includes('美語')) {
-                            if (!DEPARTMENT_CLASSES["小_學部"] && !DEPARTMENT_CLASSES["小學部"].includes(cls)) {
-                                DEPARTMENT_CLASSES["小學部"].push(cls);
-                            }
-                        } else if (cls.includes('國中') || cls.includes('數學') || cls.includes('理化')) {
-                            if (!DEPARTMENT_CLASSES["國中部"].includes(cls)) {
-                                DEPARTMENT_CLASSES["國中部"].push(cls);
-                            }
-                        } else {
-                            if (!DEPARTMENT_CLASSES["高中部"].includes(cls)) {
-                                DEPARTMENT_CLASSES["高中部"].push(cls);
-                            }
-                        }
-                    });
-                }
-            } catch (e) {
-                console.log("使用預設內建班級清單架構。");
-            }
-        }
 
         function getTeachers() {
             let data = localStorage.getItem('good_school_teachers');
@@ -838,7 +845,7 @@
                         phone: "0900-000-000", 
                         note: "機構負責人", 
                         perms: ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney"],
-                        classes: ["國小美語A班", "國中數學精熟班"]
+                        classes: ["小四課後安親輔導班", "國二數學進階A班"]
                     }
                 ];
                 localStorage.setItem('good_school_teachers', JSON.stringify(initial));
@@ -846,12 +853,6 @@
             }
             return JSON.parse(data);
         }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            await syncClassesFromRollbook();
-            checkLoginState();
-            renderDepartmentClasses();
-        });
 
         function checkLoginState() {
             let currentUser = sessionStorage.getItem('good_current_user');
@@ -970,22 +971,26 @@
             document.getElementById('submitBtnText').innerText = "儲存老師資料";
         }
 
-        // 根據選擇的部門動態渲染班級核取方塊
-        function filterClassesByDepartment() {
+        // 依據部門下拉選單動態過濾並渲染雲端同步的班級
+        window.filterClassesByDepartment = function() {
             let dept = document.getElementById('departmentSelect').value;
             let container = document.getElementById('departmentClassContainer');
+            if (!container) return;
             container.innerHTML = '';
 
-            // 取得目前已勾選的班級（防止切換部門時清空已勾選狀態）
             let checkedClasses = Array.from(document.querySelectorAll('input[name="assignedClass"]:checked')).map(cb => cb.value);
-
             let classesToShow = [];
+            const dbClasses = window.cloudDepartmentsClasses || { care: [], elementary: [], junior: [] };
+
             if (dept === 'ALL') {
-                for (let key in DEPARTMENT_CLASSES) {
-                    classesToShow = classesToShow.concat(DEPARTMENT_CLASSES[key]);
-                }
+                classesToShow = [...(dbClasses.care || []), ...(dbClasses.elementary || []), ...(dbClasses.junior || [])];
             } else {
-                classesToShow = DEPARTMENT_CLASSES[dept] || [];
+                classesToShow = dbClasses[dept] || [];
+            }
+
+            if (classesToShow.length === 0) {
+                container.innerHTML = `<span style="font-size:12.5px; color:#888;">此部門目前尚無建立班級。</span>`;
+                return;
             }
 
             classesToShow.forEach(cls => {
@@ -1042,7 +1047,7 @@
             });
         }
 
-        function saveTeacher(e) {
+        window.saveTeacher = function(e) {
             e.preventDefault();
             let name = document.getElementById('tName').value.trim();
             let pass = document.getElementById('tPass').value.trim();
@@ -1057,7 +1062,6 @@
             let permCheckboxes = document.querySelectorAll('input[name="perm"]:checked');
             let perms = Array.from(permCheckboxes).map(cb => cb.value);
 
-            // 收集所有勾選的班級（跨部門累積保留）
             let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]:checked');
             let classes = Array.from(classCheckboxes).map(cb => cb.value);
 
@@ -1081,9 +1085,9 @@
             renderDepartmentClasses();
             renderTeacherTable();
             alert('老師人事資料、權限與班級指派儲存成功！');
-        }
+        };
 
-        function editTeacher(index) {
+        window.editTeacher = function(index) {
             let teachers = getTeachers();
             let t = teachers[index];
 
@@ -1105,21 +1109,20 @@
                 cb.checked = (t.perms || []).includes(cb.value);
             });
 
-            // 預先勾選該老師原本被賦予的班級
             let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]');
             classCheckboxes.forEach(cb => {
                 cb.checked = (t.classes || []).includes(cb.value);
             });
-        }
+        };
 
-        function deleteTeacher(index) {
+        window.deleteTeacher = function(index) {
             if (confirm('確定要刪除這位老師的帳號、人事資料與班級權限嗎？')) {
                 let teachers = getTeachers();
                 teachers.splice(index, 1);
                 localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
                 renderTeacherTable();
             }
-        }
+        };
     </script>
 </body>
 </html>
