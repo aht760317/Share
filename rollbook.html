@@ -2202,9 +2202,10 @@
             if (record.status === '請假') leaveCount++;
 
             const phone = getParentPhone(stu);
+            const isPresent = record.status === '出席';
 
             const card = document.createElement('div');
-            card.className = `student-card ${record.status === '出席' ? 'present' : (record.status === '請假' ? 'leave' : '')}`;
+            card.className = `student-card ${isPresent ? 'present' : (record.status === '請假' ? 'leave' : '')}`;
 
             card.innerHTML = `
                 <div>
@@ -2215,8 +2216,8 @@
                     </div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-top:10px;">
-                    <button class="btn ${record.status === '出席' ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
-                        ${record.status === '出席' ? '✔ 已出席' : '簽到 (✔)'}
+                    <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
+                        ${isPresent ? '✔ 今日已到班' : '點名 (✔)'}
                     </button>
                     <button class="btn btn-warning" style="padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
                         ${record.status === '請假' ? '▲ 已請假' : '請假 (▲)'}
@@ -2227,7 +2228,7 @@
             grid.appendChild(card);
 
             let statusText = `<span style="color:#999;">-</span>`;
-            if (record.status === '出席') statusText = `<span style="color:green; font-weight:bold; font-size:15px;">✔</span>`;
+            if (isPresent) statusText = `<span style="color:green; font-weight:bold; font-size:15px;">✔</span>`;
             if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:14px;">▲</span>${record.reason ? '<br><span style="font-size:7.5pt; color:#666;">('+record.reason+')</span>' : ''}`;
 
             paperRowsHtml += `
@@ -2427,7 +2428,7 @@
                     </div>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
-                            ${isPresent ? '✔ 已出席' : '簽到 (✔)'}
+                            ${isPresent ? '✔ 今日已到班' : '點名 (✔)'}
                         </button>
                         <button class="btn btn-warning" style="padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
                             ${isLeave ? '▲ 已請假' : '請假 (▲)'}
