@@ -469,6 +469,7 @@
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:13px;">⚠️ 本日為放假日</span>
                     <button class="btn btn-primary" onclick="quickMarkAll()" style="padding:7px 12px; font-size:13px;">⚡ 全員到齊 (✔)</button>
                     <button class="btn btn-purple" onclick="confirmRollCallAndSync()" style="padding:7px 12px; font-size:13px;">🔒 點名確認</button>
+                    <button class="btn btn-danger" onclick="resetRollCall()" style="padding:7px 12px; font-size:13px;">🔄 重新點名 (需密碼)</button>
                 </div>
             </div>
 
@@ -2290,6 +2291,28 @@
         updateHomeAlertBanner();
     };
 
+    window.resetRollCall = function() {
+        if (!window.state.currentCourse) return alert("請先選擇要重新點名的課程！");
+        if (!checkPassword("🔒 重新點名需要輸入管理密碼：")) return;
+
+        const dateStr = document.getElementById('rollDateInput').value;
+        const c = window.state.currentCourse;
+        const courseStudents = window.state.students.filter(s => {
+            const arr = getStudentCoursesArray(s);
+            return arr.includes(c.name) && s.status !== 'graduated';
+        });
+
+        courseStudents.forEach(stu => {
+            const key = `${dateStr}_${c.name}_${stu.name}`;
+            delete window.state.attendanceData[key];
+        });
+
+        saveAttendanceToCloud();
+        renderStudentList();
+        updateHomeAlertBanner();
+        alert(`✅ 已成功重置【${c.name}】於 ${dateStr} 的點名紀錄！`);
+    };
+
     window.quickMarkAllModal = function() {
         const dateStr = window.state.quickRollContext.dateStr;
         const courseName = window.state.quickRollContext.courseName;
@@ -2372,7 +2395,7 @@
         if (unCheckedCount === 0 && unPresentStudents === 0) {
             banner.style.background = 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
             banner.style.border = '2px solid #22c55e';
-            content.innerHTML = `<span style="color: #166534; font-weight: bold;">🌟 太棒了！今日所有排課班級皆已完成點名, 且無學員缺席或未到！</span>`;
+            content.innerHTML = `<span style="color: #166534; font-weight: bold;">🌟 太棒了！今日所有排課班級皆已完成點名，且無學員缺席或未到！</span>`;
         } else {
             banner.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
             banner.style.border = '2px solid #f59e0b';
