@@ -1061,8 +1061,19 @@
         quickRollContext: { courseName: '', dateStr: '' }
     };
 
+    // 取得台灣時間 (Asia/Taipei) 的 YYYY-MM-DD 字串
+    function getTaiwanTodayStr() {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Taipei',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        return formatter.format(new Date());
+    }
+
     window.onload = function() {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTaiwanTodayStr();
         document.getElementById('rollDateInput').value = today;
         document.getElementById('alertDateInput').value = today;
         document.getElementById('newHolidayDate').value = today;
@@ -1407,7 +1418,7 @@
         }
 
         document.getElementById('timetableModalTitle').innerText = `斗六顧德補習班 - ${scopeTitle}`;
-        document.getElementById('timetableModalSub').innerText = `產表時間：${new Date().toLocaleDateString('zh-TW')}`;
+        document.getElementById('timetableModalSub').innerText = `產表時間：${new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })}`;
 
         const scheduleByDay = {
             '星期一': [], '星期二': [], '星期三': [], '星期四': [], '星期五': [], '星期六': [], '星期日': []
@@ -1493,7 +1504,7 @@
         if (!newName) return alert('請輸入班級課程名稱！');
 
         try {
-            let origStartDate = new Date().toISOString().slice(0, 8) + '01';
+            let origStartDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01';
             let origEndDate = '';
             if (window.state.courses[origDept]) {
                 const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
@@ -2037,7 +2048,7 @@
         if (!name) return alert('請輸入班級課程名稱！');
 
         if (!window.state.courses[dept]) window.state.courses[dept] = [];
-        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toISOString().slice(0, 8) + '01', endDate: '' });
+        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01', endDate: '' });
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
@@ -2058,7 +2069,7 @@
 
     function getAllCoursesList() {
         let list = [];
-        const defaultStart = new Date().toISOString().slice(0, 8) + '01';
+        const defaultStart = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01';
         ['care', 'elementary', 'junior'].forEach(dept => {
             (window.state.courses[dept] || []).forEach((c) => {
                 const name = typeof c === 'object' ? c.name : c;
@@ -2108,7 +2119,7 @@
         const curDayName = WEEK_NAMES[dayIdx];
 
         document.getElementById('currentDayText').innerText = 
-            `📅 點名日期：${curDate.toISOString().slice(0,10)} (${curDayName})`;
+            `📅 點名日期：${document.getElementById('rollDateInput').value} (${curDayName})`;
 
         const grid = document.getElementById('courseGrid');
         grid.innerHTML = '';
@@ -2256,7 +2267,7 @@
     window.setAttendance = function(key, status) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
         window.state.attendanceData[key].status = (window.state.attendanceData[key].status === status) ? '未到' : status;
-        window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
         saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
@@ -2400,7 +2411,7 @@
             banner.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
             banner.style.border = '2px solid #f59e0b';
             content.innerHTML = `
-                <div>📌 <b>尚有未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
+                <div>📌 <b>尚有機動/未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
                 <div style="margin-top:3px;">📌 <b>尚有尚未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${unPresentStudents} 人次 (請至「還沒點名/未到」專區確認與填寫原因)</span></div>
             `;
         }
@@ -2574,7 +2585,7 @@
         window.state.attendanceData[key].status = newStatus;
         window.state.attendanceData[key].reason = reasonText;
         if (!window.state.attendanceData[key].time && newStatus !== '未到') {
-            window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
         }
 
         saveAttendanceToCloud();
@@ -2593,7 +2604,7 @@
 
         document.getElementById('sheetPeriodBadge').innerText = `上課日：${course.day || '未設定'}`;
 
-        const baseStart = course.startDate || new Date().toISOString().slice(0, 10);
+        const baseStart = course.startDate || getTaiwanTodayStr();
         document.getElementById('sheetQueryStartDate').value = baseStart;
         
         const defaultEnd = course.endDate || new Date(new Date(baseStart).getTime() + 8 * 7 * 86400000).toISOString().slice(0, 10);
@@ -2612,7 +2623,7 @@
         let endVal = document.getElementById('sheetQueryEndDate').value;
 
         if (!startVal) {
-            startVal = course.startDate || new Date().toISOString().slice(0, 10);
+            startVal = course.startDate || getTaiwanTodayStr();
             document.getElementById('sheetQueryStartDate').value = startVal;
         }
         if (!endVal) {
@@ -2801,7 +2812,7 @@
     window.verifyAndAddHoliday = function() {
         const date = document.getElementById('newHolidayDate').value;
         const name = document.getElementById('newHolidayName').value.trim();
-        if (!date || !name) return alert('請輸入完整日期與事由！');
+        if (!date || !name) return alert('請輸入完整日期與事與事由！');
 
         window.state.holidays.push({ date, name });
         localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
