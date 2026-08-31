@@ -305,15 +305,6 @@
             min-width: 0;
             white-space: nowrap;
         }
-        .unpaid-period-badge {
-            font-size: 12px;
-            color: #475569;
-            font-weight: 600;
-            background: #F1F5F9;
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid #E2E8F0;
-        }
         .unpaid-student-title {
             font-size: 14px;
             color: #334155;
@@ -342,14 +333,38 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據樣式 */
-        .receipt-box { border: 2px solid #000; padding: 12px 15px; width: 100%; background: white; color: #000; font-size: 13px; page-break-inside: avoid; }
-        .receipt-title { text-align: center; font-size: 18px; font-weight: bold; }
-        .receipt-subtitle { text-align: center; font-size: 11px; margin-bottom: 8px; color: #555; }
-        .receipt-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 2px solid #000; }
-        .receipt-total { text-align: right; font-size: 16px; font-weight: bold; padding-top: 5px; }
-        .cut-line { text-align: center; font-size: 12px; color: #555; margin: 12px 0; }
-        .page-break { page-break-after: always; height: 0; }
+        /* 列印及收據樣式 (針對 1 頁 3 張精確設計，防止切斷) */
+        .receipt-box { 
+            border: 1.5px solid #000; 
+            padding: 8px 12px; 
+            width: 100%; 
+            background: white; 
+            color: #000; 
+            font-size: 12px; 
+            box-sizing: border-box;
+            page-break-inside: avoid !important; 
+            break-inside: avoid !important;
+            margin: 0 auto;
+        }
+        .receipt-title { text-align: center; font-size: 15px; font-weight: bold; line-height: 1.2; }
+        .receipt-subtitle { text-align: center; font-size: 10px; margin-bottom: 4px; color: #444; }
+        .receipt-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1.5px solid #000; }
+        .receipt-total { text-align: right; font-size: 14px; font-weight: bold; padding-top: 4px; }
+        .cut-line { 
+            text-align: center; 
+            font-size: 10px; 
+            color: #444; 
+            margin: 5px 0; 
+            page-break-inside: avoid !important; 
+            break-inside: avoid !important; 
+        }
+        .page-break { 
+            page-break-after: always !important; 
+            break-after: page !important;
+            height: 0; 
+            margin: 0;
+            padding: 0;
+        }
 
         /* 手機端專屬體驗 */
         @media screen and (max-width: 768px) {
@@ -458,14 +473,28 @@
 
         @media screen { .print-only { display: none; } }
         @media print {
+            @page { 
+                size: A4 portrait; 
+                margin: 8mm 10mm; 
+            }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            body { background: white; padding: 0; margin: 0; }
-            .report-box { padding: 10px; width: 100%; box-sizing: border-box; }
-            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 6px 8px; font-size: 13px; }
+            body { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            .receipt-box { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+            }
+            .report-box { padding: 5px; width: 100%; box-sizing: border-box; }
+            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 4px 6px; font-size: 11px; }
             .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
-            .report-total { text-align: right; font-size: 16px; font-weight: bold; padding-top: 8px; border-top: 2px solid #000; }
+            .report-total { text-align: right; font-size: 14px; font-weight: bold; padding-top: 6px; border-top: 2px solid #000; }
         }
     </style>
 </head>
@@ -1843,7 +1872,7 @@
 
     window.toggleSelectAll = function(dept, masterCheckbox) {
         const checkboxes = document.querySelectorAll(`.row-checkbox-${dept}`);
-        checkbox.forEach(cb => cb.checked = masterCheckbox.checked);
+        checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
     };
 
     window.renderRecords = function() {
@@ -1955,7 +1984,7 @@
                 return `
                     <div class="unpaid-card">
                         <div class="unpaid-card-info">
-                            <span class="unpaid-period-badge">📅 ${periodText}</span>
+                            <span style="font-size: 13px; color: #64748B; font-weight: 600;">${periodText}</span>
                             <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong></span>
                             <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
                         </div>
@@ -1976,19 +2005,19 @@
         const bill = window.bills.find(b => b.id === id);
         if (!bill) return;
 
-        let itemsDetail = bill.items.map(i => `<tr><td style="padding:6px 8px; border:1px solid #CBD5E1; font-size:14px;">${i.name}</td><td style="padding:6px 8px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:14px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
+        let itemsDetail = bill.items.map(i => `<tr><td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td><td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
 
         const modalHtml = `
             <div>
-                <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:12px;">
-                    <div style="font-size:16px; font-weight:bold; color:#1E40AF; margin-bottom:4px;">👤 學生：${bill.studentName} (${bill.className})</div>
-                    <div style="font-size:13px; color:#475569;">📅 期間：${bill.periodStr || bill.yearMonth}</div>
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:8px; margin-bottom:10px;">
+                    <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${bill.studentName} (${bill.className})</div>
+                    <div style="font-size:12px; color:#475569;">📅 期間：${bill.periodStr || bill.yearMonth}</div>
                 </div>
-                <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:13px;">
-                    <thead><tr style="background:#F8FAFC;"><th style="padding:6px 8px; border:1px solid #CBD5E1; text-align:left;">項目</th><th style="padding:6px 8px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
+                    <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
                     <tbody>${itemsDetail}</tbody>
                 </table>
-                <div style="text-align:right; font-size:18px; font-weight:bold; color:#B91C1C; margin-bottom:15px;">
+                <div style="text-align:right; font-size:16px; font-weight:bold; color:#B91C1C; margin-bottom:12px;">
                     應收總金額：$ ${bill.total.toLocaleString()} 元
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -2061,7 +2090,7 @@
         let allHtml = '';
         targetBills.forEach((bill, index) => {
             allHtml += getSingleReceiptHtml(bill, false, '');
-            if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
+            if ((index + 1) % 3 === 0 && index !== targetBills.length - 1) {
                 allHtml += '<div class="page-break"></div>';
             } else if (index !== targetBills.length - 1) {
                 allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
@@ -2283,8 +2312,8 @@
                         <td style="text-align:center;">${idx + 1}</td>
                         <td>${bill.className}</td>
                         <td><strong>${bill.studentName}</strong></td>
-                        <td style="text-align:center; font-size:13px;">${displayMonth}</td>
-                        <td style="font-size:13px; line-height:1.4;">${itemDetails}</td>
+                        <td style="text-align:center; font-size:12px;">${displayMonth}</td>
+                        <td style="font-size:12px; line-height:1.3;">${itemDetails}</td>
                         <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
                     </tr>
                 `;
@@ -2292,8 +2321,8 @@
 
             html = `
                 <div class="report-box">
-                    <div style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:12px;">每日收費明細表</div>
-                    <div style="font-size:14px; margin-bottom: 8px; display:flex; justify-content:space-between;">
+                    <div style="text-align:center; font-size:17px; font-weight:bold; margin-bottom:8px;">每日收費明細表</div>
+                    <div style="font-size:13px; margin-bottom: 6px; display:flex; justify-content:space-between;">
                         <span>日期：<strong>${dateVal}</strong></span>
                         <span>時間：${new Date().toLocaleTimeString()}</span>
                     </div>
@@ -2311,7 +2340,7 @@
                         <tbody>${tableRows}</tbody>
                     </table>
                     <div class="report-total">當日實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
-                    <div style="margin-top: 30px; text-align:right; font-size:15px;">經手人簽名：_____________________</div>
+                    <div style="margin-top: 24px; text-align:right; font-size:14px;">經手人簽名：_____________________</div>
                 </div>
             `;
         } else if (type === 'monthly') {
@@ -2346,7 +2375,7 @@
                         <td>${bill.className}</td>
                         <td><strong>${bill.studentName}</strong></td>
                         <td style="text-align:center; font-size:12px;">${displayMonth}</td>
-                        <td style="font-size:13px; line-height:1.4;">${itemDetails}</td>
+                        <td style="font-size:12px; line-height:1.3;">${itemDetails}</td>
                         <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
                     </tr>
                 `;
@@ -2354,8 +2383,8 @@
 
             html = `
                 <div class="report-box">
-                    <div style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:12px;">每月收費總結表</div>
-                    <div style="font-size:14px; margin-bottom: 8px; display:flex; justify-content:space-between;">
+                    <div style="text-align:center; font-size:17px; font-weight:bold; margin-bottom:8px;">每月收費總結表</div>
+                    <div style="font-size:13px; margin-bottom: 6px; display:flex; justify-content:space-between;">
                         <span>月份：<strong>${monthVal}</strong></span>
                         <span>時間：${new Date().toLocaleTimeString()}</span>
                     </div>
@@ -2411,7 +2440,7 @@
                         <td>${bill.className}</td>
                         <td><strong>${bill.studentName}</strong></td>
                         <td style="text-align:center; font-size:12px;">${displayMonth}</td>
-                        <td style="font-size:13px; line-height:1.4;">${itemDetails}</td>
+                        <td style="font-size:12px; line-height:1.3;">${itemDetails}</td>
                         <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
                     </tr>
                 `;
@@ -2419,8 +2448,8 @@
 
             html = `
                 <div class="report-box">
-                    <div style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:12px;">自訂區間收費明細表</div>
-                    <div style="font-size:14px; margin-bottom: 8px; display:flex; justify-content:space-between;">
+                    <div style="text-align:center; font-size:17px; font-weight:bold; margin-bottom:8px;">自訂區間收費明細表</div>
+                    <div style="font-size:13px; margin-bottom: 6px; display:flex; justify-content:space-between;">
                         <span>區間：<strong>${startVal} ~ ${endVal}</strong></span>
                         <span>時間：${new Date().toLocaleTimeString()}</span>
                     </div>
@@ -2439,7 +2468,7 @@
                         <tbody>${tableRows}</tbody>
                     </table>
                     <div class="report-total">區間實收總計： $ ${totalRevenue.toLocaleString()} 元</div>
-                    <div style="margin-top: 30px; text-align:right; font-size:15px;">經手人簽名：_____________________</div>
+                    <div style="margin-top: 24px; text-align:right; font-size:14px;">經手人簽名：_____________________</div>
                 </div>
             `;
         }
@@ -2465,7 +2494,7 @@
         `).join('');
 
         const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
-            <div style="margin-top: 5px; font-size: 7px; line-height: 1.15; border-top: 1px solid #000; padding-top: 2px; color: #222;">
+            <div style="margin-top: 3px; font-size: 7px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
                 <strong>【退費規定】</strong><br>
                 補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還(已購置成品發給成品)。
             </div>
@@ -2473,15 +2502,15 @@
 
         let html = `
             <div class="receipt-box">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-                    <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                    <div style="width: 50px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                     <div style="flex: 1; text-align: center;">
                         <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                         <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                     </div>
-                    ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10px; border: 1.5px solid #333; padding: 1px 3px; border-radius: 4px; font-weight: bold; white-space: nowrap;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
+                    ${copyLabel ? `<div style="width: 50px; text-align: right;"><span style="font-size: 9px; border: 1px solid #333; padding: 1px 2px; border-radius: 3px; font-weight: bold; white-space: nowrap;">${copyLabel}</span></div>` : '<div style="width: 50px; display:none;"></div>'}
                 </div>
-                <div style="text-align:center; font-size:15px; font-weight:bold; margin-bottom:6px;">${isReceipt ? '繳費收據明細單' : '繳費通知單'}</div>
+                <div style="text-align:center; font-size:13px; font-weight:bold; margin-bottom:4px;">${isReceipt ? '繳費收據明細單' : '繳費通知單'}</div>
                 <div class="receipt-header">
                     <div>班級：<strong>${bill.className}</strong></div>
                     <div>姓名：<strong>${bill.studentName}</strong></div>
@@ -2490,9 +2519,9 @@
                 <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr style="background: #f0f0f0;">
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:10%;">項次</th>
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:65%;">項目名稱</th>
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:25%;">金額</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:10%;">項次</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:65%;">項目名稱</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:25%;">金額</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
@@ -2501,10 +2530,10 @@
         `;
 
         if(isReceipt) {
-            html += `<div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 20px;">收款經手人：<strong>${window.config.handler}</strong></div></div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">收款經手人：<strong>${window.config.handler}</strong></div></div>`;
             html += refundPolicyHtml;
         } else {
-            html += `<div style="margin-top: 8px; font-size: 11px; color: #444;">備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝。</div>`;
+            html += `<div style="margin-top: 4px; font-size: 10px; color: #444;">備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝。</div>`;
         }
 
         html += `</div>`;
@@ -2527,7 +2556,7 @@
 
             grandTotal += bill.total;
 
-            combinedItemsHtml += `<tr><td colspan="3" style="background:#f7f7f7; font-weight:bold; font-size:12px; padding:2px 6px;">【${bill.className} - ${bill.studentName}】</td></tr>`;
+            combinedItemsHtml += `<tr><td colspan="3" style="background:#f7f7f7; font-weight:bold; font-size:11px; padding:2px 4px;">【${bill.className} - ${bill.studentName}】</td></tr>`;
             bill.items.forEach(item => {
                 combinedItemsHtml += `
                     <tr>
@@ -2544,7 +2573,7 @@
         const displayPeriod = periodStrsArr.join(' / ');
 
         const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
-            <div style="margin-top: 5px; font-size: 7px; line-height: 1.15; border-top: 1px solid #000; padding-top: 2px; color: #222;">
+            <div style="margin-top: 3px; font-size: 7px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
                 <strong>【退費規定】</strong><br>
                 補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還(已購置成品發給成品)。
             </div>
@@ -2552,15 +2581,15 @@
 
         let html = `
             <div class="receipt-box">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-                    <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                    <div style="width: 50px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                     <div style="flex: 1; text-align: center;">
                         <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                         <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                     </div>
-                    ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10px; border: 1.5px solid #333; padding: 1px 3px; border-radius: 4px; font-weight: bold; white-space: nowrap;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
+                    ${copyLabel ? `<div style="width: 50px; text-align: right;"><span style="font-size: 9px; border: 1px solid #333; padding: 1px 2px; border-radius: 3px; font-weight: bold; white-space: nowrap;">${copyLabel}</span></div>` : '<div style="width: 50px; display:none;"></div>'}
                 </div>
-                <div style="text-align:center; font-size:15px; font-weight:bold; margin-bottom:6px;">${isReceipt ? '合併繳費收據明細單' : '合併繳費通知單'}</div>
+                <div style="text-align:center; font-size:13px; font-weight:bold; margin-bottom:4px;">${isReceipt ? '合併繳費收據明細單' : '合併繳費通知單'}</div>
                 <div class="receipt-header">
                     <div>班級：<strong>${displayClass}</strong></div>
                     <div>姓名：<strong>${displayNames}</strong></div>
@@ -2569,9 +2598,9 @@
                 <table class="report-table" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr style="background: #f0f0f0;">
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:10%;">項次</th>
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:65%;">項目名稱 (學生)</th>
-                            <th style="border: 1px solid #000; padding: 3px 6px; width:25%;">金額</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:10%;">項次</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:65%;">項目名稱 (學生)</th>
+                            <th style="border: 1px solid #000; padding: 2px 4px; width:25%;">金額</th>
                         </tr>
                     </thead>
                     <tbody>${combinedItemsHtml}</tbody>
@@ -2580,7 +2609,7 @@
         `;
 
         if(isReceipt) {
-            html += `<div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 20px;">收款經手人：<strong>${window.config.handler}</strong></div></div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">收款經手人：<strong>${window.config.handler}</strong></div></div>`;
             html += refundPolicyHtml;
         }
 
@@ -2630,7 +2659,7 @@
         targetBills.forEach((bill, index) => {
             allHtml += getSingleReceiptHtml(bill, false, '');
 
-            if ((index + 1) % 2 === 0 && index !== targetBills.length - 1) {
+            if ((index + 1) % 3 === 0 && index !== targetBills.length - 1) {
                 allHtml += '<div class="page-break"></div>';
             } else if (index !== targetBills.length - 1) {
                 allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
