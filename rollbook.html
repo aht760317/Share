@@ -789,8 +789,43 @@
 
         <div class="grid-3">
             <div>
-                <label style="font-size:13px;"><b>就讀學校：</b></label>
-                <input type="text" id="m_stu_school" placeholder="例如：鎮東國小">
+                <label style="font-size:13px;"><b>就讀學校*：</b></label>
+                <select id="m_stu_school" class="select-styled" onchange="onSchoolSelectChange(this.value)">
+                    <option value="">-- 請選擇孩子的學校 --</option>
+                    <option value="幼稚園">幼稚園（自行輸入）</option>
+                    <optgroup label="── 國小部 ──">
+                        <option value="公誠國小">公誠國小</option>
+                        <option value="斗六國小">斗六國小</option>
+                        <option value="雲林國小">雲林國小</option>
+                        <option value="鎮南國小">鎮南國小</option>
+                        <option value="鎮西國小">鎮西國小</option>
+                        <option value="鎮東國小">鎮東國小</option>
+                        <option value="林頭國小">林頭國小</option>
+                        <option value="梅林國小">梅林國小</option>
+                        <option value="溪洲國小">溪洲國小</option>
+                        <option value="溝壩國小">溝壩國小</option>
+                        <option value="石榴國小">石榴國小</option>
+                        <option value="保長國小">保長國小</option>
+                        <option value="久安國小">久安國小</option>
+                        <option value="三光國小">三光國小</option>
+                        <option value="維多利亞雙語中小學（小學部）">維多利亞雙語中小學（小學部）</option>
+                    </optgroup>
+                    <optgroup label="── 國中部 ──">
+                        <option value="斗六國中">斗六國中</option>
+                        <option value="雲林國中">雲林國中</option>
+                        <option value="石榴國中">石榴國中</option>
+                        <option value="正心中學（國中部）">正心中學（國中部）</option>
+                        <option value="維多利亞雙語中小學（國中部）">維多利亞雙語中小學（國中部）</option>
+                        <option value="斗南國中">斗南國中</option>
+                        <option value="林內國中">林內國中</option>
+                        <option value="西螺國中">西螺國中</option>
+                        <option value="莿桐國中">莿桐國中</option>
+                        <option value="古坑國中">古坑國中</option>
+                    </optgroup>
+                    <option value="其他">其他（自行輸入）</option>
+                </select>
+                <!-- 自行輸入欄位（預設隱藏，選擇幼稚園或其他時自動顯示） -->
+                <input type="text" id="m_stu_school_custom" placeholder="請手動輸入學校名稱..." style="display:none; margin-top:6px;">
             </div>
             <div>
                 <label style="font-size:13px;"><b>學校年級/座號：</b></label>
@@ -1115,7 +1150,6 @@
     }
 
     window.switchTab = function(tab) {
-        // 已暫時移除學生總覽的密碼驗證
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-rollcall').style.display = tab === 'rollcall' ? 'block' : 'none';
         document.getElementById('tab-absent-alert').style.display = tab === 'absent-alert' ? 'block' : 'none';
@@ -1753,6 +1787,19 @@
         return list;
     }
 
+    // 學校下拉選單變更聯動事件：若選「幼稚園」或「其他」則顯示手動輸入框
+    window.onSchoolSelectChange = function(val) {
+        const customInput = document.getElementById('m_stu_school_custom');
+        if (val === '幼稚園' || val === '其他') {
+            customInput.style.display = 'block';
+            customInput.value = '';
+            customInput.placeholder = val === '幼稚園' ? '請輸入幼稚園名稱...' : '請手動輸入學校名稱...';
+        } else {
+            customInput.style.display = 'none';
+            customInput.value = '';
+        }
+    };
+
     window.openStudentModal = function() {
         document.getElementById('studentModalTitle').innerText = "➕ 新增學生學籍檔案";
         document.getElementById('editStudentFirestoreId').value = "";
@@ -1760,7 +1807,13 @@
         document.getElementById('m_stu_name').value = "";
         document.getElementById('m_stu_gender').value = "男";
         document.getElementById('m_stu_idcard').value = "";
-        document.getElementById('m_stu_school').value = "";
+        
+        const schoolSel = document.getElementById('m_stu_school');
+        const schoolCustom = document.getElementById('m_stu_school_custom');
+        schoolSel.value = "";
+        schoolCustom.style.display = "none";
+        schoolCustom.value = "";
+
         document.getElementById('m_stu_class').value = "";
         document.getElementById('m_stu_birthday').value = "";
         document.getElementById('m_stu_status').value = "active";
@@ -1788,7 +1841,39 @@
         document.getElementById('m_stu_name').value = stu.name || '';
         document.getElementById('m_stu_gender').value = stu.gender || '男';
         document.getElementById('m_stu_idcard').value = stu.idCard || '';
-        document.getElementById('m_stu_school').value = stu.school || '';
+
+        // 學校下拉與自訂欄位處理
+        const schoolSel = document.getElementById('m_stu_school');
+        const schoolCustom = document.getElementById('m_stu_school_custom');
+        const stuSchool = stu.school || '';
+
+        // 檢查該學校是否在選單內
+        let foundInSelect = false;
+        for (let opt of schoolSel.options) {
+            if (opt.value === stuSchool) {
+                foundInSelect = true;
+                break;
+            }
+        }
+
+        if (foundInSelect) {
+            schoolSel.value = stuSchool;
+            schoolCustom.style.display = 'none';
+            schoolCustom.value = '';
+        } else if (stuSchool.includes('幼稚園')) {
+            schoolSel.value = '幼稚園';
+            schoolCustom.style.display = 'block';
+            schoolCustom.value = stuSchool;
+        } else if (stuSchool) {
+            schoolSel.value = '其他';
+            schoolCustom.style.display = 'block';
+            schoolCustom.value = stuSchool;
+        } else {
+            schoolSel.value = '';
+            schoolCustom.style.display = 'none';
+            schoolCustom.value = '';
+        }
+
         document.getElementById('m_stu_class').value = stu.studentClass || '';
         document.getElementById('m_stu_birthday').value = stu.birthday || '';
         document.getElementById('m_stu_status').value = stu.status || 'active';
@@ -1819,11 +1904,18 @@
         if (!name) return alert('⚠️ 學生姓名不能為空白！');
         if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
 
+        const schoolSelVal = document.getElementById('m_stu_school').value;
+        const schoolCustomVal = document.getElementById('m_stu_school_custom').value.trim();
+        let finalSchool = schoolSelVal;
+        if ((schoolSelVal === '幼稚園' || schoolSelVal === '其他') && schoolCustomVal) {
+            finalSchool = schoolCustomVal;
+        }
+
         const studentData = {
             name: name,
             gender: document.getElementById('m_stu_gender').value,
             idCard: document.getElementById('m_stu_idcard').value.trim(),
-            school: document.getElementById('m_stu_school').value.trim(),
+            school: finalSchool,
             studentClass: document.getElementById('m_stu_class').value.trim(),
             birthday: document.getElementById('m_stu_birthday').value,
             courses: selectedCourses,
@@ -2582,7 +2674,7 @@
         const div = document.getElementById('holidayListDiv');
         if (!div) return;
         if (window.state.holidays.length === 0) {
-            div.innerHTML = '<p style="color:#888; font-size:13px;">目前無設定任何放假日期。';
+            div.innerHTML = '<p style="color:#888; font-size:13.5px;">目前無設定任何放假日期。';
             return;
         }
         let html = '<table><tr><th>放假日期</th><th>放假事由</th><th>操作</th></tr>';
