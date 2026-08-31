@@ -290,7 +290,7 @@
         }
 
         .modal-box.large {
-            max-width: 840px;
+            max-width: 860px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -377,7 +377,7 @@
             text-align: center;
         }
 
-        /* 標籤樣式 */
+        /* 標籤與清單樣式 */
         .teacher-list-table {
             width: 100%;
             border-collapse: collapse;
@@ -511,15 +511,15 @@
         </div>
     </div>
 
-    <!-- 老師資料、權限與班級指派管理後台 Modal -->
+    <!-- 老師資料、權限與部門班級管理後台 Modal -->
     <div id="adminModal" class="modal-overlay" style="display: none;">
         <div class="modal-box large">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> 老師資料、權限與專屬班級管理</h3>
+                <h3><i class="fa-solid fa-gear"></i> 老師資料、權限與部門班級指派</h3>
                 <button class="close-modal" onclick="closeAdminModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="margin-bottom: 20px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
-                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與基本資料</h4>
+                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與完整人事資料</h4>
                 <form id="teacherForm" onsubmit="saveTeacher(event)">
                     <input type="hidden" id="editIndex" value="-1">
                     
@@ -531,6 +531,17 @@
                         <div class="form-group">
                             <label>登入密碼</label>
                             <input type="text" id="tPass" class="form-control" placeholder="設定密碼" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>出生年月日</label>
+                            <input type="date" id="tBirth" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>正職日期 (到職日)</label>
+                            <input type="date" id="tHireDate" class="form-control">
                         </div>
                     </div>
 
@@ -568,15 +579,19 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>指派管理班級 (可複選該老師負責的班級)：</label>
-                        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;" id="classCheckboxes">
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國小美語A班"> 國小美語A班</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國小美語B班"> 國小美語B班</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國中數學精熟班"> 國中數學精熟班</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國中英文衝刺班"> 國中英文衝刺班</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="升小一正音班"> 升小一正音班</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="高中英文特訓班"> 高中英文特訓班</label>
+                    <!-- 選擇部門後連動勾選該部門班級 -->
+                    <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+                        <label style="color: var(--primary-navy); font-weight: 700; margin-bottom: 8px;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
+                        <div style="margin-bottom: 12px;">
+                            <select id="departmentSelect" class="form-control" onchange="filterClassesByDepartment()">
+                                <option value="ALL">全部部門 / 班別總覽</option>
+                                <option value="小學部">小學部 (美語、正音)</option>
+                                <option value="國中部">國中部 (數學、英文)</option>
+                                <option value="高中部">高中部 (特訓班)</option>
+                            </select>
+                        </div>
+                        <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;">
+                            <!-- 動態渲染從 rollbook 抓取的班級核取方塊 -->
                         </div>
                     </div>
 
@@ -593,6 +608,7 @@
                         <thead>
                             <tr>
                                 <th>名字/密碼</th>
+                                <th>到職/生日</th>
                                 <th>學歷與聯絡</th>
                                 <th>負責專屬班級</th>
                                 <th>可用權限</th>
@@ -760,6 +776,54 @@
         const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
 
+        // 預設部門與班級分類資料庫 (未來可與 rollbook 自動同步或擴充)
+        const DEPARTMENT_CLASSES = {
+            "小學部": ["國小美語A班", "國小美語B班", "升小一正音班", "小學菁英安親班"],
+            "國中部": ["國中數學精熟班", "國中英文衝刺班", "國中理化特訓班"],
+            "高中部": ["高中英文特訓班", "高中數學進階班"]
+        };
+
+        // 自動從外部 rollbook 雲端系統同步班級清單的機制
+        async function syncClassesFromRollbook() {
+            try {
+                let response = await fetch('https://aht760317.github.io/Share/rollbook.html');
+                let htmlText = await response.text();
+                
+                // 解析頁面中可能存在的班級關鍵字或選項
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(htmlText, 'text/html');
+                let selects = doc.querySelectorAll('select option');
+                let foundClasses = [];
+                selects.forEach(opt => {
+                    let val = opt.textContent.trim();
+                    if (val && (val.includes('班') || val.includes('組')) && !foundClasses.includes(val)) {
+                        foundClasses.push(val);
+                    }
+                });
+
+                if (foundClasses.length > 0) {
+                    // 若有抓到則自動歸入自訂或預設部門
+                    foundClasses.forEach(cls => {
+                        if (cls.includes('小') || cls.includes('正音') || cls.includes('美語')) {
+                            if (!DEPARTMENT_CLASSES["小_學部"] && !DEPARTMENT_CLASSES["小學部"].includes(cls)) {
+                                DEPARTMENT_CLASSES["小學部"].push(cls);
+                            }
+                        } else if (cls.includes('國中') || cls.includes('數學') || cls.includes('理化')) {
+                            if (!DEPARTMENT_CLASSES["國中部"].includes(cls)) {
+                                DEPARTMENT_CLASSES["國中部"].push(cls);
+                            }
+                        } else {
+                            if (!DEPARTMENT_CLASSES["高中部"].includes(cls)) {
+                                DEPARTMENT_CLASSES["高中部"].push(cls);
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log("使用預設內建班級清單架構。");
+            }
+        }
+
         function getTeachers() {
             let data = localStorage.getItem('good_school_teachers');
             if (!data) {
@@ -767,6 +831,8 @@
                     { 
                         name: "雅鴻", 
                         pass: "0000", 
+                        birth: "1987-03-17",
+                        hireDate: "2020-01-01",
                         education: "大學", 
                         school: "教育系", 
                         phone: "0900-000-000", 
@@ -781,8 +847,10 @@
             return JSON.parse(data);
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            await syncClassesFromRollbook();
             checkLoginState();
+            renderDepartmentClasses();
         });
 
         function checkLoginState() {
@@ -848,7 +916,6 @@
                 let allowedPerms = tData ? tData.perms : [];
                 let assignedClasses = tData ? (tData.classes || []) : [];
 
-                // 顯示專屬班級提示
                 if (assignedClasses.length > 0) {
                     classText.innerText = assignedClasses.join('、');
                     banner.style.display = 'flex';
@@ -891,6 +958,7 @@
 
         function openAdminModal() {
             renderTeacherTable();
+            renderDepartmentClasses();
             document.getElementById('adminModal').style.display = 'flex';
         }
 
@@ -898,8 +966,41 @@
             document.getElementById('adminModal').style.display = 'none';
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
-            document.getElementById('formTitleText').innerText = "新增老師帳號與基本資料";
+            document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
             document.getElementById('submitBtnText').innerText = "儲存老師資料";
+        }
+
+        // 根據選擇的部門動態渲染班級核取方塊
+        function filterClassesByDepartment() {
+            let dept = document.getElementById('departmentSelect').value;
+            let container = document.getElementById('departmentClassContainer');
+            container.innerHTML = '';
+
+            // 取得目前已勾選的班級（防止切換部門時清空已勾選狀態）
+            let checkedClasses = Array.from(document.querySelectorAll('input[name="assignedClass"]:checked')).map(cb => cb.value);
+
+            let classesToShow = [];
+            if (dept === 'ALL') {
+                for (let key in DEPARTMENT_CLASSES) {
+                    classesToShow = classesToShow.concat(DEPARTMENT_CLASSES[key]);
+                }
+            } else {
+                classesToShow = DEPARTMENT_CLASSES[dept] || [];
+            }
+
+            classesToShow.forEach(cls => {
+                let isChecked = checkedClasses.includes(cls) ? 'checked' : '';
+                let label = document.createElement('label');
+                label.style.cssText = "font-weight: normal; font-size: 0.9rem; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border);";
+                label.innerHTML = `<input type="checkbox" name="assignedClass" value="${cls}" ${isChecked}> ${cls}`;
+                container.appendChild(label);
+            });
+        }
+
+        function renderDepartmentClasses() {
+            let deptSelect = document.getElementById('departmentSelect');
+            if (deptSelect) deptSelect.value = 'ALL';
+            filterClassesByDepartment();
         }
 
         function renderTeacherTable() {
@@ -908,7 +1009,7 @@
             tbody.innerHTML = '';
 
             if (teachers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">尚未新增任何老師帳號</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">尚未新增任何老師帳號</td></tr>`;
                 return;
             }
 
@@ -928,6 +1029,7 @@
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${t.name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">密碼: ${t.pass}</span></td>
+                    <td style="font-size:0.82rem;">正職: ${t.hireDate || '-'}<br>生日: ${t.birth || '-'}</td>
                     <td>${t.education || '-'}<br><span style="font-size:0.78rem; color:var(--text-secondary);">${t.phone || ''}</span></td>
                     <td>${classBadges}</td>
                     <td>${permBadges}</td>
@@ -944,6 +1046,8 @@
             e.preventDefault();
             let name = document.getElementById('tName').value.trim();
             let pass = document.getElementById('tPass').value.trim();
+            let birth = document.getElementById('tBirth').value;
+            let hireDate = document.getElementById('tHireDate').value;
             let education = document.getElementById('tEducation').value.trim();
             let school = document.getElementById('tSchool').value.trim();
             let phone = document.getElementById('tPhone').value.trim();
@@ -953,6 +1057,7 @@
             let permCheckboxes = document.querySelectorAll('input[name="perm"]:checked');
             let perms = Array.from(permCheckboxes).map(cb => cb.value);
 
+            // 收集所有勾選的班級（跨部門累積保留）
             let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]:checked');
             let classes = Array.from(classCheckboxes).map(cb => cb.value);
 
@@ -963,18 +1068,19 @@
                     alert('此老師名字已經存在，請直接編輯或使用其他名字！');
                     return;
                 }
-                teachers.push({ name, pass, education, school, phone, note, perms, classes });
+                teachers.push({ name, pass, birth, hireDate, education, school, phone, note, perms, classes });
             } else {
-                teachers[editIndex] = { name, pass, education, school, phone, note, perms, classes };
+                teachers[editIndex] = { name, pass, birth, hireDate, education, school, phone, note, perms, classes };
             }
 
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
-            document.getElementById('formTitleText').innerText = "新增老師帳號與基本資料";
+            document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
             document.getElementById('submitBtnText').innerText = "儲存老師資料";
+            renderDepartmentClasses();
             renderTeacherTable();
-            alert('老師資料與專屬班級指派儲存成功！');
+            alert('老師人事資料、權限與班級指派儲存成功！');
         }
 
         function editTeacher(index) {
@@ -983,6 +1089,8 @@
 
             document.getElementById('tName').value = t.name || '';
             document.getElementById('tPass').value = t.pass || '';
+            document.getElementById('tBirth').value = t.birth || '';
+            document.getElementById('tHireDate').value = t.hireDate || '';
             document.getElementById('tEducation').value = t.education || '';
             document.getElementById('tSchool').value = t.school || '';
             document.getElementById('tPhone').value = t.phone || '';
@@ -997,6 +1105,7 @@
                 cb.checked = (t.perms || []).includes(cb.value);
             });
 
+            // 預先勾選該老師原本被賦予的班級
             let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]');
             classCheckboxes.forEach(cb => {
                 cb.checked = (t.classes || []).includes(cb.value);
@@ -1004,7 +1113,7 @@
         }
 
         function deleteTeacher(index) {
-            if (confirm('確定要刪除這位老師的帳號、基本資料與班級權限嗎？')) {
+            if (confirm('確定要刪除這位老師的帳號、人事資料與班級權限嗎？')) {
                 let teachers = getTeachers();
                 teachers.splice(index, 1);
                 localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
