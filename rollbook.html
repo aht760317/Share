@@ -468,7 +468,6 @@
                 <div class="no-print" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:13px;">⚠️ 本日為放假日</span>
                     <button class="btn btn-primary" onclick="quickMarkAll()" style="padding:7px 12px; font-size:13px;">⚡ 全員到齊 (✔)</button>
-                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()" style="padding:7px 12px; font-size:13px;">🔒 點名確認</button>
                     <button class="btn btn-danger" onclick="resetRollCall()" style="padding:7px 12px; font-size:13px;">🔄 重新點名 (需密碼)</button>
                 </div>
             </div>
@@ -533,9 +532,12 @@
             </p>
 
             <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:14px; border-radius:10px; margin-bottom:14px;">
-                <label for="sheetCourseSelectDropdown" style="display:block; font-size:13.5px; font-weight:bold; color:var(--primary); margin-bottom:6px;">
-                    🎯 選擇欲產出點名表的班級課程：
-                </label>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                    <label for="sheetCourseSelectDropdown" style="display:block; font-size:13.5px; font-weight:bold; color:var(--primary); margin:0;">
+                        🎯 選擇欲產出點名表的班級課程：
+                    </label>
+                    <button class="btn btn-danger" onclick="switchTab('course-config')" style="padding:6px 14px; font-size:12.5px; font-weight:bold;">📅 設定放假與停課</button>
+                </div>
                 <select id="sheetCourseSelectDropdown" class="select-styled" onchange="onDropdownSelectCourse(this.value)" style="margin:0; font-size:15px; padding:10px 14px; width:100%; border-radius:8px;"></select>
             </div>
 
@@ -1026,7 +1028,6 @@
     const db = getFirestore(app);
 
     const SECURITY_CODE = "8888";
-    const CONFIRM_ROLLCALL_CODE = "0000";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
@@ -1061,22 +1062,21 @@
         quickRollContext: { courseName: '', dateStr: '' }
     };
 
-    // 取得台灣時間 (Asia/Taipei) 的 YYYY-MM-DD 字串
-    function getTaiwanTodayStr() {
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Taipei',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        return formatter.format(new Date());
+    // 取得台灣時間 (UTC+8) 的 YYYY-MM-DD 字串
+    function getTaiwanDateString(dateObj = new Date()) {
+        const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
+        const taiwanTime = new Date(utc + (3600000 * 8));
+        const y = taiwanTime.getFullYear();
+        const m = String(taiwanTime.getMonth() + 1).padStart(2, '0');
+        const d = String(taiwanTime.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
     window.onload = function() {
-        const today = getTaiwanTodayStr();
-        document.getElementById('rollDateInput').value = today;
-        document.getElementById('alertDateInput').value = today;
-        document.getElementById('newHolidayDate').value = today;
+        const todayStr = getTaiwanDateString();
+        document.getElementById('rollDateInput').value = todayStr;
+        document.getElementById('alertDateInput').value = todayStr;
+        document.getElementById('newHolidayDate').value = todayStr;
         initGradYearDropdowns();
         initDropdowns();
         renderCourseFilterButtons();
@@ -1418,7 +1418,7 @@
         }
 
         document.getElementById('timetableModalTitle').innerText = `斗六顧德補習班 - ${scopeTitle}`;
-        document.getElementById('timetableModalSub').innerText = `產表時間：${new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })}`;
+        document.getElementById('timetableModalSub').innerText = `產表時間：${getTaiwanDateString()}`;
 
         const scheduleByDay = {
             '星期一': [], '星期二': [], '星期三': [], '星期四': [], '星期五': [], '星期六': [], '星期日': []
@@ -1504,7 +1504,7 @@
         if (!newName) return alert('請輸入班級課程名稱！');
 
         try {
-            let origStartDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01';
+            let origStartDate = getTaiwanDateString().slice(0, 8) + '01';
             let origEndDate = '';
             if (window.state.courses[origDept]) {
                 const idx = window.state.courses[origDept].findIndex(c => (typeof c === 'object' ? c.name : c) === origName);
@@ -2048,7 +2048,7 @@
         if (!name) return alert('請輸入班級課程名稱！');
 
         if (!window.state.courses[dept]) window.state.courses[dept] = [];
-        window.state.courses[dept].push({ name, day, time, teacher, startDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01', endDate: '' });
+        window.state.courses[dept].push({ name, day, time, teacher, startDate: getTaiwanDateString().slice(0, 8) + '01', endDate: '' });
 
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
@@ -2069,7 +2069,7 @@
 
     function getAllCoursesList() {
         let list = [];
-        const defaultStart = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }).slice(0, 8) + '01';
+        const defaultStart = getTaiwanDateString().slice(0, 8) + '01';
         ['care', 'elementary', 'junior'].forEach(dept => {
             (window.state.courses[dept] || []).forEach((c) => {
                 const name = typeof c === 'object' ? c.name : c;
@@ -2119,7 +2119,7 @@
         const curDayName = WEEK_NAMES[dayIdx];
 
         document.getElementById('currentDayText').innerText = 
-            `📅 點名日期：${document.getElementById('rollDateInput').value} (${curDayName})`;
+            `📅 點名日期：${curDate.toISOString().slice(0,10)} (${curDayName})`;
 
         const grid = document.getElementById('courseGrid');
         grid.innerHTML = '';
@@ -2267,7 +2267,11 @@
     window.setAttendance = function(key, status) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
         window.state.attendanceData[key].status = (window.state.attendanceData[key].status === status) ? '未到' : status;
-        window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
+        
+        const utc = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+        const taiwanTime = new Date(utc + (3600000 * 8));
+        window.state.attendanceData[key].time = taiwanTime.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+        
         saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
@@ -2341,20 +2345,6 @@
         updateHomeAlertBanner();
     };
 
-    window.confirmRollCallAndSync = function() {
-        if (!window.state.currentCourse) return alert("請先選擇要確認點名的課程！");
-        const input = prompt("🔒 請輸入點名確認密碼：");
-        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
-
-        const courseName = window.state.currentCourse.name;
-        saveAttendanceToCloud();
-
-        alert(`✅ 點名確認成功！即將跳轉至【${courseName}】點名表生成總表。`);
-        switchTab('sheet');
-        selectSheetCourse(courseName);
-        updateHomeAlertBanner();
-    };
-
     function getAbsentAndUncheckedSummary(dateStr) {
         const curDate = new Date(dateStr);
         const dayIdx = curDate.getDay();
@@ -2411,7 +2401,7 @@
             banner.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
             banner.style.border = '2px solid #f59e0b';
             content.innerHTML = `
-                <div>📌 <b>尚有機動/未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
+                <div>📌 <b>尚有未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${unCheckedCount > 0 ? summary.unassignedClasses.join('、') : '無'}</span></div>
                 <div style="margin-top:3px;">📌 <b>尚有尚未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${unPresentStudents} 人次 (請至「還沒點名/未到」專區確認與填寫原因)</span></div>
             `;
         }
@@ -2585,7 +2575,9 @@
         window.state.attendanceData[key].status = newStatus;
         window.state.attendanceData[key].reason = reasonText;
         if (!window.state.attendanceData[key].time && newStatus !== '未到') {
-            window.state.attendanceData[key].time = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
+            const utc = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+            const taiwanTime = new Date(utc + (3600000 * 8));
+            window.state.attendanceData[key].time = taiwanTime.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         saveAttendanceToCloud();
@@ -2604,7 +2596,7 @@
 
         document.getElementById('sheetPeriodBadge').innerText = `上課日：${course.day || '未設定'}`;
 
-        const baseStart = course.startDate || getTaiwanTodayStr();
+        const baseStart = course.startDate || getTaiwanDateString();
         document.getElementById('sheetQueryStartDate').value = baseStart;
         
         const defaultEnd = course.endDate || new Date(new Date(baseStart).getTime() + 8 * 7 * 86400000).toISOString().slice(0, 10);
@@ -2623,7 +2615,7 @@
         let endVal = document.getElementById('sheetQueryEndDate').value;
 
         if (!startVal) {
-            startVal = course.startDate || getTaiwanTodayStr();
+            startVal = course.startDate || getTaiwanDateString();
             document.getElementById('sheetQueryStartDate').value = startVal;
         }
         if (!endVal) {
@@ -2812,7 +2804,7 @@
     window.verifyAndAddHoliday = function() {
         const date = document.getElementById('newHolidayDate').value;
         const name = document.getElementById('newHolidayName').value.trim();
-        if (!date || !name) return alert('請輸入完整日期與事與事由！');
+        if (!date || !name) return alert('請輸入完整日期與事由！');
 
         window.state.holidays.push({ date, name });
         localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
