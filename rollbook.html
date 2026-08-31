@@ -468,6 +468,7 @@
                 <div class="no-print" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:13px;">⚠️ 本日為放假日</span>
                     <button class="btn btn-primary" onclick="quickMarkAll()" style="padding:7px 12px; font-size:13px;">⚡ 全員到齊 (✔)</button>
+                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()" style="padding:7px 12px; font-size:13px;">🔒 確認點名</button>
                     <button class="btn btn-danger" onclick="resetRollCall()" style="padding:7px 12px; font-size:13px;">🔄 重新點名 (需密碼)</button>
                 </div>
             </div>
@@ -1028,6 +1029,7 @@
     const db = getFirestore(app);
 
     const SECURITY_CODE = "8888";
+    const CONFIRM_ROLLCALL_CODE = "0000";
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
@@ -2306,9 +2308,24 @@
         updateHomeAlertBanner();
     };
 
+    window.confirmRollCallAndSync = function() {
+        if (!window.state.currentCourse) return alert("請先選擇要確認點名的課程！");
+        const input = prompt("🔒 請輸入確認點名密碼：");
+        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
+
+        const courseName = window.state.currentCourse.name;
+        saveAttendanceToCloud();
+
+        alert(`✅ 點名確認成功！即將跳轉至【${courseName}】點名表生成總表。`);
+        switchTab('sheet');
+        selectSheetCourse(courseName);
+        updateHomeAlertBanner();
+    };
+
     window.resetRollCall = function() {
         if (!window.state.currentCourse) return alert("請先選擇要重新點名的課程！");
-        if (!checkPassword("🔒 重新點名需要輸入管理密碼：")) return;
+        const input = prompt("🔒 重新點名需要輸入管理密碼：");
+        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！操作已取消。");
 
         const dateStr = document.getElementById('rollDateInput').value;
         const c = window.state.currentCourse;
