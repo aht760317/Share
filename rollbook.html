@@ -496,8 +496,7 @@
                             <th style="width: 110px;">學校年級</th>
                             <th style="width: 120px;">主要電話</th>
                             <th style="width: 80px;">出缺席</th>
-                            <th style="width: 70px;">成績</th>
-                            <th>備註</th>
+                            <th>請假原因 / 備註</th>
                         </tr>
                     </thead>
                     <tbody id="paperTableBody"></tbody>
@@ -561,7 +560,7 @@
             </div>
 
             <div class="print-header">
-                <h2 id="sheetPrintTitle">斗六顧德補習班 學生點名與成績總表</h2>
+                <h2 id="sheetPrintTitle">斗六顧德補習班 學生點名總表</h2>
                 <p id="sheetPrintSub" style="margin-top:3px; font-size:9pt;"></p>
             </div>
 
@@ -722,8 +721,8 @@
             <option value="出席">🟢 已聯繫確認並出席 (出席)</option>
         </select>
 
-        <label style="font-size:13px; font-weight:bold;"><b>未到原因 / 櫃檯連絡結果紀錄：</b></label>
-        <textarea id="modalReasonText" rows="4" style="resize:vertical; line-height:1.4;" placeholder="請輸入家長電話聯繫結果、未到原因（例：感冒請假、家長已告知搭車中...）"></textarea>
+        <label style="font-size:13px; font-weight:bold;"><b>請假原因 / 櫃檯連絡結果紀錄：</b></label>
+        <textarea id="modalReasonText" rows="4" style="resize:vertical; line-height:1.4;" placeholder="請輸入家長電話聯繫結果、請假原因（例：感冒請假、家長已告知搭車中...）"></textarea>
 
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
             <button class="btn btn-success" onclick="saveAbsentReasonModal()" style="padding:8px 16px; font-size:13px;">💾 儲存原因與連絡結果</button>
@@ -2197,39 +2196,39 @@
 
         courseStudents.forEach((stu, idx) => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
-            const record = window.state.attendanceData[key] || { status: '未到', time: '', score: '' };
+            const record = window.state.attendanceData[key] || { status: '未到', time: '', reason: '' };
             if (record.status === '出席') presentCount++;
             if (record.status === '請假') leaveCount++;
 
             const phone = getParentPhone(stu);
             const isPresent = record.status === '出席';
+            const isLeave = record.status === '請假';
 
             const card = document.createElement('div');
-            card.className = `student-card ${isPresent ? 'present' : (record.status === '請假' ? 'leave' : '')}`;
+            card.className = `student-card ${isPresent ? 'present' : (isLeave ? 'leave' : '')}`;
 
             card.innerHTML = `
                 <div>
                     <div style="font-size:16px; font-weight:bold; color:var(--primary);">${stu.name}</div>
                     <div style="font-size:12px; color:#555; margin-top:2px;">
                         ${stu.school || '-'} | 電話：${phone}
-                        ${record.reason ? `<div style="color:#b91c1c; margin-top:3px;">📞 備註原因：${record.reason}</div>` : ''}
                     </div>
                 </div>
-                <div style="display:flex; gap:6px; align-items:center; margin-top:10px;">
-                    <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
+                <div style="display:flex; gap:6px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+                    <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; min-width:110px; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
                         ${isPresent ? '✔ 今日已到班' : '點名 (✔)'}
                     </button>
-                    <button class="btn btn-warning" style="padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
-                        ${record.status === '請假' ? '▲ 已請假' : '請假 (▲)'}
+                    <button class="btn btn-warning" style="flex:1; min-width:90px; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
+                        ${isLeave ? '▲ 已請假' : '請假 (▲)'}
                     </button>
-                    <input type="number" placeholder="成績" value="${record.score !== undefined ? record.score : ''}" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center; margin:0; font-size:13px;" onchange="saveScore('${key}', this.value)">
+                    <input type="text" placeholder="請輸入請假原因..." value="${record.reason || ''}" style="flex:2; min-width:180px; padding:6px 10px; border:1px solid #ccc; border-radius:6px; margin:0; font-size:13px;" onchange="saveReason('${key}', this.value)">
                 </div>
             `;
             grid.appendChild(card);
 
             let statusText = `<span style="color:#999;">-</span>`;
             if (isPresent) statusText = `<span style="color:green; font-weight:bold; font-size:15px;">✔</span>`;
-            if (record.status === '請假') statusText = `<span style="color:red; font-weight:bold; font-size:14px;">▲</span>${record.reason ? '<br><span style="font-size:7.5pt; color:#666;">('+record.reason+')</span>' : ''}`;
+            if (isLeave) statusText = `<span style="color:red; font-weight:bold; font-size:14px;">▲</span>`;
 
             paperRowsHtml += `
                 <tr>
@@ -2238,8 +2237,7 @@
                     <td>${stu.school || '-'} ${stu.studentClass || ''}</td>
                     <td style="font-size:8.5pt;">${phone}</td>
                     <td>${statusText}</td>
-                    <td style="font-weight:bold; color:#0284c7;">${record.score !== undefined && record.score !== '' ? record.score + '分' : '-'}</td>
-                    <td>${record.reason || ''}</td>
+                    <td style="text-align:left; font-size:12.5px; color:#b91c1c;">${record.reason || ''}</td>
                 </tr>
             `;
         });
@@ -2247,9 +2245,9 @@
         document.getElementById('rollStatsText').innerText = 
             `應到：${courseStudents.length} 人 / 出席(✔)：${presentCount} 人 / 請假(▲)：${leaveCount} 人`;
 
-        document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名單`;
+        document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名總表`;
         document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 教師：${c.teacher || '老師'} | 應到：${courseStudents.length} 人 | 實到：${presentCount} 人`;
-        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="7" style="padding:12px; color:#888;">此班級目前無在籍學生</td></tr>`;
+        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="6" style="padding:12px; color:#888;">此班級目前無在籍學生</td></tr>`;
         
         updateHomeAlertBanner();
     };
@@ -2266,9 +2264,9 @@
         }
     };
 
-    window.saveScore = function(key, val) {
-        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '出席' };
-        window.state.attendanceData[key].score = val !== '' ? Number(val) : '';
+    window.saveReason = function(key, val) {
+        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '請假' };
+        window.state.attendanceData[key].reason = val.trim();
         saveAttendanceToCloud();
         renderStudentList();
         if (document.getElementById('quickRollModal').style.display === 'flex') {
@@ -2285,7 +2283,7 @@
         });
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
-            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : ''), reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
+            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
         saveAttendanceToCloud();
         renderStudentList();
@@ -2301,7 +2299,7 @@
         });
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${courseName}_${stu.name}`;
-            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', score: (window.state.attendanceData[key] ? window.state.attendanceData[key].score : ''), reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
+            window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
         saveAttendanceToCloud();
         renderQuickRollModal(courseName, dateStr);
@@ -2374,7 +2372,7 @@
         if (unCheckedCount === 0 && unPresentStudents === 0) {
             banner.style.background = 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
             banner.style.border = '2px solid #22c55e';
-            content.innerHTML = `<span style="color: #166534; font-weight: bold;">🌟 太棒了！今日所有排課班級皆已完成點名，且無學員缺席或未到！</span>`;
+            content.innerHTML = `<span style="color: #166534; font-weight: bold;">🌟 太棒了！今日所有排課班級皆已完成點名, 且無學員缺席或未到！</span>`;
         } else {
             banner.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
             banner.style.border = '2px solid #f59e0b';
@@ -2408,7 +2406,7 @@
 
         courseStudents.forEach((stu, idx) => {
             const key = `${dateStr}_${courseName}_${stu.name}`;
-            const record = window.state.attendanceData[key] || { status: '未到', time: '', score: '' };
+            const record = window.state.attendanceData[key] || { status: '未到', time: '', reason: '' };
             if (record.status === '出席') presentCount++;
             if (record.status === '請假') leaveCount++;
 
@@ -2426,16 +2424,15 @@
                         </div>
                         <div style="font-size:12px; color:#475569;">📞 ${phone}</div>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; min-width:110px; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '出席')">
                             ${isPresent ? '✔ 今日已到班' : '點名 (✔)'}
                         </button>
-                        <button class="btn btn-warning" style="padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
+                        <button class="btn btn-warning" style="flex:1; min-width:90px; padding:7px; font-size:13px;" onclick="setAttendance('${key}', '請假')">
                             ${isLeave ? '▲ 已請假' : '請假 (▲)'}
                         </button>
-                        <input type="number" placeholder="成績" value="${record.score !== undefined ? record.score : ''}" style="width:70px; padding:6px; border:1px solid #ccc; border-radius:6px; text-align:center; margin:0; font-size:13px;" onchange="saveScore('${key}', this.value)">
+                        <input type="text" placeholder="請輸入請假原因..." value="${record.reason || ''}" style="flex:2; min-width:180px; padding:6px 10px; border:1px solid #ccc; border-radius:6px; margin:0; font-size:13px;" onchange="saveReason('${key}', this.value)">
                     </div>
-                    ${record.reason ? `<div style="font-size:12px; color:#b91c1c;">📝 備註原因：${record.reason}</div>` : ''}
                 </div>
             `;
         });
@@ -2483,7 +2480,7 @@
                         <th style="width:100px;">就讀學校</th>
                         <th style="width:120px;">家長電話</th>
                         <th style="width:110px;">點名狀態</th>
-                        <th style="width:200px;">未到原因 / 連絡結果紀錄</th>
+                        <th style="width:200px;">請假原因 / 連絡結果紀錄</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -2560,7 +2557,7 @@
         saveAttendanceToCloud();
 
         document.getElementById('absentReasonModal').style.display = 'none';
-        alert(`✅ 已成功儲存【${studentName}】的點名狀態與連絡結果！`);
+        alert(`✅ 已成功儲存【${studentName}】的請假原因與連絡結果！`);
         renderAbsentAlertTab();
         updateHomeAlertBanner();
     };
@@ -2635,7 +2632,7 @@
 
         const actualEndStr = dateList[dateList.length - 1].dateStr;
 
-        document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名與成績總表`;
+        document.getElementById('sheetPrintTitle').innerText = `斗六顧德補習班 - ${course.name} 點名總表`;
         document.getElementById('sheetPrintSub').innerText = 
             `上課星期：${course.day || '自訂'} | 查詢：${startVal} 至 ${actualEndStr} | 教師：${course.teacher || '老師'}`;
 
@@ -2654,7 +2651,7 @@
             </th>`;
         });
 
-        html += `<th style="width:50px;">備註</th></tr></thead><tbody>`;
+        html += `<th style="width:80px;">備註/請假原因</th></tr></thead><tbody>`;
 
         courseStudents.forEach((stu, idx) => {
             const phone = getParentPhone(stu);
@@ -2664,6 +2661,8 @@
                 <td>${stu.school || '-'}</td>
                 <td style="font-size:8pt;">${phone}</td>`;
 
+            let reasonsArr = [];
+
             dateList.forEach(d => {
                 if (d.holiday) {
                     html += `<td class="holiday-col" style="font-size:7.5pt;">放假</td>`;
@@ -2671,20 +2670,20 @@
                     const key = `${d.dateStr}_${course.name}_${stu.name}`;
                     const rec = window.state.attendanceData[key];
                     let mark = '';
-                    let score = '';
                     if (rec) {
-                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:10pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:11pt;">✔</span>' : '');
-                        score = (rec.score !== undefined && rec.score !== '') ? `<span style="font-size:7pt;color:#0284c7;font-weight:bold;">${rec.score}分</span>` : '';
+                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:11pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:11pt;">✔</span>' : '');
+                        if (rec.status === '請假' && rec.reason) {
+                            reasonsArr.push(`${d.shortDate}${rec.reason}`);
+                        }
                     }
 
                     html += `<td>
-                        <div style="height:15px; line-height:15px;">${mark}</div>
-                        <div style="height:12px; font-size:7pt; color:#888;">${score || '分:'}</div>
+                        <div style="height:20px; line-height:20px;">${mark}</div>
                     </td>`;
                 }
             });
 
-            html += `<td></td></tr>`;
+            html += `<td style="font-size:7.5pt; text-align:left; color:#b91c1c;">${reasonsArr.join('、')}</td></tr>`;
         });
 
         html += `</tbody></table>`;
