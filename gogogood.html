@@ -290,7 +290,7 @@
         }
 
         .modal-box.large {
-            max-width: 860px;
+            max-width: 900px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -377,22 +377,50 @@
             text-align: center;
         }
 
+        /* 後台 Tab 標籤切換按鈕 */
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .admin-tab-btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: 0.2s;
+        }
+
+        .admin-tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
         /* 標籤與清單樣式 */
-        .teacher-list-table {
+        .teacher-list-table, .log-list-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             font-size: 0.85rem;
         }
 
-        .teacher-list-table th, .teacher-list-table td {
+        .teacher-list-table th, .teacher-list-table td,
+        .log-list-table th, .log-list-table td {
             border: 1px solid var(--border);
             padding: 10px;
             text-align: left;
             vertical-align: middle;
         }
 
-        .teacher-list-table th {
+        .teacher-list-table th, .log-list-table th {
             background: #f8fafc;
             font-weight: 600;
         }
@@ -511,119 +539,147 @@
         </div>
     </div>
 
-    <!-- 老師資料、權限與部門班級管理後台 Modal -->
+    <!-- 老師資料、權限與管理後台 Modal -->
     <div id="adminModal" class="modal-overlay" style="display: none;">
         <div class="modal-box large">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> 老師資料、權限與部門班級指派</h3>
+                <h3><i class="fa-solid fa-gear"></i> 機構行政與權限管理後台</h3>
                 <button class="close-modal" onclick="closeAdminModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div style="margin-bottom: 20px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
-                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與完整人事資料</h4>
-                <form id="teacherForm" onsubmit="saveTeacher(event)">
-                    <input type="hidden" id="editIndex" value="-1">
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label>老師姓名 (作為登入帳號)</label>
-                            <input type="text" id="tName" class="form-control" placeholder="例如：王小明" required>
-                        </div>
-                        <div class="form-group">
-                            <label>登入密碼</label>
-                            <input type="text" id="tPass" class="form-control" placeholder="設定密碼" required>
-                        </div>
-                    </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label>出生年月日</label>
-                            <input type="date" id="tBirth" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>正職日期 (到職日)</label>
-                            <input type="date" id="tHireDate" class="form-control">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label>最高學歷</label>
-                            <input type="text" id="tEducation" class="form-control" placeholder="例如：國立台灣大學 碩士">
-                        </div>
-                        <div class="form-group">
-                            <label>畢業學校 / 科系</label>
-                            <input type="text" id="tSchool" class="form-control" placeholder="例如：外國語文學系">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label>聯絡電話</label>
-                            <input type="text" id="tPhone" class="form-control" placeholder="例如：0912-345-678">
-                        </div>
-                        <div class="form-group">
-                            <label>專長 / 備註</label>
-                            <input type="text" id="tNote" class="form-control" placeholder="例如：英文文法、國中數學">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>開放使用功能權限：</label>
-                        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;">
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="rollbook"> 線上點名</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="gotogood"> 招生與進班系統</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="ClassLog"> 教學日誌</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="good-school"> 官方網站</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="class"> 線上課表</label>
-                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="indexmoney"> 繳費管理</label>
-                        </div>
-                    </div>
-
-                    <!-- 選擇部門後連動雲端勾選該部門班級 -->
-                    <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label style="color: var(--primary-navy); font-weight: 700; margin:0;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
-                            <button type="button" class="btn-sm" onclick="syncClassesFromRollbook()" style="background:#2563eb; color:#fff; border:none; padding:4px 10px;">🔄 雲端同步最新班級</button>
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <select id="departmentSelect" class="form-control" onchange="filterClassesByDepartment()">
-                                <option value="ALL">全部部門 / 班別總覽</option>
-                                <option value="care">課輔部</option>
-                                <option value="elementary">國小部</option>
-                                <option value="junior">國中部</option>
-                            </select>
-                        </div>
-                        <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;">
-                            <!-- 動態從 rollbook 雲端同步渲染 -->
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存老師資料</button>
-                </form>
+            <!-- 後台分頁切換按鈕 -->
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="switchAdminTab('teachers')">👨‍🏫 老師資料與權限設定</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('logs')">📜 使用者操作紀錄</button>
+                <button class="admin-tab-btn" onclick="backupSystemData()" style="background:#059669; color:white; border-color:#059669; margin-left:auto;">💾 備份全系統資料到電腦</button>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+            <!-- 1. 老師設定分頁 -->
+            <div id="adminTabTeachers">
+                <div style="margin-bottom: 20px; max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與完整人事資料</h4>
+                    <form id="teacherForm" onsubmit="saveTeacher(event)">
+                        <input type="hidden" id="editIndex" value="-1">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>老師姓名 (作為登入帳號)</label>
+                                <input type="text" id="tName" class="form-control" placeholder="例如：王小明" required>
+                            </div>
+                            <div class="form-group">
+                                <label>登入密碼</label>
+                                <input type="text" id="tPass" class="form-control" placeholder="設定密碼" required>
+                            </div>
+                        </div>
 
-            <div>
-                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊與資料</h4>
-                <div style="overflow-x: auto;">
-                    <table class="teacher-list-table">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>出生年月日</label>
+                                <input type="date" id="tBirth" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>正職日期 (到職日)</label>
+                                <input type="date" id="tHireDate" class="form-control">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>最高學歷</label>
+                                <input type="text" id="tEducation" class="form-control" placeholder="例如：國立台灣大學 碩士">
+                            </div>
+                            <div class="form-group">
+                                <label>畢業學校 / 科系</label>
+                                <input type="text" id="tSchool" class="form-control" placeholder="例如：外國語文學系">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>聯絡電話</label>
+                                <input type="text" id="tPhone" class="form-control" placeholder="例如：0912-345-678">
+                            </div>
+                            <div class="form-group">
+                                <label>專長 / 備註</label>
+                                <input type="text" id="tNote" class="form-control" placeholder="例如：英文文法、國中數學">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>開放使用功能權限：</label>
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;">
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="rollbook"> 線上點名</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="gotogood"> 招生與進班系統</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="ClassLog"> 教學日誌</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="good-school"> 官方網站</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="class"> 線上課表</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="indexmoney"> 繳費管理</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <label style="color: var(--primary-navy); font-weight: 700; margin:0;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
+                                <button type="button" class="btn-sm" onclick="syncClassesFromRollbook()" style="background:#2563eb; color:#fff; border:none; padding:4px 10px;">🔄 雲端同步最新班級</button>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <select id="departmentSelect" class="form-control" onchange="filterClassesByDepartment()">
+                                    <option value="ALL">全部部門 / 班別總覽</option>
+                                    <option value="care">課輔部</option>
+                                    <option value="elementary">國小部</option>
+                                    <option value="junior">國中部</option>
+                                </select>
+                            </div>
+                            <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;"></div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存老師資料</button>
+                    </form>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+
+                <div>
+                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊與資料</h4>
+                    <div style="overflow-x: auto;">
+                        <table class="teacher-list-table">
+                            <thead>
+                                <tr>
+                                    <th>名字/密碼</th>
+                                    <th>到職/生日</th>
+                                    <th>學歷與聯絡</th>
+                                    <th>負責專屬班級</th>
+                                    <th>可用權限</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacherTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 使用者操作紀錄分頁 -->
+            <div id="adminTabLogs" style="display: none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h4 style="font-size: 1rem; color: var(--text-primary);">教師與管理者系統操作足跡 (Audit Trail)</h4>
+                    <button class="btn-sm btn-danger" onclick="clearSystemLogs()">清空紀錄</button>
+                </div>
+                <div style="max-height: 65vh; overflow-y: auto;">
+                    <table class="log-list-table">
                         <thead>
                             <tr>
-                                <th>名字/密碼</th>
-                                <th>到職/生日</th>
-                                <th>學歷與聯絡</th>
-                                <th>負責專屬班級</th>
-                                <th>可用權限</th>
-                                <th>操作</th>
+                                <th style="width:150px;">時間</th>
+                                <th style="width:110px;">操作者</th>
+                                <th style="width:140px;">動作類型</th>
+                                <th>詳細內容紀錄</th>
                             </tr>
                         </thead>
-                        <tbody id="teacherTableBody">
-                            <!-- 動態載入 -->
-                        </tbody>
+                        <tbody id="auditLogTableBody"></tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -634,11 +690,9 @@
                 <p id="welcomeText">內部行政與教學整合工作台</p>
             </div>
             <div class="header-right">
-                <!-- 快速諮詢報名小框框 -->
                 <a href="https://aht760317.github.io/Share/askclass.html#faq" target="_blank" class="quick-consult-btn btn-action">
                     <i class="fa-solid fa-bolt"></i> 快速諮詢報名
                 </a>
-                <!-- 登出按鈕 -->
                 <button onclick="handleLogout()" id="logoutBtn" class="logout-btn btn-action">
                     <i class="fa-solid fa-right-from-bracket"></i> 登出
                 </button>
@@ -649,14 +703,12 @@
             </div>
         </header>
 
-        <!-- 一般老師登入時顯示的專屬班級提示條 -->
         <div id="teacherClassBanner" class="teacher-class-banner">
             <i class="fa-solid fa-chalkboard-user"></i> <span>您的負責專屬班級：<strong id="assignedClassText">無</strong></span>
         </div>
 
         <div class="grid-menu">
-            <!-- 1. 線上點名 -->
-            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card" data-key="rollbook">
+            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card" data-key="rollbook" onclick="logUserAction('點擊模組', '開啟 線上點名 系統')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-user-check"></i></div>
@@ -673,8 +725,7 @@
                 </div>
             </a>
 
-            <!-- 2. 招生與進班管理系統 -->
-            <a href="https://aht760317.github.io/Share/gotogood.html" target="_blank" class="card" data-key="gotogood">
+            <a href="https://aht760317.github.io/Share/gotogood.html" target="_blank" class="card" data-key="gotogood" onclick="logUserAction('點擊模組', '開啟 招生與進班系統')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-user-plus"></i></div>
@@ -691,8 +742,7 @@
                 </div>
             </a>
 
-            <!-- 3. 教學日誌 -->
-            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card" data-key="ClassLog">
+            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card" data-key="ClassLog" onclick="logUserAction('點擊模組', '開啟 教學日誌')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-book-open"></i></div>
@@ -709,8 +759,7 @@
                 </div>
             </a>
 
-            <!-- 4. 官方網站 -->
-            <a href="https://aht760317.github.io/good-school/" target="_blank" class="card" data-key="good-school">
+            <a href="https://aht760317.github.io/good-school/" target="_blank" class="card" data-key="good-school" onclick="logUserAction('點擊模組', '開啟 官方網站')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-globe"></i></div>
@@ -727,8 +776,7 @@
                 </div>
             </a>
 
-            <!-- 5. 線上課表 -->
-            <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card" data-key="class">
+            <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card" data-key="class" onclick="logUserAction('點擊模組', '開啟 線上課表')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
@@ -745,8 +793,7 @@
                 </div>
             </a>
 
-            <!-- 6. 繳費管理 -->
-            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card" data-key="indexmoney">
+            <a href="https://aht760317.github.io/good-school/indexmoney.html" target="_blank" class="card" data-key="indexmoney" onclick="logUserAction('點擊模組', '開啟 繳費管理')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
@@ -774,7 +821,7 @@
         </footer>
     </div>
 
-    <!-- 導入 Firebase 模組以自動抓取 rollbook 雲端資料庫中的所有班級 -->
+    <!-- Firebase 模組自動同步班級 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -791,7 +838,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 將抓取到的雲端班級資料掛載到全域變數
         window.cloudDepartmentsClasses = {
             care: ["小四課後安親輔導班"],
             elementary: ["小五數學培優班"],
@@ -806,10 +852,9 @@
                     if (data.care) window.cloudDepartmentsClasses.care = data.care.map(c => typeof c === 'object' ? c.name : c);
                     if (data.elementary) window.cloudDepartmentsClasses.elementary = data.elementary.map(c => typeof c === 'object' ? c.name : c);
                     if (data.junior) window.cloudDepartmentsClasses.junior = data.junior.map(c => typeof c === 'object' ? c.name : c);
-                    console.log("✅ 成功從 rollbook 雲端同步最新班級清單！");
                 }
             } catch (e) {
-                console.log("使用預設或本機班級資料架構。");
+                console.log("使用本機備用班級清單。");
             }
             filterClassesByDepartment();
         }
@@ -817,6 +862,7 @@
         window.syncClassesFromRollbook = async function() {
             alert("正在從雲端同步最新班級...");
             await fetchCloudClassesFromRollbook();
+            logUserAction('系統維護', '手動點擊雲端同步最新班級清單');
             alert("✅ 同步完成！選單已更新為最新班級。");
         };
 
@@ -830,6 +876,20 @@
         const ADMIN_USER = "aht0317";
         const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
+
+        // 紀錄使用者操作足跡 (Audit Log)
+        function logUserAction(actionType, details) {
+            let user = sessionStorage.getItem('good_current_user') || '訪客';
+            let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
+            
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+            logs.unshift({ time: timeStr, user: user, action: actionType, details: details });
+            // 最多保留最近 300 筆紀錄
+            if (logs.length > 300) logs = logs.slice(0, 300);
+            localStorage.setItem('good_school_audit_logs', JSON.stringify(logs));
+        }
 
         function getTeachers() {
             let data = localStorage.getItem('good_school_teachers');
@@ -870,9 +930,10 @@
             let errEl = document.getElementById('loginError');
 
             if (uInput === ADMIN_USER && pInput === ADMIN_PASS) {
-                sessionStorage.setItem('good_current_user', 'ADMIN');
+                sessionStorage.setItem('good_current_user', '雅鴻 (管理者)');
                 document.getElementById('loginModal').style.display = 'none';
-                applyUserPermissions('ADMIN');
+                logUserAction('系統登入', '管理者登入系統');
+                applyUserPermissions('雅鴻 (管理者)');
                 return;
             }
 
@@ -882,6 +943,7 @@
             if (found) {
                 sessionStorage.setItem('good_current_user', found.name);
                 document.getElementById('loginModal').style.display = 'none';
+                logUserAction('系統登入', `老師 ${found.name} 登入系統`);
                 applyUserPermissions(found.name);
             } else {
                 errEl.style.display = 'block';
@@ -889,6 +951,7 @@
         }
 
         function handleLogout() {
+            logUserAction('系統登入', '使用者登出系統');
             sessionStorage.removeItem('good_current_user');
             location.reload();
         }
@@ -903,7 +966,7 @@
 
             logoutBtn.style.display = 'inline-flex';
 
-            if (user === 'ADMIN') {
+            if (user === '雅鴻 (管理者)') {
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">雅鴻 (最高管理者)</span>`;
                 statusText.innerText = "已取得完整系統權限";
                 cards.forEach(card => card.classList.remove('locked'));
@@ -951,6 +1014,7 @@
             let val = document.getElementById('adminSecretInput').value.trim();
             if (val === CONFIG_PASS) {
                 document.getElementById('adminPassModal').style.display = 'none';
+                logUserAction('安全驗證', '成功通過密碼驗證進入設定後台');
                 openAdminModal();
             } else {
                 document.getElementById('adminPassError').style.display = 'block';
@@ -958,6 +1022,7 @@
         }
 
         function openAdminModal() {
+            switchAdminTab('teachers');
             renderTeacherTable();
             renderDepartmentClasses();
             document.getElementById('adminModal').style.display = 'flex';
@@ -971,7 +1036,79 @@
             document.getElementById('submitBtnText').innerText = "儲存老師資料";
         }
 
-        // 依據部門下拉選單動態過濾並渲染雲端同步的班級
+        // 後台分頁切換
+        window.switchAdminTab = function(tabName) {
+            const tabTeachers = document.getElementById('adminTabTeachers');
+            const tabLogs = document.getElementById('adminTabLogs');
+            const buttons = document.querySelectorAll('.admin-tab-btn');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (tabName === 'teachers') {
+                tabTeachers.style.display = 'block';
+                tabLogs.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else if (tabName === 'logs') {
+                tabTeachers.style.display = 'none';
+                tabLogs.style.display = 'block';
+                buttons[1].classList.add('active');
+                renderAuditLogsTable();
+            }
+        };
+
+        // 渲染操作紀錄表格
+        function renderAuditLogsTable() {
+            let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
+            let tbody = document.getElementById('auditLogTableBody');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">目前尚無任何操作足跡紀錄</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-size:0.78rem; color:var(--text-secondary);">${log.time}</td>
+                    <td><strong style="color:var(--accent-blue);">${log.user}</strong></td>
+                    <td><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold;">${log.action}</span></td>
+                    <td>${log.details}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.clearSystemLogs = function() {
+            if (confirm('確定要清空所有操作紀錄嗎？')) {
+                localStorage.removeItem('good_school_audit_logs');
+                renderAuditLogsTable();
+                alert('操作紀錄已清空！');
+            }
+        };
+
+        // 一鍵備份全系統資料到電腦 (JSON)
+        window.backupSystemData = function() {
+            const backupPackage = {
+                exportDate: new Date().toISOString(),
+                teachers: localStorage.getItem('good_school_teachers'),
+                auditLogs: localStorage.getItem('good_school_audit_logs'),
+                holidays: localStorage.getItem('gude_holidays'),
+                attendanceRecords: localStorage.getItem('gude_attendance_records')
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPackage, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `斗六顧德教務系統備份_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            logUserAction('系統備份', '下載全系統資料備份 JSON 檔案至電腦');
+            alert('✅ 系統資料備份檔案已成功下載至您的電腦！');
+        };
+
         window.filterClassesByDepartment = function() {
             let dept = document.getElementById('departmentSelect').value;
             let container = document.getElementById('departmentClassContainer');
@@ -1000,7 +1137,7 @@
                 label.innerHTML = `<input type="checkbox" name="assignedClass" value="${cls}" ${isChecked}> ${cls}`;
                 container.appendChild(label);
             });
-        }
+        };
 
         function renderDepartmentClasses() {
             let deptSelect = document.getElementById('departmentSelect');
@@ -1073,8 +1210,10 @@
                     return;
                 }
                 teachers.push({ name, pass, birth, hireDate, education, school, phone, note, perms, classes });
+                logUserAction('人事管理', `新增老師帳號與權限：${name}`);
             } else {
                 teachers[editIndex] = { name, pass, birth, hireDate, education, school, phone, note, perms, classes };
+                logUserAction('人事管理', `修改老師資料與權限：${name}`);
             }
 
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
@@ -1116,10 +1255,12 @@
         };
 
         window.deleteTeacher = function(index) {
-            if (confirm('確定要刪除這位老師的帳號、人事資料與班級權限嗎？')) {
-                let teachers = getTeachers();
+            let teachers = getTeachers();
+            let targetName = teachers[index] ? teachers[index].name : '未知';
+            if (confirm(`確定要刪除老師【${targetName}】的帳號與權限設定嗎？`)) {
                 teachers.splice(index, 1);
                 localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
+                logUserAction('人事管理', `刪除老師帳號：${targetName}`);
                 renderTeacherTable();
             }
         };
