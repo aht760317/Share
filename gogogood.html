@@ -127,17 +127,6 @@
             border-color: #f59e0b;
         }
 
-        .admin-btn {
-            color: #4f46e5;
-            background: #eef2ff;
-            border-color: #c7d2fe;
-            display: none; /* 預設隱藏，登入管理者後顯示 */
-        }
-        .admin-btn:hover {
-            background: #e0e7ff;
-            border-color: #818cf8;
-        }
-
         .logout-btn {
             color: #dc2626;
             background: #fef2f2;
@@ -146,6 +135,20 @@
         }
         .logout-btn:hover {
             background: #fee2e2;
+        }
+
+        /* 班級專屬面板提示條 */
+        .teacher-class-banner {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
         }
 
         /* 網格排列 */
@@ -287,7 +290,7 @@
         }
 
         .modal-box.large {
-            max-width: 700px;
+            max-width: 840px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -374,18 +377,19 @@
             text-align: center;
         }
 
-        /* 表格與列表樣式 (後台管理用) */
+        /* 標籤樣式 */
         .teacher-list-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .teacher-list-table th, .teacher-list-table td {
             border: 1px solid var(--border);
             padding: 10px;
             text-align: left;
+            vertical-align: middle;
         }
 
         .teacher-list-table th {
@@ -393,14 +397,18 @@
             font-weight: 600;
         }
 
-        .badge-perm {
+        .badge-perm, .badge-class {
             display: inline-block;
             background: #e2e8f0;
             color: #334155;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             padding: 2px 6px;
             border-radius: 4px;
             margin: 2px;
+        }
+        .badge-class {
+            background: #e0f2fe;
+            color: #0369a1;
         }
 
         .btn-sm {
@@ -414,11 +422,31 @@
         .btn-danger { color: #dc2626; border-color: #fecaca; }
         .btn-danger:hover { background: #fef2f2; }
 
+        /* 頁尾樣式 */
         footer {
             margin-top: 48px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.82rem;
             color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .footer-admin-link {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .footer-admin-link:hover {
+            color: var(--accent-blue);
         }
 
         @media (max-width: 768px) {
@@ -434,12 +462,17 @@
             .grid-menu {
                 grid-template-columns: 1fr;
             }
+            footer {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- 登入驗證彈跳視窗 (未登入時強制跳出) -->
+    <!-- 登入驗證彈跳視窗 -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
         <div class="modal-box">
             <div class="modal-header">
@@ -460,20 +493,39 @@
         </div>
     </div>
 
-    <!-- 教師權限設定後台 Modal -->
+    <!-- 管理者密碼驗證視窗 (760317) -->
+    <div id="adminPassModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-shield-halved" style="color:#d97706"></i> 輸入管理者密碼</h3>
+                <button class="close-modal" onclick="closeAdminPassModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="verifyAdminPass(event)">
+                <div class="form-group">
+                    <label>管理密碼</label>
+                    <input type="password" id="adminSecretInput" class="form-control" placeholder="請輸入設定密碼" required autofocus>
+                </div>
+                <button type="submit" class="btn-primary" style="background:#059669;">確認進入</button>
+                <div id="adminPassError" class="error-msg">密碼錯誤</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 老師資料、權限與班級指派管理後台 Modal -->
     <div id="adminModal" class="modal-overlay" style="display: none;">
         <div class="modal-box large">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> 教師資料與權限管理</h3>
+                <h3><i class="fa-solid fa-gear"></i> 老師資料、權限與專屬班級管理</h3>
                 <button class="close-modal" onclick="closeAdminModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div style="margin-bottom: 20px;">
-                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">新增或編輯老師帳號</h4>
+            <div style="margin-bottom: 20px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與基本資料</h4>
                 <form id="teacherForm" onsubmit="saveTeacher(event)">
                     <input type="hidden" id="editIndex" value="-1">
+                    
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div class="form-group">
-                            <label>老師姓名 (帳號)</label>
+                            <label>老師姓名 (作為登入帳號)</label>
                             <input type="text" id="tName" class="form-control" placeholder="例如：王小明" required>
                         </div>
                         <div class="form-group">
@@ -481,6 +533,29 @@
                             <input type="text" id="tPass" class="form-control" placeholder="設定密碼" required>
                         </div>
                     </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>最高學歷</label>
+                            <input type="text" id="tEducation" class="form-control" placeholder="例如：國立台灣大學 碩士">
+                        </div>
+                        <div class="form-group">
+                            <label>畢業學校 / 科系</label>
+                            <input type="text" id="tSchool" class="form-control" placeholder="例如：外國語文學系">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>聯絡電話</label>
+                            <input type="text" id="tPhone" class="form-control" placeholder="例如：0912-345-678">
+                        </div>
+                        <div class="form-group">
+                            <label>專長 / 備註</label>
+                            <input type="text" id="tNote" class="form-control" placeholder="例如：英文文法、國中數學">
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>開放使用功能權限：</label>
                         <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;">
@@ -492,20 +567,34 @@
                             <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="indexmoney"> 繳費管理</label>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary" style="background: #059669;">儲存老師資料</button>
+
+                    <div class="form-group">
+                        <label>指派管理班級 (可複選該老師負責的班級)：</label>
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;" id="classCheckboxes">
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國小美語A班"> 國小美語A班</label>
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國小美語B班"> 國小美語B班</label>
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國中數學精熟班"> 國中數學精熟班</label>
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="國中英文衝刺班"> 國中英文衝刺班</label>
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="升小一正音班"> 升小一正音班</label>
+                            <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="assignedClass" value="高中英文特訓班"> 高中英文特訓班</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存老師資料</button>
                 </form>
             </div>
 
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
             <div>
-                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師清單</h4>
+                <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊與資料</h4>
                 <div style="overflow-x: auto;">
                     <table class="teacher-list-table">
                         <thead>
                             <tr>
-                                <th>老師名字</th>
-                                <th>密碼</th>
+                                <th>名字/密碼</th>
+                                <th>學歷與聯絡</th>
+                                <th>負責專屬班級</th>
                                 <th>可用權限</th>
                                 <th>操作</th>
                             </tr>
@@ -530,10 +619,6 @@
                 <a href="https://aht760317.github.io/Share/askclass.html#faq" target="_blank" class="quick-consult-btn btn-action">
                     <i class="fa-solid fa-bolt"></i> 快速諮詢報名
                 </a>
-                <!-- 管理者專屬設定按鈕 -->
-                <button onclick="openAdminModal()" id="adminSettingBtn" class="admin-btn btn-action">
-                    <i class="fa-solid fa-user-gear"></i> 權限與老師設定
-                </button>
                 <!-- 登出按鈕 -->
                 <button onclick="handleLogout()" id="logoutBtn" class="logout-btn btn-action">
                     <i class="fa-solid fa-right-from-bracket"></i> 登出
@@ -544,6 +629,11 @@
                 </div>
             </div>
         </header>
+
+        <!-- 一般老師登入時顯示的專屬班級提示條 -->
+        <div id="teacherClassBanner" class="teacher-class-banner">
+            <i class="fa-solid fa-chalkboard-user"></i> <span>您的負責專屬班級：<strong id="assignedClassText">無</strong></span>
+        </div>
 
         <div class="grid-menu">
             <!-- 1. 線上點名 -->
@@ -656,22 +746,34 @@
         </div>
 
         <footer>
-            &copy; 斗六顧德文教機構 · 內部專用行政整合系統
+            <div>&copy; 斗六顧德文教機構 · 內部專用行政整合系統</div>
+            <div>
+                <button onclick="openAdminPassModal()" class="footer-admin-link">
+                    <i class="fa-solid fa-user-gear"></i> 權限與老師設定
+                </button>
+            </div>
         </footer>
     </div>
 
     <script>
-        // 預設管理者帳號與初始教師資料清單
         const ADMIN_USER = "aht0317";
         const ADMIN_PASS = "aa0618aa";
+        const CONFIG_PASS = "760317";
 
-        // 從 localStorage 讀取老師名單，若沒有則給予預設資料
         function getTeachers() {
             let data = localStorage.getItem('good_school_teachers');
             if (!data) {
-                // 預設一筆測試資料
                 let initial = [
-                    { name: "雅鴻", pass: "0000", perms: ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney"] }
+                    { 
+                        name: "雅鴻", 
+                        pass: "0000", 
+                        education: "大學", 
+                        school: "教育系", 
+                        phone: "0900-000-000", 
+                        note: "機構負責人", 
+                        perms: ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney"],
+                        classes: ["國小美語A班", "國中數學精熟班"]
+                    }
                 ];
                 localStorage.setItem('good_school_teachers', JSON.stringify(initial));
                 return initial;
@@ -679,7 +781,6 @@
             return JSON.parse(data);
         }
 
-        // 頁面載入時檢查登入狀態
         window.addEventListener('DOMContentLoaded', () => {
             checkLoginState();
         });
@@ -687,10 +788,8 @@
         function checkLoginState() {
             let currentUser = sessionStorage.getItem('good_current_user');
             if (!currentUser) {
-                // 未登入，顯示登入框
                 document.getElementById('loginModal').style.display = 'flex';
             } else {
-                // 已登入，根據權限解鎖介面
                 applyUserPermissions(currentUser);
             }
         }
@@ -701,7 +800,6 @@
             let pInput = document.getElementById('loginPass').value.trim();
             let errEl = document.getElementById('loginError');
 
-            // 檢查是否為總管理者帳號
             if (uInput === ADMIN_USER && pInput === ADMIN_PASS) {
                 sessionStorage.setItem('good_current_user', 'ADMIN');
                 document.getElementById('loginModal').style.display = 'none';
@@ -709,7 +807,6 @@
                 return;
             }
 
-            // 檢查一般老師帳號
             let teachers = getTeachers();
             let found = teachers.find(t => t.name === uInput && t.pass === pInput);
 
@@ -729,27 +826,36 @@
 
         function applyUserPermissions(user) {
             let cards = document.querySelectorAll('.grid-menu .card');
-            let adminBtn = document.getElementById('adminSettingBtn');
             let logoutBtn = document.getElementById('logoutBtn');
             let welcomeText = document.getElementById('welcomeText');
             let statusText = document.getElementById('statusText');
+            let banner = document.getElementById('teacherClassBanner');
+            let classText = document.getElementById('assignedClassText');
 
             logoutBtn.style.display = 'inline-flex';
 
             if (user === 'ADMIN') {
-                // 管理者擁有全部權限，並顯示後台設定按鈕
-                adminBtn.style.display = 'inline-flex';
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">雅鴻 (最高管理者)</span>`;
                 statusText.innerText = "已取得完整系統權限";
                 cards.forEach(card => card.classList.remove('locked'));
+                banner.style.display = 'none';
             } else {
-                // 一般老師，根據名單中的權限解鎖
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
                 statusText.innerText = `已登入 (${user})`;
                 
                 let teachers = getTeachers();
                 let tData = teachers.find(t => t.name === user);
                 let allowedPerms = tData ? tData.perms : [];
+                let assignedClasses = tData ? (tData.classes || []) : [];
+
+                // 顯示專屬班級提示
+                if (assignedClasses.length > 0) {
+                    classText.innerText = assignedClasses.join('、');
+                    banner.style.display = 'flex';
+                } else {
+                    classText.innerText = "目前未指派專屬班級";
+                    banner.style.display = 'flex';
+                }
 
                 cards.forEach(card => {
                     let key = card.getAttribute('data-key');
@@ -762,7 +868,27 @@
             }
         }
 
-        // 開啟與關閉管理者後台 Modal
+        function openAdminPassModal() {
+            document.getElementById('adminSecretInput').value = '';
+            document.getElementById('adminPassError').style.display = 'none';
+            document.getElementById('adminPassModal').style.display = 'flex';
+        }
+
+        function closeAdminPassModal() {
+            document.getElementById('adminPassModal').style.display = 'none';
+        }
+
+        function verifyAdminPass(e) {
+            e.preventDefault();
+            let val = document.getElementById('adminSecretInput').value.trim();
+            if (val === CONFIG_PASS) {
+                document.getElementById('adminPassModal').style.display = 'none';
+                openAdminModal();
+            } else {
+                document.getElementById('adminPassError').style.display = 'block';
+            }
+        }
+
         function openAdminModal() {
             renderTeacherTable();
             document.getElementById('adminModal').style.display = 'flex';
@@ -772,16 +898,17 @@
             document.getElementById('adminModal').style.display = 'none';
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
+            document.getElementById('formTitleText').innerText = "新增老師帳號與基本資料";
+            document.getElementById('submitBtnText').innerText = "儲存老師資料";
         }
 
-        // 渲染管理者後台的老師列表
         function renderTeacherTable() {
             let teachers = getTeachers();
             let tbody = document.getElementById('teacherTableBody');
             tbody.innerHTML = '';
 
             if (teachers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">尚未新增任何老師帳號</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">尚未新增任何老師帳號</td></tr>`;
                 return;
             }
 
@@ -795,11 +922,14 @@
             };
 
             teachers.forEach((t, index) => {
-                let permBadges = t.perms.map(p => `<span class="badge-perm">${permNames[p] || p}</span>`).join('');
+                let permBadges = (t.perms || []).map(p => `<span class="badge-perm">${permNames[p] || p}</span>`).join('');
+                let classBadges = (t.classes || []).map(c => `<span class="badge-class">${c}</span>`).join('') || '<span style="color:var(--text-muted); font-size:0.8rem;">未指派</span>';
+                
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight:600;">${t.name}</td>
-                    <td><code>${t.pass}</code></td>
+                    <td><strong>${t.name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">密碼: ${t.pass}</span></td>
+                    <td>${t.education || '-'}<br><span style="font-size:0.78rem; color:var(--text-secondary);">${t.phone || ''}</span></td>
+                    <td>${classBadges}</td>
                     <td>${permBadges}</td>
                     <td>
                         <button class="btn-sm" onclick="editTeacher(${index})">編輯</button>
@@ -810,54 +940,71 @@
             });
         }
 
-        // 儲存老師資料 (新增或修改)
         function saveTeacher(e) {
             e.preventDefault();
             let name = document.getElementById('tName').value.trim();
             let pass = document.getElementById('tPass').value.trim();
+            let education = document.getElementById('tEducation').value.trim();
+            let school = document.getElementById('tSchool').value.trim();
+            let phone = document.getElementById('tPhone').value.trim();
+            let note = document.getElementById('tNote').value.trim();
             let editIndex = parseInt(document.getElementById('editIndex').value);
 
-            let checkboxes = document.querySelectorAll('input[name="perm"]:checked');
-            let perms = Array.from(checkboxes).map(cb => cb.value);
+            let permCheckboxes = document.querySelectorAll('input[name="perm"]:checked');
+            let perms = Array.from(permCheckboxes).map(cb => cb.value);
+
+            let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]:checked');
+            let classes = Array.from(classCheckboxes).map(cb => cb.value);
 
             let teachers = getTeachers();
 
             if (editIndex === -1) {
-                // 檢查名字是否重複
                 if (teachers.some(t => t.name === name)) {
                     alert('此老師名字已經存在，請直接編輯或使用其他名字！');
                     return;
                 }
-                teachers.push({ name, pass, perms });
+                teachers.push({ name, pass, education, school, phone, note, perms, classes });
             } else {
-                teachers[editIndex] = { name, pass, perms };
+                teachers[editIndex] = { name, pass, education, school, phone, note, perms, classes };
             }
 
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
+            document.getElementById('formTitleText').innerText = "新增老師帳號與基本資料";
+            document.getElementById('submitBtnText').innerText = "儲存老師資料";
             renderTeacherTable();
-            alert('老師資料儲存成功！');
+            alert('老師資料與專屬班級指派儲存成功！');
         }
 
-        // 編輯老師
         function editTeacher(index) {
             let teachers = getTeachers();
             let t = teachers[index];
 
-            document.getElementById('tName').value = t.name;
-            document.getElementById('tPass').value = t.pass;
+            document.getElementById('tName').value = t.name || '';
+            document.getElementById('tPass').value = t.pass || '';
+            document.getElementById('tEducation').value = t.education || '';
+            document.getElementById('tSchool').value = t.school || '';
+            document.getElementById('tPhone').value = t.phone || '';
+            document.getElementById('tNote').value = t.note || '';
             document.getElementById('editIndex').value = index;
 
-            let checkboxes = document.querySelectorAll('input[name="perm"]');
-            checkboxes.forEach(cb => {
-                cb.checked = t.perms.includes(cb.value);
+            document.getElementById('formTitleText').innerText = `編輯老師資料與班級：${t.name}`;
+            document.getElementById('submitBtnText').innerText = "確認修改老師資料";
+
+            let permCheckboxes = document.querySelectorAll('input[name="perm"]');
+            permCheckboxes.forEach(cb => {
+                cb.checked = (t.perms || []).includes(cb.value);
+            });
+
+            let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]');
+            classCheckboxes.forEach(cb => {
+                cb.checked = (t.classes || []).includes(cb.value);
             });
         }
 
-        // 刪除老師
         function deleteTeacher(index) {
-            if (confirm('確定要刪除這位老師的帳號與權限設定嗎？')) {
+            if (confirm('確定要刪除這位老師的帳號、基本資料與班級權限嗎？')) {
                 let teachers = getTeachers();
                 teachers.splice(index, 1);
                 localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
