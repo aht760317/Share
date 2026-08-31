@@ -384,6 +384,7 @@
             border-bottom: 2px solid var(--border);
             margin-bottom: 20px;
             padding-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .admin-tab-btn {
@@ -793,7 +794,7 @@
                 </div>
             </a>
 
-            <a href="https://aht760317.github.io/good-school/indexmoney.html" target="_blank" class="card" data-key="indexmoney" onclick="logUserAction('點擊模組', '開啟 繳費管理')">
+            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card" data-key="indexmoney" onclick="logUserAction('點擊模組', '開啟 繳費管理')">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
@@ -821,10 +822,10 @@
         </footer>
     </div>
 
-    <!-- Firebase 模組自動同步班級 -->
+    <!-- Firebase 模組自動同步班級與全系統雲端資料 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -844,30 +845,51 @@
             junior: ["國二數學進階A班", "國三會考理化總複習"]
         };
 
-        async function fetchCloudClassesFromRollbook() {
+        // 用於備份全系統雲端資料的全局變數
+        window.cloudBackupDataStore = { courses: null, students: [], attendance: null };
+
+        async function fetchCloudDataFromRollbook() {
             try {
+                // 1. 抓取課程與班級
                 const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
                 if (coursesDoc.exists()) {
                     const data = coursesDoc.data().data || {};
+                    window.cloudBackupDataStore.courses = data;
                     if (data.care) window.cloudDepartmentsClasses.care = data.care.map(c => typeof c === 'object' ? c.name : c);
                     if (data.elementary) window.cloudDepartmentsClasses.elementary = data.elementary.map(c => typeof c === 'object' ? c.name : c);
                     if (data.junior) window.cloudDepartmentsClasses.junior = data.junior.map(c => typeof c === 'object' ? c.name : c);
                 }
+
+                // 2. 抓取學生學籍總庫
+                const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
+                let studentsArr = [];
+                studentsSnapshot.forEach(d => {
+                    studentsArr.push({ id: d.id, ...d.data() });
+                });
+                window.cloudBackupDataStore.students = studentsArr;
+
+                // 3. 抓取雲端點名紀錄
+                const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
+                if (attendanceDoc.exists()) {
+                    window.cloudBackupDataStore.attendance = attendanceDoc.data().data || {};
+                }
+
+                console.log("✅ 成功從 Firebase 雲端同步最新學籍與課程資料！");
             } catch (e) {
-                console.log("使用本機備用班級清單。");
+                console.log("使用本機備用資料架構。");
             }
             filterClassesByDepartment();
         }
 
         window.syncClassesFromRollbook = async function() {
             alert("正在從雲端同步最新班級...");
-            await fetchCloudClassesFromRollbook();
-            logUserAction('系統維護', '手動點擊雲端同步最新班級清單');
+            await fetchCloudDataFromRollbook();
+            logUserAction('系統維護', '手動點擊雲端同步最新班級與學籍清單');
             alert("✅ 同步完成！選單已更新為最新班級。");
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
-            await fetchCloudClassesFromRollbook();
+            await fetchCloudDataFromRollbook();
             checkLoginState();
         });
     </script>
@@ -886,7 +908,6 @@
             const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 
             logs.unshift({ time: timeStr, user: user, action: actionType, details: details });
-            // 最多保留最近 300 筆紀錄
             if (logs.length > 300) logs = logs.slice(0, 300);
             localStorage.setItem('good_school_audit_logs', JSON.stringify(logs));
         }
@@ -1042,7 +1063,9 @@
             const tabLogs = document.getElementById('adminTabLogs');
             const buttons = document.querySelectorAll('.admin-tab-btn');
 
-            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons.forEach((btn, idx) => {
+                if (idx < 2) btn.classList.remove('active');
+            });
 
             if (tabName === 'teachers') {
                 tabTeachers.style.display = 'block';
@@ -1087,26 +1110,29 @@
             }
         };
 
-        // 一鍵備份全系統資料到電腦 (JSON)
+        // 全系統資料打包下載 (包含雲端學生總庫、課程、點名、本機老師與操作紀錄)
         window.backupSystemData = function() {
             const backupPackage = {
                 exportDate: new Date().toISOString(),
-                teachers: localStorage.getItem('good_school_teachers'),
-                auditLogs: localStorage.getItem('good_school_audit_logs'),
-                holidays: localStorage.getItem('gude_holidays'),
-                attendanceRecords: localStorage.getItem('gude_attendance_records')
+                // 雲端資料總庫 (from rollbook)
+                cloudDatabase: window.cloudBackupDataStore || {},
+                // 本機資料
+                teachers: JSON.parse(localStorage.getItem('good_school_teachers') || '[]'),
+                auditLogs: JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]'),
+                holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
+                attendanceRecords: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}')
             };
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPackage, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `斗六顧德教務系統備份_${new Date().toISOString().slice(0,10)}.json`);
+            downloadAnchor.setAttribute("download", `斗六顧德全系統完整備份_${new Date().toISOString().slice(0,10)}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
 
-            logUserAction('系統備份', '下載全系統資料備份 JSON 檔案至電腦');
-            alert('✅ 系統資料備份檔案已成功下載至您的電腦！');
+            logUserAction('系統備份', '下載全系統（含學生總庫與點名）完整備份 JSON 檔案');
+            alert('✅ 全系統資料（包含雲端學籍、課程、點名、老師權限與操作日誌）已完整打包下載至您的電腦！');
         };
 
         window.filterClassesByDepartment = function() {
