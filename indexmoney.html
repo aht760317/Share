@@ -899,6 +899,12 @@
         <label style="color: #334155; margin-bottom: 4px;">📋 目前收費清單明細：</label>
         <div id="modalFeeItemsList" style="background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 10px;"></div>
 
+        <!-- 單據自訂備註說明 (供櫃台查閱/優惠原因) -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+            <label style="color: #475569; font-size: 13px; margin-bottom: 4px;">📝 單據備註說明 (優惠原因/特殊計費備查)：</label>
+            <textarea id="modalBillNoteInput" placeholder="例：兄弟姊妹同行優惠、中途插班按天計費、教材費已折抵..." rows="2" style="font-size: 13px;"></textarea>
+        </div>
+
         <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; border: 1px solid #FDE68A; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px;">
             <span style="font-weight: bold; color: #92400E; font-size: 14px;">應收總計：</span>
             <span style="font-weight: 900; color: #DC2626; font-size: 18px;">$ <span id="modalFeeTotalDisplay">0</span> 元</span>
@@ -932,6 +938,11 @@
         <div id="editBillItemsContainer" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 8px; border-radius: 6px; max-height: 180px; overflow-y: auto; margin-bottom: 8px;"></div>
         
         <button class="btn-select" style="background:#E0E7FF; color:#3730A3; font-weight:bold; width:100%; margin-bottom:12px; padding:8px;" onclick="addEditBillItemRow()">➕ 新增項目</button>
+
+        <div style="margin-bottom: 12px;">
+            <label>單據備註說明：</label>
+            <textarea id="editBillNoteInput" placeholder="填寫備註說明..." rows="2" style="font-size: 13px;"></textarea>
+        </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
             <button class="btn-select" onclick="closeModal('editBillModal')">取消</button>
@@ -1448,6 +1459,9 @@
                 if (bill.items && bill.items.length > 0) {
                     itemsHtml = bill.items.map(item => `<span class="fee-item-tag">${item.name} ($${item.amount.toLocaleString()})</span>`).join('');
                 }
+                if (bill.billNote) {
+                    itemsHtml += `<div style="margin-top:4px; font-size:12px; color:#B45309; background:#FEF3C7; padding:2px 6px; border-radius:4px; border:1px dashed #FCD34D; display:inline-block;">📝 備註：${bill.billNote}</div>`;
+                }
                 totalAmountHtml = `<strong style="color:var(--danger); font-size:15px;">$ ${bill.total.toLocaleString()}</strong>`;
                 if (bill.isPaid) {
                     const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
@@ -1525,6 +1539,7 @@
         const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, currentMonth));
         if (existingBill && existingBill.items) {
             window.modalCurrentItems = JSON.parse(JSON.stringify(existingBill.items));
+            document.getElementById('modalBillNoteInput').value = existingBill.billNote || '';
             if (existingBill.periodStr && existingBill.periodStr.includes('~')) {
                 const [sDate, eDate] = existingBill.periodStr.split('~').map(x => x.trim());
                 document.getElementById('modalCustomPeriodToggle').checked = true;
@@ -1534,6 +1549,7 @@
             }
         } else {
             window.modalCurrentItems = [];
+            document.getElementById('modalBillNoteInput').value = '';
         }
 
         renderModalItemsList();
@@ -1632,6 +1648,7 @@
         const stu = document.getElementById('modalBillStudentName').value;
         const cls = document.getElementById('modalBillClassName').value;
         const isCustom = document.getElementById('modalCustomPeriodToggle').checked;
+        const billNote = document.getElementById('modalBillNoteInput').value.trim();
 
         if (window.modalCurrentItems.length === 0) {
             alert('⚠️ 請至少加入一個費用項目！');
@@ -1666,6 +1683,7 @@
                 existingBill.total = total;
                 existingBill.periodStr = displayPeriod;
                 existingBill.yearMonth = yMonth;
+                existingBill.billNote = billNote;
 
                 await setDoc(doc(db, "bills", existingBill.firestoreId), {
                     id: existingBill.id,
@@ -1677,7 +1695,8 @@
                     items: existingBill.items,
                     total: existingBill.total,
                     isPaid: existingBill.isPaid,
-                    paidDate: existingBill.paidDate
+                    paidDate: existingBill.paidDate,
+                    billNote: existingBill.billNote
                 });
 
                 alert(`✅ 已成功更新【${stu}】(${displayPeriod}) 的繳費單！`);
@@ -1692,7 +1711,8 @@
                     items: [...window.modalCurrentItems],
                     total: total, 
                     isPaid: false,
-                    paidDate: null
+                    paidDate: null,
+                    billNote: billNote
                 };
 
                 const docRef = await addDoc(collection(db, "bills"), newBill);
@@ -1753,7 +1773,8 @@
                     items: JSON.parse(JSON.stringify(currentBill.items || [])),
                     total: currentBill.total || 0,
                     isPaid: false,
-                    paidDate: null
+                    paidDate: null,
+                    billNote: currentBill.billNote || ''
                 };
 
                 const docRef = await addDoc(collection(db, "bills"), autoBill);
@@ -2197,11 +2218,12 @@
             if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:18px 0; font-size:14px; text-align:center;">🎉 目前無任何未繳費名單</div>';
             return list.map(bill => {
                 const periodText = bill.periodStr || bill.yearMonth || '';
+                const noteBadge = bill.billNote ? `<span style="font-size:11.5px; color:#B45309; background:#FEF3C7; padding:1px 5px; border-radius:3px; margin-left:6px; border:1px solid #FCD34D;">📝 ${bill.billNote}</span>` : '';
                 return `
                     <div class="unpaid-card">
                         <div class="unpaid-card-info">
                             <span style="font-size: 13px; color: #64748B; font-weight: 600;">${periodText}</span>
-                            <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong></span>
+                            <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong> ${noteBadge}</span>
                             <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
                         </div>
                         <div class="unpaid-card-actions">
@@ -2223,12 +2245,15 @@
 
         let itemsDetail = bill.items.map(i => `<tr><td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td><td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
 
+        let noteInfoHtml = bill.billNote ? `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:6px 8px; border-radius:6px; margin-bottom:10px; font-size:13px; color:#B45309;"><strong>📝 備註說明：</strong>${bill.billNote}</div>` : '';
+
         const modalHtml = `
             <div>
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:8px; margin-bottom:10px;">
                     <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${bill.studentName} (${formatFullClassName(bill.className)})</div>
                     <div style="font-size:12px; color:#475569;">📅 期間：${bill.periodStr || bill.yearMonth}</div>
                 </div>
+                ${noteInfoHtml}
                 <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
                     <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
                     <tbody>${itemsDetail}</tbody>
@@ -2373,6 +2398,7 @@
             document.getElementById('editBillId').value = id;
             document.getElementById('editBillStudentInfo').value = `${formatFullClassName(bill.className)} - ${bill.studentName}`;
             document.getElementById('editBillPeriod').value = bill.periodStr || bill.yearMonth || '';
+            document.getElementById('editBillNoteInput').value = bill.billNote || '';
 
             const container = document.getElementById('editBillItemsContainer');
             container.innerHTML = '';
@@ -2405,6 +2431,7 @@
         const firestoreId = document.getElementById('editBillFirestoreId').value;
         const id = parseInt(document.getElementById('editBillId').value);
         const periodStr = document.getElementById('editBillPeriod').value.trim();
+        const billNote = document.getElementById('editBillNoteInput').value.trim();
 
         const nameInputs = document.querySelectorAll('.edit-item-name');
         const amtInputs = document.querySelectorAll('.edit-item-amt');
@@ -2431,6 +2458,7 @@
             bill.items = newItems;
             bill.total = newTotal;
             bill.periodStr = periodStr;
+            bill.billNote = billNote;
             if (periodStr.includes('~')) {
                 bill.yearMonth = periodStr.split('~')[0].trim().substring(0, 7);
             } else if (periodStr.length === 7) {
@@ -2448,7 +2476,8 @@
                     items: bill.items,
                     total: bill.total,
                     isPaid: bill.isPaid,
-                    paidDate: bill.paidDate
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote
                 });
 
                 closeModal('editBillModal');
@@ -2478,7 +2507,8 @@
                     items: bill.items,
                     total: bill.total,
                     isPaid: true,
-                    paidDate: bill.paidDate
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote || ''
                 });
 
                 // 自動在雲端為該學生延續建立「下一期 / 下一趟（精準 3 個月）」未繳單據
@@ -2512,7 +2542,8 @@
                         items: bill.items,
                         total: bill.total,
                         isPaid: false,
-                        paidDate: null
+                        paidDate: null,
+                        billNote: bill.billNote || ''
                     });
                     renderBillingStudentsTable();
                     renderRecords();
@@ -2556,6 +2587,9 @@
             let tableRows = targetBills.map((bill, idx) => {
                 totalRevenue += bill.total;
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                if (bill.billNote) {
+                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                }
                 const displayMonth = bill.periodStr || bill.yearMonth;
                 return `
                     <tr>
@@ -2617,6 +2651,9 @@
                 totalRevenue += bill.total;
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                if (bill.billNote) {
+                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                }
                 const displayMonth = bill.periodStr || bill.yearMonth;
                 return `
                     <tr>
@@ -2682,6 +2719,9 @@
                 totalRevenue += bill.total;
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
+                if (bill.billNote) {
+                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                }
                 const displayMonth = bill.periodStr || bill.yearMonth;
                 return `
                     <tr>
@@ -2754,6 +2794,8 @@
 
         const singleNoticeClass = isSingleNotice ? 'single-notice' : '';
 
+        let noteDisplayHtml = bill.billNote ? `<div style="font-size: 11px; color: #333; margin-top: 2px;">備註說明：<strong>${bill.billNote}</strong></div>` : '';
+
         let html = `
             <div class="receipt-box ${singleNoticeClass}">
                 <div>
@@ -2782,6 +2824,7 @@
                         <tbody>${tableRows}</tbody>
                     </table>
                     <div class="receipt-total">總計實收：$ ${bill.total.toLocaleString()} 元</div>
+                    ${noteDisplayHtml}
                 </div>
         `;
 
@@ -2814,7 +2857,8 @@
 
             grandTotal += bill.total;
 
-            combinedItemsHtml += `<tr><td colspan="3" style="background:#f1f5f9; font-weight:900; font-size:13px; padding:3px 6px;">【${fullCls} - ${bill.studentName}】</td></tr>`;
+            const noteTag = bill.billNote ? ` <span style="font-size:11px; font-weight:normal; color:#666;">(${bill.billNote})</span>` : '';
+            combinedItemsHtml += `<tr><td colspan="3" style="background:#f1f5f9; font-weight:900; font-size:13px; padding:3px 6px;">【${fullCls} - ${bill.studentName}】${noteTag}</td></tr>`;
             bill.items.forEach(item => {
                 combinedItemsHtml += `
                     <tr>
