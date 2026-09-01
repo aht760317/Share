@@ -400,6 +400,111 @@
             padding: 0;
         }
 
+        /* 手機端專屬體驗 */
+        @media screen and (max-width: 768px) {
+            body { padding: 4px; padding-bottom: 85px !important; }
+            .app-container { border-radius: 8px; }
+            .tabs { display: none !important; }
+            .mobile-bottom-nav { display: flex; }
+            .content-area { padding: 8px 6px; }
+            .header { padding: 10px 12px; }
+            .header h1 { font-size: 16px; }
+            .btn-header-link { font-size: 12px; padding: 4px 8px; }
+            
+            .finance-bar { padding: 8px; margin-bottom: 8px; }
+            .filter-bar { padding: 8px; margin-bottom: 8px; }
+            
+            .tab-action-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                margin-bottom: 8px;
+            }
+            .sub-tabs { width: 100%; }
+            .sub-tab-btn { flex: 1; text-align: center; padding: 8px 4px; font-size: 13px; }
+            .batch-action-group {
+                width: 100%;
+                justify-content: space-between;
+                background: #F8FAFC;
+                padding: 4px 6px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+            }
+            .batch-action-group .action-btn {
+                flex: 1;
+                font-size: 11px;
+                padding: 5px 2px;
+                text-align: center;
+            }
+
+            #directoryContent .data-table { display: block !important; }
+            #directoryContent .data-table tbody { display: block !important; }
+            #directoryContent .data-table tr {
+                display: block !important;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            }
+            #directoryContent .data-table td {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                border: none !important;
+                padding: 4px 0 !important;
+                font-size: 13px;
+                text-align: right;
+                background: transparent !important;
+            }
+            #directoryContent .data-table td:before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #64748B;
+                font-size: 12px;
+                text-align: left;
+            }
+            #directoryContent .data-table td.mobile-full {
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
+                margin-top: 4px;
+                padding-top: 6px !important;
+                border-top: 1px dashed var(--border) !important;
+            }
+            #directoryContent .data-table td.mobile-full:before {
+                margin-bottom: 2px;
+            }
+
+            .quick-btn { flex: 1 1 calc(50% - 6px); min-width: auto; padding: 8px 6px; }
+            .quick-btn span { font-size: 13px; }
+            .quick-btn small { font-size: 12px; }
+
+            .unpaid-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                padding: 10px;
+            }
+            .unpaid-card-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 3px;
+                white-space: normal;
+            }
+            .unpaid-amount-tag {
+                margin-left: 0;
+                padding-right: 0;
+                align-self: flex-start;
+            }
+            .unpaid-card-actions {
+                width: 100%;
+                border-top: 1px dashed var(--border);
+                padding-top: 6px;
+            }
+            .unpaid-card-actions .action-btn { flex: 1; }
+        }
+
         @media screen { .print-only { display: none; } }
         @media print {
             @page { 
@@ -593,7 +698,7 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：產生新繳費單 (全新改版：筆劃排序名單與直接開單) -->
+    <!-- 頁籤 3：產生新繳費單 -->
     <div id="create" class="content-area active">
         <h3 class="section-title" style="margin-top:0;">第一步：選擇班級</h3>
         
@@ -1400,7 +1505,6 @@
             const isOther = isOtherItem(item.name);
             const isItemJr = window.isJuniorHigh(item.name);
 
-            // 國中部只顯示國中+其它；國小部顯示國小+其它
             if ((isJr && !isItemJr && !isOther) || (!isJr && isItemJr && !isOther)) {
                 return;
             }
@@ -1500,7 +1604,6 @@
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
 
-        // 檢查是否已有相同區間/月份單據
         const existingBill = window.bills.find(b => b.studentName === stu && (b.periodStr === displayPeriod || b.yearMonth === yMonth));
 
         try {
@@ -1553,6 +1656,75 @@
             alert("❌ 儲存失敗，請稍後再試！");
         }
     };
+
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
+
+    async function autoCreateNextPeriodBill(currentBill) {
+        try {
+            const isJr = window.isJuniorHigh(currentBill.className);
+            let nextPeriodStr = '';
+            let nextYearMonth = '';
+
+            if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
+                // 國中部區間延後一趟
+                const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
+                const startDate = new Date(startStr);
+                const endDate = new Date(endStr);
+                
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 90;
+
+                const nextStartDate = new Date(endDate);
+                nextStartDate.setDate(nextStartDate.getDate() + 1);
+
+                const nextEndDate = new Date(nextStartDate);
+                nextEndDate.setDate(nextEndDate.getDate() + diffDays);
+
+                const sStr = `${nextStartDate.getFullYear()}-${String(nextStartDate.getMonth() + 1).padStart(2, '0')}-${String(nextStartDate.getDate()).padStart(2, '0')}`;
+                const eStr = `${nextEndDate.getFullYear()}-${String(nextEndDate.getMonth() + 1).padStart(2, '0')}-${String(nextEndDate.getDate()).padStart(2, '0')}`;
+                
+                nextPeriodStr = `${sStr} ~ ${eStr}`;
+                nextYearMonth = sStr.substring(0, 7);
+            } else {
+                // 國小部/課輔部月份自動 +1 個月
+                let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
+                if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
+                const [year, month] = baseYM.split('-').map(Number);
+                const nextDate = new Date(year, month, 1); // 自動進到下個月
+                nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+                nextPeriodStr = nextYearMonth;
+            }
+
+            // 檢查下一期是否已經存在單據 (避免重複自動產生)
+            const alreadyExists = window.bills.some(b => 
+                b.studentName === currentBill.studentName && 
+                b.className === currentBill.className && 
+                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
+            );
+
+            if (!alreadyExists) {
+                const autoBill = {
+                    id: Date.now() + Math.floor(Math.random() * 100),
+                    date: new Date().toLocaleDateString(),
+                    yearMonth: nextYearMonth,
+                    periodStr: nextPeriodStr,
+                    className: currentBill.className,
+                    studentName: currentBill.studentName,
+                    items: JSON.parse(JSON.stringify(currentBill.items || [])),
+                    total: currentBill.total || 0,
+                    isPaid: false,
+                    paidDate: null
+                };
+
+                const docRef = await addDoc(collection(db, "bills"), autoBill);
+                autoBill.firestoreId = docRef.id;
+                window.bills.unshift(autoBill);
+                console.log(`自動延續單據成功：${currentBill.studentName} (${nextPeriodStr})`);
+            }
+        } catch (err) {
+            console.error("自動延續下一期失敗：", err);
+        }
+    }
 
     /* ---------- 其他通用功能 ---------- */
 
@@ -2247,9 +2419,13 @@
                     isPaid: true,
                     paidDate: bill.paidDate
                 });
+
+                // 自動在雲端為該學生延續建立「下一期 / 下一趟」未繳單據
+                await autoCreateNextPeriodBill(bill);
+
                 renderBillingStudentsTable();
                 renderRecords();
-                if(confirm('結帳成功！需要立刻列印「正式收據 (1頁2聯)」嗎？')) {
+                if(confirm('結帳成功！系統已自動為同學建立下一期/下一趟繳費單。\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
                     printDocument(id, 'receipt');
                 }
             } catch (e) {
@@ -2583,7 +2759,7 @@
                     <tr>
                         <td style="text-align:center; font-weight:bold; padding:3px;">${globalIdx++}</td>
                         <td style="font-size: 13.5px; font-weight: 600; padding:3px 6px;">${item.name} (${bill.studentName})</td>
-                        <td style="text-align:right; font-size: 14px; font-weight:bold; padding:3px 6px;">$ ${item.amount.toLocaleString()}</td>
+                        <td style="text-align:right; font-weight:bold; padding:3px 6px;">$ ${item.amount.toLocaleString()}</td>
                     </tr>
                 `;
             });
@@ -2641,6 +2817,7 @@
         return html;
     }
 
+    // 列印單張單據：收據固定為 2 聯 (家長收執聯 + 補習班存根聯)；通知單只印 1 張
     window.printDocument = function(id, type) {
         const bill = window.bills.find(b => b.id === id);
         if(!bill) return;
@@ -2662,6 +2839,7 @@
         window.print();
     }
 
+    // 批次列印該班未繳通知單 (每 3 位同學剛好滿版一頁 A4)
     window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('filterClassSelect').value;
