@@ -2122,7 +2122,26 @@
         const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
         const selectedClass = classFilter ? classFilter.value : '';
 
-        let unpaidBills = window.bills.filter(b => !b.isPaid);
+        // 取得當前年月 (例如 "2026-09")
+        const currentMonth = getCurrentMonthStr();
+
+        // 過濾未繳費 且 單據期間/月份小於或等於當月 (未來月份不顯示)
+        let unpaidBills = window.bills.filter(b => {
+            if (b.isPaid) return false;
+
+            let billMonth = b.yearMonth || '';
+            if (b.periodStr && b.periodStr.includes('~')) {
+                billMonth = b.periodStr.split('~')[0].trim().substring(0, 7);
+            } else if (b.periodStr && b.periodStr.length >= 7) {
+                billMonth = b.periodStr.substring(0, 7);
+            }
+
+            if (billMonth && billMonth > currentMonth) {
+                return false;
+            }
+
+            return true;
+        });
 
         if (keyword) {
             unpaidBills = unpaidBills.filter(b => b.studentName.toLowerCase().includes(keyword) || b.className.toLowerCase().includes(keyword));
