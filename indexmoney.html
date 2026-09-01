@@ -333,7 +333,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據樣式 (全新升級：滿版 A4、大字體、1 頁 3 張精確配置) */
+        /* 列印及收據滿版配置 */
         .receipt-container-page {
             display: flex;
             flex-direction: column;
@@ -341,6 +341,8 @@
             height: 100%;
             box-sizing: border-box;
         }
+        
+        /* 預設 3 聯剛好佔滿一頁 A4 (31.8%) */
         .receipt-box { 
             border: 2px solid #000; 
             padding: 10px 14px; 
@@ -350,13 +352,25 @@
             font-size: 13px; 
             box-sizing: border-box;
             page-break-inside: avoid !important; 
-            break-inside: avoid !important;
+            break-inside: avoid !important; 
             margin: 0 auto;
-            flex: 0 0 31.8%; /* 精準佔比 確保三張剛好填滿一頁 A4 */
+            flex: 0 0 31.8%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
+        
+        /* 當一頁放 2 聯時 (收據兩張 / 勾選 2 人通知單) */
+        .receipt-container-page.page-two-items .receipt-box {
+            flex: 0 0 48.5%;
+        }
+
+        /* 當只印 1 張通知單時 */
+        .receipt-box.single-notice {
+            flex: none;
+            margin-bottom: 20px;
+        }
+
         .receipt-title { text-align: center; font-size: 19px; font-weight: 900; line-height: 1.2; letter-spacing: 0.5px; }
         .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 4px; color: #222; font-weight: 500; }
         .receipt-header { display: flex; justify-content: space-between; font-size: 14.5px; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 2px solid #000; font-weight: bold; }
@@ -488,7 +502,7 @@
         @media print {
             @page { 
                 size: A4 portrait; 
-                margin: 5mm 8mm; /* 放大版面邊距，創造更大可視空間 */
+                margin: 5mm 8mm; 
             }
             html, body {
                 height: 100%;
@@ -2076,22 +2090,16 @@
 
         let fullHtml = '';
         if (type === 'receipt') {
-            fullHtml = '<div class="receipt-container-page">' +
+            // 收據：一個人固定 2 張 (家長收執聯 + 補習班存根聯)
+            fullHtml = '<div class="receipt-container-page page-two-items">' +
                 getSingleReceiptHtml(bill, true, '家長收執聯') +
                 '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, true, '留存聯') +
                 '</div>';
-            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁3聯)`;
+            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            fullHtml = '<div class="receipt-container-page">' +
-                getSingleReceiptHtml(bill, false, '第一聯') +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, false, '第二聯') +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, false, '第三聯') +
-                '</div>';
+            // 單一同學通知單：只出現 1 個通知單
+            fullHtml = getSingleReceiptHtml(bill, false, '', true);
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
         }
 
@@ -2112,6 +2120,7 @@
         printDocument(id, type);
     };
 
+    // 勾選列印通知單：1人1張、2人2張滿版、3人以上每3人一頁A4
     window.printSelectedCheckedNotices = function() {
         const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
         if (checkedBoxes.length === 0) {
@@ -2128,19 +2137,41 @@
         }
 
         let allHtml = '';
-        targetBills.forEach((bill, index) => {
-            allHtml += getSingleReceiptHtml(bill, false, '');
-            if ((index + 1) % 3 === 0 && index !== targetBills.length - 1) {
-                allHtml += '<div class="page-break"></div>';
-            } else if (index !== targetBills.length - 1) {
-                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            }
-        });
+        const count = targetBills.length;
+
+        if (count === 1) {
+            allHtml = getSingleReceiptHtml(targetBills[0], false, '', true);
+        } else if (count === 2) {
+            allHtml = '<div class="receipt-container-page page-two-items">' +
+                getSingleReceiptHtml(targetBills[0], false, '') +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(targetBills[1], false, '') +
+                '</div>';
+        } else {
+            // 3人以上：每3人一頁A4滿版
+            targetBills.forEach((bill, index) => {
+                if (index % 3 === 0) {
+                    allHtml += '<div class="receipt-container-page">';
+                }
+
+                allHtml += getSingleReceiptHtml(bill, false, '');
+
+                if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
+                    allHtml += '</div>';
+                    if (index !== targetBills.length - 1) {
+                        allHtml += '<div class="page-break"></div>';
+                    }
+                } else {
+                    allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                }
+            });
+        }
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
+    // 合併收據列印：收據固定 2 張 (家長收執聯 + 補習班存根聯)
     window.printCombinedSelectedReceipts = function() {
         const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
         if (checkedBoxes.length < 2) {
@@ -2156,12 +2187,10 @@
             return;
         }
 
-        const combinedHtml = '<div class="receipt-container-page">' +
+        const combinedHtml = '<div class="receipt-container-page page-two-items">' +
             getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
             '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
             getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
-            '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-            getCombinedReceiptHtml(targetBills, true, '留存聯') +
             '</div>';
 
         document.getElementById('printArea').innerHTML = combinedHtml;
@@ -2282,7 +2311,7 @@
                     paidDate: bill.paidDate
                 });
                 renderRecords();
-                if(confirm('結帳成功！需要立刻列印「正式收據 (1頁3聯滿版)」嗎？')) {
+                if(confirm('結帳成功！需要立刻列印「正式收據 (1頁2聯)」嗎？')) {
                     printDocument(id, 'receipt');
                 }
             } catch (e) {
@@ -2527,7 +2556,7 @@
         window.print();
     };
 
-    window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel) {
+    window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
         
@@ -2546,8 +2575,10 @@
             </div>
         ` : '';
 
+        const singleNoticeClass = isSingleNotice ? 'single-notice' : '';
+
         let html = `
-            <div class="receipt-box">
+            <div class="receipt-box ${singleNoticeClass}">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
                         <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
@@ -2670,35 +2701,29 @@
         return html;
     }
 
-    // 列印單張單據：一次完整輸出 3 聯滿版 A4
+    // 列印單張單據：收據固定為 2 聯 (家長收執聯 + 補習班存根聯)；通知單只印 1 張
     window.printDocument = function(id, type) {
         const bill = window.bills.find(b => b.id === id);
         if(!bill) return;
         
         const isReceipt = type === 'receipt';
-        let allHtml = '<div class="receipt-container-page">';
+        let allHtml = '';
 
         if (isReceipt) {
-            allHtml += getSingleReceiptHtml(bill, true, '家長收執聯');
-            allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            allHtml += getSingleReceiptHtml(bill, true, '補習班存根聯');
-            allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            allHtml += getSingleReceiptHtml(bill, true, '留存聯');
+            allHtml = '<div class="receipt-container-page page-two-items">' +
+                getSingleReceiptHtml(bill, true, '家長收執聯') +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(bill, true, '補習班存根聯') +
+                '</div>';
         } else {
-            allHtml += getSingleReceiptHtml(bill, false, '第一聯');
-            allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            allHtml += getSingleReceiptHtml(bill, false, '第二聯');
-            allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            allHtml += getSingleReceiptHtml(bill, false, '第三聯');
+            allHtml = getSingleReceiptHtml(bill, false, '', true);
         }
-
-        allHtml += '</div>';
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     }
 
-    // 批次列印該班未繳通知單
+    // 批次列印該班未繳通知單 (每 3 位同學剛好滿版一頁 A4)
     window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const targetClass = document.getElementById('filterClassSelect').value;
