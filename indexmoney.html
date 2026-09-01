@@ -726,7 +726,7 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">單據年月</th>
+                            <th style="width: 170px;">單據年月/期間</th>
                             <th style="width: 180px;">班級 / 姓名</th>
                             <th>應繳費用項目明細</th>
                             <th style="width: 100px; text-align: right;">總金額</th>
@@ -877,7 +877,7 @@
             </div>
             
             <div id="modalMonthSelectContainer">
-                <select id="modalBillMonthSelect" style="font-weight: bold; color: #1E40AF;"></select>
+                <select id="modalBillMonthSelect" onchange="onModalMonthSelectChange()" style="font-weight: bold; color: #1E40AF;"></select>
             </div>
 
             <div id="modalCustomDateContainer" style="display: none; gap: 6px; align-items: center; margin-top: 6px;">
@@ -1028,6 +1028,35 @@
     let pQuickSortable = null;
     let jQuickSortable = null;
     let oQuickSortable = null;
+
+    // 計算 3 個月的自然月區間：某年某月1日 ～ 第3個月的最後一日 (例如 2026-09-01 ~ 2026-11-30)
+    window.calculate3MonthRange = function(year, month) {
+        const startD = new Date(year, month - 1, 1);
+        const endD = new Date(year, month - 1 + 3, 0); // 取第 3 個月的最後一天 (大小月、閏年自動精準計算)
+        
+        const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
+        const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+        return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
+    };
+
+    // 計算下一期 3 個月自然月週期
+    window.calculateNext3MonthRangeFromEnd = function(endDateStr) {
+        const [eY, eM, eD] = endDateStr.split('-').map(Number);
+        const nextStartD = new Date(eY, eM, 1); // 結束日期的下個月1日
+        return window.calculate3MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
+    };
+
+    // 檢查某月份是否落入單據所屬期間
+    window.isBillMatchingMonth = function(bill, targetMonth) {
+        if (!bill || !targetMonth) return false;
+        if (bill.yearMonth === targetMonth) return true;
+        if (bill.periodStr && bill.periodStr.includes('~')) {
+            const [s, e] = bill.periodStr.split('~').map(x => x.trim().substring(0, 7));
+            return targetMonth >= s && targetMonth <= e;
+        }
+        if (bill.periodStr) return bill.periodStr.includes(targetMonth);
+        return false;
+    };
 
     window.formatFullClassName = function(className) {
         if (!className) return '斗六顧德';
@@ -1406,8 +1435,8 @@
             const rowClass = gender === 'female' ? 'row-female' : 'row-male';
             const genderIcon = gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
 
-            // 尋找當月 (或包含該月) 的單據
-            const bill = window.bills.find(b => b.studentName === stu && (b.yearMonth === selectedMonth || (b.periodStr && b.periodStr.includes(selectedMonth))));
+            // 尋找涵蓋選定月份的單據 (包含 3 個月自然月週期)
+            const bill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, selectedMonth));
 
             let displayPeriod = selectedMonth;
             let itemsHtml = '<span style="color:#94A3B8; font-size:12px;">尚未設定費用</span>';
@@ -1426,6 +1455,11 @@
                 } else {
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
+            } else if (window.isJuniorHigh(cls)) {
+                // 國中部若尚未開單，預設顯示以選定月份為起始的 3 個月週期
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const r = window.calculate3MonthRange(y, m);
+                displayPeriod = r.periodStr;
             }
 
             const trHtml = `
@@ -1449,6 +1483,7 @@
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
         window.currentStudent = stu;
+        const isJr = window.isJuniorHigh(cls);
 
         document.getElementById('modalBillClassName').value = cls;
         document.getElementById('modalBillStudentName').value = stu;
@@ -1466,19 +1501,28 @@
         }
         monthSelect.innerHTML = monthOptions;
 
-        // 重置自訂日期
-        document.getElementById('modalCustomPeriodToggle').checked = false;
-        document.getElementById('modalCustomDateContainer').style.display = 'none';
-        document.getElementById('modalStartDate').value = getCurrentDateStr();
-        const endDateObj = new Date();
-        endDateObj.setMonth(endDateObj.getMonth() + 3);
-        document.getElementById('modalEndDate').value = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
+        // 計算自然 3 個月週期 (如 2026-09-01 ~ 2026-11-30)
+        const defaultRange = window.calculate3MonthRange(currY, currM);
+
+        if (isJr) {
+            // 國中部預設強制啟用自然 3 個月自訂起訖區間
+            document.getElementById('modalCustomPeriodToggle').checked = true;
+            document.getElementById('modalCustomDateContainer').style.display = 'flex';
+            document.getElementById('modalStartDate').value = defaultRange.start;
+            document.getElementById('modalEndDate').value = defaultRange.end;
+        } else {
+            // 國小部預設月繳
+            document.getElementById('modalCustomPeriodToggle').checked = false;
+            document.getElementById('modalCustomDateContainer').style.display = 'none';
+            document.getElementById('modalStartDate').value = defaultRange.start;
+            document.getElementById('modalEndDate').value = defaultRange.end;
+        }
 
         // 依據國中/國小過濾下拉項目
         populateQuickDropdownForModal(cls);
 
         // 讀取既有單據明細 (若有)
-        const existingBill = window.bills.find(b => b.studentName === stu && (b.yearMonth === currentMonth || (b.periodStr && b.periodStr.includes(currentMonth))));
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, currentMonth));
         if (existingBill && existingBill.items) {
             window.modalCurrentItems = JSON.parse(JSON.stringify(existingBill.items));
             if (existingBill.periodStr && existingBill.periodStr.includes('~')) {
@@ -1494,6 +1538,15 @@
 
         renderModalItemsList();
         document.getElementById('addFeeItemModal').style.display = 'flex';
+    };
+
+    window.onModalMonthSelectChange = function() {
+        const ym = document.getElementById('modalBillMonthSelect').value;
+        if (!ym) return;
+        const [y, m] = ym.split('-').map(Number);
+        const r = window.calculate3MonthRange(y, m);
+        document.getElementById('modalStartDate').value = r.start;
+        document.getElementById('modalEndDate').value = r.end;
     };
 
     function populateQuickDropdownForModal(cls) {
@@ -1604,7 +1657,8 @@
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
 
-        const existingBill = window.bills.find(b => b.studentName === stu && (b.periodStr === displayPeriod || b.yearMonth === yMonth));
+        // 檢查是否存在同名且期間重疊/相同的單據
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && (b.periodStr === displayPeriod || b.yearMonth === yMonth || window.isBillMatchingMonth(b, yMonth)));
 
         try {
             if (existingBill) {
@@ -1657,7 +1711,7 @@
         }
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (精準3個月自然月週期) ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
         try {
@@ -1666,25 +1720,11 @@
             let nextYearMonth = '';
 
             if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
-                // 國中部區間延後一趟
+                // 國中部自然 3 個月週期精準延展 (例如 09-01~11-30 下一期自動為 12-01~02-28)
                 const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
-                const startDate = new Date(startStr);
-                const endDate = new Date(endStr);
-                
-                const diffTime = Math.abs(endDate - startDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 90;
-
-                const nextStartDate = new Date(endDate);
-                nextStartDate.setDate(nextStartDate.getDate() + 1);
-
-                const nextEndDate = new Date(nextStartDate);
-                nextEndDate.setDate(nextEndDate.getDate() + diffDays);
-
-                const sStr = `${nextStartDate.getFullYear()}-${String(nextStartDate.getMonth() + 1).padStart(2, '0')}-${String(nextStartDate.getDate()).padStart(2, '0')}`;
-                const eStr = `${nextEndDate.getFullYear()}-${String(nextEndDate.getMonth() + 1).padStart(2, '0')}-${String(nextEndDate.getDate()).padStart(2, '0')}`;
-                
-                nextPeriodStr = `${sStr} ~ ${eStr}`;
-                nextYearMonth = sStr.substring(0, 7);
+                const nextRange = window.calculateNext3MonthRangeFromEnd(endStr);
+                nextPeriodStr = nextRange.periodStr;
+                nextYearMonth = nextRange.start.substring(0, 7);
             } else {
                 // 國小部/課輔部月份自動 +1 個月
                 let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
@@ -1719,7 +1759,7 @@
                 const docRef = await addDoc(collection(db, "bills"), autoBill);
                 autoBill.firestoreId = docRef.id;
                 window.bills.unshift(autoBill);
-                console.log(`自動延續單據成功：${currentBill.studentName} (${nextPeriodStr})`);
+                console.log(`自動延續下一期成功：${currentBill.studentName} (${nextPeriodStr})`);
             }
         } catch (err) {
             console.error("自動延續下一期失敗：", err);
@@ -2045,7 +2085,7 @@
         let filteredBills = [...window.bills];
 
         if (filterMonth) {
-            filteredBills = filteredBills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth)));
+            filteredBills = filteredBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
         }
 
         if (filterClass) {
@@ -2129,14 +2169,14 @@
         let unpaidBills = window.bills.filter(b => {
             if (b.isPaid) return false;
 
-            let billMonth = b.yearMonth || '';
+            let billStartMonth = b.yearMonth || '';
             if (b.periodStr && b.periodStr.includes('~')) {
-                billMonth = b.periodStr.split('~')[0].trim().substring(0, 7);
+                billStartMonth = b.periodStr.split('~')[0].trim().substring(0, 7);
             } else if (b.periodStr && b.periodStr.length >= 7) {
-                billMonth = b.periodStr.substring(0, 7);
+                billStartMonth = b.periodStr.substring(0, 7);
             }
 
-            if (billMonth && billMonth > currentMonth) {
+            if (billStartMonth && billStartMonth > currentMonth) {
                 return false;
             }
 
@@ -2391,7 +2431,9 @@
             bill.items = newItems;
             bill.total = newTotal;
             bill.periodStr = periodStr;
-            if (periodStr.length === 7 && !periodStr.includes('~')) {
+            if (periodStr.includes('~')) {
+                bill.yearMonth = periodStr.split('~')[0].trim().substring(0, 7);
+            } else if (periodStr.length === 7) {
                 bill.yearMonth = periodStr;
             }
 
@@ -2439,12 +2481,12 @@
                     paidDate: bill.paidDate
                 });
 
-                // 自動在雲端為該學生延續建立「下一期 / 下一趟」未繳單據
+                // 自動在雲端為該學生延續建立「下一期 / 下一趟（精準 3 個月）」未繳單據
                 await autoCreateNextPeriodBill(bill);
 
                 renderBillingStudentsTable();
                 renderRecords();
-                if(confirm('結帳成功！系統已自動為同學建立下一期/下一趟繳費單。\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
+                if(confirm('結帳成功！系統已自動為同學建立下一期繳費單。\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
                     printDocument(id, 'receipt');
                 }
             } catch (e) {
@@ -2870,7 +2912,7 @@
 
         let targetBills = window.bills.filter(b => b.className === targetClass && !b.isPaid);
         if (filterMonth) {
-            targetBills = targetBills.filter(b => b.yearMonth === filterMonth || (b.periodStr && b.periodStr.includes(filterMonth)));
+            targetBills = targetBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
         }
 
         if(targetBills.length === 0) { 
