@@ -630,7 +630,7 @@
                     </div>
                     <div id="classDropdownWrapper" style="display:none;">
                         <label style="display:block; font-size:12.5px; font-weight:bold; color:var(--primary); margin-bottom:4px;">📚 選擇部門所屬班級：</label>
-                        <select id="classSelectDropdown" class="select-styled" onchange="onClassDropdownChange(this.value)" style="margin:0; font-size:14px; padding:8px 12px;"></select>
+                        <select id="classSelectDropdown" class="select-styled" onchange="onClassDropdownChange(this.value)" style="margin:0; font-size:14px; padding:8px 12px foreign;"></select>
                     </div>
                 </div>
             </div>
@@ -656,7 +656,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
                     <h4 id="studentListTitle" style="color:var(--primary); font-size:15px;">目前學生名冊</h4>
                     <div style="display:flex; gap:6px; align-items:center; width:100%;">
-                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:8px 10px; font-size:13px;">
+                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話、接送備註..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:8px 10px; font-size:13px;">
                     </div>
                 </div>
 
@@ -693,6 +693,7 @@
                                 <th style="width:120px;">電話 2</th>
                                 <th style="width:120px;">電話 3</th>
                                 <th style="width:160px;">補習課程</th>
+                                <th style="width:150px;">接送/社團備註</th>
                                 <th style="width:150px;">操作</th>
                             </tr>
                         </thead>
@@ -735,7 +736,7 @@
     </div>
 </div>
 
-<!-- 專屬班級快速點名彈窗（點擊未點名班級直接在當前分頁彈出） -->
+<!-- 專屬班級快速點名彈窗 -->
 <div class="modal-overlay" id="quickRollModal">
     <div class="modal-box" style="max-width:750px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:12px;">
@@ -896,6 +897,14 @@
         <div>
             <label style="font-size:13px;"><b>通訊地址：</b></label>
             <input type="text" id="m_stu_address" placeholder="例如：雲林縣斗六市...">
+        </div>
+
+        <!-- 🌸 淡粉紅色：學生接送備註(其他課程/學校社團) 區塊 -->
+        <div style="background:#fdf2f8; border:1.5px solid #fbcfe8; padding:12px; border-radius:8px; margin:10px 0;">
+            <label style="color:#9d174d; font-weight:bold; font-size:13px; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
+                🚗 學生接送備註(其他課程/學校社團)：
+            </label>
+            <textarea id="m_stu_pickup_notes" rows="2" style="resize:vertical; line-height:1.4; border-color:#f472b6; background:#fff; margin:0;" placeholder="例如：週二參加學校管樂社17:00接、週四佳音英語下課由媽媽自接、公誠側門接送..."></textarea>
         </div>
 
         <div>
@@ -1064,7 +1073,6 @@
         quickRollContext: { courseName: '', dateStr: '' }
     };
 
-    // 取得台灣時間 (UTC+8) 的 YYYY-MM-DD 字串
     function getTaiwanDateString(dateObj = new Date()) {
         const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
         const taiwanTime = new Date(utc + (3600000 * 8));
@@ -1162,7 +1170,8 @@
                     firestoreId: d.id,
                     ...stuData,
                     courses: coursesArr,
-                    course: coursesArr.join('、')
+                    course: coursesArr.join('、'),
+                    pickupNotes: stuData.pickupNotes || ''
                 });
             });
 
@@ -1597,8 +1606,14 @@
                 <div><b>爸爸職業：</b>${stu.fatherJob || '-'} ｜ <b>媽媽職業：</b>${stu.motherJob || '-'}</div>
                 <div style="margin-top:4px;"><b>健康狀況/過敏：</b>${stu.health || '-'}</div>
                 <div style="margin-top:4px;"><b>通訊地址：</b>${stu.address || '-'}</div>
-                <div style="margin-top:4px;"><b>修習課程：</b>${stuCourses}</div>
-                <div style="margin-top:4px;"><b>備註事項：</b>${stu.notes || '無'}</div>
+                
+                <div style="margin-top:10px; background:#fdf2f8; border:1.5px solid #fbcfe8; padding:10px; border-radius:8px;">
+                    <div style="color:#9d174d; font-weight:bold; font-size:13px;">🚗 學生接送備註(其他課程/學校社團)：</div>
+                    <div style="color:#831843; font-size:13px; margin-top:3px; line-height:1.4;">${stu.pickupNotes ? stu.pickupNotes.replace(/\n/g, '<br>') : '無特殊接送備註'}</div>
+                </div>
+
+                <div style="margin-top:8px;"><b>修習課程：</b>${stuCourses}</div>
+                <div style="margin-top:4px;"><b>學生詳細備註：</b>${stu.notes || '無'}</div>
             </div>
         `;
         document.getElementById('viewStudentContent').innerHTML = html;
@@ -1668,8 +1683,10 @@
                 const stuClass = (s.studentClass || '').toLowerCase();
                 const course = (s.course || '').toLowerCase();
                 const bday = (s.birthday || '').toLowerCase();
+                const pickup = (s.pickupNotes || '').toLowerCase();
+                const notes = (s.notes || '').toLowerCase();
                 const phones = (s.phones || []).map(p => p.number).join(' ');
-                return name.includes(keyword) || school.includes(keyword) || stuClass.includes(keyword) || course.includes(keyword) || bday.includes(keyword) || phones.includes(keyword);
+                return name.includes(keyword) || school.includes(keyword) || stuClass.includes(keyword) || course.includes(keyword) || bday.includes(keyword) || phones.includes(keyword) || pickup.includes(keyword) || notes.includes(keyword);
             });
         }
 
@@ -1682,7 +1699,7 @@
         if (gradCountBadge) gradCountBadge.innerText = `共 ${filtered.length} 人`;
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" style="padding:20px; color:#888; text-align:center;">目前查無學生資料。</td></tr>`;
             if (cardContainer) cardContainer.innerHTML = `<div style="padding:20px; color:#888; text-align:center; background:#fff; border-radius:8px; border:1px solid #cbd5e1;">目前查無學生資料。</div>`;
             return;
         }
@@ -1720,6 +1737,7 @@
                                 ${formatPhoneText(p2)}
                                 ${formatPhoneText(p3)}
                                 <div style="margin-top:6px;"><b>📖 修習課程：</b><div>${coursesTags}</div></div>
+                                ${stu.pickupNotes ? `<div style="margin-top:6px; background:#fdf2f8; border:1px solid #fbcfe8; padding:6px 8px; border-radius:6px; color:#9d174d; font-size:12.5px;">🚗 <b>接送/社團備註：</b>${stu.pickupNotes}</div>` : ''}
                             </div>
                             <div class="student-master-card-footer">
                                 <button class="btn btn-warning action-btn" onclick="openQuickAssignModal('${stu.firestoreId}')">📋 加選</button>
@@ -1756,6 +1774,7 @@
                         <td>${formatPlainPhone(p2)}</td>
                         <td>${formatPlainPhone(p3)}</td>
                         <td style="text-align:left;"><div>${coursesTags}</div></td>
+                        <td style="text-align:left; font-size:12px; color:#9d174d; background:#fff7fa;">${stu.pickupNotes || '<span style="color:#ccc;">-</span>'}</td>
                         <td>
                             <div class="action-btn-group">
                                 <button class="btn btn-warning action-btn" style="color:#000;" onclick="openQuickAssignModal('${stu.firestoreId}')">加選</button>
@@ -1870,6 +1889,7 @@
         document.getElementById('m_stu_p3_label').value = "學生本人";
         document.getElementById('m_stu_p3_num').value = "";
         document.getElementById('m_stu_address').value = "";
+        document.getElementById('m_stu_pickup_notes').value = "";
         document.getElementById('m_stu_father_job').value = "";
         document.getElementById('m_stu_mother_job').value = "";
         document.getElementById('m_stu_health').value = "";
@@ -1931,6 +1951,7 @@
         document.getElementById('m_stu_p3_label').value = p3.label || '學生本人';
         document.getElementById('m_stu_p3_num').value = p3.number || '';
         document.getElementById('m_stu_address').value = stu.address || '';
+        document.getElementById('m_stu_pickup_notes').value = stu.pickupNotes || '';
         document.getElementById('m_stu_father_job').value = stu.fatherJob || '';
         document.getElementById('m_stu_mother_job').value = stu.motherJob || '';
         document.getElementById('m_stu_health').value = stu.health || '';
@@ -1971,6 +1992,7 @@
                 { label: document.getElementById('m_stu_p3_label').value.trim(), number: document.getElementById('m_stu_p3_num').value.trim() }
             ],
             address: document.getElementById('m_stu_address').value.trim(),
+            pickupNotes: document.getElementById('m_stu_pickup_notes').value.trim(),
             fatherJob: document.getElementById('m_stu_father_job').value.trim(),
             motherJob: document.getElementById('m_stu_mother_job').value.trim(),
             health: document.getElementById('m_stu_health').value.trim(),
@@ -2264,7 +2286,7 @@
         document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="6" style="padding:12px; color:#888;">此班級目前無在籍學生</td></tr>`;
         
         updateHomeAlertBanner();
-    };
+    }
 
     window.setAttendance = function(key, status) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
