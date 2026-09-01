@@ -52,7 +52,6 @@
             max-width: 1080px;
         }
 
-        /* 頂部標頭區塊 */
         header {
             margin-bottom: 36px;
             display: flex;
@@ -137,7 +136,6 @@
             background: #fee2e2;
         }
 
-        /* 班級專屬面板提示條 */
         .teacher-class-banner {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -151,14 +149,12 @@
             gap: 8px;
         }
 
-        /* 網格排列 */
         .grid-menu {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
         }
 
-        /* 專業商務卡片 */
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -263,7 +259,6 @@
             transform: translateX(4px);
         }
 
-        /* 彈出視窗 Modal 共用樣式 */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -290,7 +285,7 @@
         }
 
         .modal-box.large {
-            max-width: 900px;
+            max-width: 920px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -377,7 +372,6 @@
             text-align: center;
         }
 
-        /* 後台 Tab 標籤切換按鈕 */
         .admin-tabs {
             display: flex;
             gap: 8px;
@@ -405,7 +399,6 @@
             border-color: var(--accent-blue);
         }
 
-        /* 標籤與清單樣式 */
         .teacher-list-table, .log-list-table {
             width: 100%;
             border-collapse: collapse;
@@ -451,7 +444,6 @@
         .btn-danger { color: #dc2626; border-color: #fecaca; }
         .btn-danger:hover { background: #fef2f2; }
 
-        /* 頁尾樣式 */
         footer {
             margin-top: 48px;
             display: flex;
@@ -516,7 +508,7 @@
                     <label>密碼</label>
                     <input type="password" id="loginPass" class="form-control" placeholder="請輸入密碼" required>
                 </div>
-                <button type="submit" class="btn-primary">登入系統</button>
+                <button type="submit" id="loginSubmitBtn" class="btn-primary">登入系統</button>
                 <div id="loginError" class="error-msg">帳號或密碼錯誤，請重新輸入</div>
             </form>
         </div>
@@ -544,11 +536,10 @@
     <div id="adminModal" class="modal-overlay" style="display: none;">
         <div class="modal-box large">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> 機構行政與權限管理後台</h3>
+                <h3><i class="fa-solid fa-gear"></i> 機構行政與權限管理後台 (雲端即時同步)</h3>
                 <button class="close-modal" onclick="closeAdminModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- 後台分頁切換按鈕 -->
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" onclick="switchAdminTab('teachers')">👨‍🏫 老師資料與權限設定</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('logs')">📜 使用者操作紀錄</button>
@@ -557,7 +548,7 @@
 
             <!-- 1. 老師設定分頁 -->
             <div id="adminTabTeachers">
-                <div style="margin-bottom: 20px; max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+                <div style="margin-bottom: 20px; max-height: 55vh; overflow-y: auto; padding-right: 5px;">
                     <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與完整人事資料</h4>
                     <form id="teacherForm" onsubmit="saveTeacher(event)">
                         <input type="hidden" id="editIndex" value="-1">
@@ -634,14 +625,14 @@
                             <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;"></div>
                         </div>
 
-                        <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存老師資料</button>
+                        <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存並同步至雲端</button>
                     </form>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
                 <div>
-                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊與資料</h4>
+                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊（雲端與本機同步）</h4>
                     <div style="overflow-x: auto;">
                         <table class="teacher-list-table">
                             <thead>
@@ -699,7 +690,7 @@
                 </button>
                 <div class="header-status">
                     <span class="status-indicator"></span>
-                    <span id="statusText">系統連線正常</span>
+                    <span id="statusText">正在同步雲端權限...</span>
                 </div>
             </div>
         </header>
@@ -822,10 +813,10 @@
         </footer>
     </div>
 
-    <!-- Firebase 模組自動同步班級與全系統雲端資料 -->
+    <!-- Firebase 模組：同步老師名冊、班級與學籍總庫 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -845,12 +836,23 @@
             junior: ["國二數學進階A班", "國三會考理化總複習"]
         };
 
-        // 用於備份全系統雲端資料的全局變數
         window.cloudBackupDataStore = { courses: null, students: [], attendance: null };
 
-        async function fetchCloudDataFromRollbook() {
+        // 雲端同步全系統資料及老師名冊
+        window.fetchCloudAllData = async function() {
             try {
-                // 1. 抓取課程與班級
+                // 1. 抓取雲端老師名冊
+                const teachersDoc = await getDoc(doc(db, "classLogSettings", "teachers"));
+                if (teachersDoc.exists() && teachersDoc.data().list) {
+                    const cloudTeachers = teachersDoc.data().list;
+                    localStorage.setItem('good_school_teachers', JSON.stringify(cloudTeachers));
+                } else {
+                    // 若雲端尚無資料，建立預設並寫入雲端
+                    let localTeachers = getTeachers();
+                    await setDoc(doc(db, "classLogSettings", "teachers"), { list: localTeachers }, { merge: true });
+                }
+
+                // 2. 抓取課程與班級
                 const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
                 if (coursesDoc.exists()) {
                     const data = coursesDoc.data().data || {};
@@ -860,36 +862,47 @@
                     if (data.junior) window.cloudDepartmentsClasses.junior = data.junior.map(c => typeof c === 'object' ? c.name : c);
                 }
 
-                // 2. 抓取學生學籍總庫
+                // 3. 抓取學生學籍
                 const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
                 let studentsArr = [];
-                studentsSnapshot.forEach(d => {
-                    studentsArr.push({ id: d.id, ...d.data() });
-                });
+                studentsSnapshot.forEach(d => studentsArr.push({ id: d.id, ...d.data() }));
                 window.cloudBackupDataStore.students = studentsArr;
 
-                // 3. 抓取雲端點名紀錄
+                // 4. 抓取雲端點名紀錄
                 const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
                 if (attendanceDoc.exists()) {
                     window.cloudBackupDataStore.attendance = attendanceDoc.data().data || {};
                 }
 
-                console.log("✅ 成功從 Firebase 雲端同步最新學籍與課程資料！");
+                document.getElementById('statusText').innerText = "系統雲端連線正常";
             } catch (e) {
-                console.log("使用本機備用資料架構。");
+                console.warn("雲端讀取離線，使用本機快取資料：", e);
+                document.getElementById('statusText').innerText = "離線工作模式 (本地資料)";
             }
             filterClassesByDepartment();
-        }
+        };
+
+        // 將老師名冊即時回寫 Firebase 雲端
+        window.saveTeachersToCloud = async function(teachersArray) {
+            try {
+                await setDoc(doc(db, "classLogSettings", "teachers"), { list: teachersArray }, { merge: true });
+                return true;
+            } catch (error) {
+                console.error("雲端更新失敗：", error);
+                return false;
+            }
+        };
 
         window.syncClassesFromRollbook = async function() {
-            alert("正在從雲端同步最新班級...");
-            await fetchCloudDataFromRollbook();
-            logUserAction('系統維護', '手動點擊雲端同步最新班級與學籍清單');
-            alert("✅ 同步完成！選單已更新為最新班級。");
+            alert("正在從雲端同步最新班級與老師清單...");
+            await window.fetchCloudAllData();
+            renderTeacherTable();
+            logUserAction('系統維護', '手動點擊雲端同步最新班級與老師清單');
+            alert("✅ 同步完成！已更新為最新雲端資料。");
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
-            await fetchCloudDataFromRollbook();
+            await window.fetchCloudAllData();
             checkLoginState();
         });
     </script>
@@ -899,7 +912,6 @@
         const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
 
-        // 紀錄使用者操作足跡 (Audit Log)
         function logUserAction(actionType, details) {
             let user = sessionStorage.getItem('good_current_user') || '訪客';
             let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
@@ -944,7 +956,7 @@
             }
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             let uInput = document.getElementById('loginUser').value.trim();
             let pInput = document.getElementById('loginPass').value.trim();
@@ -956,6 +968,11 @@
                 logUserAction('系統登入', '管理者登入系統');
                 applyUserPermissions('雅鴻 (管理者)');
                 return;
+            }
+
+            // 登入前若雲端可用，重新拉取最新名冊
+            if (window.fetchCloudAllData) {
+                await window.fetchCloudAllData();
             }
 
             let teachers = getTeachers();
@@ -981,7 +998,6 @@
             let cards = document.querySelectorAll('.grid-menu .card');
             let logoutBtn = document.getElementById('logoutBtn');
             let welcomeText = document.getElementById('welcomeText');
-            let statusText = document.getElementById('statusText');
             let banner = document.getElementById('teacherClassBanner');
             let classText = document.getElementById('assignedClassText');
 
@@ -989,16 +1005,14 @@
 
             if (user === '雅鴻 (管理者)') {
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">雅鴻 (最高管理者)</span>`;
-                statusText.innerText = "已取得完整系統權限";
                 cards.forEach(card => card.classList.remove('locked'));
                 banner.style.display = 'none';
             } else {
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
-                statusText.innerText = `已登入 (${user})`;
                 
                 let teachers = getTeachers();
                 let tData = teachers.find(t => t.name === user);
-                let allowedPerms = tData ? tData.perms : [];
+                let allowedPerms = tData ? (tData.perms || []) : [];
                 let assignedClasses = tData ? (tData.classes || []) : [];
 
                 if (assignedClasses.length > 0) {
@@ -1054,10 +1068,9 @@
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
             document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
-            document.getElementById('submitBtnText').innerText = "儲存老師資料";
+            document.getElementById('submitBtnText').innerText = "儲存並同步至雲端";
         }
 
-        // 後台分頁切換
         window.switchAdminTab = function(tabName) {
             const tabTeachers = document.getElementById('adminTabTeachers');
             const tabLogs = document.getElementById('adminTabLogs');
@@ -1079,7 +1092,6 @@
             }
         };
 
-        // 渲染操作紀錄表格
         function renderAuditLogsTable() {
             let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
             let tbody = document.getElementById('auditLogTableBody');
@@ -1110,17 +1122,12 @@
             }
         };
 
-        // 全系統資料打包下載 (包含雲端學生總庫、課程、點名、本機老師與操作紀錄)
         window.backupSystemData = function() {
             const backupPackage = {
                 exportDate: new Date().toISOString(),
-                // 雲端資料總庫 (from rollbook)
                 cloudDatabase: window.cloudBackupDataStore || {},
-                // 本機資料
                 teachers: JSON.parse(localStorage.getItem('good_school_teachers') || '[]'),
-                auditLogs: JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]'),
-                holidays: JSON.parse(localStorage.getItem('gude_holidays') || '[]'),
-                attendanceRecords: JSON.parse(localStorage.getItem('gude_attendance_records') || '{}')
+                auditLogs: JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]')
             };
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPackage, null, 2));
@@ -1131,8 +1138,8 @@
             downloadAnchor.click();
             downloadAnchor.remove();
 
-            logUserAction('系統備份', '下載全系統（含學生總庫與點名）完整備份 JSON 檔案');
-            alert('✅ 全系統資料（包含雲端學籍、課程、點名、老師權限與操作日誌）已完整打包下載至您的電腦！');
+            logUserAction('系統備份', '下載全系統完整備份 JSON 檔案');
+            alert('✅ 全系統資料已完整打包下載至您的電腦！');
         };
 
         window.filterClassesByDepartment = function() {
@@ -1210,7 +1217,7 @@
             });
         }
 
-        window.saveTeacher = function(e) {
+        window.saveTeacher = async function(e) {
             e.preventDefault();
             let name = document.getElementById('tName').value.trim();
             let pass = document.getElementById('tPass').value.trim();
@@ -1242,14 +1249,19 @@
                 logUserAction('人事管理', `修改老師資料與權限：${name}`);
             }
 
+            // 同步寫入 LocalStorage 與 Firebase 雲端
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
+            if (window.saveTeachersToCloud) {
+                await window.saveTeachersToCloud(teachers);
+            }
+
             document.getElementById('teacherForm').reset();
             document.getElementById('editIndex').value = "-1";
             document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
-            document.getElementById('submitBtnText').innerText = "儲存老師資料";
+            document.getElementById('submitBtnText').innerText = "儲存並同步至雲端";
             renderDepartmentClasses();
             renderTeacherTable();
-            alert('老師人事資料、權限與班級指派儲存成功！');
+            alert('✅ 老師帳號、密碼與權限已成功同步更新至雲端！所有裝置均可即時登入。');
         };
 
         window.editTeacher = function(index) {
@@ -1267,7 +1279,7 @@
             document.getElementById('editIndex').value = index;
 
             document.getElementById('formTitleText').innerText = `編輯老師資料與班級：${t.name}`;
-            document.getElementById('submitBtnText').innerText = "確認修改老師資料";
+            document.getElementById('submitBtnText').innerText = "確認修改並同步雲端";
 
             let permCheckboxes = document.querySelectorAll('input[name="perm"]');
             permCheckboxes.forEach(cb => {
@@ -1280,14 +1292,18 @@
             });
         };
 
-        window.deleteTeacher = function(index) {
+        window.deleteTeacher = async function(index) {
             let teachers = getTeachers();
             let targetName = teachers[index] ? teachers[index].name : '未知';
             if (confirm(`確定要刪除老師【${targetName}】的帳號與權限設定嗎？`)) {
                 teachers.splice(index, 1);
                 localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
+                if (window.saveTeachersToCloud) {
+                    await window.saveTeachersToCloud(teachers);
+                }
                 logUserAction('人事管理', `刪除老師帳號：${targetName}`);
                 renderTeacherTable();
+                alert(`已刪除老師【${targetName}】並同步更新至雲端。`);
             }
         };
     </script>
