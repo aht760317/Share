@@ -145,7 +145,6 @@
             flex-wrap: wrap;
         }
 
-        /* 按鈕與表單 */
         button { cursor: pointer; font-family: inherit; }
         .btn-select { 
             padding: 8px 14px; 
@@ -160,15 +159,14 @@
         .btn-select:hover { background: #E2E8F0; }
         .btn-select.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
 
-        /* 精簡化班級資訊卡網格 */
+        /* 班級資訊卡網格 (第一步選擇班級) */
         .class-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
         }
         .class-info-card {
-            background: #FFFFFF;
             border: 1.5px solid var(--border);
             border-radius: 10px;
             padding: 12px 14px;
@@ -179,56 +177,82 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            gap: 8px;
         }
         .class-info-card:hover {
-            border-color: #FECACA;
             transform: translateY(-2px);
             box-shadow: 0 5px 12px rgba(197, 34, 39, 0.08);
+            filter: brightness(0.98);
         }
         .class-info-card.active {
-            border-color: var(--primary);
-            background: #FFFBFB;
+            border-color: var(--primary) !important;
             box-shadow: 0 0 0 2px var(--primary);
         }
+
+        /* 依時段賦予淡雅顏色區分 */
+        .time-afternoon {
+            background-color: #F0F9FF; /* 柔和淡天藍 (下午班) */
+            border-color: #BAE6FD;
+        }
+        .time-evening {
+            background-color: #FEFCE8; /* 柔和淡鵝黃 (晚上班) */
+            border-color: #FEF08A;
+        }
+        .time-default {
+            background-color: #FFFBFB; /* 柔和淡粉白 (未指定) */
+            border-color: #FECACA;
+        }
+
+        /* 第一列：班級名稱與授課老師同列並排 */
         .class-info-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            gap: 6px;
+        }
+        .class-title-teacher-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
         }
         .class-info-name {
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 900;
             color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            white-space: nowrap;
         }
         .class-info-name span { color: var(--primary); }
+        .class-info-teacher-inline {
+            font-size: 13px;
+            font-weight: bold;
+            color: #475569;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
         .class-info-count {
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: bold;
             color: #64748B;
-            background: #F1F5F9;
+            background: rgba(255, 255, 255, 0.85);
             padding: 2px 8px;
             border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            white-space: nowrap;
         }
-        .class-info-teacher {
-            font-size: 13.5px;
-            color: #334155;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .class-info-teacher strong {
-            color: var(--text-main);
-            font-size: 14px;
-        }
+
+        /* 第二列：本期期間 */
         .class-info-period {
-            background: #FEF2F2;
-            border: 1px solid #FECACA;
-            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px dashed rgba(0, 0, 0, 0.12);
+            padding: 5px 8px;
             border-radius: 6px;
             font-size: 12px;
             color: #991B1B;
@@ -653,12 +677,12 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：產生新繳費單 (精簡卡片：只留本期與老師) -->
+    <!-- 頁籤 3：產生新繳費單 (班級與老師同列，時段色彩區隔) -->
     <div id="create" class="content-area active">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
             <div>
                 <h3 class="section-title" style="margin:0; border:none; padding:0;">第一步：選擇英語班級</h3>
-                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（卡片支援自由拖曳自訂順序）</p>
+                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（底色依時段區分：藍色=下午班、黃色=晚上班；支援拖曳排序）</p>
             </div>
             <button class="btn-sync" style="padding:5px 12px; font-size:12px;" onclick="syncAllFromRollbook()">🔄 重新整理排程</button>
         </div>
@@ -1159,6 +1183,8 @@
                             syncedClassOrder.push(name);
                         }
                         syncedClassMeta[name] = {
+                            day: c.day || '',
+                            time: c.time || '',
                             teacher: c.teacher || '未設定師資',
                             startDate: c.startDate || '',
                             endDate: c.endDate || ''
@@ -1186,7 +1212,7 @@
                     if (!syncedClasses[clsName]) {
                         syncedClasses[clsName] = [];
                         syncedClassOrder.push(clsName);
-                        syncedClassMeta[clsName] = { teacher: '未設定', startDate: '', endDate: '' };
+                        syncedClassMeta[clsName] = { day: '', time: '', teacher: '未設定', startDate: '', endDate: '' };
                     }
                     if (!syncedClasses[clsName].includes(stuName)) {
                         syncedClasses[clsName].push(stuName);
@@ -1299,7 +1325,7 @@
         if(tabId === 'settings') renderQuickItemConfigList();
     };
 
-    /* 頁籤 3：產生繳費單 (精簡卡片呈現) */
+    /* 頁籤 3：產生繳費單 (精簡卡片：班級與老師同列，時段色彩淡雅區分) */
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -1307,9 +1333,22 @@
         const classOrder = window.config.classOrder;
 
         classOrder.forEach(cls => {
-            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { teacher: '未設師資', startDate: '', endDate: '' };
+            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { teacher: '未設師資', time: '', startDate: '', endDate: '' };
             const stuCount = (window.config.classes[cls] || []).length;
             const isSelected = (cls === window.currentClass);
+
+            // 依上課時段決定淡雅色彩
+            let timeColorClass = 'time-default';
+            const timeStr = meta.time || '';
+            const match = timeStr.match(/^(\d{1,2}):/);
+            if (match) {
+                const hour = parseInt(match[1]);
+                if (hour >= 18) {
+                    timeColorClass = 'time-evening';   // 晚上班：淡鵝黃
+                } else {
+                    timeColorClass = 'time-afternoon'; // 下午班：淡天藍
+                }
+            }
 
             let periodText = '期程未設定';
             if (meta.startDate && meta.endDate) {
@@ -1319,19 +1358,17 @@
             }
 
             const card = document.createElement('div');
-            card.className = `class-info-card ${isSelected ? 'active' : ''}`;
+            card.className = `class-info-card ${timeColorClass} ${isSelected ? 'active' : ''}`;
             card.setAttribute('data-classname', cls);
             card.onclick = () => selectBillingClass(cls);
 
             card.innerHTML = `
-                <div>
-                    <div class="class-info-header">
+                <div class="class-info-header">
+                    <div class="class-title-teacher-group">
                         <div class="class-info-name">🔤 <span>${cls}</span></div>
-                        <span class="class-info-count">學員 ${stuCount} 人</span>
+                        <div class="class-info-teacher-inline" title="授課老師：${meta.teacher}">👨‍🏫 ${meta.teacher}</div>
                     </div>
-                    <div class="class-info-teacher">
-                        <span>👨‍🏫 授課老師：</span><strong>${meta.teacher}</strong>
-                    </div>
+                    <span class="class-info-count">${stuCount} 人</span>
                 </div>
                 <div class="class-info-period">
                     <span>📅 本期：</span>${periodText}
