@@ -14,8 +14,8 @@
             --success: #15803D;
             --warning: #B45309;
             --purple: #6D28D9;
-            --blue: #0284C7;           /* 新增：重點按鈕海湛藍 */
-            --gray-btn: #64748B;       /* 新增：次要按鈕沉穩灰 */
+            --blue: #0284C7;           /* 重點按鈕海湛藍 */
+            --gray-btn: #64748B;       /* 次要按鈕沉穩灰 */
             --bg: #F8FAFC;             /* 舒心純淨灰白背景 */
             --card-bg: #FFFFFF;
             --border: #E2E8F0;         /* 簡約清晰淺灰邊框 */
@@ -117,12 +117,12 @@
 
         /* 班級全覽卡片網格（迷你化 Compact） */
         .classes-overview-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 12px; margin-top: 14px;
         }
         .class-box-card {
             background: #FFFFFF; border: 1.5px solid var(--border); border-radius: 8px;
-            padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 14px; display: flex; flex-direction: column; justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s;
             position: relative; overflow: hidden;
         }
@@ -137,7 +137,7 @@
         .class-box-card:hover::before {
             background: var(--primary);
         }
-        .class-box-title { font-size: 15.5px; font-weight: 800; color: var(--text-main); margin: 5px 0 4px; }
+        .class-box-title { font-size: 16px; font-weight: 800; color: var(--text-main); }
 
         .course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -158,7 +158,7 @@
         .student-card.present { border-color: var(--success); background: #F0FDF4; }
         .student-card.leave { border-color: var(--danger); background: #FFF5F5; }
 
-        .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13.5px; }
+        .btn { padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-dark); }
         .btn-success { background: var(--success); color: white; }
@@ -429,7 +429,7 @@
         </div>
     </div>
 
-    <!-- 4. 英語班級排程與班級總覽 -->
+    <!-- 4. 英語班級排程與班級總覽 (條列式優先，總攬在後) -->
     <div id="tab-class-config" style="display:none;">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom: 1.5px solid var(--border); padding-bottom: 12px;">
@@ -712,8 +712,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const SECURITY_CODE = "8888";
-    const CONFIRM_ROLLCALL_CODE = "0000";
+    // 統一管理驗證密碼為 0618
+    const SECURITY_CODE = "0618";
+    const CONFIRM_ROLLCALL_CODE = "0618";
+
     const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
     const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
@@ -727,7 +729,7 @@
         currentCourse: null,
         filterMode: 'today',
         selectedSheetCourse: null,
-        classViewMode: 'table',  // 預設改為條列式排程
+        classViewMode: 'table', // 預設為條列式排程
         selectedHolidayYear: currentSystemYear
     };
 
@@ -784,7 +786,6 @@
             renderMasterClassFilterOptions();
             renderMasterStudentsTable();
             renderSheetDropdown();
-            // 預設顯示條列式
             switchClassViewMode('table');
             renderHolidayList();
             updateHomeAlertBanner();
@@ -993,7 +994,7 @@
 
     window.resetRollCall = function() {
         const input = prompt("🔒 重新點名請輸入管理密碼：");
-        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！");
+        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！操作已取消。");
         const c = window.state.currentCourse;
         const dateStr = document.getElementById('rollDateInput').value;
         const students = window.state.students.filter(s => (s.courses || []).includes(c.name));
@@ -1263,7 +1264,7 @@
         }
     };
 
-    /* 渲染「班級總覽卡片專區」（迷你化、顏色區隔） */
+    /* 渲染「班級總覽卡片專區」（按鈕移至上方同行靠右） */
     function renderClassOverviewCards() {
         const container = document.getElementById('classCardsContainer');
         if (!container) return;
@@ -1280,24 +1281,27 @@
             card.className = 'class-box-card';
             card.innerHTML = `
                 <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:11px; font-weight:700; background:#F1F5F9; color:#475569; padding:2px 6px; border-radius:4px; border:1px solid #CBD5E1;">佳音班級</span>
-                        <span style="font-size:12px; color:var(--text-sub); font-weight:600;">學員：<b style="color:var(--text-main); font-size:13px;">${stuCount}</b> 人</span>
+                    <!-- 標題與上方靠右按鈕同行 -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+                        <div>
+                            <span style="font-size:10.5px; font-weight:700; background:#F1F5F9; color:#475569; padding:2px 6px; border-radius:4px; border:1px solid #CBD5E1;">佳音班級</span>
+                            <div class="class-box-title" style="margin-top:2px;">🔤 ${c.name}</div>
+                        </div>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <button class="btn btn-gray" style="padding:3px 8px; font-size:11px;" onclick="openEditClassModal('${c.name}')">⚙️ 編輯</button>
+                            <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="filterByClassFromCard('${c.name}')">👥 學員</button>
+                        </div>
                     </div>
-                    <div class="class-box-title" style="font-size:15.5px; margin:6px 0 4px;">🔤 ${c.name}</div>
-                    <div style="font-size:12.5px; color:#334155; margin-top:4px; line-height:1.5;">
+                    <div style="font-size:12px; color:#334155; margin-top:6px; line-height:1.5;">
                         <div>🗓️ <b>星期：</b><span style="color:var(--text-main); font-weight:700;">${c.day || '未設'}</span></div>
                         <div>🕒 <b>時段：</b>${c.time || '未設'}</div>
                         <div>👨‍🏫 <b>師資：</b>${c.teacher || '未設定'}</div>
-                        <div style="font-size:11.5px; color:#64748B; margin-top:4px;">📅 起訖：${c.startDate || '未定'} ~ ${c.endDate || '未定'}</div>
+                        <div style="font-size:11px; color:#64748B; margin-top:3px;">📅 起訖：${c.startDate || '未定'} ~ ${c.endDate || '未定'}</div>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:5px; margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
-                    <button class="btn btn-blue" style="padding:5px 8px; font-size:12px;" onclick="enterRollCallDirectly('${c.name}')">⚡ 快速進入點名</button>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn btn-gray" style="flex:1; padding:5px 8px; font-size:11.5px;" onclick="openEditClassModal('${c.name}')">⚙️ 編輯</button>
-                        <button class="btn btn-outline" style="flex:1; padding:5px 8px; font-size:11.5px;" onclick="filterByClassFromCard('${c.name}')">👥 學員</button>
-                    </div>
+                <div style="margin-top:10px; border-top:1px dashed var(--border); pt:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11.5px; color:var(--text-sub);">學員數：<b style="color:var(--text-main);">${stuCount}</b> 人</span>
+                    <button class="btn btn-blue" style="padding:4px 10px; font-size:11.5px;" onclick="enterRollCallDirectly('${c.name}')">⚡ 快速點名</button>
                 </div>
             `;
             container.appendChild(card);
