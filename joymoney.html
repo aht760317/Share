@@ -1050,6 +1050,22 @@
         return `斗六佳音 ${className}`;
     };
 
+    // 產生班級在下拉選單的完整格式標題：例如 "R7A (週一、四 - Eva老師)"
+    window.formatClassDropdownLabel = function(cls) {
+        const meta = (window.config.classMeta && window.config.classMeta[cls]) || {};
+        let parts = [];
+        if (meta.day) {
+            parts.push(meta.day.replace(/星期/g, '週'));
+        }
+        if (meta.teacher && meta.teacher !== '未設定' && meta.teacher !== '未設定師資') {
+            parts.push(`${meta.teacher}老師`);
+        }
+        if (parts.length > 0) {
+            return `${cls} (${parts.join(' - ')})`;
+        }
+        return cls;
+    };
+
     window.handleReportModeChange = function() {
         const mode = document.getElementById('reportModeSelect').value;
         const container = document.getElementById('reportDateInputContainer');
@@ -1268,22 +1284,30 @@
         }
     }
 
+    // 頁籤 1 繳費紀錄篩選班級下拉選單
     function updateClassFilterDropdown() {
         const select = document.getElementById('filterClassSelect');
         if (!select) return;
         const currentVal = select.value;
         const classNames = window.config.classOrder;
         select.innerHTML = '<option value="">全部班級</option>' + 
-            classNames.map(cls => `<option value="${cls}" ${cls === currentVal ? 'selected' : ''}>${cls}</option>`).join('');
+            classNames.map(cls => {
+                const label = window.formatClassDropdownLabel(cls);
+                return `<option value="${cls}" ${cls === currentVal ? 'selected' : ''}>${label}</option>`;
+            }).join('');
     }
 
+    // 頁籤 2 未繳費查詢篩選班級下拉選單
     function updateUnpaidClassDropdown() {
         const select = document.getElementById('unpaidClassFilter');
         if (!select) return;
         const currentVal = select.value;
         const classNames = window.config.classOrder;
         select.innerHTML = '<option value="">全部班級</option>' + 
-            classNames.map(cls => `<option value="${cls}" ${cls === currentVal ? 'selected' : ''}>${cls}</option>`).join('');
+            classNames.map(cls => {
+                const label = window.formatClassDropdownLabel(cls);
+                return `<option value="${cls}" ${cls === currentVal ? 'selected' : ''}>${label}</option>`;
+            }).join('');
     }
 
     async function saveStudentDetailsToCloud() {
@@ -1782,6 +1806,7 @@
         showDirectoryClass(window.currentDirectoryClass); 
     };
 
+    // 頁籤 5 通訊錄選擇班級下拉選單
     window.renderDirectoryInit = function() {
         const select = document.getElementById('directoryClassSelect');
         select.innerHTML = '';
@@ -1790,7 +1815,8 @@
 
         let html = `<option value="all">全校總覽 (${classOrder.length} 個班級)</option>`;
         classOrder.forEach(cls => {
-            html += `<option value="${cls}" ${cls === window.currentDirectoryClass ? 'selected' : ''}>${cls}</option>`;
+            const label = window.formatClassDropdownLabel(cls);
+            html += `<option value="${cls}" ${cls === window.currentDirectoryClass ? 'selected' : ''}>${label}</option>`;
         });
         select.innerHTML = html;
 
@@ -1815,7 +1841,9 @@
             
             students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
 
-            html += `<h4 style="margin-top:14px; margin-bottom:6px; color:var(--primary); font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:4px;">🏫 佳音英語斗六分校 ${className}</h4>`;
+            const classFullTitle = window.formatClassDropdownLabel(className);
+
+            html += `<h4 style="margin-top:14px; margin-bottom:6px; color:var(--primary); font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:4px;">🏫 佳音英語斗六分校 - ${classFullTitle}</h4>`;
             html += `<table class="data-table">
                         <thead>
                             <tr>
@@ -1859,7 +1887,7 @@
     window.printDirectory = function() {
         const printContent = document.getElementById('directoryContent').innerHTML;
         const printDate = new Date().toLocaleDateString();
-        const printTitle = window.currentDirectoryClass === 'all' ? '佳音英語斗六分校 - 全校學生通訊錄' : `佳音英語斗六分校 ${window.currentDirectoryClass} - 學生通訊錄`;
+        const printTitle = window.currentDirectoryClass === 'all' ? '佳音英語斗六分校 - 全校學生通訊錄' : `佳音英語斗六分校 ${window.formatClassDropdownLabel(window.currentDirectoryClass)} - 學生通訊錄`;
 
         const html = `
             <div class="report-box">
