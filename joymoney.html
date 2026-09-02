@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>佳音英語 - 智慧教務繳費管理系統</title>
+    <title>佳音英語斗六分校 - 智慧教務繳費管理系統</title>
     <!-- 引入 SortableJS 支援拖曳排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -33,7 +33,7 @@
         }
 
         .app-container { 
-            max-width: 1100px; 
+            max-width: 1200px; 
             margin: auto; 
             background: white; 
             border-radius: 12px; 
@@ -159,29 +159,37 @@
         .btn-select:hover { background: #E2E8F0; }
         .btn-select.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
 
-        /* 班級資訊卡網格 (第一步選擇班級) */
+        /* 一行五個卡片排版 (電腦端) */
         .class-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
             margin-bottom: 15px;
         }
+        @media screen and (max-width: 1024px) {
+            .class-card-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media screen and (max-width: 640px) {
+            .class-card-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
         .class-info-card {
             border: 1.5px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 14px;
+            border-radius: 8px;
+            padding: 8px 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            gap: 8px;
+            gap: 4px;
+            user-select: none;
         }
         .class-info-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 12px rgba(197, 34, 39, 0.08);
+            box-shadow: 0 4px 10px rgba(197, 34, 39, 0.1);
             filter: brightness(0.98);
         }
         .class-info-card.active {
@@ -189,7 +197,7 @@
             box-shadow: 0 0 0 2px var(--primary);
         }
 
-        /* 依時段賦予淡雅顏色區分 */
+        /* 依時段賦予淡雅色彩區分 */
         .time-afternoon {
             background-color: #F0F9FF; /* 柔和淡天藍 (下午班) */
             border-color: #BAE6FD;
@@ -199,7 +207,7 @@
             border-color: #FEF08A;
         }
         .time-default {
-            background-color: #FFFBFB; /* 柔和淡粉白 (未指定) */
+            background-color: #FFFBFB; /* 柔和淡粉白 */
             border-color: #FECACA;
         }
 
@@ -208,58 +216,67 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
         .class-title-teacher-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             flex: 1;
             min-width: 0;
             overflow: hidden;
         }
         .class-info-name {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 900;
-            color: var(--text-main);
+            color: var(--primary);
             white-space: nowrap;
         }
-        .class-info-name span { color: var(--primary); }
         .class-info-teacher-inline {
-            font-size: 13px;
-            font-weight: bold;
-            color: #475569;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #334155;
             background: rgba(255, 255, 255, 0.7);
             border: 1px solid rgba(0, 0, 0, 0.08);
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
         }
         .class-info-count {
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: bold;
             color: #64748B;
             background: rgba(255, 255, 255, 0.85);
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 1px 5px;
+            border-radius: 10px;
             border: 1px solid rgba(0, 0, 0, 0.06);
             white-space: nowrap;
         }
 
-        /* 第二列：本期期間 */
+        /* 第二列：上課星期 */
+        .class-info-day {
+            font-size: 11px;
+            font-weight: bold;
+            color: #475569;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 第三列：本期期間 */
         .class-info-period {
             background: rgba(255, 255, 255, 0.75);
             border: 1px dashed rgba(0, 0, 0, 0.12);
-            padding: 5px 8px;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10.5px;
             color: #991B1B;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         input, select, textarea { 
@@ -471,7 +488,6 @@
             .header h1 { font-size: 16px; }
             .btn-header-link { font-size: 12px; padding: 4px 8px; }
             
-            .class-card-grid { grid-template-columns: 1fr; }
             .finance-bar, .filter-bar { padding: 8px; margin-bottom: 8px; }
             
             .tab-action-bar {
@@ -554,7 +570,7 @@
 <div class="app-container no-print">
     <!-- 頂部標題列 -->
     <div class="header">
-        <h1>🔤 佳音英語 - 繳費管理系統</h1>
+        <h1>🔤 佳音英語斗六分校 - 繳費管理系統</h1>
         <div style="display:flex; gap:6px; align-items:center;">
             <button class="btn-header-link" onclick="syncAllFromRollbook()">🔄 同步學籍名單</button>
         </div>
@@ -628,7 +644,7 @@
         </div>
 
         <div class="tab-action-bar">
-            <div style="font-weight:bold; color:var(--text-main); font-size:15px;">📋 佳音英語 - 繳費總名冊</div>
+            <div style="font-weight:bold; color:var(--text-main); font-size:15px;">📋 佳音英語斗六分校 - 繳費總名冊</div>
             <div class="batch-action-group">
                 <span style="color: var(--primary); font-weight: bold; font-size: 12px; white-space: nowrap;">🖨️ 批次：</span>
                 <button class="btn-blue action-btn" onclick="printSelectedCheckedNotices()">印勾選通知單</button>
@@ -672,22 +688,22 @@
         </div>
 
         <div style="border: 2px solid #FECACA; border-radius: 8px; overflow: hidden; background: #FFF7F7;">
-            <div style="background:#FEF2F2; color:#991B1B; padding: 8px 12px; font-weight:bold; border-bottom: 1px solid #FECACA; font-size: 14px;">🔤 佳音英語 - 待繳費學員清單</div>
+            <div style="background:#FEF2F2; color:#991B1B; padding: 8px 12px; font-weight:bold; border-bottom: 1px solid #FECACA; font-size: 14px;">🔤 佳音英語斗六分校 - 待繳費學員清單</div>
             <div style="padding: 8px;" id="unpaidListBody"></div>
         </div>
     </div>
 
-    <!-- 頁籤 3：產生新繳費單 (班級與老師同列，時段色彩區隔) -->
+    <!-- 頁籤 3：產生新繳費單 (一行五個卡片，緊湊精準) -->
     <div id="create" class="content-area active">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
             <div>
                 <h3 class="section-title" style="margin:0; border:none; padding:0;">第一步：選擇英語班級</h3>
-                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（底色依時段區分：藍色=下午班、黃色=晚上班；支援拖曳排序）</p>
+                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（底色依時段區分：藍色=下午班、黃色=晚上班；卡片支援自由拖曳排序）</p>
             </div>
             <button class="btn-sync" style="padding:5px 12px; font-size:12px;" onclick="syncAllFromRollbook()">🔄 重新整理排程</button>
         </div>
 
-        <!-- 班級資訊卡網格 -->
+        <!-- 一行五個資訊卡網格 -->
         <div id="classGrid" class="class-card-grid"></div>
 
         <div id="billingClassStudentTableSection" style="display: none; margin-top: 15px;">
@@ -1028,9 +1044,10 @@
         return false;
     };
 
+    // 格式化全銜為「斗六佳音」
     window.formatFullClassName = function(className) {
-        if (!className) return '佳音英語';
-        return `佳音英語 ${className}`;
+        if (!className) return '斗六佳音';
+        return `斗六佳音 ${className}`;
     };
 
     window.handleReportModeChange = function() {
@@ -1163,7 +1180,7 @@
 
     window.syncAllFromRollbook = async function() {
         await autoSyncFromRollbookQuietly();
-        alert('🎉 佳音最新班級與排程名冊已成功同步！');
+        alert('🎉 最新班級與排程名冊已成功同步！');
     };
 
     async function autoSyncFromRollbookQuietly() {
@@ -1247,7 +1264,7 @@
             }
             renderUnpaidTabLists();
         } catch (e) {
-            console.error("佳音同步失敗：", e);
+            console.error("同步失敗：", e);
         }
     }
 
@@ -1325,7 +1342,7 @@
         if(tabId === 'settings') renderQuickItemConfigList();
     };
 
-    /* 頁籤 3：產生繳費單 (精簡卡片：班級與老師同列，時段色彩淡雅區分) */
+    /* 頁籤 3：產生繳費單 (一行五個小卡片排版) */
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -1333,11 +1350,11 @@
         const classOrder = window.config.classOrder;
 
         classOrder.forEach(cls => {
-            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { teacher: '未設師資', time: '', startDate: '', endDate: '' };
+            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { teacher: '未設師資', day: '', time: '', startDate: '', endDate: '' };
             const stuCount = (window.config.classes[cls] || []).length;
             const isSelected = (cls === window.currentClass);
 
-            // 依上課時段決定淡雅色彩
+            // 依上課時段決定淡雅色彩區隔
             let timeColorClass = 'time-default';
             const timeStr = meta.time || '';
             const match = timeStr.match(/^(\d{1,2}):/);
@@ -1350,11 +1367,14 @@
                 }
             }
 
+            // 格式化星期文字
+            let dayText = meta.day ? `🗓️ ${meta.day.replace(/星期/g, '週')}` : '🗓️ 尚未排課';
+
             let periodText = '期程未設定';
             if (meta.startDate && meta.endDate) {
                 periodText = `${meta.startDate} ~ ${meta.endDate}`;
             } else if (meta.startDate) {
-                periodText = `開課日：${meta.startDate}`;
+                periodText = `開課: ${meta.startDate}`;
             }
 
             const card = document.createElement('div');
@@ -1363,15 +1383,20 @@
             card.onclick = () => selectBillingClass(cls);
 
             card.innerHTML = `
-                <div class="class-info-header">
-                    <div class="class-title-teacher-group">
-                        <div class="class-info-name">🔤 <span>${cls}</span></div>
-                        <div class="class-info-teacher-inline" title="授課老師：${meta.teacher}">👨‍🏫 ${meta.teacher}</div>
+                <div>
+                    <div class="class-info-header">
+                        <div class="class-title-teacher-group">
+                            <div class="class-info-name">${cls}</div>
+                            <div class="class-info-teacher-inline" title="授課老師：${meta.teacher}">👨‍🏫 ${meta.teacher}</div>
+                        </div>
+                        <span class="class-info-count">${stuCount}人</span>
                     </div>
-                    <span class="class-info-count">${stuCount} 人</span>
+                    <div class="class-info-day" title="${meta.day}">
+                        ${dayText}
+                    </div>
                 </div>
-                <div class="class-info-period">
-                    <span>📅 本期：</span>${periodText}
+                <div class="class-info-period" title="本期起訖日：${periodText}">
+                    📅 ${periodText}
                 </div>
             `;
             grid.appendChild(card);
@@ -1790,7 +1815,7 @@
             
             students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
 
-            html += `<h4 style="margin-top:14px; margin-bottom:6px; color:var(--primary); font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:4px;">🏫 佳音英語 ${className}</h4>`;
+            html += `<h4 style="margin-top:14px; margin-bottom:6px; color:var(--primary); font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:4px;">🏫 佳音英語斗六分校 ${className}</h4>`;
             html += `<table class="data-table">
                         <thead>
                             <tr>
@@ -1834,7 +1859,7 @@
     window.printDirectory = function() {
         const printContent = document.getElementById('directoryContent').innerHTML;
         const printDate = new Date().toLocaleDateString();
-        const printTitle = window.currentDirectoryClass === 'all' ? '佳音英語 - 全校學生通訊錄' : `佳音英語 ${window.currentDirectoryClass} - 學生通訊錄`;
+        const printTitle = window.currentDirectoryClass === 'all' ? '佳音英語斗六分校 - 全校學生通訊錄' : `佳音英語斗六分校 ${window.currentDirectoryClass} - 學生通訊錄`;
 
         const html = `
             <div class="report-box">
@@ -2132,7 +2157,7 @@
             </div>
         `;
 
-        document.getElementById('previewModalTitle').innerText = '💰 佳音英語 - 收款確認';
+        document.getElementById('previewModalTitle').innerText = '💰 佳音英語斗六分校 - 收款確認';
         document.getElementById('billPreviewContent').innerHTML = modalHtml;
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
         if (footerBtn) footerBtn.style.display = 'none';
@@ -2470,7 +2495,7 @@
 
         html = `
             <div class="report-box">
-                <div style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:8px;">佳音英語 - ${reportTitle}</div>
+                <div style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:8px;">佳音英語斗六分校 - ${reportTitle}</div>
                 <div style="font-size:13px; margin-bottom: 6px; display:flex; justify-content:space-between;">
                     <span>${dateInfoText}</span>
                     <span>列印時間：${new Date().toLocaleTimeString()}</span>
@@ -2504,6 +2529,7 @@
         window.print();
     };
 
+    // 正式收據與通知單：抬頭改為「佳音英語斗六分校」
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
@@ -2533,8 +2559,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
                         <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                         <div style="flex: 1; text-align: center;">
-                            <div class="receipt-title">佳音英語 JOY ENGLISH</div>
-                            <div class="receipt-subtitle">專業美語分級教學 ｜ 智慧校務管理系統</div>
+                            <div class="receipt-title">佳音英語斗六分校</div>
+                            <div class="receipt-subtitle">JOY ENGLISH DOULIU ｜ 專業美語分級教學</div>
                         </div>
                         ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
                     </div>
@@ -2571,6 +2597,7 @@
         return html;
     };
 
+    // 合併收據抬頭改為「佳音英語斗六分校」
     window.getCombinedReceiptHtml = function(bills, isReceipt, copyLabel) {
         let combinedItemsHtml = '';
         let grandTotal = 0;
@@ -2620,8 +2647,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
                         <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                         <div style="flex: 1; text-align: center;">
-                            <div class="receipt-title">佳音英語 JOY ENGLISH</div>
-                            <div class="receipt-subtitle">專業美語分級教學 ｜ 智慧校務管理系統</div>
+                            <div class="receipt-title">佳音英語斗六分校</div>
+                            <div class="receipt-subtitle">JOY ENGLISH DOULIU ｜ 專業美語分級教學</div>
                         </div>
                         ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
                     </div>
