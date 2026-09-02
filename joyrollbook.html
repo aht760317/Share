@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>佳音英語斗六分校 - 智慧教務點名與學生管理系統</title>
+    <style>
+        :root {
+            --primary: #0284c7;       /* 佳音清爽英倫藍 */
+            --primary-dark: #0369a1;
+            --accent: #0ea5e9;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --bg: #f8fafc;
+            --border: #cbd5e1;
+            --tab-height: 62px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #1e293b; font-size: 15px; }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white; padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+        }
+        .header-title h2 { margin: 0; font-size: 19px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        .header-title p { margin: 3px 0 0; font-size: 12px; opacity: 0.9; }
+
+        .sync-controls {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .nav-link {
+            color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2);
+            padding: 7px 14px; border-radius: 20px; font-weight: bold; transition: 0.2s;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.35); }
+
+        .container { max-width: 1400px; margin: 15px auto; padding: 0 12px; }
+
+        /* 手機版：底部固定導覽列 */
+        @media(max-width: 767px) {
+            body {
+                padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 20px) + 15px) !important;
+            }
+            .tabs {
+                position: fixed; bottom: 0; left: 0; width: 100%;
+                height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+                background: #ffffff; border-top: 1px solid #e2e8f0;
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.06); z-index: 999;
+                display: flex; justify-content: space-around; align-items: flex-start;
+                padding: 6px 2px env(safe-area-inset-bottom, 6px); margin: 0; gap: 2px;
+            }
+            .tab-btn {
+                flex: 1; height: 50px; font-size: 10px; padding: 4px 1px;
+                border-radius: 8px; background: transparent; color: #64748b;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 2px; border: none; font-weight: 600; cursor: pointer;
+            }
+            .tab-btn .tab-icon { font-size: 17px; line-height: 1; }
+            .tab-btn.active {
+                background: #f0f9ff; color: var(--primary-dark); font-weight: bold;
+            }
+        }
+
+        /* 網頁版：頂部分頁切換列 */
+        @media(min-width: 768px) {
+            body { padding-bottom: 40px; }
+            .tabs {
+                display: flex; gap: 12px; margin-bottom: 20px;
+                background: white; padding: 10px; border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            }
+            .tab-btn {
+                flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px;
+                background: #f8fafc; font-size: 14px; font-weight: bold; cursor: pointer;
+                color: #334155; transition: 0.2s; display: flex; align-items: center;
+                justify-content: center; gap: 6px;
+            }
+            .tab-btn:hover { background: #f0f9ff; border-color: var(--accent); }
+            .tab-btn.active {
+                background: var(--primary); color: white; border-color: var(--primary);
+                box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            }
+            .card { padding: 22px; margin-bottom: 20px; }
+        }
+
+        .card {
+            background: white; border-radius: 10px; padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px;
+            border: 1px solid #edf2f7;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media(min-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+            .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        }
+
+        .filter-btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+        .filter-pill {
+            padding: 8px 14px; border: 1.5px solid var(--border); background: #f8fafc;
+            border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;
+            transition: 0.2s; user-select: none; color: #334155;
+        }
+        .filter-pill.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+        }
+
+        .course-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px; margin-top: 12px;
+        }
+        .course-card {
+            background: #fff; border: 2px solid var(--border); border-radius: 8px;
+            padding: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .course-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+        .course-card.active { border-color: var(--warning); background: #fffdf5; }
+
+        .student-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+        .student-card {
+            background: #fff; border: 1.5px solid var(--border); border-radius: 8px;
+            padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .student-card.present { border-color: var(--success); background: #f0fdf4; }
+        .student-card.leave { border-color: var(--danger); background: #fff5f5; }
+
+        .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13.5px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: #78350f; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-purple { background: var(--purple); color: white; }
+        .btn-outline { background: white; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn:hover { opacity: 0.9; }
+
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%; padding: 9px 12px; margin-top: 4px; margin-bottom: 10px;
+            border: 1px solid var(--border); border-radius: 6px; font-size: 14.5px; background: #fff;
+        }
+
+        .select-styled {
+            font-weight: 600; color: #1e293b; border: 1.5px solid #cbd5e1; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            appearance: none; padding-right: 36px !important;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid var(--border); padding: 8px 6px; text-align: center; vertical-align: middle; }
+        th { background: #f1f5f9; color: var(--primary-dark); font-weight: bold; }
+        .holiday-col { background: #fef3c7 !important; color: #92400e; font-weight: bold; }
+
+        .student-master-card {
+            background: #fff; border: 1.5px solid #cbd5e1; border-radius: 10px;
+            padding: 14px; margin-bottom: 10px;
+        }
+        .student-master-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 6px;
+        }
+
+        .paper-sheet {
+            background: #fff; padding: 20px; border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 0 0 1px #cbd5e1;
+            margin-top: 20px; overflow-x: auto;
+        }
+        .paper-sheet table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 600px; }
+        .paper-sheet th, .paper-sheet td { border: 1px solid #334155 !important; padding: 6px 4px; }
+        .paper-sheet th { background: #f8fafc; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; padding: 12px;
+        }
+        .modal-box {
+            background: white; width: 100%; max-width: 680px; padding: 20px;
+            border-radius: 10px; max-height: 90vh; overflow-y: auto;
+        }
+
+        .course-tag {
+            display: inline-block; font-size: 11.5px; font-weight: bold; padding: 2px 7px;
+            border-radius: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; margin: 2px;
+        }
+
+        @media print {
+            @page { size: landscape; margin: 6mm; }
+            body { background: white; padding: 0; }
+            header, .tabs, .no-print, .btn, .filter-btn-group { display: none !important; }
+            .card { box-shadow: none; padding: 0; margin: 0; border: none; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
+            table { font-size: 9pt; width: 100%; }
+            th, td { border: 1px solid #000 !important; padding: 4px 2px; }
+            .paper-sheet { box-shadow: none; border: none; padding: 0; overflow: visible; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title">
+        <h2>🔤 佳音英語 斗六分校 智慧教務點名系統</h2>
+        <p>Joy English Douliu Branch ｜ 英語學籍管理 ｜ 即時點名與出缺席聯繫總庫</p>
+    </div>
+    <div class="sync-controls no-print">
+        <span style="font-size: 13px; opacity: 0.9;">雲端連線狀態：<b style="color:#bbf7d0;">正常</b></span>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('rollcall')">
+            <span class="tab-icon">📱</span>
+            <span>今日點名</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('absent-alert')">
+            <span class="tab-icon">🚨</span>
+            <span>未到/未點名</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('sheet')">
+            <span class="tab-icon">🖨️</span>
+            <span>點名總表產出</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('class-config')">
+            <span class="tab-icon">⚙️</span>
+            <span>英語班級排程</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('students-master')">
+            <span class="tab-icon">👥</span>
+            <span>學生學籍總覽</span>
+        </button>
+    </div>
+
+    <!-- 1. 今日點名 -->
+    <div id="tab-rollcall">
+        <div class="card no-print" id="homeAlertBanner" style="background: #fffbeb; border: 2px solid #f59e0b; padding: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <h4 style="color: #92400e; font-size: 15px; margin:0; display:flex; align-items:center; gap:6px;">
+                    📢 櫃檯即時提醒：今日尚有班級未完成點名或學員未到班
+                </h4>
+                <button class="btn btn-warning" onclick="switchTab('absent-alert')">查看詳細未到名冊 🔍</button>
+            </div>
+            <div id="homeAlertContent" style="margin-top: 8px; font-size: 13.5px; color: #78350f;">正在載入今日出缺席狀況...</div>
+        </div>
+
+        <div class="card no-print">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                <h3 id="currentDayText" style="color:var(--primary-dark); font-size:17px;">📅 今日排課英語班級</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <label style="font-weight:bold; font-size:13px;">點名日期：</label>
+                    <input type="date" id="rollDateInput" onchange="onDateChange()" style="padding:6px 8px; border-radius:6px; margin:0; width:auto;">
+                </div>
+            </div>
+
+            <div style="margin-top:12px;">
+                <span style="font-size:13px; font-weight:bold; color:var(--primary-dark);">快速篩選：</span>
+                <div class="filter-btn-group" id="courseFilterGroup">
+                    <div class="filter-pill active" onclick="filterCourses('today')">📅 今日排課班級</div>
+                    <div class="filter-pill" onclick="filterCourses('all')">👁️ 全部分校班級</div>
+                </div>
+            </div>
+
+            <div class="course-grid" id="courseGrid"></div>
+        </div>
+
+        <div class="card" id="rollDetailCard" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3 id="rollCourseTitle" style="color:var(--primary-dark); font-size:18px;">班級名稱</h3>
+                    <p id="rollCourseMeta" style="color:#64748b; font-size:12.5px; margin-top:2px;"></p>
+                </div>
+                <div class="no-print" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:13px;">⚠️ 本日為分校停課放假日</span>
+                    <button class="btn btn-primary" onclick="quickMarkAll()">⚡ 全員到齊 (✔)</button>
+                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()">🔒 完成並鎖定點名</button>
+                    <button class="btn btn-danger" onclick="resetRollCall()">🔄 重新點名 (需密碼)</button>
+                </div>
+            </div>
+
+            <div style="margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                <span id="rollStatsText" style="font-weight:bold; color:var(--primary-dark); font-size:13px;">應到 0 人 / 出席 0 人</span>
+                <span style="font-size:12px; color:#64748b;">標記說明：出席 <b>✔</b> ｜ 請假 <b style="color:red;">▲</b></span>
+            </div>
+
+            <div class="student-grid" id="studentRollGrid"></div>
+
+            <div class="paper-sheet" id="paperSheetArea">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h3 id="paperCourseTitle" style="font-size:16px;">佳音英語斗六分校 - 課堂點名單</h3>
+                        <p id="paperMetaInfo" style="font-size:11.5px; color:#475569; margin-top:2px;"></p>
+                    </div>
+                    <button class="btn btn-primary no-print" onclick="window.print()">🖨️ 列印此點名單</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 35px;">序</th>
+                            <th style="width: 100px;">中文姓名</th>
+                            <th style="width: 100px;">English Name</th>
+                            <th style="width: 110px;">學校年級</th>
+                            <th style="width: 120px;">家長電話</th>
+                            <th style="width: 75px;">狀態</th>
+                            <th>請假事由 / 連絡紀錄</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paperTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 未到/未點名專區 -->
+    <div id="tab-absent-alert" style="display:none;">
+        <div class="card" style="border-top: 4px solid var(--danger);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                <div>
+                    <h3 style="color:var(--primary-dark); font-size:18px;">🚨 櫃檯專用：今日缺席學員與未點名班級追蹤</h3>
+                    <p style="color:#64748b; font-size:13px; margin-top:2px;">即時監控今日尚未完成點名的英語班級，並快速致電登記家長請假原因。</p>
+                </div>
+                <div>
+                    <label style="font-weight:bold; font-size:13px;">檢視日期：</label>
+                    <input type="date" id="alertDateInput" onchange="renderAbsentAlertTab()" style="padding:6px 8px; border-radius:6px; margin:0; width:auto;">
+                </div>
+            </div>
+            <div id="alertTabContainer"></div>
+        </div>
+    </div>
+
+    <!-- 3. 點名總表產出 -->
+    <div id="tab-sheet" style="display:none;">
+        <div class="card">
+            <h3 style="color:var(--primary-dark); font-size:17px; margin-bottom:6px;">🖨️ 點名總表與出勤紀錄列印專區</h3>
+            <p style="font-size:13px; color:#64748b; margin-bottom:14px;">選取班級並設定日期區間，系統將依據該班上課星期自動產生完整的出缺席報表。</p>
+
+            <div style="background:#f0f9ff; border:1.5px solid #bae6fd; padding:14px; border-radius:8px; margin-bottom:14px;">
+                <label style="display:block; font-size:13.5px; font-weight:bold; color:var(--primary-dark); margin-bottom:6px;">🎯 選擇欲列印之英語班級：</label>
+                <select id="sheetCourseSelectDropdown" class="select-styled" onchange="onDropdownSelectCourse(this.value)" style="margin:0; width:100%;"></select>
+            </div>
+
+            <div class="no-print" style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:15px;">
+                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <div style="flex:1; min-width:140px;">
+                        <label style="font-size:12px; font-weight:bold;">起始日期：</label>
+                        <input type="date" id="sheetQueryStartDate" style="padding:6px; margin:0;" onchange="generateCustomSheet()">
+                    </div>
+                    <div style="flex:1; min-width:140px;">
+                        <label style="font-size:12px; font-weight:bold;">結束日期：</label>
+                        <input type="date" id="sheetQueryEndDate" style="padding:6px; margin:0;" onchange="generateCustomSheet()">
+                    </div>
+                    <div style="display:flex; gap:8px; width:100%; margin-top:4px;">
+                        <button class="btn btn-primary" onclick="generateCustomSheet()" style="flex:1;">📋 產出總表</button>
+                        <button class="btn btn-success" onclick="window.print()" style="flex:1;">🖨️ 列印總表 (A4橫向)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-header">
+                <h2 id="sheetPrintTitle">佳音英語斗六分校 學生點名出勤總表</h2>
+                <p id="sheetPrintSub" style="margin-top:3px; font-size:9pt;"></p>
+            </div>
+
+            <div id="sheetTableContainer" style="overflow-x:auto;"></div>
+        </div>
+    </div>
+
+    <!-- 4. 英語班級排程 -->
+    <div id="tab-class-config" style="display:none;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3 style="color:var(--primary-dark); font-size:17px;">⚙️ 英語班級列表與開課排程維護</h3>
+                    <p style="color:#64748b; font-size:13px; margin-top:2px;">設定各班之上課時段、中外師資、開課日起訖日。</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddClassModal()">➕ 新增英語班級</button>
+            </div>
+
+            <div id="courseConfigList" style="margin-top:14px; overflow-x:auto;"></div>
+
+            <div style="margin-top:16px; text-align:right; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <button class="btn btn-success" onclick="saveAllCourseConfigs()">💾 儲存全部班級起訖日設定 (需密碼)</button>
+            </div>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--warning);">
+            <h3 style="color:var(--primary-dark); font-size:17px;">📢 國定假日與停課放假設定</h3>
+            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                <input type="date" id="newHolidayDate" style="padding:8px; border-radius:6px; width:auto; margin:0;">
+                <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節連假停課)" style="padding:8px; border-radius:6px; flex:1; min-width:160px; margin:0;">
+                <button class="btn btn-warning" onclick="verifyAndAddHoliday()">➕ 新增放假日</button>
+            </div>
+            <div id="holidayListDiv" style="margin-top:12px; overflow-x:auto;"></div>
+        </div>
+    </div>
+
+    <!-- 5. 學生學籍總覽 -->
+    <div id="tab-students-master" style="display:none;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                <h3 style="color:var(--primary-dark); font-size:17px;">👥 佳音英語學員檔案總覽</h3>
+                <button class="btn btn-success" onclick="openStudentModal()">➕ 新增學生檔案</button>
+            </div>
+
+            <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <div class="grid-2">
+                    <div>
+                        <label style="font-size:12.5px; font-weight:bold; color:var(--primary-dark);">🔍 依班級篩選：</label>
+                        <select id="masterClassFilterSelect" class="select-styled" onchange="renderMasterStudentsTable()">
+                            <option value="ALL">-- 全校所有在籍學員 --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12.5px; font-weight:bold; color:var(--primary-dark);">🔎 關鍵字搜尋：</label>
+                        <input type="text" id="studentSearchInput" placeholder="搜尋中文名、英文名、學校、電話、接送..." oninput="renderMasterStudentsTable()" style="margin:0;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:8px; font-size:14px; font-weight:bold; color:var(--primary-dark);" id="studentCountBadge">共 0 位學生</div>
+
+            <!-- 手機版卡片容器 -->
+            <div id="masterStudentCardContainer" style="display:none;"></div>
+
+            <!-- 電腦版表格 -->
+            <div id="masterStudentTableWrapper" style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:35px;">序</th>
+                            <th style="width:90px;">中文姓名</th>
+                            <th style="width:100px;">English Name</th>
+                            <th style="width:90px;">生日</th>
+                            <th style="width:100px;">學校年級</th>
+                            <th style="width:120px;">主要電話</th>
+                            <th style="width:120px;">次要電話</th>
+                            <th style="width:140px;">修習班級</th>
+                            <th style="width:150px;">接送/安親備註</th>
+                            <th style="width:130px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterStudentTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 彈窗：缺席與聯繫結果登記 -->
+<div class="modal-overlay" id="absentReasonModal">
+    <div class="modal-box" style="max-width:500px;">
+        <h3 style="color:var(--primary-dark); margin-bottom:12px; border-bottom:2px solid var(--primary); padding-bottom:6px;">📞 缺席事由與家長聯繫紀錄</h3>
+        <input type="hidden" id="modalKey">
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px; font-size:13.5px; line-height:1.6;">
+            <div>學員：<b id="modalDisplayStuName" style="color:var(--primary-dark);"></b> (<span id="modalDisplayEngName"></span>)</div>
+            <div>班級：<b id="modalDisplayClassName"></b></div>
+            <div>電話：<b id="modalDisplayPhone" style="color:var(--primary);"></b></div>
+        </div>
+        <label style="font-size:13px; font-weight:bold;">出缺席狀態：</label>
+        <select id="modalStatusSelect" class="select-styled">
+            <option value="未到">🔴 未到班 (未到)</option>
+            <option value="請假">🟡 病假 / 事假 (請假)</option>
+            <option value="出席">🟢 已聯繫並補簽出席 (出席)</option>
+        </select>
+        <label style="font-size:13px; font-weight:bold;">請假事由 / 櫃檯聯繫結果：</label>
+        <textarea id="modalReasonText" rows="3" placeholder="例如：家長告知感冒在家休養一堂、學校社團晚放學..."></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+            <button class="btn btn-success" onclick="saveAbsentReasonModal()">儲存紀錄</button>
+            <button class="btn btn-outline" onclick="document.getElementById('absentReasonModal').style.display='none'">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 彈窗：學生檔案 新增/編輯 -->
+<div class="modal-overlay" id="studentModal">
+    <div class="modal-box">
+        <h3 id="studentModalTitle" style="color:var(--primary-dark); margin-bottom:12px; border-bottom:2px solid var(--primary); padding-bottom:6px;">新增學員學籍</h3>
+        <input type="hidden" id="editStudentFirestoreId">
+        <div class="grid-3">
+            <div>
+                <label style="font-size:13px;"><b>中文姓名*：</b></label>
+                <input type="text" id="m_stu_name" placeholder="例如：林小明">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>English Name：</b></label>
+                <input type="text" id="m_stu_eng_name" placeholder="例如：Leo">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>性別：</b></label>
+                <select id="m_stu_gender">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid-3">
+            <div>
+                <label style="font-size:13px;"><b>就讀學校：</b></label>
+                <input type="text" id="m_stu_school" placeholder="例如：公誠國小">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>年級：</b></label>
+                <input type="text" id="m_stu_grade" placeholder="例如：四年級">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>出生年月日：</b></label>
+                <input type="date" id="m_stu_birthday">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div>
+                <label style="font-size:13px;"><b>電話 1 (媽媽/主要)：</b></label>
+                <input type="text" id="m_stu_p1" placeholder="0912-345-678">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>電話 2 (爸爸/備用)：</b></label>
+                <input type="text" id="m_stu_p2" placeholder="0923-456-789">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:13px;"><b>修習班級 (可複選)：</b></label>
+            <div id="studentClassCheckboxWrapper" style="display:flex; gap:8px; flex-wrap:wrap; background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:10px;"></div>
+        </div>
+        <div>
+            <label style="font-size:13px; color:#9d174d;"><b>🚗 接送 / 安親班配合備註：</b></label>
+            <textarea id="m_stu_pickup" rows="2" placeholder="例如：顧德補習班安親老師接送、家長親接..."></textarea>
+        </div>
+        <div>
+            <label style="font-size:13px;"><b>備註：</b></label>
+            <textarea id="m_stu_notes" rows="2" placeholder="學習表現、教材進度或其他備註"></textarea>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+            <button class="btn btn-danger" id="btnDeleteStudent" onclick="deleteStudent()" style="display:none;">🗑️ 刪除學生 (需密碼)</button>
+            <div style="display:flex; gap:8px; margin-left:auto;">
+                <button class="btn btn-success" onclick="saveStudent()">💾 儲存</button>
+                <button class="btn btn-outline" onclick="document.getElementById('studentModal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 彈窗：新增/編輯班級 -->
+<div class="modal-overlay" id="classModal">
+    <div class="modal-box" style="max-width:500px;">
+        <h3 id="classModalTitle" style="color:var(--primary-dark); margin-bottom:12px; border-bottom:2px solid var(--primary); padding-bottom:6px;">新增英語班級</h3>
+        <input type="hidden" id="editClassOriginalName">
+        <div>
+            <label style="font-size:13px;"><b>班級名稱 (級數)：</b></label>
+            <input type="text" id="m_class_name" placeholder="例如：Joy Kids 1, Step 3A">
+        </div>
+        <div>
+            <label style="font-size:13px;"><b>上課星期：</b></label>
+            <div id="classDayCheckboxWrapper" style="display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; background:#f8fafc; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+        </div>
+        <div class="grid-2">
+            <div>
+                <label style="font-size:13px;"><b>上課時段：</b></label>
+                <input type="text" id="m_class_time" placeholder="例如：16:30 - 18:30">
+            </div>
+            <div>
+                <label style="font-size:13px;"><b>授課老師 (中師/外師)：</b></label>
+                <input type="text" id="m_class_teacher" placeholder="例如：Teacher Amy / Mark">
+            </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+            <button class="btn btn-danger" id="btnDeleteClass" onclick="deleteClass()" style="display:none;">🗑️ 刪除班級</button>
+            <div style="display:flex; gap:8px; margin-left:auto;">
+                <button class="btn btn-success" onclick="saveClass()">💾 儲存</button>
+                <button class="btn btn-outline" onclick="document.getElementById('classModal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+        authDomain: "my-project-9999-479215.firebaseapp.com",
+        projectId: "my-project-9999-479215",
+        storageBucket: "my-project-9999-479215.firebasestorage.app",
+        messagingSenderId: "1020162825898",
+        appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const SECURITY_CODE = "8888";
+    const CONFIRM_ROLLCALL_CODE = "0000";
+    const WEEK_DAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+    const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+
+    window.state = {
+        courses: [],          // 純佳音英語班級清單 [{ name, day, time, teacher, startDate, endDate }]
+        students: [],         // 學生學籍清單
+        holidays: JSON.parse(localStorage.getItem('joy_holidays') || '[]'),
+        attendanceData: {},
+        currentCourse: null,
+        filterMode: 'today',
+        selectedSheetCourse: null
+    };
+
+    function getTaiwanDateString(dateObj = new Date()) {
+        const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
+        const taiwanTime = new Date(utc + (3600000 * 8));
+        const y = taiwanTime.getFullYear();
+        const m = String(taiwanTime.getMonth() + 1).padStart(2, '0');
+        const d = String(taiwanTime.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function checkPassword(promptText = "🔒 請輸入管理密碼：") {
+        const input = prompt(promptText);
+        if (input === SECURITY_CODE) return true;
+        alert("❌ 密碼不正確！");
+        return false;
+    }
+
+    window.onload = function() {
+        const todayStr = getTaiwanDateString();
+        document.getElementById('rollDateInput').value = todayStr;
+        document.getElementById('alertDateInput').value = todayStr;
+        document.getElementById('newHolidayDate').value = todayStr;
+        initCloudData();
+    };
+
+    async function initCloudData() {
+        try {
+            // 讀取班級 (獨立集合 joyEnglishSettings)
+            const coursesDoc = await getDoc(doc(db, "joyEnglishSettings", "courses"));
+            if (coursesDoc.exists()) {
+                window.state.courses = coursesDoc.data().data || [];
+            } else {
+                // 預設示範班級
+                window.state.courses = [
+                    { name: "Step 1A 啟蒙班", day: "星期二、星期四", time: "16:40 - 18:10", teacher: "Teacher Joy & Peter", startDate: getTaiwanDateString().slice(0,8)+"01", endDate: "" },
+                    { name: "Step 3B 進階班", day: "星期一、星期三、星期五", time: "16:40 - 18:20", teacher: "Teacher Amy", startDate: getTaiwanDateString().slice(0,8)+"01", endDate: "" }
+                ];
+            }
+
+            // 讀取學生名冊 (獨立集合 joyEnglishStudents)
+            const studentsSnapshot = await getDocs(collection(db, "joyEnglishStudents"));
+            window.state.students = [];
+            studentsSnapshot.forEach(d => {
+                window.state.students.push({ firestoreId: d.id, ...d.data() });
+            });
+
+            // 讀取點名紀錄
+            const attendanceDoc = await getDoc(doc(db, "joyEnglishSettings", "attendance"));
+            if (attendanceDoc.exists()) {
+                window.state.attendanceData = attendanceDoc.data().data || {};
+            } else {
+                window.state.attendanceData = JSON.parse(localStorage.getItem('joy_attendance_records') || '{}');
+            }
+
+            renderCourseCards();
+            renderMasterClassFilterOptions();
+            renderMasterStudentsTable();
+            renderSheetDropdown();
+            renderCourseConfigList();
+            renderHolidayList();
+            updateHomeAlertBanner();
+        } catch (e) {
+            console.error("載入佳音雲端資料失敗：", e);
+        }
+    }
+
+    async function saveAttendanceToCloud() {
+        try {
+            await setDoc(doc(db, "joyEnglishSettings", "attendance"), { data: window.state.attendanceData });
+        } catch(e) {
+            console.error(e);
+            localStorage.setItem('joy_attendance_records', JSON.stringify(window.state.attendanceData));
+        }
+    }
+
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const tabs = ['rollcall', 'absent-alert', 'sheet', 'class-config', 'students-master'];
+        tabs.forEach((t, i) => {
+            const el = document.getElementById(`tab-${t}`);
+            if (el) el.style.display = (tab === t) ? 'block' : 'none';
+            if (tab === t) document.querySelectorAll('.tab-btn')[i].classList.add('active');
+        });
+
+        if (tab === 'rollcall') { renderCourseCards(); updateHomeAlertBanner(); }
+        if (tab === 'absent-alert') renderAbsentAlertTab();
+        if (tab === 'sheet') { renderSheetDropdown(); generateCustomSheet(); }
+        if (tab === 'class-config') { renderCourseConfigList(); renderHolidayList(); }
+        if (tab === 'students-master') { renderMasterClassFilterOptions(); renderMasterStudentsTable(); }
+    };
+
+    window.onDateChange = function() {
+        renderCourseCards();
+        updateHomeAlertBanner();
+        if (window.state.currentCourse) selectCourse(window.state.currentCourse.name);
+    };
+
+    window.filterCourses = function(mode) {
+        window.state.filterMode = mode;
+        const pills = document.querySelectorAll('#courseFilterGroup .filter-pill');
+        pills[0].classList.toggle('active', mode === 'today');
+        pills[1].classList.toggle('active', mode === 'all');
+        renderCourseCards();
+    };
+
+    function renderCourseCards() {
+        const curDate = new Date(document.getElementById('rollDateInput').value);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
+        document.getElementById('currentDayText').innerText = `📅 點名日期：${curDate.toISOString().slice(0,10)} (${curDayName})`;
+
+        const grid = document.getElementById('courseGrid');
+        grid.innerHTML = '';
+
+        let list = window.state.courses;
+        if (window.state.filterMode === 'today') {
+            list = list.filter(c => (c.day || '').includes(curDayName) || (c.day || '').includes(curDayName.replace('星期', '週')));
+        }
+
+        if (list.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: #64748b; background: #fff; border-radius: 8px; border: 1px dashed #cbd5e1;">本日 (${curDayName}) 無英語排課班級。</div>`;
+            return;
+        }
+
+        list.forEach(c => {
+            const isSelected = window.state.currentCourse && window.state.currentCourse.name === c.name;
+            const stuCount = window.state.students.filter(s => (s.courses || []).includes(c.name)).length;
+            const card = document.createElement('div');
+            card.className = `course-card ${isSelected ? 'active' : ''}`;
+            card.onclick = () => selectCourse(c.name);
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11.5px; font-weight:bold; background:#e0f2fe; color:var(--primary-dark); padding:2px 7px; border-radius:4px;">佳音英語</span>
+                    <span style="font-size:12px; color:#64748b;">學員：<b>${stuCount}</b> 人</span>
+                </div>
+                <div style="font-size:16px; font-weight:bold; margin:6px 0 3px; color:var(--primary-dark);">${c.name}</div>
+                <div style="font-size:12px; color:#475569;">🕒 ${c.time || '未設時段'}</div>
+                <div style="font-size:12px; color:#475569;">👨‍🏫 ${c.teacher || '師資未設定'}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    window.selectCourse = function(name) {
+        window.state.currentCourse = window.state.courses.find(c => c.name === name);
+        if (!window.state.currentCourse) return;
+        const c = window.state.currentCourse;
+
+        document.getElementById('rollDetailCard').style.display = 'block';
+        document.getElementById('rollCourseTitle').innerText = `🔤 ${c.name}`;
+        document.getElementById('rollCourseMeta').innerText = `時段：${c.time || '-'} ｜ 師資：${c.teacher || '-'} ｜ 排課：${c.day || '-'}`;
+
+        const curDateStr = document.getElementById('rollDateInput').value;
+        const holiday = window.state.holidays.find(h => h.date === curDateStr);
+        const notice = document.getElementById('holidayNotice');
+        if (holiday) {
+            notice.innerText = `⚠️ 今日分校停課放假：【${holiday.name}】`;
+            notice.style.display = 'inline';
+        } else {
+            notice.style.display = 'none';
+        }
+
+        renderStudentRollGrid();
+        renderCourseCards();
+    };
+
+    function renderStudentRollGrid() {
+        const c = window.state.currentCourse;
+        if (!c) return;
+        const grid = document.getElementById('studentRollGrid');
+        grid.innerHTML = '';
+        const dateStr = document.getElementById('rollDateInput').value;
+
+        const enrolledStudents = window.state.students.filter(s => (s.courses || []).includes(c.name));
+        let presentCount = 0;
+        let leaveCount = 0;
+        let paperRows = '';
+
+        enrolledStudents.forEach((stu, idx) => {
+            const key = `${dateStr}_${c.name}_${stu.name}`;
+            const rec = window.state.attendanceData[key] || { status: '未到', time: '', reason: '' };
+            if (rec.status === '出席') presentCount++;
+            if (rec.status === '請假') leaveCount++;
+
+            const isPresent = rec.status === '出席';
+            const isLeave = rec.status === '請假';
+
+            const card = document.createElement('div');
+            card.className = `student-card ${isPresent ? 'present' : (isLeave ? 'leave' : '')}`;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <div>
+                        <span style="font-size:16px; font-weight:bold; color:var(--primary-dark);">${stu.name}</span>
+                        ${stu.engName ? `<span style="font-size:14px; font-weight:bold; color:var(--accent); margin-left:6px;">(${stu.engName})</span>` : ''}
+                        ${stu.pickup ? `<span style="background:#fdf2f8; color:#9d174d; border:1px solid #fbcfe8; padding:2px 6px; border-radius:4px; font-size:11.5px; margin-left:8px; font-weight:bold;">🚗 ${stu.pickup}</span>` : ''}
+                    </div>
+                    <div style="font-size:12px; color:#64748b;">${stu.school || ''} ${stu.grade || ''} ｜ 📞 ${stu.p1 || stu.p2 || '-'}</div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+                    <button class="btn ${isPresent ? 'btn-success' : 'btn-primary'}" style="flex:1; min-width:110px;" onclick="setAttendance('${key}', '出席')">
+                        ${isPresent ? '✔ 已到班' : '點名 (✔)'}
+                    </button>
+                    <button class="btn btn-warning" style="flex:1; min-width:90px;" onclick="setAttendance('${key}', '請假')">
+                        ${isLeave ? '▲ 已請假' : '請假 (▲)'}
+                    </button>
+                    <input type="text" placeholder="輸入請假原因..." value="${rec.reason || ''}" style="flex:2; min-width:180px; margin:0;" onchange="saveAttendanceReason('${key}', this.value)">
+                </div>
+            `;
+            grid.appendChild(card);
+
+            paperRows += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${stu.name}</b></td>
+                    <td><b>${stu.engName || '-'}</b></td>
+                    <td>${stu.school || '-'} ${stu.grade || ''}</td>
+                    <td style="font-size:8.5pt;">${stu.p1 || stu.p2 || '-'}</td>
+                    <td>${isPresent ? '<b style="color:green;">✔</b>' : (isLeave ? '<b style="color:red;">▲</b>' : '-')}</td>
+                    <td style="text-align:left; color:#b91c1c;">${rec.reason || ''}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('rollStatsText').innerText = `應到：${enrolledStudents.length} 人 ｜ 出席(✔)：${presentCount} 人 ｜ 請假(▲)：${leaveCount} 人`;
+        document.getElementById('paperCourseTitle').innerText = `佳音英語斗六分校 - 【${c.name}】課堂點名單`;
+        document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} ｜ 師資：${c.teacher || '-'} ｜ 實到：${presentCount} / ${enrolledStudents.length} 人`;
+        document.getElementById('paperTableBody').innerHTML = paperRows || `<tr><td colspan="7" style="padding:15px; color:#888;">此班級目前尚無加入學生</td></tr>`;
+    }
+
+    window.setAttendance = function(key, status) {
+        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
+        window.state.attendanceData[key].status = (window.state.attendanceData[key].status === status) ? '未到' : status;
+        saveAttendanceToCloud();
+        renderStudentRollGrid();
+        updateHomeAlertBanner();
+    };
+
+    window.saveAttendanceReason = function(key, val) {
+        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '請假' };
+        window.state.attendanceData[key].reason = val.trim();
+        saveAttendanceToCloud();
+        renderStudentRollGrid();
+    };
+
+    window.quickMarkAll = function() {
+        const c = window.state.currentCourse;
+        if (!c) return;
+        const dateStr = document.getElementById('rollDateInput').value;
+        const students = window.state.students.filter(s => (s.courses || []).includes(c.name));
+        students.forEach(stu => {
+            const key = `${dateStr}_${c.name}_${stu.name}`;
+            window.state.attendanceData[key] = { status: '出席', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
+        });
+        saveAttendanceToCloud();
+        renderStudentRollGrid();
+        updateHomeAlertBanner();
+    };
+
+    window.confirmRollCallAndSync = function() {
+        const input = prompt("🔒 請輸入點名確認密碼：");
+        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
+        saveAttendanceToCloud();
+        alert(`✅ 【${window.state.currentCourse.name}】今日點名紀錄已確認並同步！`);
+    };
+
+    window.resetRollCall = function() {
+        const input = prompt("🔒 重新點名請輸入管理密碼：");
+        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！");
+        const c = window.state.currentCourse;
+        const dateStr = document.getElementById('rollDateInput').value;
+        const students = window.state.students.filter(s => (s.courses || []).includes(c.name));
+        students.forEach(stu => {
+            delete window.state.attendanceData[`${dateStr}_${c.name}_${stu.name}`];
+        });
+        saveAttendanceToCloud();
+        renderStudentRollGrid();
+        updateHomeAlertBanner();
+        alert("✅ 點名紀錄已成功重置！");
+    };
+
+    function updateHomeAlertBanner() {
+        const dateStr = document.getElementById('rollDateInput').value;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
+        const todayCourses = window.state.courses.filter(c => (c.day || '').includes(curDayName) || (c.day || '').includes(curDayName.replace('星期', '週')));
+
+        let uncheckClasses = [];
+        let absentStudents = 0;
+
+        todayCourses.forEach(c => {
+            const students = window.state.students.filter(s => (s.courses || []).includes(c.name));
+            let anyChecked = false;
+            students.forEach(s => {
+                const rec = window.state.attendanceData[`${dateStr}_${c.name}_${s.name}`];
+                if (rec && (rec.status === '出席' || rec.status === '請假')) anyChecked = true;
+                if (!rec || rec.status !== '出席') absentStudents++;
+            });
+            if (!anyChecked && students.length > 0) uncheckClasses.push(c.name);
+        });
+
+        const banner = document.getElementById('homeAlertBanner');
+        const content = document.getElementById('homeAlertContent');
+        if (uncheckClasses.length === 0 && absentStudents === 0) {
+            banner.style.background = '#f0fdf4';
+            banner.style.borderColor = '#10b981';
+            content.innerHTML = `<b style="color:#047857;">🌟 今日所有排課班級皆已完成點名且全體到齊！</b>`;
+        } else {
+            banner.style.background = '#fffbeb';
+            banner.style.borderColor = '#f59e0b';
+            content.innerHTML = `
+                <div>📌 <b>尚未點名班級：</b> <span style="color:#b45309; font-weight:bold;">${uncheckClasses.length > 0 ? uncheckClasses.join('、') : '無'}</span></div>
+                <div style="margin-top:2px;">📌 <b>未到班 / 請假學員：</b> <span style="color:#b91c1c; font-weight:bold;">共 ${absentStudents} 人次 (請至「未到/未點名」專區查看)</span></div>
+            `;
+        }
+    }
+
+    window.renderAbsentAlertTab = function() {
+        const dateStr = document.getElementById('alertDateInput').value;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
+        const todayCourses = window.state.courses.filter(c => (c.day || '').includes(curDayName) || (c.day || '').includes(curDayName.replace('星期', '週')));
+
+        const container = document.getElementById('alertTabContainer');
+        let html = '';
+
+        let uncheckClasses = [];
+        let absentList = [];
+
+        todayCourses.forEach(c => {
+            const students = window.state.students.filter(s => (s.courses || []).includes(c.name));
+            let checked = false;
+            students.forEach(s => {
+                const key = `${dateStr}_${c.name}_${s.name}`;
+                const rec = window.state.attendanceData[key];
+                if (rec && (rec.status === '出席' || rec.status === '請假')) checked = true;
+                if (!rec || rec.status !== '出席') {
+                    absentList.push({ stu: s, courseName: c.name, status: rec ? rec.status : '未點名', reason: rec ? rec.reason : '', key });
+                }
+            });
+            if (!checked && students.length > 0) uncheckClasses.push(c.name);
+        });
+
+        html += `<h4 style="color:var(--primary-dark); margin-bottom:8px;">🏫 今日尚未點名英語班級 (${uncheckClasses.length} 班)：</h4>`;
+        if (uncheckClasses.length === 0) {
+            html += `<p style="color:#10b981; font-weight:bold; margin-bottom:15px;">✔ 所有排課班級皆已有老師進行點名！</p>`;
+        } else {
+            html += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">`;
+            uncheckClasses.forEach(name => {
+                html += `<button class="btn btn-warning" onclick="selectCourse('${name}'); switchTab('rollcall');">🏫 ${name} (前往點名) ➔</button>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `<h4 style="color:var(--primary-dark); margin-bottom:8px; margin-top:16px;">👥 今日尚未到班 / 請假名冊 (${absentList.length} 人)：</h4>`;
+        if (absentList.length === 0) {
+            html += `<p style="color:#10b981; font-weight:bold;">🌟 今日全部學員皆已出席！</p>`;
+        } else {
+            html += `<table>
+                <thead>
+                    <tr>
+                        <th style="width:35px;">序</th>
+                        <th style="width:110px;">學生姓名</th>
+                        <th style="width:100px;">English Name</th>
+                        <th style="width:130px;">所屬班級</th>
+                        <th style="width:120px;">家長電話</th>
+                        <th style="width:100px;">狀態</th>
+                        <th>請假事由 / 櫃檯聯繫</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            absentList.forEach((item, idx) => {
+                const s = item.stu;
+                html += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><b>${s.name}</b></td>
+                        <td><b style="color:var(--accent);">${s.engName || '-'}</b></td>
+                        <td><span class="course-tag">${item.courseName}</span></td>
+                        <td style="font-size:12px;">${s.p1 || s.p2 || '-'}</td>
+                        <td><span style="color:${item.status==='請假'?'#b45309':'#b91c1c'}; font-weight:bold;">${item.status}</span></td>
+                        <td style="text-align:left;">
+                            <button class="btn btn-outline" style="padding:3px 8px; font-size:11.5px;" onclick="openAbsentReasonModal('${item.key}', '${s.name}', '${s.engName || ''}', '${item.courseName}', '${s.p1 || s.p2 || ''}', '${item.status}', '${item.reason}')">✏️ 填寫事由</button>
+                            <span style="margin-left:6px; font-size:12px; color:#475569;">${item.reason || ''}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+        }
+
+        container.innerHTML = html;
+    };
+
+    window.openAbsentReasonModal = function(key, stuName, engName, className, phone, status, reason) {
+        document.getElementById('modalKey').value = key;
+        document.getElementById('modalDisplayStuName').innerText = stuName;
+        document.getElementById('modalDisplayEngName').innerText = engName || '無英文名';
+        document.getElementById('modalDisplayClassName').innerText = className;
+        document.getElementById('modalDisplayPhone').innerText = phone || '-';
+        document.getElementById('modalStatusSelect').value = status === '未點名' ? '未到' : status;
+        document.getElementById('modalReasonText').value = reason || '';
+        document.getElementById('absentReasonModal').style.display = 'flex';
+    };
+
+    window.saveAbsentReasonModal = function() {
+        const key = document.getElementById('modalKey').value;
+        const newStatus = document.getElementById('modalStatusSelect').value;
+        const reason = document.getElementById('modalReasonText').value.trim();
+
+        if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
+        window.state.attendanceData[key].status = newStatus;
+        window.state.attendanceData[key].reason = reason;
+
+        saveAttendanceToCloud();
+        document.getElementById('absentReasonModal').style.display = 'none';
+        renderAbsentAlertTab();
+        updateHomeAlertBanner();
+        alert("✅ 聯繫結果已成功儲存！");
+    };
+
+    function renderSheetDropdown() {
+        const sel = document.getElementById('sheetCourseSelectDropdown');
+        sel.innerHTML = '';
+        window.state.courses.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.innerText = `🔤 ${c.name} (${c.day || ''})`;
+            if (window.state.selectedSheetCourse === c.name) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        if (!window.state.selectedSheetCourse && window.state.courses.length > 0) {
+            window.state.selectedSheetCourse = window.state.courses[0].name;
+            sel.value = window.state.selectedSheetCourse;
+        }
+    }
+
+    window.onDropdownSelectCourse = function(name) {
+        window.state.selectedSheetCourse = name;
+        generateCustomSheet();
+    };
+
+    window.generateCustomSheet = function() {
+        const courseName = window.state.selectedSheetCourse;
+        const course = window.state.courses.find(c => c.name === courseName);
+        if (!course) return;
+
+        let startVal = document.getElementById('sheetQueryStartDate').value || course.startDate || getTaiwanDateString();
+        let endVal = document.getElementById('sheetQueryEndDate').value || new Date(new Date(startVal).getTime() + 8 * 7 * 86400000).toISOString().slice(0,10);
+        document.getElementById('sheetQueryStartDate').value = startVal;
+        document.getElementById('sheetQueryEndDate').value = endVal;
+
+        const students = window.state.students.filter(s => (s.courses || []).includes(course.name));
+        const targetDays = WEEK_DAYS.filter(d => (course.day || '').includes(d) || (course.day || '').includes(d.replace('星期', '週')));
+
+        let dateList = [];
+        let cur = new Date(startVal);
+        const endObj = new Date(endVal);
+
+        while (cur <= endObj && dateList.length < 90) {
+            let dayIdx = cur.getDay();
+            let dayName = dayIdx === 0 ? '星期日' : WEEK_DAYS[dayIdx - 1];
+            if (targetDays.length === 0 || targetDays.includes(dayName)) {
+                let dStr = cur.toISOString().slice(0, 10);
+                let holi = window.state.holidays.find(h => h.date === dStr);
+                dateList.push({ dateStr: dStr, shortDate: `${cur.getMonth()+1}/${cur.getDate()}`, dayName: dayName.replace('星期', '週'), holiday: holi ? holi.name : null });
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+
+        document.getElementById('sheetPrintTitle').innerText = `佳音英語斗六分校 - ${course.name} 點名總表`;
+        document.getElementById('sheetPrintSub').innerText = `時段：${course.time || '-'} ｜ 師資：${course.teacher || '-'} ｜ 期間：${startVal} 至 ${endVal}`;
+
+        let html = `<table><thead><tr>
+            <th style="width:30px;">序</th>
+            <th style="width:80px;">姓名</th>
+            <th style="width:80px;">English</th>
+            <th style="width:90px;">學校年級</th>
+            <th style="width:100px;">主要電話</th>`;
+
+        dateList.forEach(d => {
+            html += `<th style="width:48px;" class="${d.holiday ? 'holiday-col' : ''}">${d.shortDate}<br><span style="font-size:7pt;">${d.dayName}</span>${d.holiday ? `<div style="font-size:6.5pt; color:#856404;">${d.holiday}</div>` : ''}</th>`;
+        });
+
+        html += `<th>備註 / 請假原因</th></tr></thead><tbody>`;
+
+        students.forEach((s, idx) => {
+            html += `<tr>
+                <td>${idx + 1}</td>
+                <td><b>${s.name}</b></td>
+                <td><b style="color:var(--primary);">${s.engName || '-'}</b></td>
+                <td>${s.school || '-'} ${s.grade || ''}</td>
+                <td style="font-size:8pt;">${s.p1 || s.p2 || '-'}</td>`;
+
+            let reasons = [];
+            dateList.forEach(d => {
+                if (d.holiday) {
+                    html += `<td class="holiday-col" style="font-size:7.5pt;">放假</td>`;
+                } else {
+                    const rec = window.state.attendanceData[`${d.dateStr}_${course.name}_${s.name}`];
+                    let mark = '';
+                    if (rec) {
+                        mark = rec.status === '出席' ? '<b style="color:#10b981;">✔</b>' : (rec.status === '請假' ? '<b style="color:#ef4444;">▲</b>' : '');
+                        if (rec.status === '請假' && rec.reason) reasons.push(`${d.shortDate}${rec.reason}`);
+                    }
+                    html += `<td>${mark}</td>`;
+                }
+            });
+            html += `<td style="font-size:7.5pt; text-align:left; color:#b91c1c;">${reasons.join('、')}</td></tr>`;
+        });
+
+        html += `</tbody></table>`;
+        document.getElementById('sheetTableContainer').innerHTML = html;
+    };
+
+    function renderCourseConfigList() {
+        const container = document.getElementById('courseConfigList');
+        let html = `<table><thead><tr>
+            <th style="width:160px;">英語班級</th>
+            <th style="width:130px;">上課星期</th>
+            <th style="width:140px;">上課時段</th>
+            <th style="width:140px;">授課中/外師</th>
+            <th style="width:120px;">開課起日</th>
+            <th style="width:120px;">結業迄日</th>
+            <th style="width:80px;">管理</th>
+        </tr></thead><tbody>`;
+
+        window.state.courses.forEach((c, idx) => {
+            html += `<tr>
+                <td><b>${c.name}</b></td>
+                <td>${c.day || '-'}</td>
+                <td>${c.time || '-'}</td>
+                <td>${c.teacher || '-'}</td>
+                <td><input type="date" value="${c.startDate || ''}" onchange="window.state.courses[${idx}].startDate=this.value" style="padding:4px; margin:0; font-size:12px;"></td>
+                <td><input type="date" value="${c.endDate || ''}" onchange="window.state.courses[${idx}].endDate=this.value" style="padding:4px; margin:0; font-size:12px;"></td>
+                <td><button class="btn btn-outline" style="padding:3px 8px; font-size:11.5px;" onclick="openEditClassModal('${c.name}')">編輯</button></td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    window.saveAllCourseConfigs = async function() {
+        if (!checkPassword("🔒 儲存班級排程設定，請輸入密碼：")) return;
+        try {
+            await setDoc(doc(db, "joyEnglishSettings", "courses"), { data: window.state.courses });
+            alert("✅ 班級起訖日與設定已儲存至雲端！");
+        } catch(e) {
+            alert("❌ 儲存失敗！");
+        }
+    };
+
+    window.openAddClassModal = function() {
+        document.getElementById('classModalTitle').innerText = "➕ 新增佳音英語班級";
+        document.getElementById('editClassOriginalName').value = "";
+        document.getElementById('btnDeleteClass').style.display = "none";
+        document.getElementById('m_class_name').value = "";
+        document.getElementById('m_class_time').value = "";
+        document.getElementById('m_class_teacher').value = "";
+        renderDayCheckboxes('classDayCheckboxWrapper', "星期一、星期三");
+        document.getElementById('classModal').style.display = "flex";
+    };
+
+    window.openEditClassModal = function(name) {
+        const c = window.state.courses.find(item => item.name === name);
+        if (!c) return;
+        document.getElementById('classModalTitle').innerText = `✏️ 編輯【${c.name}】班級`;
+        document.getElementById('editClassOriginalName').value = c.name;
+        document.getElementById('btnDeleteClass').style.display = "inline-block";
+        document.getElementById('m_class_name').value = c.name;
+        document.getElementById('m_class_time').value = c.time || '';
+        document.getElementById('m_class_teacher').value = c.teacher || '';
+        renderDayCheckboxes('classDayCheckboxWrapper', c.day || '');
+        document.getElementById('classModal').style.display = "flex";
+    };
+
+    function renderDayCheckboxes(wrapperId, currentStr = "") {
+        const wrapper = document.getElementById(wrapperId);
+        wrapper.innerHTML = '';
+        const curArr = currentStr ? currentStr.split(/[,，、]/).map(d => d.trim()) : [];
+        WEEK_DAYS.forEach(day => {
+            const isChecked = curArr.includes(day);
+            wrapper.innerHTML += `
+                <label style="display:inline-flex; align-items:center; gap:3px; font-size:12.5px; cursor:pointer;">
+                    <input type="checkbox" value="${day}" ${isChecked ? 'checked' : ''} style="width:auto; margin:0;"> ${day}
+                </label>
+            `;
+        });
+    }
+
+    function getSelectedDays(wrapperId) {
+        const boxes = document.querySelectorAll(`#${wrapperId} input[type="checkbox"]:checked`);
+        return Array.from(boxes).map(b => b.value).join('、') || '星期一';
+    }
+
+    window.saveClass = async function() {
+        const origName = document.getElementById('editClassOriginalName').value;
+        const name = document.getElementById('m_class_name').value.trim();
+        const time = document.getElementById('m_class_time').value.trim();
+        const teacher = document.getElementById('m_class_teacher').value.trim();
+        const day = getSelectedDays('classDayCheckboxWrapper');
+
+        if (!name) return alert("請輸入班級名稱！");
+
+        if (origName) {
+            const c = window.state.courses.find(item => item.name === origName);
+            if (c) { c.name = name; c.time = time; c.teacher = teacher; c.day = day; }
+        } else {
+            window.state.courses.push({ name, time, teacher, day, startDate: getTaiwanDateString().slice(0,8)+"01", endDate: "" });
+        }
+
+        try {
+            await setDoc(doc(db, "joyEnglishSettings", "courses"), { data: window.state.courses });
+            document.getElementById('classModal').style.display = 'none';
+            alert(`✅ 班級【${name}】已成功儲存！`);
+            initCloudData();
+        } catch(e) { alert("儲存失敗！"); }
+    };
+
+    window.deleteClass = async function() {
+        const origName = document.getElementById('editClassOriginalName').value;
+        if (!checkPassword(`🔒 確定刪除【${origName}】？請輸入管理密碼：`)) return;
+        window.state.courses = window.state.courses.filter(c => c.name !== origName);
+        try {
+            await setDoc(doc(db, "joyEnglishSettings", "courses"), { data: window.state.courses });
+            document.getElementById('classModal').style.display = 'none';
+            alert(`✅ 已刪除【${origName}】！`);
+            initCloudData();
+        } catch(e) { alert("刪除失敗！"); }
+    };
+
+    window.verifyAndAddHoliday = function() {
+        const date = document.getElementById('newHolidayDate').value;
+        const name = document.getElementById('newHolidayName').value.trim();
+        if (!date || !name) return alert("請填妥日期與放假名稱！");
+        window.state.holidays.push({ date, name });
+        localStorage.setItem('joy_holidays', JSON.stringify(window.state.holidays));
+        document.getElementById('newHolidayName').value = '';
+        renderHolidayList();
+        alert("✅ 放假日新增成功！");
+    };
+
+    function renderHolidayList() {
+        const div = document.getElementById('holidayListDiv');
+        if (window.state.holidays.length === 0) {
+            div.innerHTML = '<p style="color:#64748b; font-size:13px;">目前無設定任何停課放假日。</p>';
+            return;
+        }
+        let html = '<table><thead><tr><th>日期</th><th>事由</th><th>操作</th></tr></thead><tbody>';
+        window.state.holidays.forEach((h, idx) => {
+            html += `<tr>
+                <td><b>${h.date}</b></td>
+                <td>${h.name}</td>
+                <td><button class="btn btn-danger" style="padding:2px 8px; font-size:11.5px;" onclick="deleteHoliday(${idx})">刪除</button></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+    }
+
+    window.deleteHoliday = function(idx) {
+        window.state.holidays.splice(idx, 1);
+        localStorage.setItem('joy_holidays', JSON.stringify(window.state.holidays));
+        renderHolidayList();
+    };
+
+    function renderMasterClassFilterOptions() {
+        const sel = document.getElementById('masterClassFilterSelect');
+        const curVal = sel.value;
+        sel.innerHTML = `<option value="ALL">-- 全校所有在籍學員 --</option>`;
+        window.state.courses.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.innerText = `🔤 ${c.name}`;
+            if (curVal === c.name) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    window.renderMasterStudentsTable = function() {
+        const filterClass = document.getElementById('masterClassFilterSelect').value;
+        const keyword = (document.getElementById('studentSearchInput').value || '').trim().toLowerCase();
+
+        let list = window.state.students.filter(s => {
+            if (filterClass !== 'ALL' && !(s.courses || []).includes(filterClass)) return false;
+            if (keyword) {
+                const combined = `${s.name || ''} ${s.engName || ''} ${s.school || ''} ${s.grade || ''} ${s.p1 || ''} ${s.p2 || ''} ${s.pickup || ''} ${(s.courses || []).join(' ')}`.toLowerCase();
+                return combined.includes(keyword);
+            }
+            return true;
+        });
+
+        document.getElementById('studentCountBadge').innerText = `共 ${list.length} 位學生`;
+
+        const isMobile = window.innerWidth < 768;
+        const tableWrapper = document.getElementById('masterStudentTableWrapper');
+        const cardContainer = document.getElementById('masterStudentCardContainer');
+        const tbody = document.getElementById('masterStudentTableBody');
+
+        if (isMobile) {
+            tableWrapper.style.display = 'none';
+            cardContainer.style.display = 'block';
+            let html = '';
+            list.forEach((s, idx) => {
+                const courseTags = (s.courses || []).map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#94a3b8;">未修課</span>';
+                html += `
+                    <div class="student-master-card">
+                        <div class="student-master-card-header">
+                            <div>
+                                <span style="font-size:12px; color:#94a3b8;">#${idx+1}</span>
+                                <b style="font-size:16px; color:var(--primary-dark); margin-left:4px;">${s.name}</b>
+                                ${s.engName ? `<span style="color:var(--accent); font-weight:bold; margin-left:4px;">(${s.engName})</span>` : ''}
+                            </div>
+                            <div style="font-size:12px; color:#64748b;">${s.school || '-'} ${s.grade || ''}</div>
+                        </div>
+                        <div style="font-size:13px; color:#334155; line-height:1.6;">
+                            <div>🎂 <b>生日：</b>${s.birthday || '-'}</div>
+                            <div>📞 <b>主要：</b><a href="tel:${s.p1}">${s.p1 || '-'}</a> ｜ <b>次要：</b><a href="tel:${s.p2}">${s.p2 || '-'}</a></div>
+                            <div>📖 <b>修讀班級：</b>${courseTags}</div>
+                            ${s.pickup ? `<div style="background:#fdf2f8; color:#9d174d; padding:4px 8px; border-radius:4px; font-size:12px; margin-top:4px;">🚗 <b>接送備註：</b>${s.pickup}</div>` : ''}
+                        </div>
+                        <div style="margin-top:8px; text-align:right;">
+                            <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openEditStudentModal('${s.firestoreId}')">✏️ 編輯檔案</button>
+                        </div>
+                    </div>
+                `;
+            });
+            cardContainer.innerHTML = html || '<p style="text-align:center; color:#888; padding:20px;">查無學生資料</p>';
+        } else {
+            cardContainer.style.display = 'none';
+            tableWrapper.style.display = 'block';
+            let html = '';
+            list.forEach((s, idx) => {
+                const courseTags = (s.courses || []).map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#94a3b8;">未修課</span>';
+                html += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><b style="color:var(--primary-dark);">${s.name}</b></td>
+                        <td><b style="color:var(--accent);">${s.engName || '-'}</b></td>
+                        <td style="font-size:12px;">${s.birthday || '-'}</td>
+                        <td>${s.school || '-'} ${s.grade || ''}</td>
+                        <td style="font-size:12px;">${s.p1 || '-'}</td>
+                        <td style="font-size:12px;">${s.p2 || '-'}</td>
+                        <td style="text-align:left;">${courseTags}</td>
+                        <td style="text-align:left; font-size:12px; color:#9d174d;">${s.pickup || '-'}</td>
+                        <td>
+                            <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openEditStudentModal('${s.firestoreId}')">編輯</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="10" style="padding:20px; color:#888;">查無學生資料</td></tr>';
+        }
+    };
+
+    window.openStudentModal = function() {
+        document.getElementById('studentModalTitle').innerText = "➕ 新增佳音學員檔案";
+        document.getElementById('editStudentFirestoreId').value = "";
+        document.getElementById('btnDeleteStudent').style.display = "none";
+        document.getElementById('m_stu_name').value = "";
+        document.getElementById('m_stu_eng_name').value = "";
+        document.getElementById('m_stu_gender').value = "男";
+        document.getElementById('m_stu_school').value = "";
+        document.getElementById('m_stu_grade').value = "";
+        document.getElementById('m_stu_birthday').value = "";
+        document.getElementById('m_stu_p1').value = "";
+        document.getElementById('m_stu_p2').value = "";
+        document.getElementById('m_stu_pickup').value = "";
+        document.getElementById('m_stu_notes').value = "";
+        renderStudentClassCheckboxes([]);
+        document.getElementById('studentModal').style.display = "flex";
+    };
+
+    window.openEditStudentModal = function(id) {
+        const s = window.state.students.find(item => item.firestoreId === id);
+        if (!s) return;
+        document.getElementById('studentModalTitle').innerText = `✏️ 編輯【${s.name}】檔案`;
+        document.getElementById('editStudentFirestoreId').value = id;
+        document.getElementById('btnDeleteStudent').style.display = "inline-block";
+        document.getElementById('m_stu_name').value = s.name || '';
+        document.getElementById('m_stu_eng_name').value = s.engName || '';
+        document.getElementById('m_stu_gender').value = s.gender || '男';
+        document.getElementById('m_stu_school').value = s.school || '';
+        document.getElementById('m_stu_grade').value = s.grade || '';
+        document.getElementById('m_stu_birthday').value = s.birthday || '';
+        document.getElementById('m_stu_p1').value = s.p1 || '';
+        document.getElementById('m_stu_p2').value = s.p2 || '';
+        document.getElementById('m_stu_pickup').value = s.pickup || '';
+        document.getElementById('m_stu_notes').value = s.notes || '';
+        renderStudentClassCheckboxes(s.courses || []);
+        document.getElementById('studentModal').style.display = "flex";
+    };
+
+    function renderStudentClassCheckboxes(selected = []) {
+        const wrapper = document.getElementById('studentClassCheckboxWrapper');
+        wrapper.innerHTML = '';
+        window.state.courses.forEach(c => {
+            const isChecked = selected.includes(c.name);
+            wrapper.innerHTML += `
+                <label style="display:inline-flex; align-items:center; gap:4px; font-size:13px; cursor:pointer;">
+                    <input type="checkbox" value="${c.name}" ${isChecked ? 'checked' : ''} style="width:auto; margin:0;"> ${c.name}
+                </label>
+            `;
+        });
+    }
+
+    function getSelectedStudentClasses() {
+        const boxes = document.querySelectorAll('#studentClassCheckboxWrapper input[type="checkbox"]:checked');
+        return Array.from(boxes).map(b => b.value);
+    }
+
+    window.saveStudent = async function() {
+        const firestoreId = document.getElementById('editStudentFirestoreId').value;
+        const name = document.getElementById('m_stu_name').value.trim();
+        const selectedClasses = getSelectedStudentClasses();
+
+        if (!name) return alert("學生中文姓名為必填！");
+        if (selectedClasses.length === 0) return alert("請至少為學生勾選一個修讀班級！");
+
+        const data = {
+            name,
+            engName: document.getElementById('m_stu_eng_name').value.trim(),
+            gender: document.getElementById('m_stu_gender').value,
+            school: document.getElementById('m_stu_school').value.trim(),
+            grade: document.getElementById('m_stu_grade').value.trim(),
+            birthday: document.getElementById('m_stu_birthday').value,
+            p1: document.getElementById('m_stu_p1').value.trim(),
+            p2: document.getElementById('m_stu_p2').value.trim(),
+            pickup: document.getElementById('m_stu_pickup').value.trim(),
+            notes: document.getElementById('m_stu_notes').value.trim(),
+            courses: selectedClasses
+        };
+
+        try {
+            if (firestoreId) {
+                await setDoc(doc(db, "joyEnglishStudents", firestoreId), data);
+            } else {
+                const newDoc = doc(collection(db, "joyEnglishStudents"));
+                await setDoc(newDoc, data);
+            }
+            document.getElementById('studentModal').style.display = 'none';
+            alert(`✅ 學生【${name}】資料已成功儲存！`);
+            initCloudData();
+        } catch(e) { alert("儲存失敗！"); }
+    };
+
+    window.deleteStudent = async function() {
+        const firestoreId = document.getElementById('editStudentFirestoreId').value;
+        const name = document.getElementById('m_stu_name').value;
+        if (!checkPassword(`🔒 刪除【${name}】學籍資料請輸入管理密碼：`)) return;
+        try {
+            await deleteDoc(doc(db, "joyEnglishStudents", firestoreId));
+            document.getElementById('studentModal').style.display = 'none';
+            alert(`✅ 學員【${name}】已成功刪除！`);
+            initCloudData();
+        } catch(e) { alert("刪除失敗！"); }
+    };
+</script>
+</body>
+</html>
