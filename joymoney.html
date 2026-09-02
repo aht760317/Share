@@ -160,10 +160,10 @@
         .btn-select:hover { background: #E2E8F0; }
         .btn-select.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
 
-        /* 班級資訊卡網格 (第一步選擇班級) */
+        /* 精簡化班級資訊卡網格 */
         .class-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
         }
@@ -175,7 +175,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -183,7 +183,7 @@
         .class-info-card:hover {
             border-color: #FECACA;
             transform: translateY(-2px);
-            box-shadow: 0 6px 14px rgba(197, 34, 39, 0.08);
+            box-shadow: 0 5px 12px rgba(197, 34, 39, 0.08);
         }
         .class-info-card.active {
             border-color: var(--primary);
@@ -194,12 +194,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px dashed var(--border);
-            padding-bottom: 6px;
             margin-bottom: 8px;
         }
         .class-info-name {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--text-main);
             display: flex;
@@ -212,26 +210,32 @@
             font-weight: bold;
             color: #64748B;
             background: #F1F5F9;
-            padding: 2px 7px;
+            padding: 2px 8px;
             border-radius: 12px;
         }
-        .class-info-detail {
-            font-size: 12.5px;
+        .class-info-teacher {
+            font-size: 13.5px;
             color: #334155;
-            line-height: 1.6;
-        }
-        .class-info-detail div {
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+        }
+        .class-info-teacher strong {
+            color: var(--text-main);
+            font-size: 14px;
         }
         .class-info-period {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px dashed #F1F5F9;
-            font-size: 11.5px;
-            color: #B45309;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #991B1B;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         input, select, textarea { 
@@ -649,12 +653,12 @@
         </div>
     </div>
 
-    <!-- 頁籤 3：產生新繳費單 (升級：完整排課班級卡片) -->
+    <!-- 頁籤 3：產生新繳費單 (精簡卡片：只留本期與老師) -->
     <div id="create" class="content-area active">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
             <div>
                 <h3 class="section-title" style="margin:0; border:none; padding:0;">第一步：選擇英語班級</h3>
-                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（卡片已同步點名系統排程，支援自由拖曳自訂順序）</p>
+                <p style="font-size:12.5px; color:#64748B; margin-top:2px;">點擊欲開單之班級卡片（卡片支援自由拖曳自訂順序）</p>
             </div>
             <button class="btn-sync" style="padding:5px 12px; font-size:12px;" onclick="syncAllFromRollbook()">🔄 重新整理排程</button>
         </div>
@@ -1155,8 +1159,6 @@
                             syncedClassOrder.push(name);
                         }
                         syncedClassMeta[name] = {
-                            day: c.day || '未設定上課日',
-                            time: c.time || '未設時段',
                             teacher: c.teacher || '未設定師資',
                             startDate: c.startDate || '',
                             endDate: c.endDate || ''
@@ -1184,7 +1186,7 @@
                     if (!syncedClasses[clsName]) {
                         syncedClasses[clsName] = [];
                         syncedClassOrder.push(clsName);
-                        syncedClassMeta[clsName] = { day: '未設定', time: '未設時段', teacher: '未設定', startDate: '', endDate: '' };
+                        syncedClassMeta[clsName] = { teacher: '未設定', startDate: '', endDate: '' };
                     }
                     if (!syncedClasses[clsName].includes(stuName)) {
                         syncedClasses[clsName].push(stuName);
@@ -1297,7 +1299,7 @@
         if(tabId === 'settings') renderQuickItemConfigList();
     };
 
-    /* 頁籤 3：產生繳費單 (升級為排程資訊卡片) */
+    /* 頁籤 3：產生繳費單 (精簡卡片呈現) */
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
@@ -1305,7 +1307,7 @@
         const classOrder = window.config.classOrder;
 
         classOrder.forEach(cls => {
-            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { day: '未設', time: '未設時段', teacher: '未設師資', startDate: '', endDate: '' };
+            const meta = (window.config.classMeta && window.config.classMeta[cls]) || { teacher: '未設師資', startDate: '', endDate: '' };
             const stuCount = (window.config.classes[cls] || []).length;
             const isSelected = (cls === window.currentClass);
 
@@ -1327,14 +1329,12 @@
                         <div class="class-info-name">🔤 <span>${cls}</span></div>
                         <span class="class-info-count">學員 ${stuCount} 人</span>
                     </div>
-                    <div class="class-info-detail">
-                        <div>🗓️ <b>星期：</b>${meta.day}</div>
-                        <div>🕒 <b>時段：</b>${meta.time}</div>
-                        <div>👨‍🏫 <b>師資：</b>${meta.teacher}</div>
+                    <div class="class-info-teacher">
+                        <span>👨‍🏫 授課老師：</span><strong>${meta.teacher}</strong>
                     </div>
                 </div>
                 <div class="class-info-period">
-                    📅 本期：${periodText}
+                    <span>📅 本期：</span>${periodText}
                 </div>
             `;
             grid.appendChild(card);
