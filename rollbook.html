@@ -201,6 +201,26 @@
         .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
         .btn:hover { opacity: 0.9; }
 
+        /* 純文字無邊框下載連結按鈕 */
+        .text-download-btn {
+            background: none;
+            border: none;
+            color: #475569;
+            font-size: 13.5px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 8px 4px;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s ease;
+        }
+        .text-download-btn:hover {
+            color: var(--accent);
+        }
+
         input[type="text"], input[type="date"], input[type="number"], select, textarea {
             width: 100%; padding: 10px 12px; margin-top: 4px; margin-bottom: 10px;
             border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff;
@@ -350,7 +370,7 @@
         @media print {
             @page { size: landscape; margin: 6mm; }
             body { background: white; padding: 0; }
-            header, .tabs, .no-print, .btn, .filter-btn-group { display: none !important; }
+            header, .tabs, .no-print, .btn, .filter-btn-group, .text-download-btn { display: none !important; }
             .card { box-shadow: none; padding: 0; margin: 0; border: none; }
             .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
             table { font-size: 9pt; width: 100%; }
@@ -429,7 +449,6 @@
 
     <!-- 1. 今日點名與日誌成績 -->
     <div id="tab-rollcall">
-        <!-- 未到與未點名提醒看板（首頁頂部即時顯示） -->
         <div class="card no-print" id="homeAlertBanner" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #f59e0b; padding: 14px; margin-bottom: 15px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <h4 style="color: #92400e; font-size: 15px; margin:0; display:flex; align-items:center; gap:6px;">
@@ -591,7 +610,7 @@
         </div>
 
         <div class="card" style="border-top: 4px solid var(--warning);">
-            <h3 style="color:var(--primary); font-size:17px;">📢 國定假日與停課放假設定</h3>
+            <h3 style="color:var(--primary); font-size:17px;">📢 國定假日與停課放假設定 (全校雲端連動)</h3>
             <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
                 <input type="date" id="newHolidayDate" style="padding:8px; border-radius:6px; border:1px solid #ccc; width:auto; margin:0;">
                 <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節放假)" style="padding:8px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:160px; margin:0;">
@@ -656,7 +675,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
                     <h4 id="studentListTitle" style="color:var(--primary); font-size:15px;">目前學生名冊</h4>
                     <div style="display:flex; gap:6px; align-items:center; width:100%;">
-                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話、接送備註..." oninput="renderMasterStudentsTable()" style="width:100%; margin:0; padding:8px 10px; font-size:13px;">
+                        <input type="text" id="studentSearchInput" placeholder="🔍 搜尋姓名、學校、電話、接送備註..." oninput="handleStudentSearchDebounced()" style="width:100%; margin:0; padding:8px 10px; font-size:13px;">
                     </div>
                 </div>
 
@@ -699,6 +718,13 @@
                         </thead>
                         <tbody id="masterStudentTableBody"></tbody>
                     </table>
+                </div>
+
+                <!-- 學生名單下方純文字下載備份按鈕 -->
+                <div style="margin-top: 14px; text-align: left; padding: 6px 0;">
+                    <button type="button" class="text-download-btn no-print" onclick="exportCurrentStudentsToCSV()">
+                        📥 下載學生資料（CSV 備份檔）
+                    </button>
                 </div>
             </div>
         </div>
@@ -1056,6 +1082,8 @@
         { key: 'junior', label: '📙 國中部' }
     ];
 
+    let searchDebounceTimer = null;
+
     window.state = {
         courses: { care: [], elementary: [], junior: [] },
         students: [],
@@ -1070,7 +1098,8 @@
         selectedSheetCourse: null,
         filterOrder: JSON.parse(localStorage.getItem('gude_filter_order_v2')) || DEFAULT_FILTER_ORDER,
         configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER,
-        quickRollContext: { courseName: '', dateStr: '' }
+        quickRollContext: { courseName: '', dateStr: '' },
+        currentFilteredStudents: []
     };
 
     function getTaiwanDateString(dateObj = new Date()) {
@@ -1148,6 +1177,7 @@
 
     async function initCloudData() {
         try {
+            // 載入課程資料
             const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
             if (coursesDoc.exists()) {
                 const data = coursesDoc.data().data || {};
@@ -1161,6 +1191,7 @@
                 };
             }
 
+            // 載入全體學生名冊
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
             window.state.students = [];
             studentsSnapshot.forEach(d => {
@@ -1175,11 +1206,21 @@
                 });
             });
 
+            // 載入點名記錄
             const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
             if (attendanceDoc.exists()) {
                 window.state.attendanceData = attendanceDoc.data().data || {};
             } else {
                 window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+            }
+
+            // 載入國定放假清單 (雲端 Firestore)
+            const holidaysDoc = await getDoc(doc(db, "classLogSettings", "holidays"));
+            if (holidaysDoc.exists()) {
+                window.state.holidays = holidaysDoc.data().data || [];
+                localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+            } else {
+                window.state.holidays = JSON.parse(localStorage.getItem('gude_holidays') || '[]');
             }
 
             initDropdowns();
@@ -1202,6 +1243,15 @@
         } catch (e) {
             console.error("同步點名資料至雲端失敗：", e);
             localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        }
+    }
+
+    async function saveHolidaysToCloud() {
+        try {
+            localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+            await setDoc(doc(db, "classLogSettings", "holidays"), { data: window.state.holidays });
+        } catch (e) {
+            console.error("放假資料同步至雲端失敗：", e);
         }
     }
 
@@ -1626,6 +1676,14 @@
         renderMasterStudentsTable();
     };
 
+    // 搜尋防抖（Debounce），避免大量 DOM 頻繁重繪
+    window.handleStudentSearchDebounced = function() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            renderMasterStudentsTable();
+        }, 200);
+    };
+
     window.renderMasterStudentsTable = function() {
         const tbody = document.getElementById('masterStudentTableBody');
         const cardContainer = document.getElementById('masterStudentCardContainer');
@@ -1689,6 +1747,8 @@
                 return name.includes(keyword) || school.includes(keyword) || stuClass.includes(keyword) || course.includes(keyword) || bday.includes(keyword) || phones.includes(keyword) || pickup.includes(keyword) || notes.includes(keyword);
             });
         }
+
+        window.state.currentFilteredStudents = filtered;
 
         let titleDesc = '目前學生名冊';
         if (deptKey === 'graduated') titleDesc = '🎓 畢業/離班學員清單';
@@ -1787,6 +1847,84 @@
             });
             tbody.innerHTML = html;
         }
+    };
+
+    // 匯出目前檢視之學生資料為 CSV 檔 (純文字按鈕觸發)
+    window.exportCurrentStudentsToCSV = function() {
+        const list = window.state.currentFilteredStudents || [];
+        if (list.length === 0) {
+            return alert('目前沒有可供下載的學生資料！');
+        }
+
+        const headers = [
+            "編號", "學生姓名", "性別", "身分證字號", "就讀學校", "年級座號",
+            "生日", "學籍狀態", "電話1稱謂", "電話1號碼", "電話2稱謂",
+            "電話2號碼", "電話3稱謂", "電話3號碼", "修習課程", "接送備註",
+            "父親職業", "母親職業", "健康狀況", "通訊地址", "詳細備註"
+        ];
+
+        const escapeCSV = (str) => {
+            if (str === null || str === undefined) return '""';
+            const s = String(str).replace(/"/g, '""');
+            return `"${s}"`;
+        };
+
+        const rows = [headers.map(escapeCSV).join(",")];
+
+        list.forEach((stu, index) => {
+            const p1 = (stu.phones && stu.phones[0]) || { label: '', number: '' };
+            const p2 = (stu.phones && stu.phones[1]) || { label: '', number: '' };
+            const p3 = (stu.phones && stu.phones[2]) || { label: '', number: '' };
+            const stuCourses = getStudentCoursesArray(stu).join('、');
+
+            const rowData = [
+                index + 1,
+                stu.name || '',
+                stu.gender || '',
+                stu.idCard || '',
+                stu.school || '',
+                stu.studentClass || '',
+                stu.birthday || '',
+                stu.status === 'graduated' ? '已畢業/離班' : '在籍就讀中',
+                p1.label || '',
+                p1.number || '',
+                p2.label || '',
+                p2.number || '',
+                p3.label || '',
+                p3.number || '',
+                stuCourses,
+                stu.pickupNotes || '',
+                stu.fatherJob || '',
+                stu.motherJob || '',
+                stu.health || '',
+                stu.address || '',
+                stu.notes || ''
+            ];
+            rows.push(rowData.map(escapeCSV).join(","));
+        });
+
+        // 包含 UTF-8 BOM 避免 Excel 打開中文變亂碼
+        const csvContent = "\uFEFF" + rows.join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        const deptKey = window.state.currentDeptView;
+        const filterClass = window.state.currentFilterClass;
+        let fileTag = "顧德補習班_學生名冊";
+        if (filterClass) fileTag += `_${filterClass}`;
+        else if (deptKey === 'care') fileTag += "_課輔部";
+        else if (deptKey === 'elementary') fileTag += "_國小部";
+        else if (deptKey === 'junior') fileTag += "_國中部";
+        else if (deptKey === 'graduated') fileTag += "_畢業班";
+        else fileTag += "_全校學生";
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${fileTag}_${getTaiwanDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     window.addEventListener('resize', () => {
@@ -2844,16 +2982,16 @@
         }
     };
 
-    window.verifyAndAddHoliday = function() {
+    window.verifyAndAddHoliday = async function() {
         const date = document.getElementById('newHolidayDate').value;
         const name = document.getElementById('newHolidayName').value.trim();
         if (!date || !name) return alert('請輸入完整日期與事由！');
 
         window.state.holidays.push({ date, name });
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+        await saveHolidaysToCloud();
         document.getElementById('newHolidayName').value = '';
         renderHolidayList();
-        alert(`已成功設定放假：${date} 【${name}】！`);
+        alert(`✅ 已成功設定放假：${date} 【${name}】並同步至全校雲端！`);
     };
 
     function renderHolidayList() {
@@ -2875,9 +3013,10 @@
         div.innerHTML = html;
     }
 
-    window.deleteHoliday = function(idx) {
+    window.deleteHoliday = async function(idx) {
+        if (!confirm('確定要刪除此放假設定嗎？')) return;
         window.state.holidays.splice(idx, 1);
-        localStorage.setItem('gude_holidays', JSON.stringify(window.state.holidays));
+        await saveHolidaysToCloud();
         renderHolidayList();
     };
 </script>
