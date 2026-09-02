@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>斗六顧德補習班 - 智慧教務與點名系統</title>
+    <title>斗六顧德補習班 - 專業繳費管理系統</title>
     <!-- 引入 SortableJS 支援拖曳排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -177,7 +177,7 @@
             font-size: 14px; 
             box-sizing: border-box; 
             width: 100%; 
-            background: white; 
+            background: white;
         }
         .form-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-end; flex-wrap: wrap; }
         label { display: block; font-weight: bold; margin-bottom: 6px; color: #475569; font-size: 13px; }
@@ -196,7 +196,7 @@
         }
         .category-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* 快捷按鈕與拖曳樣式 */
+        /* 快捷按鈕 */
         .quick-btn { 
             padding: 10px 14px; 
             background: #E0E7FF; 
@@ -210,11 +210,7 @@
             align-items: center; 
             flex: 1 1 30%; 
             min-width: 140px; 
-            cursor: grab; /* 提示可拖曳 */
         }
-        .quick-btn:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.4; background: #CBD5E1 !important; border: 2px dashed #64748B !important; }
-
         .quick-btn span { font-size: 15px; font-weight: bold; }
         .quick-btn small { font-size: 14px; font-weight: bold; }
         .quick-btn.discount { background: #FEF3C7; border-color: #FBBF24; color: #B45309; }
@@ -236,14 +232,6 @@
         .class-math { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }
         .class-writing { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
         .class-daycare { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
-
-        /* 班級選擇按鈕也能拖曳移動 */
-        #classGrid .btn-select {
-            cursor: grab;
-        }
-        #classGrid .btn-select:active {
-            cursor: grabbing;
-        }
 
         .fee-item-tag {
             display: inline-block;
@@ -371,7 +359,7 @@
             background: white; 
             color: #000; 
             font-size: 13px; 
-            box-sizing: border-box; 
+            box-sizing: border-box;
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
             margin: 0 auto;
@@ -406,10 +394,10 @@
         }
         .page-break { 
             page-break-after: always !important; 
-            break-after: page !important; 
+            break-after: page !important;
             height: 0; 
-            margin: 0; 
-            padding: 0; 
+            margin: 0;
+            padding: 0;
         }
 
         /* 手機端專屬體驗 */
@@ -538,7 +526,7 @@
                 padding: 0 !important; 
                 margin: 0 !important; 
                 -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
+                print-color-adjust: exact;
             }
             .receipt-box { 
                 page-break-inside: avoid !important; 
@@ -728,10 +716,9 @@
                     🏫 【<span id="billingSelectedClassName"></span>】學生收費清單 
                     <span style="font-size: 12px; color: #64748B; font-weight: normal;">(依姓氏筆劃排序)</span>
                 </h3>
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 6px;">
                     <label style="margin:0; font-size:13px; font-weight:bold; color:#475569;">預設月份：</label>
-                    <select id="billingGlobalYearSelect" onchange="onGlobalDateChange()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
-                    <select id="billingGlobalMonthSelect" onchange="onGlobalDateChange()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
+                    <select id="billingGlobalMonthSelect" onchange="renderBillingStudentsTable()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
                 </div>
             </div>
 
@@ -889,9 +876,8 @@
                 </label>
             </div>
             
-            <div id="modalMonthSelectContainer" style="display: flex; gap: 8px;">
-                <select id="modalBillYearSelect" onchange="onModalMonthSelectChange()" style="flex: 1.2; font-weight: bold; color: #1E40AF;"></select>
-                <select id="modalBillMonthSelect" onchange="onModalMonthSelectChange()" style="flex: 1; font-weight: bold; color: #1E40AF;"></select>
+            <div id="modalMonthSelectContainer">
+                <select id="modalBillMonthSelect" onchange="onModalMonthSelectChange()" style="font-weight: bold; color: #1E40AF;"></select>
             </div>
 
             <div id="modalCustomDateContainer" style="display: none; gap: 6px; align-items: center; margin-top: 6px;">
@@ -1053,12 +1039,11 @@
     let pQuickSortable = null;
     let jQuickSortable = null;
     let oQuickSortable = null;
-    let classGridSortable = null; // 支援班級按鈕拖曳排序
 
-    // 計算 3 個月的自然月區間：某年某月1日 ～ 第3個月的最後一日
+    // 計算 3 個月的自然月區間：某年某月1日 ～ 第3個月的最後一日 (例如 2026-09-01 ~ 2026-11-30)
     window.calculate3MonthRange = function(year, month) {
         const startD = new Date(year, month - 1, 1);
-        const endD = new Date(year, month - 1 + 3, 0);
+        const endD = new Date(year, month - 1 + 3, 0); // 取第 3 個月的最後一天 (大小月、閏年自動精準計算)
         
         const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
         const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
@@ -1068,7 +1053,7 @@
     // 計算下一期 3 個月自然月週期
     window.calculateNext3MonthRangeFromEnd = function(endDateStr) {
         const [eY, eM, eD] = endDateStr.split('-').map(Number);
-        const nextStartD = new Date(eY, eM, 1);
+        const nextStartD = new Date(eY, eM, 1); // 結束日期的下個月1日
         return window.calculate3MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
     };
 
@@ -1118,18 +1103,18 @@
 
     window.isOtherItem = function(name) {
         return (name.includes('(') && name.includes(')')) || (name.includes('（') && name.includes('）'));
-    };
+    }
 
     window.isJuniorHigh = function(className) {
         return className.includes('國中') || className.includes('國一') || className.includes('國二') || className.includes('國三') || className.includes('會考') || className.includes('理化') || className.includes('七年級') || className.includes('八年級') || className.includes('九年級');
-    };
+    }
 
     window.getClassCategoryStyle = function(className) {
         if (window.isJuniorHigh(className)) return 'class-junior';
         if (className.includes('數學') || className.includes('奧數') || className.includes('資優')) return 'class-math';
         if (className.includes('作文') || className.includes('語文') || className.includes('閱讀')) return 'class-writing';
         return 'class-daycare';
-    };
+    }
 
     async function initCloudData() {
         try {
@@ -1169,7 +1154,7 @@
             await autoSyncFromRollbookQuietly();
 
             document.getElementById('filterMonth').value = getCurrentMonthStr();
-            initYearMonthDropdowns();
+            initMonthDropdowns();
             
             handleReportModeChange();
             renderQuickItemConfigList();
@@ -1182,51 +1167,22 @@
         }
     }
 
-    // 初始化年份與月份雙下拉選單
-    function initYearMonthDropdowns() {
-        const d = new Date();
-        const currYear = d.getFullYear();
-        const currMonth = d.getMonth() + 1;
-
-        const startYear = 2024;
-        const endYear = Math.max(currYear + 3, 2029);
-
-        let yearOptions = '';
-        for (let y = startYear; y <= endYear; y++) {
-            const roc = y - 1911;
-            yearOptions += `<option value="${y}" ${y === currYear ? 'selected' : ''}>${y} 年 (民國 ${roc} 年)</option>`;
+    function initMonthDropdowns() {
+        const currentMonth = getCurrentMonthStr();
+        const options = [];
+        const [currY, currM] = currentMonth.split('-').map(Number);
+        
+        for (let i = -3; i <= 3; i++) {
+            const d = new Date(currY, currM - 1 + i, 1);
+            const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            options.push(mStr);
         }
 
-        let monthOptions = '';
-        for (let m = 1; m <= 12; m++) {
-            const mVal = String(m).padStart(2, '0');
-            monthOptions += `<option value="${mVal}" ${m === currMonth ? 'selected' : ''}>${m} 月</option>`;
-        }
-
-        const gY = document.getElementById('billingGlobalYearSelect');
-        const gM = document.getElementById('billingGlobalMonthSelect');
-        if (gY && gM) {
-            gY.innerHTML = yearOptions;
-            gM.innerHTML = monthOptions;
-        }
-
-        const mY = document.getElementById('modalBillYearSelect');
-        const mM = document.getElementById('modalBillMonthSelect');
-        if (mY && mM) {
-            mY.innerHTML = yearOptions;
-            mM.innerHTML = monthOptions;
+        const globalSelect = document.getElementById('billingGlobalMonthSelect');
+        if (globalSelect) {
+            globalSelect.innerHTML = options.map(m => `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}</option>`).join('');
         }
     }
-
-    window.getSelectedGlobalYearMonth = function() {
-        const y = document.getElementById('billingGlobalYearSelect').value;
-        const m = document.getElementById('billingGlobalMonthSelect').value;
-        return `${y}-${m}`;
-    };
-
-    window.onGlobalDateChange = function() {
-        renderBillingStudentsTable();
-    };
 
     window.syncAllFromRollbook = async function() {
         await autoSyncFromRollbookQuietly();
@@ -1313,7 +1269,7 @@
         } catch (e) {
             console.error("同步失敗：", e);
         }
-    }
+    };
 
     function updateClassFilterDropdown() {
         const select = document.getElementById('filterClassSelect');
@@ -1353,17 +1309,17 @@
         } else {
             alert('❌ 密碼錯誤！動作已取消。');
         }
-    };
+    }
 
     window.getCurrentMonthStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    };
+    }
 
     window.getCurrentDateStr = function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
+    }
 
     window.parseLegacyDateToIso = function(dateStr) {
         if(!dateStr) return "";
@@ -1372,7 +1328,7 @@
             return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
         }
         return dateStr;
-    };
+    }
 
     window.switchTab = function(tabId) {
         document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
@@ -1396,7 +1352,7 @@
         if(tabId === 'create') renderClassGrid();
         if(tabId === 'directory') renderDirectoryInit();
         if(tabId === 'settings') renderQuickItemConfigList();
-    };
+    }
 
     window.switchDeptRecord = function(dept) {
         document.getElementById('tabPrimary').classList.remove('active');
@@ -1411,7 +1367,7 @@
             document.getElementById('tabJunior').classList.add('active');
             document.getElementById('juniorRecordSection').style.display = 'block';
         }
-    };
+    }
 
     window.filterBillingClasses = function(category, btnEl) {
         window.billingFilterCategory = category;
@@ -1427,7 +1383,7 @@
         renderDirectoryInit();
     };
 
-    /* ---------- 頁籤 3：產生繳費單 (含 SortableJS 拖曳班級排序) ---------- */
+    /* ---------- 頁籤 3：產生繳費單 (依筆劃排序與單據列表化) ---------- */
 
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
@@ -1446,7 +1402,6 @@
             const classColor = getClassCategoryStyle(cls);
             btn.className = `btn-select ${classColor} ${cls === window.currentClass ? 'active' : ''}`;
             btn.innerText = cls;
-            btn.setAttribute('data-classname', cls);
             btn.onclick = () => selectBillingClass(cls);
             grid.appendChild(btn);
         });
@@ -1454,22 +1409,7 @@
         if (filteredOrder.length === 0) {
             grid.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無此分類班級</div>';
         }
-
-        // 啟用 SortableJS 讓班級按鈕可自由拖曳排序
-        if (classGridSortable) classGridSortable.destroy();
-        classGridSortable = new Sortable(grid, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function() {
-                const newOrder = [];
-                grid.querySelectorAll('button').forEach(btn => {
-                    newOrder.push(btn.getAttribute('data-classname'));
-                });
-                // 更新全校班級順序陣列
-                window.config.classOrder = newOrder;
-            }
-        });
-    };
+    }
 
     window.selectBillingClass = function(cls) {
         window.currentClass = cls;
@@ -1488,7 +1428,7 @@
         const tbody = document.getElementById('billingStudentTableBody');
         tbody.innerHTML = '';
 
-        const selectedMonth = window.getSelectedGlobalYearMonth();
+        const selectedMonth = document.getElementById('billingGlobalMonthSelect').value || getCurrentMonthStr();
         let students = [...(window.config.classes[cls] || [])];
 
         // 依繁體中文姓氏筆劃排序 (zh-Hant)
@@ -1506,6 +1446,7 @@
             const rowClass = gender === 'female' ? 'row-female' : 'row-male';
             const genderIcon = gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
 
+            // 尋找涵蓋選定月份的單據 (包含 3 個月自然月週期)
             const bill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, selectedMonth));
 
             let displayPeriod = selectedMonth;
@@ -1529,6 +1470,7 @@
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
             } else if (window.isJuniorHigh(cls)) {
+                // 國中部若尚未開單，預設顯示以選定月份為起始的 3 個月週期
                 const [y, m] = selectedMonth.split('-').map(Number);
                 const r = window.calculate3MonthRange(y, m);
                 displayPeriod = r.periodStr;
@@ -1561,29 +1503,40 @@
         document.getElementById('modalBillStudentName').value = stu;
         document.getElementById('modalTargetStudentTitle').innerText = `${stu} (${cls})`;
 
-        const curY = document.getElementById('billingGlobalYearSelect').value;
-        const curM = document.getElementById('billingGlobalMonthSelect').value;
-        document.getElementById('modalBillYearSelect').value = curY;
-        document.getElementById('modalBillMonthSelect').value = curM;
+        // 設定月份下拉選單 (前後 6 個月)
+        const currentMonth = document.getElementById('billingGlobalMonthSelect').value || getCurrentMonthStr();
+        const monthSelect = document.getElementById('modalBillMonthSelect');
+        const [currY, currM] = currentMonth.split('-').map(Number);
+        let monthOptions = '';
+        for (let i = -3; i <= 3; i++) {
+            const d = new Date(currY, currM - 1 + i, 1);
+            const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthOptions += `<option value="${mStr}" ${mStr === currentMonth ? 'selected' : ''}>${mStr}</option>`;
+        }
+        monthSelect.innerHTML = monthOptions;
 
-        const defaultRange = window.calculate3MonthRange(Number(curY), Number(curM));
+        // 計算自然 3 個月週期 (如 2026-09-01 ~ 2026-11-30)
+        const defaultRange = window.calculate3MonthRange(currY, currM);
 
         if (isJr) {
+            // 國中部預設強制啟用自然 3 個月自訂起訖區間
             document.getElementById('modalCustomPeriodToggle').checked = true;
             document.getElementById('modalCustomDateContainer').style.display = 'flex';
             document.getElementById('modalStartDate').value = defaultRange.start;
             document.getElementById('modalEndDate').value = defaultRange.end;
         } else {
+            // 國小部預設月繳
             document.getElementById('modalCustomPeriodToggle').checked = false;
             document.getElementById('modalCustomDateContainer').style.display = 'none';
             document.getElementById('modalStartDate').value = defaultRange.start;
             document.getElementById('modalEndDate').value = defaultRange.end;
         }
 
+        // 依據國中/國小過濾下拉項目
         populateQuickDropdownForModal(cls);
 
-        const targetYM = `${curY}-${curM}`;
-        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
+        // 讀取既有單據明細 (若有)
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, currentMonth));
         if (existingBill && existingBill.items) {
             window.modalCurrentItems = JSON.parse(JSON.stringify(existingBill.items));
             document.getElementById('modalBillNoteInput').value = existingBill.billNote || '';
@@ -1604,8 +1557,9 @@
     };
 
     window.onModalMonthSelectChange = function() {
-        const y = Number(document.getElementById('modalBillYearSelect').value);
-        const m = Number(document.getElementById('modalBillMonthSelect').value);
+        const ym = document.getElementById('modalBillMonthSelect').value;
+        if (!ym) return;
+        const [y, m] = ym.split('-').map(Number);
         const r = window.calculate3MonthRange(y, m);
         document.getElementById('modalStartDate').value = r.start;
         document.getElementById('modalEndDate').value = r.end;
@@ -1632,7 +1586,7 @@
     window.toggleCustomPeriodInputs = function() {
         const isCustom = document.getElementById('modalCustomPeriodToggle').checked;
         document.getElementById('modalCustomDateContainer').style.display = isCustom ? 'flex' : 'none';
-        document.getElementById('modalMonthSelectContainer').style.display = isCustom ? 'none' : 'flex';
+        document.getElementById('modalMonthSelectContainer').style.display = isCustom ? 'none' : 'block';
     };
 
     window.addSelectedItemToModalList = function() {
@@ -1714,14 +1668,13 @@
             yMonth = start.substring(0, 7);
             displayPeriod = `${start} ~ ${end}`;
         } else {
-            const y = document.getElementById('modalBillYearSelect').value;
-            const m = document.getElementById('modalBillMonthSelect').value;
-            yMonth = `${y}-${m}`;
+            yMonth = document.getElementById('modalBillMonthSelect').value;
             displayPeriod = yMonth;
         }
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
 
+        // 檢查是否存在同名且期間重疊/相同的單據
         const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && (b.periodStr === displayPeriod || b.yearMonth === yMonth || window.isBillMatchingMonth(b, yMonth)));
 
         try {
@@ -1778,7 +1731,7 @@
         }
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (精準3個月自然月週期) ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
         try {
@@ -1787,19 +1740,22 @@
             let nextYearMonth = '';
 
             if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
+                // 國中部自然 3 個月週期精準延展 (例如 09-01~11-30 下一期自動為 12-01~02-28)
                 const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
                 const nextRange = window.calculateNext3MonthRangeFromEnd(endStr);
                 nextPeriodStr = nextRange.periodStr;
                 nextYearMonth = nextRange.start.substring(0, 7);
             } else {
+                // 國小部/課輔部月份自動 +1 個月
                 let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
                 if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
                 const [year, month] = baseYM.split('-').map(Number);
-                const nextDate = new Date(year, month, 1);
+                const nextDate = new Date(year, month, 1); // 自動進到下個月
                 nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
                 nextPeriodStr = nextYearMonth;
             }
 
+            // 檢查下一期是否已經存在單據 (避免重複自動產生)
             const alreadyExists = window.bills.some(b => 
                 b.studentName === currentBill.studentName && 
                 b.className === currentBill.className && 
@@ -1854,13 +1810,13 @@
         
         document.getElementById('studentProfileSection').style.display = 'block';
         document.getElementById('studentProfileSection').scrollIntoView({behavior: 'smooth', block: 'start'});
-    };
+    }
 
     window.closeStudentProfile = function() {
         document.getElementById('studentProfileSection').style.display = 'none';
         window.editingProfileClass = "";
         window.editingProfileStudent = "";
-    };
+    }
 
     window.saveStudentProfile = async function() {
         if(!window.editingProfileClass || !window.editingProfileStudent) return;
@@ -1883,7 +1839,7 @@
         alert('💾 學生資料與備註已成功同步至雲端！');
         closeStudentProfile();
         showDirectoryClass(window.currentDirectoryClass); 
-    };
+    }
 
     window.renderDirectoryInit = function() {
         const select = document.getElementById('directoryClassSelect');
@@ -1904,7 +1860,7 @@
         select.innerHTML = html;
 
         showDirectoryClass(window.currentDirectoryClass);
-    };
+    }
 
     window.showDirectoryClass = function(cls) {
         window.currentDirectoryClass = cls;
@@ -1980,7 +1936,7 @@
         });
         
         container.innerHTML = html || '<div style="padding:15px; text-align:center; color:#94A3B8;">目前沒有任何學生資料可以顯示。</div>';
-    };
+    }
 
     window.printDirectory = function() {
         const printContent = document.getElementById('directoryContent').innerHTML;
@@ -1996,11 +1952,11 @@
         `;
         document.getElementById('printArea').innerHTML = html;
         window.print();
-    };
+    }
 
     window.closeModal = function(modalId) {
         document.getElementById(modalId).style.display = 'none';
-    };
+    }
 
     window.saveHandler = async function() {
         const handler = document.getElementById('setHandler').value.trim();
@@ -2011,7 +1967,7 @@
         } catch (e) {
             console.error(e);
         }
-    };
+    }
 
     window.renderQuickItemConfigList = function() {
         const pList = document.getElementById('primaryQuickItemConfigList');
@@ -2075,7 +2031,7 @@
 
         if (oQuickSortable) oQuickSortable.destroy();
         oQuickSortable = new Sortable(oList, { group: 'quickItems', animation: 150, ghostClass: 'sortable-ghost', onEnd: onSortEnd });
-    };
+    }
 
     window.addQuickItemConfig = async function() {
         const name = document.getElementById('newConfigName').value.trim();
@@ -2087,7 +2043,7 @@
         document.getElementById('newConfigName').value = '';
         document.getElementById('newConfigPrice').value = '';
         renderQuickItemConfigList();
-    };
+    }
 
     window.openQuickItemModal = function(index) {
         const item = window.quickItems[index];
@@ -2095,7 +2051,7 @@
         document.getElementById('modalQuickItemNameInput').value = item.name;
         document.getElementById('modalQuickItemPriceInput').value = item.price !== null ? item.price : '';
         document.getElementById('quickItemModal').style.display = 'flex';
-    };
+    }
 
     window.saveQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
@@ -2112,7 +2068,7 @@
             closeModal('quickItemModal');
             alert('✏️ 快捷項目修改成功！');
         });
-    };
+    }
 
     window.deleteQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
@@ -2123,14 +2079,14 @@
             renderQuickItemConfigList();
             closeModal('quickItemModal');
         });
-    };
+    }
 
     window.clearFilter = function() {
         document.getElementById('filterMonth').value = '';
         const classFilter = document.getElementById('filterClassSelect');
         if (classFilter) classFilter.value = '';
         renderRecords();
-    };
+    }
 
     window.toggleSelectAll = function(dept, masterCheckbox) {
         const checkboxes = document.querySelectorAll(`.row-checkbox-${dept}`);
@@ -2215,7 +2171,7 @@
         }
         
         renderUnpaidTabLists();
-    };
+    }
 
     window.renderUnpaidTabLists = function() {
         const primaryContainer = document.getElementById('tabPrimaryUnpaidListBody');
@@ -2227,8 +2183,10 @@
         const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
         const selectedClass = classFilter ? classFilter.value : '';
 
+        // 取得當前年月 (例如 "2026-09")
         const currentMonth = getCurrentMonthStr();
 
+        // 過濾未繳費 且 單據期間/月份小於或等於當月 (未來月份不顯示)
         let unpaidBills = window.bills.filter(b => {
             if (b.isPaid) return false;
 
@@ -2553,6 +2511,7 @@
                     billNote: bill.billNote || ''
                 });
 
+                // 自動在雲端為該學生延續建立「下一期 / 下一趟（精準 3 個月）」未繳單據
                 await autoCreateNextPeriodBill(bill);
 
                 renderBillingStudentsTable();
@@ -2564,7 +2523,7 @@
                 console.error(e);
             }
         }
-    };
+    }
 
     window.cancelPayment = async function(firestoreId, id) {
         verifyAndDelete(`取消繳費紀錄`, async () => {
@@ -2594,7 +2553,7 @@
                 }
             }
         });
-    };
+    }
 
     window.promptDeleteBill = async function(firestoreId, id, studentName) {
         verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
@@ -2607,7 +2566,7 @@
                 console.error(e);
             }
         });
-    };
+    }
 
     window.openReportModal = function(type) {
         let html = '';
@@ -2817,7 +2776,6 @@
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
-        const issueDate = (isReceipt && bill.paidDate) ? bill.paidDate : (bill.date || getCurrentDateStr());
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
@@ -2871,16 +2829,16 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px; white-space: nowrap;">繳費日期：${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">收款經手人：<strong>${window.config.handler || '顧德教務處'}</strong></div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         } else {
-            html += `<div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 11.5px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:12px; white-space:nowrap; margin-right: 15px;">繳費日期：${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div style="margin-top: 4px; font-size: 11.5px; color: #222; font-weight: 500;">備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div>`;
         }
 
         html += `</div>`;
         return html;
-    };
+    }
 
     window.getCombinedReceiptHtml = function(bills, isReceipt, copyLabel) {
         let combinedItemsHtml = '';
@@ -2888,7 +2846,6 @@
         let studentNamesArr = [];
         let classNamesArr = [];
         let periodStrsArr = [];
-        let issueDate = getCurrentDateStr();
 
         let globalIdx = 1;
         bills.forEach(bill => {
@@ -2897,7 +2854,6 @@
             if (!classNamesArr.includes(fullCls)) classNamesArr.push(fullCls);
             if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
             else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
-            if (bill.paidDate && bill.paidDate > issueDate) issueDate = bill.paidDate;
 
             grandTotal += bill.total;
 
@@ -2957,15 +2913,16 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px; white-space: nowrap;">繳費日期：${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">收款經手人：<strong>${window.config.handler || '顧德教務處'}</strong></div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         }
 
         html += `</div>`;
         return html;
-    };
+    }
 
+    // 列印單張單據：收據固定為 2 聯 (家長收執聯 + 補習班存根聯)；通知單只印 1 張
     window.printDocument = function(id, type) {
         const bill = window.bills.find(b => b.id === id);
         if(!bill) return;
@@ -2985,11 +2942,49 @@
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
-    };
+    }
 
+    // 批次列印該班未繳通知單 (每 3 位同學剛好滿版一頁 A4)
     window.batchPrintNotices = function() {
-        ... (略，保持原有批次列印邏輯) ...
-    };
+        const filterMonth = document.getElementById('filterMonth').value;
+        const targetClass = document.getElementById('filterClassSelect').value;
+
+        if(!targetClass) { 
+            alert('請先在上方「🏫 班級」選取要列印的班級！'); 
+            return; 
+        }
+
+        let targetBills = window.bills.filter(b => b.className === targetClass && !b.isPaid);
+        if (filterMonth) {
+            targetBills = targetBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
+        }
+
+        if(targetBills.length === 0) { 
+            alert(`【${targetClass}】目前沒有未繳費單據可供列印！`); 
+            return; 
+        }
+
+        let allHtml = '';
+        targetBills.forEach((bill, index) => {
+            if (index % 3 === 0) {
+                allHtml += '<div class="receipt-container-page">';
+            }
+
+            allHtml += getSingleReceiptHtml(bill, false, '');
+
+            if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
+                allHtml += '</div>';
+                if (index !== targetBills.length - 1) {
+                    allHtml += '<div class="page-break"></div>';
+                }
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        });
+
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
+    }
 
     initCloudData();
 </script>
