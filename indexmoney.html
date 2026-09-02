@@ -1175,7 +1175,6 @@
         const currYear = d.getFullYear();
         const currMonth = d.getMonth() + 1;
 
-        // 年份：從 2024 年一路提供至當前年份 + 3 年
         const startYear = 2024;
         const endYear = Math.max(currYear + 3, 2029);
 
@@ -1533,7 +1532,6 @@
         document.getElementById('modalBillStudentName').value = stu;
         document.getElementById('modalTargetStudentTitle').innerText = `${stu} (${cls})`;
 
-        // 同步預設畫面上選擇的年與月至彈跳視窗
         const curY = document.getElementById('billingGlobalYearSelect').value;
         const curM = document.getElementById('billingGlobalMonthSelect').value;
         document.getElementById('modalBillYearSelect').value = curY;
@@ -2244,7 +2242,7 @@
                         <div class="unpaid-card-actions">
                             <button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id}, 'notice')">🖨️ 印單據</button>
                             <button class="action-btn btn-green" onclick="openBillPreviewModal(${bill.id}, 'receipt')">🖨️ 印收據</button>
-                            <button class="action-btn btn-purple" onclick="openPaymentConfirmModal('${bill.firestoreId}', ${bill.id})">💰 收款</button>
+                            <button class="action-btn btn-purple" onclick="openPaymentConfirmModal('${firestoreId || bill.firestoreId}', ${bill.id})">💰 收款</button>
                         </div>
                     </div>`;
             }).join('');
@@ -2790,6 +2788,8 @@
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
+        // 抓取點收日期 (若已繳費則用 paidDate，若未繳費/通知單則用當天日期)
+        const issueDate = (isReceipt && bill.paidDate) ? bill.paidDate : (bill.date || getCurrentDateStr());
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
@@ -2814,12 +2814,12 @@
             <div class="receipt-box ${singleNoticeClass}">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-                        <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="width: 85px; font-size: 12px; font-weight: bold;">日期：${issueDate}</div>
                         <div style="flex: 1; text-align: center;">
                             <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                             <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                         </div>
-                        ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
+                        ${copyLabel ? `<div style="width: 85px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 85px; display:none;"></div>'}
                     </div>
                     <div style="text-align:center; font-size:16px; font-weight:900; margin-bottom:4px; letter-spacing: 1px;">${isReceipt ? '繳 費 收 據 明 細 單' : '繳 費 通 知 單'}</div>
                     <div class="receipt-header">
@@ -2860,6 +2860,7 @@
         let studentNamesArr = [];
         let classNamesArr = [];
         let periodStrsArr = [];
+        let issueDate = getCurrentDateStr();
 
         let globalIdx = 1;
         bills.forEach(bill => {
@@ -2868,6 +2869,7 @@
             if (!classNamesArr.includes(fullCls)) classNamesArr.push(fullCls);
             if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
             else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
+            if (bill.paidDate && bill.paidDate > issueDate) issueDate = bill.paidDate;
 
             grandTotal += bill.total;
 
@@ -2899,12 +2901,12 @@
             <div class="receipt-box">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-                        <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="width: 85px; font-size: 12px; font-weight: bold;">日期：${issueDate}</div>
                         <div style="flex: 1; text-align: center;">
                             <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                             <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                         </div>
-                        ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
+                        ${copyLabel ? `<div style="width: 85px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 85px; display:none;"></div>'}
                     </div>
                     <div style="text-align:center; font-size:16px; font-weight:900; margin-bottom:4px; letter-spacing: 1px;">${isReceipt ? '合 併 繳 費 收 據 明 細 單' : '合 併 繳 費 通 知 單'}</div>
                     <div class="receipt-header">
