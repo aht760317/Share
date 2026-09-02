@@ -716,9 +716,10 @@
                     🏫 【<span id="billingSelectedClassName"></span>】學生收費清單 
                     <span style="font-size: 12px; color: #64748B; font-weight: normal;">(依姓氏筆劃排序)</span>
                 </h3>
-                <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <label style="margin:0; font-size:13px; font-weight:bold; color:#475569;">預設月份：</label>
-                    <select id="billingGlobalMonthSelect" onchange="renderBillingStudentsTable()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
+                    <select id="billingGlobalYearSelect" onchange="onGlobalDateChange()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
+                    <select id="billingGlobalMonthSelect" onchange="onGlobalDateChange()" style="padding: 4px 8px; font-size: 13px; font-weight: bold; width: auto; background: #EFF6FF; border-color: #93C5FD;"></select>
                 </div>
             </div>
 
@@ -876,8 +877,9 @@
                 </label>
             </div>
             
-            <div id="modalMonthSelectContainer">
-                <select id="modalBillMonthSelect" onchange="onModalMonthSelectChange()" style="font-weight: bold; color: #1E40AF;"></select>
+            <div id="modalMonthSelectContainer" style="display: flex; gap: 8px;">
+                <select id="modalBillYearSelect" onchange="onModalMonthSelectChange()" style="flex: 1.2; font-weight: bold; color: #1E40AF;"></select>
+                <select id="modalBillMonthSelect" onchange="onModalMonthSelectChange()" style="flex: 1; font-weight: bold; color: #1E40AF;"></select>
             </div>
 
             <div id="modalCustomDateContainer" style="display: none; gap: 6px; align-items: center; margin-top: 6px;">
@@ -1154,7 +1156,7 @@
             await autoSyncFromRollbookQuietly();
 
             document.getElementById('filterMonth').value = getCurrentMonthStr();
-            initMonthDropdowns();
+            initYearMonthDropdowns();
             
             handleReportModeChange();
             renderQuickItemConfigList();
@@ -1167,31 +1169,52 @@
         }
     }
 
-    // 生成月份選單：固定從 2026 年 1 月開始，一路生成到未來 (當前年份 + 2 年) 的 12 月
-    window.generateMonthOptions = function(selectedVal) {
-        const currentYear = new Date().getFullYear();
-        const startYear = 2026;
-        const endYear = Math.max(currentYear + 2, 2028); // 至少生成到 2028 年，隨時間動態延長
-        let html = '';
+    // 初始化年份與月份雙下拉選單 (支援過去到未來的年與月)
+    function initYearMonthDropdowns() {
+        const d = new Date();
+        const currYear = d.getFullYear();
+        const currMonth = d.getMonth() + 1;
 
+        // 年份：從 2024 年一路提供至當前年份 + 3 年
+        const startYear = 2024;
+        const endYear = Math.max(currYear + 3, 2029);
+
+        let yearOptions = '';
         for (let y = startYear; y <= endYear; y++) {
-            for (let m = 1; m <= 12; m++) {
-                const mStr = `${y}-${String(m).padStart(2, '0')}`;
-                const rocYear = y - 1911;
-                const labelText = `${y} 年 ${String(m).padStart(2, '0')} 月 (民國 ${rocYear} 年)`;
-                html += `<option value="${mStr}" ${mStr === selectedVal ? 'selected' : ''}>${labelText}</option>`;
-            }
+            const roc = y - 1911;
+            yearOptions += `<option value="${y}" ${y === currYear ? 'selected' : ''}>${y} 年 (民國 ${roc} 年)</option>`;
         }
-        return html;
-    };
 
-    function initMonthDropdowns() {
-        const currentMonth = getCurrentMonthStr();
-        const globalSelect = document.getElementById('billingGlobalMonthSelect');
-        if (globalSelect) {
-            globalSelect.innerHTML = window.generateMonthOptions(currentMonth);
+        let monthOptions = '';
+        for (let m = 1; m <= 12; m++) {
+            const mVal = String(m).padStart(2, '0');
+            monthOptions += `<option value="${mVal}" ${m === currMonth ? 'selected' : ''}>${m} 月</option>`;
+        }
+
+        const gY = document.getElementById('billingGlobalYearSelect');
+        const gM = document.getElementById('billingGlobalMonthSelect');
+        if (gY && gM) {
+            gY.innerHTML = yearOptions;
+            gM.innerHTML = monthOptions;
+        }
+
+        const mY = document.getElementById('modalBillYearSelect');
+        const mM = document.getElementById('modalBillMonthSelect');
+        if (mY && mM) {
+            mY.innerHTML = yearOptions;
+            mM.innerHTML = monthOptions;
         }
     }
+
+    window.getSelectedGlobalYearMonth = function() {
+        const y = document.getElementById('billingGlobalYearSelect').value;
+        const m = document.getElementById('billingGlobalMonthSelect').value;
+        return `${y}-${m}`;
+    };
+
+    window.onGlobalDateChange = function() {
+        renderBillingStudentsTable();
+    };
 
     window.syncAllFromRollbook = async function() {
         await autoSyncFromRollbookQuietly();
@@ -1392,7 +1415,7 @@
         renderDirectoryInit();
     };
 
-    /* ---------- 頁籤 3：產生繳費單 (依筆劃排序與單據列表化) ---------- */
+    /* ---------- 頁籤 3：產生繳費單 ---------- */
 
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
@@ -1437,7 +1460,7 @@
         const tbody = document.getElementById('billingStudentTableBody');
         tbody.innerHTML = '';
 
-        const selectedMonth = document.getElementById('billingGlobalMonthSelect').value || getCurrentMonthStr();
+        const selectedMonth = window.getSelectedGlobalYearMonth();
         let students = [...(window.config.classes[cls] || [])];
 
         // 依繁體中文姓氏筆劃排序 (zh-Hant)
@@ -1510,13 +1533,13 @@
         document.getElementById('modalBillStudentName').value = stu;
         document.getElementById('modalTargetStudentTitle').innerText = `${stu} (${cls})`;
 
-        // 設定月份下拉選單 (從 2026-01 開始延伸到未來)
-        const currentMonth = document.getElementById('billingGlobalMonthSelect').value || getCurrentMonthStr();
-        const monthSelect = document.getElementById('modalBillMonthSelect');
-        monthSelect.innerHTML = window.generateMonthOptions(currentMonth);
+        // 同步預設畫面上選擇的年與月至彈跳視窗
+        const curY = document.getElementById('billingGlobalYearSelect').value;
+        const curM = document.getElementById('billingGlobalMonthSelect').value;
+        document.getElementById('modalBillYearSelect').value = curY;
+        document.getElementById('modalBillMonthSelect').value = curM;
 
-        const [currY, currM] = currentMonth.split('-').map(Number);
-        const defaultRange = window.calculate3MonthRange(currY, currM);
+        const defaultRange = window.calculate3MonthRange(Number(curY), Number(curM));
 
         if (isJr) {
             document.getElementById('modalCustomPeriodToggle').checked = true;
@@ -1532,7 +1555,8 @@
 
         populateQuickDropdownForModal(cls);
 
-        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, currentMonth));
+        const targetYM = `${curY}-${curM}`;
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
         if (existingBill && existingBill.items) {
             window.modalCurrentItems = JSON.parse(JSON.stringify(existingBill.items));
             document.getElementById('modalBillNoteInput').value = existingBill.billNote || '';
@@ -1553,9 +1577,8 @@
     };
 
     window.onModalMonthSelectChange = function() {
-        const ym = document.getElementById('modalBillMonthSelect').value;
-        if (!ym) return;
-        const [y, m] = ym.split('-').map(Number);
+        const y = Number(document.getElementById('modalBillYearSelect').value);
+        const m = Number(document.getElementById('modalBillMonthSelect').value);
         const r = window.calculate3MonthRange(y, m);
         document.getElementById('modalStartDate').value = r.start;
         document.getElementById('modalEndDate').value = r.end;
@@ -1582,7 +1605,7 @@
     window.toggleCustomPeriodInputs = function() {
         const isCustom = document.getElementById('modalCustomPeriodToggle').checked;
         document.getElementById('modalCustomDateContainer').style.display = isCustom ? 'flex' : 'none';
-        document.getElementById('modalMonthSelectContainer').style.display = isCustom ? 'none' : 'block';
+        document.getElementById('modalMonthSelectContainer').style.display = isCustom ? 'none' : 'flex';
     };
 
     window.addSelectedItemToModalList = function() {
@@ -1664,7 +1687,9 @@
             yMonth = start.substring(0, 7);
             displayPeriod = `${start} ~ ${end}`;
         } else {
-            yMonth = document.getElementById('modalBillMonthSelect').value;
+            const y = document.getElementById('modalBillYearSelect').value;
+            const m = document.getElementById('modalBillMonthSelect').value;
+            yMonth = `${y}-${m}`;
             displayPeriod = yMonth;
         }
 
