@@ -771,7 +771,7 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目進行智慧群組整合成唯一記錄
+      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目進行智慧合併與去重
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const rawBillsMap = {};
         
@@ -787,7 +787,7 @@
             const period = bill.periodStr || bill.yearMonth || '';
             const campusKey = 'wenli'; // 固定鎖定文理
             
-            // 核心修正：以「學生姓名 + 期間/月份」作為去重 Key，將同一學生的多張已付款帳單智慧合併為單筆總帳
+            // 核心去重邏輯：以「學生姓名 + 期間/月份」作為唯一識別 Key，自動整合同一學生同期的多筆繳費紀錄
             const uniqueKey = `${bill.studentName}_${period || yearMonthTW}`;
 
             if (!rawBillsMap[uniqueKey]) {
@@ -1046,8 +1046,10 @@
           totalInc += Number(t.amount);
           const formatted24HTime = formatTime24HDisplay(t.createdAt, true);
           const time24HOnly = formatTime24HDisplay(t.createdAt, false);
+          
+          // 增加刪除按鈕：若為學費連動，則顯示刪除按鈕會觸發專用提示或密碼驗證
           const actionBtn = t.isTuitionSync
-            ? `<span class="text-slate-300 text-xs" title="學費系統連動">-</span>`
+            ? `<button onclick="event.stopPropagation(); deleteTuitionTransaction('${t.firestoreId}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="刪除學費紀錄"><i class="fa-solid fa-trash text-xs"></i></button>`
             : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="刪除"><i class="fa-solid fa-trash text-xs"></i></button>`;
 
           const tr = document.createElement('tr');
@@ -1080,7 +1082,10 @@
             </div>
             <div class="text-right shrink-0 flex items-center space-x-1">
               <span class="text-sm font-black text-emerald-600">+NT$ ${Number(t.amount).toLocaleString()}</span>
-              ${!t.isTuitionSync ? `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>` : ''}
+              ${t.isTuitionSync 
+                ? `<button onclick="event.stopPropagation(); deleteTuitionTransaction('${t.firestoreId}')" class="text-slate-300 hover:text-rose-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>`
+                : `<button onclick="event.stopPropagation(); deleteCustomTransaction('${t.firestoreDocId}')" class="text-slate-300 hover:text-rose-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>`
+              }
             </div>
           `;
           incMobileList.appendChild(card);
@@ -1271,7 +1276,8 @@
       const recordType = document.getElementById('detail-target-type').value;
 
       if (recordType === 'tuition') {
-        alert("⚠️ 學費連動項目請直接至「繳費紀錄」頁面進行取消收款或刪除單據。");
+        // 學費連動項目直接呼叫專屬刪除函式
+        deleteTuitionTransaction(firestoreId);
         return;
       }
 
@@ -1283,7 +1289,34 @@
           alert("🗑️ 該筆明細已成功刪除！");
         } catch (e) {
           console.error("刪除失敗：", e);
-          alert("❌ 刪除失敗，請稍後再試。");
+          alert("❌ 刪除失敗請稍後再試。");
+        }
+      });
+    };
+
+    // 新增：學費連動項目專用刪除/取消收款函式（需密碼 0618）
+    window.deleteTuitionTransaction = async function(firestoreId) {
+      if (!firestoreId) return;
+      verifyPassword("刪除學費收入紀錄 (將恢復為未繳費狀態並解除財務連動)", async () => {
+        try {
+          const billRef = doc(db, "bills", firestoreId);
+          const billSnap = await getDoc(billRef);
+          if (billSnap.exists()) {
+            const billData = billSnap.data();
+            // 恢復為未繳費狀態，清除已繳日
+            await setDoc(billRef, {
+              ...billData,
+              isPaid: false,
+              paidDate: null
+            });
+            closeDetailModal();
+            alert("🗑️ 該筆學費已成功取消收款並解除財務連動！");
+          } else {
+            alert("⚠️ 找不到對應的帳單紀錄。");
+          }
+        } catch (e) {
+          console.error("取消學費連動失敗：", e);
+          alert("❌ 操作失敗請稍後再試。");
         }
       });
     };
