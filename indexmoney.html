@@ -343,7 +343,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據滿版配置 (調整為 A4 均分三等分格式，確保1張A4完美列印3張獨立單據且不變形) */
+        /* 列印及收據滿版配置 (調整為 A4 三等分格式，單張通知單維持精巧高度不佔滿全頁) */
         .receipt-container-page {
             display: flex;
             flex-direction: column;
@@ -369,7 +369,6 @@
             justify-content: space-between;
         }
         
-        /* 修正：當只有兩份或單獨預覽時，維持與三等分一致的小巧精緻高度，不佔滿全部畫面 */
         .receipt-container-page.page-two-items .receipt-box {
             flex: 0 0 48.5%;
         }
@@ -2307,12 +2306,9 @@
                 '</div>';
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            fullHtml = '<div class="receipt-container-page page-two-items">' +
-                getSingleReceiptHtml(bill, false, '', true) +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, false, '', true) +
-                '</div>';
-            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽 (1頁2聯)`;
+            // 修正：單獨預覽繳費通知單時，只顯示一張精巧大小的單據，不重複顯示兩張
+            fullHtml = getSingleReceiptHtml(bill, false, '', true);
+            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
         }
 
         document.getElementById('billPreviewContent').innerHTML = fullHtml;
@@ -2340,11 +2336,8 @@
         const count = targetBills.length;
 
         if (count === 1) {
-            allHtml = '<div class="receipt-container-page page-two-items">' +
-                getSingleReceiptHtml(targetBills[0], false, '', true) +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(targetBills[0], false, '', true) +
-                '</div>';
+            // 修正：如果只勾選一位同學印繳費通知單，印出來也只出現一張精巧大小，不佔滿全部頁面
+            allHtml = getSingleReceiptHtml(targetBills[0], false, '', true);
         } else if (count === 2) {
             allHtml = '<div class="receipt-container-page page-two-items">' +
                 getSingleReceiptHtml(targetBills[0], false, '', true) +
@@ -2970,12 +2963,8 @@
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
         } else {
-            // 修正：單張列印通知單時，自動包裝為上下兩半（一頁兩份），保持與批次或雙份列印一致的小巧精緻高度與完美排版
-            allHtml = '<div class="receipt-container-page page-two-items">' +
-                getSingleReceiptHtml(bill, false, '', true) +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, false, '', true) +
-                '</div>';
+            // 修正：單張列印繳費通知單時，只印出 1 張精巧大小的單據，不再自動變成兩份
+            allHtml = getSingleReceiptHtml(bill, false, '', true);
         }
 
         document.getElementById('printArea').innerHTML = allHtml;
