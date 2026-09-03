@@ -870,7 +870,7 @@
     </div>
 </div>
 
-<!-- 彈出視窗：增加/修改學費項目 Modal -->
+<!-- 彈出視窗：增加/修改學費項目 Modal (已新增「不要自動續費」勾選框與「刪除此單據」按鈕) -->
 <div id="addFeeItemModal" class="modal-overlay" style="display: none;">
     <div class="modal-box" style="max-width: 580px;">
         <h3 style="margin-top:0; color: var(--primary); font-size: 17px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">
@@ -916,6 +916,14 @@
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
             <label style="color: #475569; font-size: 13px; margin-bottom: 4px;">📝 單據備註說明 (優惠原因/特殊計費備查)：</label>
             <textarea id="modalBillNoteInput" placeholder="例：兄弟姊妹同行優惠、中途插班按天計費、教材費已折抵..." rows="2" style="font-size: 13px;"></textarea>
+            
+            <!-- 新增：不要自動續費勾選框 -->
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="modalNoAutoRenew" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                <label for="modalNoAutoRenew" style="margin: 0; color: #B45309; font-weight: bold; font-size: 12.5px; cursor: pointer;">
+                    🚫 此為短期營隊/單月收費，結帳時「不要自動續費」產生下一期單據
+                </label>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; border: 1px solid #FDE68A; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px;">
@@ -923,9 +931,13 @@
             <span style="font-weight: 900; color: #DC2626; font-size: 18px;">$ <span id="modalFeeTotalDisplay">0</span> 元</span>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 8px;">
-            <button class="btn-select" onclick="closeModal('addFeeItemModal')">取消</button>
-            <button class="btn-add" style="width: auto; padding: 8px 20px; background: var(--success);" onclick="saveModalFeeBill()">💾 儲存並更新單據</button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- 新增：開錯單可直接刪除按鈕 (密碼 0618) -->
+            <button class="btn-delete-item" id="modalDeleteBillBtn" style="padding: 8px 14px; font-size: 13px; display: none;" onclick="deleteModalCurrentBill()">🗑️ 刪除此單據</button>
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+                <button class="btn-select" onclick="closeModal('addFeeItemModal')">取消</button>
+                <button class="btn-add" style="width: auto; padding: 8px 20px; background: var(--success);" onclick="saveModalFeeBill()">💾 儲存並更新單據</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1532,7 +1544,7 @@
         });
     };
 
-    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 ---------- */
+    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 (支援不要自動續費及刪除) ---------- */
 
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
@@ -1566,9 +1578,14 @@
 
         const targetYM = `${curY}-${curM}`;
         const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
+        
+        const deleteBtn = document.getElementById('modalDeleteBillBtn');
+
         if (existingBill && existingBill.items) {
             window.modalCurrentItems = JSON.parse(JSON.stringify(existingBill.items));
             document.getElementById('modalBillNoteInput').value = existingBill.billNote || '';
+            document.getElementById('modalNoAutoRenew').checked = !!existingBill.noAutoRenew;
+            
             if (existingBill.periodStr && existingBill.periodStr.includes('~')) {
                 const [sDate, eDate] = existingBill.periodStr.split('~').map(x => x.trim());
                 document.getElementById('modalCustomPeriodToggle').checked = true;
@@ -1576,9 +1593,12 @@
                 document.getElementById('modalStartDate').value = sDate;
                 document.getElementById('modalEndDate').value = eDate;
             }
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
         } else {
             window.modalCurrentItems = [];
             document.getElementById('modalBillNoteInput').value = '';
+            document.getElementById('modalNoAutoRenew').checked = false;
+            if (deleteBtn) deleteBtn.style.display = 'none';
         }
 
         renderModalItemsList();
@@ -1677,6 +1697,7 @@
         const cls = document.getElementById('modalBillClassName').value;
         const isCustom = document.getElementById('modalCustomPeriodToggle').checked;
         const billNote = document.getElementById('modalBillNoteInput').value.trim();
+        const noAutoRenew = document.getElementById('modalNoAutoRenew').checked;
 
         if (window.modalCurrentItems.length === 0) {
             alert('⚠️ 請至少加入一個費用項目！');
@@ -1713,6 +1734,7 @@
                 existingBill.periodStr = displayPeriod;
                 existingBill.yearMonth = yMonth;
                 existingBill.billNote = billNote;
+                existingBill.noAutoRenew = noAutoRenew;
 
                 await setDoc(doc(db, "bills", existingBill.firestoreId), {
                     id: existingBill.id,
@@ -1725,7 +1747,8 @@
                     total: existingBill.total,
                     isPaid: existingBill.isPaid,
                     paidDate: existingBill.paidDate,
-                    billNote: existingBill.billNote
+                    billNote: existingBill.billNote,
+                    noAutoRenew: existingBill.noAutoRenew
                 });
 
                 alert(`✅ 已成功更新【${stu}】(${displayPeriod}) 的繳費單！`);
@@ -1741,7 +1764,8 @@
                     total: total, 
                     isPaid: false,
                     paidDate: null,
-                    billNote: billNote
+                    billNote: billNote,
+                    noAutoRenew: noAutoRenew
                 };
 
                 const docRef = await addDoc(collection(db, "bills"), newBill);
@@ -1756,15 +1780,95 @@
             renderRecords();
         } catch (e) {
             console.error("儲存失敗：", e);
-            alert("❌ 儲存失敗，請稍後再試！");
+            alert("❌ 儲存失敗請稍後再試！");
         }
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (營隊性質不自動續費) ---------- */
+    // 於開單視窗中直接刪除該筆單據（需密碼 0618）
+    window.deleteModalCurrentBill = async function() {
+        const stu = document.getElementById('modalBillStudentName').value;
+        const cls = document.getElementById('modalBillClassName').value;
+        const curY = document.getElementById('modalBillYearSelect').value;
+        const curM = document.getElementById('modalBillMonthSelect').value;
+        const targetYM = `${curY}-${curM}`;
+
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
+        if (!existingBill) {
+            alert('⚠️ 找不到此筆單據紀錄可供刪除。');
+            return;
+        }
+
+        verifyAndDelete(`刪除學生「${stu}」的繳費單`, async () => {
+            try {
+                await deleteDoc(doc(db, "bills", existingBill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== existingBill.id);
+                closeModal('addFeeItemModal');
+                renderBillingStudentsTable();
+                renderRecords();
+                alert('🗑️ 該筆繳費單已成功刪除！');
+            } catch (e) {
+                console.error(e);
+                alert('❌ 刪除失敗');
+            }
+        });
+    };
+
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (支援「不要自動續費」勾選判斷) ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
-        // 營隊性質或其他無需自動續費的課程，此處直接返回，不自動建立下一期單據
-        return;
+        try {
+            // 如果該單據勾選了「不要自動續費」，則直接略過不建立下期單據
+            if (currentBill.noAutoRenew) {
+                return;
+            }
+
+            const isJr = window.isJuniorHigh(currentBill.className);
+            let nextPeriodStr = '';
+            let nextYearMonth = '';
+
+            if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
+                const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
+                const nextRange = window.calculateNext3MonthRangeFromEnd(endStr);
+                nextPeriodStr = nextRange.periodStr;
+                nextYearMonth = nextRange.start.substring(0, 7);
+            } else {
+                let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
+                if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
+                const [year, month] = baseYM.split('-').map(Number);
+                const nextDate = new Date(year, month, 1);
+                nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+                nextPeriodStr = nextYearMonth;
+            }
+
+            const alreadyExists = window.bills.some(b => 
+                b.studentName === currentBill.studentName && 
+                b.className === currentBill.className && 
+                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
+            );
+
+            if (!alreadyExists) {
+                const autoBill = {
+                    id: Date.now() + Math.floor(Math.random() * 100),
+                    date: getCurrentDateStr(),
+                    yearMonth: nextYearMonth,
+                    periodStr: nextPeriodStr,
+                    className: currentBill.className,
+                    studentName: currentBill.studentName,
+                    items: JSON.parse(JSON.stringify(currentBill.items || [])),
+                    total: currentBill.total || 0,
+                    isPaid: false,
+                    paidDate: null,
+                    billNote: currentBill.billNote || '',
+                    noAutoRenew: false
+                };
+
+                const docRef = await addDoc(collection(db, "bills"), autoBill);
+                autoBill.firestoreId = docRef.id;
+                window.bills.unshift(autoBill);
+            }
+        } catch (err) {
+            console.error("自動延續下一期失敗：", err);
+        }
     }
 
     /* ---------- 其他通用功能 ---------- */
@@ -2487,7 +2591,8 @@
                     total: bill.total,
                     isPaid: bill.isPaid,
                     paidDate: bill.paidDate,
-                    billNote: bill.billNote
+                    billNote: bill.billNote,
+                    noAutoRenew: !!bill.noAutoRenew
                 });
 
                 closeModal('editBillModal');
@@ -2518,7 +2623,8 @@
                     total: bill.total,
                     isPaid: true,
                     paidDate: bill.paidDate,
-                    billNote: bill.billNote || ''
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew
                 });
 
                 await autoCreateNextPeriodBill(bill);
@@ -2552,7 +2658,8 @@
                         total: bill.total,
                         isPaid: false,
                         paidDate: null,
-                        billNote: bill.billNote || ''
+                        billNote: bill.billNote || '',
+                        noAutoRenew: !!bill.noAutoRenew
                     });
                     renderBillingStudentsTable();
                     renderRecords();
@@ -2786,7 +2893,6 @@
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
         
-        // 修正：收據顯示「繳費日期」，通知單統一顯示「通知單日期」並動態抓取當天最新系統日期
         const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
         const issueDate = getCurrentDateStr();
         
@@ -2952,7 +3058,6 @@
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
         } else {
-            // 單張列印繳費通知單時，只印出 1 張精巧大小的單據
             allHtml = getSingleReceiptHtml(bill, false, '', true);
         }
 
