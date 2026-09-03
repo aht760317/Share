@@ -558,12 +558,26 @@
                             <th style="width:140px;" id="th_p2">媽媽</th>
                             <th style="width:140px;" id="th_p3">阿嬤</th>
                             <th style="width:160px;">接送/安親備註</th>
-                            <th style="width:100px;">操作</th>
+                            <th style="width:130px;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="masterStudentTableBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- 彈窗：學生詳細資料瀏覽 -->
+<div class="modal-overlay" id="viewStudentModal">
+    <div class="modal-box" style="max-width:650px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2.5px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+            <h3 style="color:var(--text-main); font-size:20px;">📄 學生詳細學籍資料</h3>
+            <button class="btn btn-outline" onclick="document.getElementById('viewStudentModal').style.display='none'" style="padding:4px 12px;">✕</button>
+        </div>
+        <div id="viewStudentContent" style="font-size:15px; color:var(--text-main); line-height:1.8;"></div>
+        <div style="display:flex; justify-content:flex-end; margin-top:20px; border-top:2px solid var(--border-soft); padding-top:14px;">
+            <button class="btn btn-primary" onclick="document.getElementById('viewStudentModal').style.display='none'" style="padding:8px 20px;">關閉視窗</button>
         </div>
     </div>
 </div>
@@ -955,7 +969,7 @@
         const c = window.state.currentCourse;
 
         document.getElementById('rollDetailCard').style.display = 'block';
-        document.getElementById('rollCourseTitle', style="color:var(--primary)").innerText = `🔤 ${c.name}`;
+        document.getElementById('rollCourseTitle').innerText = `🔤 ${c.name}`;
         document.getElementById('rollCourseMeta').innerText = `時段：${c.time || '-'} ｜ 師資：${c.teacher || '-'} ｜ 排課：${c.day || '-'}`;
 
         const curDateStr = document.getElementById('rollDateInput').value;
@@ -1792,7 +1806,7 @@
             let html = '';
             list.forEach((s, idx) => {
                 const sCourses = Array.isArray(s.courses) ? s.courses : [s.courses];
-                const courseTags = sCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#94A3B8;">未修課</span>';
+                const courseTags = sCourses.map(c => `<span class="course-tag" style="color:var(--primary); font-weight:900;">${c}</span>`).join('') || '<span style="color:#94A3B8;">未修課</span>';
                 const phoneStr = formatPhoneDisplay(s);
                 html += `
                     <div class="student-master-card">
@@ -1810,8 +1824,9 @@
                             <div>📞 <b>電話：</b>${phoneStr}</div>
                             ${s.pickup ? `<div style="background:#F1F5F9; color:#475569; padding:6px 10px; border-radius:6px; font-size:13.5px; margin-top:6px;">🚗 <b>接送備註：</b>${s.pickup}</div>` : ''}
                         </div>
-                        <div style="margin-top:10px; text-align:right;">
-                            <button class="btn btn-outline" style="padding:5px 12px; font-size:13px;" onclick="openEditStudentModal('${s.firestoreId}')">✏️ 編輯檔案</button>
+                        <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+                            <button class="btn btn-blue" style="padding:5px 12px; font-size:13px;" onclick="openViewStudentModal('${s.firestoreId}')">👁️ 瀏覽</button>
+                            <button class="btn btn-outline" style="padding:5px 12px; font-size:13px;" onclick="openEditStudentModal('${s.firestoreId}')">✏️ 編輯</button>
                         </div>
                     </div>
                 `;
@@ -1823,7 +1838,7 @@
             let html = '';
             list.forEach((s, idx) => {
                 const sCourses = Array.isArray(s.courses) ? s.courses : [s.courses];
-                const courseTags = sCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#94A3B8;">未修課</span>';
+                const courseTags = sCourses.map(c => `<span class="course-tag" style="color:var(--primary); font-weight:900;">${c}</span>`).join('') || '<span style="color:#94A3B8;">未修課</span>';
                 
                 let p1Display = s.p1Num || s.p1 || '-';
                 let p2Display = s.p2Num || s.p2 || '-';
@@ -1844,13 +1859,52 @@
                         <td style="font-size:13.5px;">${p3Display}</td>
                         <td style="text-align:left; font-size:13.5px; color:var(--text-sub);">${s.pickup || '-'}</td>
                         <td>
-                            <button class="btn btn-outline" style="padding:5px 12px; font-size:13.5px;" onclick="openEditStudentModal('${s.firestoreId}')">編輯</button>
+                            <div style="display:flex; gap:6px; justify-content:center;">
+                                <button class="btn btn-blue" style="padding:5px 10px; font-size:13px;" onclick="openViewStudentModal('${s.firestoreId}')">瀏覽</button>
+                                <button class="btn btn-outline" style="padding:5px 10px; font-size:13px;" onclick="openEditStudentModal('${s.firestoreId}')">編輯</button>
+                            </div>
                         </td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="11" style="padding:22px; color:#888; font-size:15px;">查無學生資料</td></tr>';
         }
+    };
+
+    window.openViewStudentModal = function(id) {
+        const s = window.state.students.find(item => item.firestoreId === id);
+        if (!s) return;
+        const sCourses = Array.isArray(s.courses) ? s.courses.join('、') : (s.courses || '未修課');
+        const p1Name = s.p1Label || '爸爸';
+        const p2Name = s.p2Label || '媽媽';
+        const p3Name = s.p3Label || '阿嬤';
+
+        let html = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:#F8FAFC; padding:16px; border-radius:12px; border:2px solid var(--border);">
+                <div>👤 <b>學生姓名：</b> ${s.name} (${s.engName || '無英文名'})</div>
+                <div>🚻 <b>性別：</b> ${s.gender || '男'}</div>
+                <div>🏫 <b>就讀學校：</b> ${s.school || '-'}</div>
+                <div>🎓 <b>學校年級：</b> ${s.grade || '-'}</div>
+                <div>🎂 <b>出生年月日：</b> ${s.birthday || '-'}</div>
+                <div>📖 <b>修習班級：</b> <span style="color:var(--primary); font-weight:bold;">${sCourses}</span></div>
+            </div>
+            <div style="margin-top:14px; background:#F8FAFC; padding:16px; border-radius:12px; border:2px solid var(--border);">
+                <div style="font-weight:bold; color:var(--primary-dark); margin-bottom:8px; border-bottom:1.5px solid var(--border); padding-bottom:4px;">📞 家長與聯絡電話</div>
+                <div>🔸 <b>${p1Name}：</b> ${s.p1Num || s.p1 || '-'}</div>
+                <div>🔸 <b>${p2Name}：</b> ${s.p2Num || s.p2 || '-'}</div>
+                <div>🔸 <b>${p3Name}：</b> ${s.p3Num || s.p3 || '-'}</div>
+            </div>
+            <div style="margin-top:14px; background:#F8FAFC; padding:16px; border-radius:12px; border:2px solid var(--border);">
+                <div style="font-weight:bold; color:var(--primary-dark); margin-bottom:8px; border-bottom:1.5px solid var(--border); padding-bottom:4px;">🏥 職業、健康與備註</div>
+                <div>👨 <b>爸爸職業：</b> ${s.dadJob || '-'} ｜ 👩 <b>媽媽職業：</b> ${s.momJob || '-'}</div>
+                <div style="margin-top:6px;">🩺 <b>健康狀況/過敏：</b> ${s.health || '-'}</div>
+                <div style="margin-top:6px;">🏠 <b>通訊地址：</b> ${s.address || '-'}</div>
+                <div style="margin-top:6px;">🚗 <b>接送備註：</b> ${s.pickup || '-'}</div>
+                <div style="margin-top:6px;">📝 <b>詳細備註：</b> ${s.notes || '-'}</div>
+            </div>
+        `;
+        document.getElementById('viewStudentContent').innerHTML = html;
+        document.getElementById('viewStudentModal').style.display = 'flex';
     };
 
     function populateStudentCourseDropdown(selectedCourse = "") {
@@ -1975,7 +2029,7 @@
     };
 
     window.deleteStudent = async function() {
-        const firestoreId = document.getElementById('editStudentFirestoreId').value;
+        const firestoreId = document.getElementById('editStudentFirestoreId', style="color:var(--primary)").value;
         const name = document.getElementById('m_stu_name').value;
         if (!checkPassword(`🔒 刪除【${name}】學籍請輸入密碼：`)) return;
         try {
