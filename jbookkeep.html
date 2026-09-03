@@ -355,7 +355,7 @@
             <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
             <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1.5 text-slate-600">
               <div>專案 ID：<span class="font-mono font-bold text-slate-800">my-project-9999-479215</span></div>
-              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (自動整合同帳單多科目)</span></div>
+              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (自動整合同帳單多科目去重)</span></div>
               <div>文理支出：<span class="font-mono font-bold text-rose-600">expenses_wenli</span></div>
               <div>英文支出：<span class="font-mono font-bold text-rose-600">expenses_english</span></div>
             </div>
@@ -519,7 +519,7 @@
   <!-- Firebase 模組與即時同步邏輯 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateModel, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -771,7 +771,7 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目合併為單一筆收入
+      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目進行智慧合併與去重
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const rawBillsMap = {};
         
@@ -787,7 +787,7 @@
             const period = bill.periodStr || bill.yearMonth || '';
             const campusKey = 'wenli'; // 固定鎖定文理
             
-            // 以 學生姓名 + 期間/月份 作為唯一識別 Key，避免同一期多張單據重複列出
+            // 結合學生姓名與繳費期間作為唯一 Key，有效避免同一個學生在同一期被拆成多筆記錄
             const uniqueKey = `${bill.studentName}_${period || yearMonthTW}`;
 
             if (!rawBillsMap[uniqueKey]) {
@@ -808,7 +808,6 @@
               };
             }
 
-            // 累加金額與收集明細
             const currentEntry = rawBillsMap[uniqueKey];
             currentEntry.amount += Number(bill.total || 0);
             
@@ -826,7 +825,6 @@
           }
         });
 
-        // 轉換成陣列格式
         const tuitionList = Object.keys(rawBillsMap).map(key => {
           const item = rawBillsMap[key];
           const classesStr = Array.from(item.descTextSet).join('、');
@@ -1244,7 +1242,6 @@
 
       try {
         if (recordType === 'tuition') {
-          // 修改 bills 中的 paidDate 或 date
           const billRef = doc(db, "bills", firestoreId);
           const billSnap = await getDoc(billRef);
           if (billSnap.exists()) {
@@ -1253,7 +1250,6 @@
             await setDoc(billRef, { ...billData, [updateField]: newTimeVal });
           }
         } else {
-          // 修改自訂收支
           const targetCollection = state.currentCampus === 'wenli' ? 'expenses_wenli' : 'expenses_english';
           const expRef = doc(db, targetCollection, firestoreId);
           const expSnap = await getDoc(expRef);
@@ -1397,7 +1393,6 @@
         document.getElementById(`sec-${tabId}`).classList.remove('hidden');
       }
       
-      // 導覽按鈕選中反饋樣式
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800 flex items-center";
       });
@@ -1411,7 +1406,6 @@
         if (activeNav) activeNav.className = "nav-btn px-3.5 py-2 rounded-lg text-sm font-bold transition flex items-center bg-slate-800 text-white";
       }
 
-      // 手機端導覽切換反饋
       document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
         btn.classList.remove('text-indigo-400', 'text-rose-400', 'font-bold');
         btn.classList.add('text-slate-400');
