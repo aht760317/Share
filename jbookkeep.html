@@ -747,9 +747,10 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽繳費系統 (bills) - 自動將同一筆帳單的多科目合併為一行
+      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目合併為單一筆收入
       onSnapshot(collection(db, "bills"), (snapshot) => {
-        const tuitionList = [];
+        const rawBillsMap = {};
+        
         snapshot.forEach((docSnap) => {
           const bill = docSnap.data();
           if (bill.isPaid) {
@@ -761,44 +762,68 @@
             const yearMonthTW = `${p.year}-${p.month}`;
             const period = bill.periodStr || bill.yearMonth || '';
             const campusKey = 'wenli'; // 固定鎖定文理
+            
+            // 以 學生姓名 + 期間/月份 作為唯一識別 Key，避免同一期多張單據重複列出
+            const uniqueKey = `${bill.studentName}_${period || yearMonthTW}`;
+
+            if (!rawBillsMap[uniqueKey]) {
+              rawBillsMap[uniqueKey] = {
+                id: `bill_${docSnap.id}`,
+                firestoreId: docSnap.id,
+                campus: campusKey,
+                type: 'income',
+                isTuitionSync: true,
+                createdAt: pTime,
+                dateOnly: dateOnlyTW,
+                yearMonth: yearMonthTW,
+                summary: "學費",
+                amount: 0,
+                descTextSet: new Set(),
+                notesSet: new Set(),
+                subItems: []
+              };
+            }
+
+            // 累加金額與收集明細
+            const currentEntry = rawBillsMap[uniqueKey];
+            currentEntry.amount += Number(bill.total || 0);
+            
+            if (bill.className) {
+              currentEntry.descTextSet.add(bill.className);
+            }
+            
+            if (bill.billNote) {
+              currentEntry.notesSet.add(bill.billNote);
+            }
 
             if (Array.isArray(bill.items) && bill.items.length > 0) {
-              const totalAmount = bill.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-              const itemsCount = bill.items.length;
-
-              tuitionList.push({
-                id: `bill_${docSnap.id}`,
-                firestoreId: docSnap.id,
-                campus: campusKey,
-                type: 'income',
-                isTuitionSync: true,
-                createdAt: pTime,
-                dateOnly: dateOnlyTW,
-                yearMonth: yearMonthTW,
-                summary: "學費",
-                amount: bill.total !== undefined ? Number(bill.total) : totalAmount,
-                desc: `${bill.className || ''} - ${bill.studentName || '學生'} (${itemsCount}項明細)`,
-                note: `學費系統連動 (期間: ${period || '未註記'})`,
-                subItems: bill.items // 關鍵：保存各科明細供點擊視窗瀏覽
-              });
-            } else {
-              tuitionList.push({
-                id: `bill_${docSnap.id}`,
-                firestoreId: docSnap.id,
-                campus: campusKey,
-                type: 'income',
-                isTuitionSync: true,
-                createdAt: pTime,
-                dateOnly: dateOnlyTW,
-                yearMonth: yearMonthTW,
-                summary: "學費",
-                amount: Number(bill.total || 0),
-                desc: `${bill.className || ''} - ${bill.studentName || '學生'}`,
-                note: `學費系統連動 (期間: ${period || '未註記'})`,
-                subItems: []
-              });
+              currentEntry.subItems.push(...bill.items);
             }
           }
+        });
+
+        // 轉換成陣列格式
+        const tuitionList = Object.keys(rawBillsMap).map(key => {
+          const item = rawBillsMap[key];
+          const classesStr = Array.from(item.descTextSet).join('、');
+          const notesStr = Array.from(item.notesSet).join('; ');
+          const itemsCount = item.subItems.length;
+
+          return {
+            id: item.id,
+            firestoreId: item.firestoreId,
+            campus: item.campus,
+            type: item.type,
+            isTuitionSync: item.isTuitionSync,
+            createdAt: item.createdAt,
+            dateOnly: item.dateOnly,
+            yearMonth: item.yearMonth,
+            summary: item.summary,
+            amount: item.amount,
+            desc: `${classesStr} - ${key.split('_')[0]} ${itemsCount > 0 ? `(${itemsCount}項明細)` : ''}`,
+            note: `學費系統連動 ${notesStr ? `[${notesStr}]` : ''}`,
+            subItems: item.subItems
+          };
         });
 
         state.syncedTuitionRecords = tuitionList;
