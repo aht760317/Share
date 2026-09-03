@@ -343,7 +343,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據滿版配置 */
+        /* 列印及收據滿版配置 (調整為 A4 均分三等分格式，確保1張A4完美列印3張獨立單據且不變形) */
         .receipt-container-page {
             display: flex;
             flex-direction: column;
@@ -354,16 +354,16 @@
         
         .receipt-box { 
             border: 2px solid #000; 
-            padding: 10px 14px; 
+            padding: 8px 12px; 
             width: 100%; 
             background: white; 
             color: #000; 
-            font-size: 13px; 
+            font-size: 12px; 
             box-sizing: border-box; 
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
             margin: 0 auto;
-            flex: 0 0 31.8%;
+            flex: 0 0 32%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -378,16 +378,16 @@
             margin-bottom: 20px;
         }
 
-        .receipt-title { text-align: center; font-size: 19px; font-weight: 900; line-height: 1.2; letter-spacing: 0.5px; }
-        .receipt-subtitle { text-align: center; font-size: 12px; margin-bottom: 4px; color: #222; font-weight: 500; }
-        .receipt-header { display: flex; justify-content: space-between; font-size: 14.5px; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 2px solid #000; font-weight: bold; }
-        .receipt-total { text-align: right; font-size: 18px; font-weight: 900; padding-top: 4px; }
+        .receipt-title { text-align: center; font-size: 17px; font-weight: 900; line-height: 1.1; letter-spacing: 0.5px; }
+        .receipt-subtitle { text-align: center; font-size: 11px; margin-bottom: 2px; color: #222; font-weight: 500; }
+        .receipt-header { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 2px solid #000; font-weight: bold; }
+        .receipt-total { text-align: right; font-size: 16px; font-weight: 900; padding-top: 2px; }
         .cut-line { 
             text-align: center; 
-            font-size: 11px; 
+            font-size: 10.5px; 
             font-weight: bold;
             color: #333; 
-            margin: 2px 0; 
+            margin: 1px 0; 
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
             flex-shrink: 0;
@@ -509,7 +509,7 @@
         @media print {
             @page { 
                 size: A4 portrait; 
-                margin: 5mm 8mm; 
+                margin: 4mm 6mm; 
             }
             html, body {
                 height: 100%;
@@ -534,9 +534,9 @@
             }
             .report-box { padding: 5px; width: 100%; box-sizing: border-box; }
             .report-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-            .report-table th, .report-table td { border: 1.5px solid #000 !important; padding: 4px 6px; font-size: 13.5px; }
-            .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; font-size: 14px; }
-            .report-total { text-align: right; font-size: 16px; font-weight: bold; padding-top: 6px; border-top: 2px solid #000; }
+            .report-table th, .report-table td { border: 1.5px solid #000 !important; padding: 3px 5px; font-size: 13px; }
+            .report-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; font-size: 13.5px; }
+            .report-total { text-align: right; font-size: 15px; font-weight: bold; padding-top: 4px; border-top: 2px solid #000; }
         }
     </style>
 </head>
@@ -2328,20 +2328,9 @@
         printDocument(id, type);
     };
 
-    window.printSelectedCheckedNotices = function() {
-        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
-        if (checkedBoxes.length === 0) {
-            alert('⚠️ 請先勾選至少一位學生！');
-            return;
-        }
-
-        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
-
-        if (targetBills.length === 0) {
-            alert('⚠️ 找不到所選的未繳費單據！');
-            return;
-        }
+    // 完美排版之批次/勾選列表列印分配器 (自動計算每頁3聯分配，單獨、兩個、三個或多個同學均自動完美排版)
+    window.printNoticesBatchList = function(targetBills) {
+        if (!targetBills || targetBills.length === 0) return;
 
         let allHtml = '';
         const count = targetBills.length;
@@ -2375,6 +2364,24 @@
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
+    };
+
+    window.printSelectedCheckedNotices = function() {
+        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
+        if (checkedBoxes.length === 0) {
+            alert('⚠️ 請先勾選至少一位學生！');
+            return;
+        }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+
+        if (targetBills.length === 0) {
+            alert('⚠️ 找不到所選的未繳費單據！');
+            return;
+        }
+
+        printNoticesBatchList(targetBills);
     };
 
     window.printCombinedSelectedReceipts = function() {
@@ -2788,18 +2795,22 @@
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
-        const issueDate = (isReceipt && bill.paidDate) ? bill.paidDate : (bill.date || getCurrentDateStr());
+        
+        // 修正：收據才顯示繳費日(paidDate)，繳費通知單則顯示開單日期(date)或當前系統日期
+        const issueDate = isReceipt 
+            ? (bill.paidDate || parseLegacyDateToIso(bill.date) || getCurrentDateStr())
+            : (parseLegacyDateToIso(bill.date) || getCurrentDateStr());
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
-                <td style="text-align:center; font-weight: bold; padding: 4px;">${idx + 1}</td>
-                <td style="font-size: 14px; font-weight: 600; padding: 4px 8px;">${item.name}</td>
-                <td style="text-align:right; font-size: 14.5px; font-weight: bold; padding: 4px 8px;">$ ${item.amount.toLocaleString()}</td>
+                <td style="text-align:center; font-weight: bold; padding: 3px;">${idx + 1}</td>
+                <td style="font-size: 13.5px; font-weight: 600; padding: 3px 6px;">${item.name}</td>
+                <td style="text-align:right; font-size: 14px; font-weight: bold; padding: 3px 6px;">$ ${item.amount.toLocaleString()}</td>
             </tr>
         `).join('');
 
         const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
-            <div style="margin-top: 4px; font-size: 9px; line-height: 1.15; border-top: 1px solid #000; padding-top: 3px; color: #222;">
+            <div style="margin-top: 3px; font-size: 8.5px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
                 <strong>【退費規定】</strong>
                 補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還。
             </div>
@@ -2807,20 +2818,20 @@
 
         const singleNoticeClass = isSingleNotice ? 'single-notice' : '';
 
-        let noteDisplayHtml = bill.billNote ? `<div style="font-size: 11px; color: #333; margin-top: 2px;">備註說明：<strong>${bill.billNote}</strong></div>` : '';
+        let noteDisplayHtml = bill.billNote ? `<div style="font-size: 10.5px; color: #333; margin-top: 2px;">備註說明：<strong>${bill.billNote}</strong></div>` : '';
 
         let html = `
             <div class="receipt-box ${singleNoticeClass}">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-                        <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                         <div style="flex: 1; text-align: center;">
                             <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                             <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                         </div>
-                        ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
+                        ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10.5px; border: 1.5px solid #000; padding: 1px 4px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
                     </div>
-                    <div style="text-align:center; font-size:16px; font-weight:900; margin-bottom:4px; letter-spacing: 1px;">${isReceipt ? '繳 費 收 據 明 細 單' : '繳 費 通 知 單'}</div>
+                    <div style="text-align:center; font-size:15px; font-weight:900; margin-bottom:3px; letter-spacing: 1px;">${isReceipt ? '繳 費 收 據 明 細 單' : '繳 費 通 知 單'}</div>
                     <div class="receipt-header">
                         <div>班級：<strong>${fullClassName}</strong></div>
                         <div>姓名：<strong>${bill.studentName}</strong></div>
@@ -2829,9 +2840,9 @@
                     <table class="report-table" style="border: 1.5px solid #000; border-collapse: collapse; width: 100%;">
                         <thead>
                             <tr style="background: #f0f0f0;">
-                                <th style="border: 1.5px solid #000; padding: 4px; width:10%;">項次</th>
-                                <th style="border: 1.5px solid #000; padding: 4px 8px; width:62%;">項目名稱</th>
-                                <th style="border: 1.5px solid #000; padding: 4px 8px; width:28%;">金額</th>
+                                <th style="border: 1.5px solid #000; padding: 3px; width:10%;">項次</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:62%;">項目名稱</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:28%;">金額</th>
                             </tr>
                         </thead>
                         <tbody>${tableRows}</tbody>
@@ -2842,11 +2853,11 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         } else {
-            html += `<div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 11.5px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:12px; white-space:nowrap; margin-right: 15px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:11.5px; white-space:nowrap; margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
         }
 
         html += `</div>`;
@@ -2859,7 +2870,9 @@
         let studentNamesArr = [];
         let classNamesArr = [];
         let periodStrsArr = [];
-        let issueDate = getCurrentDateStr();
+        
+        // 修正：收據才顯示繳費日(paidDate)，通知單則顯示開單日期(date)或當前系統日期
+        let issueDate = isReceipt ? getCurrentDateStr() : (parseLegacyDateToIso(bills[0]?.date) || getCurrentDateStr());
 
         let globalIdx = 1;
         bills.forEach(bill => {
@@ -2868,18 +2881,21 @@
             if (!classNamesArr.includes(fullCls)) classNamesArr.push(fullCls);
             if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
             else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
-            if (bill.paidDate && bill.paidDate > issueDate) issueDate = bill.paidDate;
+            
+            if (isReceipt && bill.paidDate && bill.paidDate > issueDate) {
+                issueDate = bill.paidDate;
+            }
 
             grandTotal += bill.total;
 
-            const noteTag = bill.billNote ? ` <span style="font-size:11px; font-weight:normal; color:#666;">(${bill.billNote})</span>` : '';
-            combinedItemsHtml += `<tr><td colspan="3" style="background:#f1f5f9; font-weight:900; font-size:13px; padding:3px 6px;">【${fullCls} - ${bill.studentName}】${noteTag}</td></tr>`;
+            const noteTag = bill.billNote ? ` <span style="font-size:10.5px; font-weight:normal; color:#666;">(${bill.billNote})</span>` : '';
+            combinedItemsHtml += `<tr><td colspan="3" style="background:#f1f5f9; font-weight:900; font-size:12.5px; padding:2px 5px;">【${fullCls} - ${bill.studentName}】${noteTag}</td></tr>`;
             bill.items.forEach(item => {
                 combinedItemsHtml += `
                     <tr>
-                        <td style="text-align:center; font-weight:bold; padding:3px;">${globalIdx++}</td>
-                        <td style="font-size: 13.5px; font-weight: 600; padding:3px 6px;">${item.name} (${bill.studentName})</td>
-                        <td style="text-align:right; font-weight:bold; padding:3px 6px;">$ ${item.amount.toLocaleString()}</td>
+                        <td style="text-align:center; font-weight:bold; padding:2px;">${globalIdx++}</td>
+                        <td style="font-size: 13px; font-weight: 600; padding:2px 5px;">${item.name} (${bill.studentName})</td>
+                        <td style="text-align:right; font-weight:bold; padding:2px 5px;">$ ${item.amount.toLocaleString()}</td>
                     </tr>
                 `;
             });
@@ -2890,7 +2906,7 @@
         const displayPeriod = periodStrsArr.join(' / ');
 
         const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
-            <div style="margin-top: 4px; font-size: 9px; line-height: 1.15; border-top: 1px solid #000; padding-top: 3px; color: #222;">
+            <div style="margin-top: 3px; font-size: 8.5px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
                 <strong>【退費規定】</strong>
                 補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還。
             </div>
@@ -2900,14 +2916,14 @@
             <div class="receipt-box">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-                        <div style="width: 65px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
                         <div style="flex: 1; text-align: center;">
                             <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
                             <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
                         </div>
-                        ${copyLabel ? `<div style="width: 65px; text-align: right;"><span style="font-size: 11px; border: 1.5px solid #000; padding: 2px 5px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 65px; display:none;"></div>'}
+                        ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10.5px; border: 1.5px solid #000; padding: 1px 4px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
                     </div>
-                    <div style="text-align:center; font-size:16px; font-weight:900; margin-bottom:4px; letter-spacing: 1px;">${isReceipt ? '合 併 繳 費 收 據 明 細 單' : '合 併 繳 費 通 知 單'}</div>
+                    <div style="text-align:center; font-size:15px; font-weight:900; margin-bottom:3px; letter-spacing: 1px;">${isReceipt ? '合 併 繳 費 收 據 明 細 單' : '合 併 繳 費 通 知 單'}</div>
                     <div class="receipt-header">
                         <div>班級：<strong>${displayClass}</strong></div>
                         <div>姓名：<strong>${displayNames}</strong></div>
@@ -2916,9 +2932,9 @@
                     <table class="report-table" style="border: 1.5px solid #000; border-collapse: collapse; width: 100%;">
                         <thead>
                             <tr style="background: #f0f0f0;">
-                                <th style="border: 1.5px solid #000; padding: 4px; width:10%;">項次</th>
-                                <th style="border: 1.5px solid #000; padding: 4px 8px; width:62%;">項目名稱 (學生)</th>
-                                <th style="border: 1.5px solid #000; padding: 4px 8px; width:28%;">金額</th>
+                                <th style="border: 1.5px solid #000; padding: 3px; width:10%;">項次</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:62%;">項目名稱 (學生)</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:28%;">金額</th>
                             </tr>
                         </thead>
                         <tbody>${combinedItemsHtml}</tbody>
@@ -2928,7 +2944,7 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 15px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         }
@@ -2963,7 +2979,7 @@
         const targetClass = document.getElementById('filterClassSelect').value;
 
         if(!targetClass) { 
-            alert('請先在上方「🏫 班級」選取要列印的班級！'); 
+            alert('請先在上方 "🏫 班級" 選取要列印的班級！'); 
             return; 
         }
 
@@ -2977,26 +2993,7 @@
             return; 
         }
 
-        let allHtml = '';
-        targetBills.forEach((bill, index) => {
-            if (index % 3 === 0) {
-                allHtml += '<div class="receipt-container-page">';
-            }
-
-            allHtml += getSingleReceiptHtml(bill, false, '');
-
-            if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
-                allHtml += '</div>';
-                if (index !== targetBills.length - 1) {
-                    allHtml += '<div class="page-break"></div>';
-                }
-            } else {
-                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-            }
-        });
-
-        document.getElementById('printArea').innerHTML = allHtml;
-        window.print();
+        printNoticesBatchList(targetBills);
     };
 
     initCloudData();
