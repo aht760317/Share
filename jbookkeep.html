@@ -355,7 +355,7 @@
             <label class="block text-xs font-semibold text-slate-600 mb-1">雲端資料庫狀態</label>
             <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1.5 text-slate-600">
               <div>專案 ID：<span class="font-mono font-bold text-slate-800">my-project-9999-479215</span></div>
-              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (自動整合同帳單多科目去重)</span></div>
+              <div>學費集合：<span class="font-mono font-bold text-emerald-600">bills (智慧群組整合同期多筆帳單)</span></div>
               <div>文理支出：<span class="font-mono font-bold text-rose-600">expenses_wenli</span></div>
               <div>英文支出：<span class="font-mono font-bold text-rose-600">expenses_english</span></div>
             </div>
@@ -771,7 +771,7 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目進行智慧合併與去重
+      // 1. 監聽繳費系統 (bills) - 自動將同一學生同一期間的多張帳單或多科目進行智慧群組整合成唯一記錄
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const rawBillsMap = {};
         
@@ -787,7 +787,7 @@
             const period = bill.periodStr || bill.yearMonth || '';
             const campusKey = 'wenli'; // 固定鎖定文理
             
-            // 結合學生姓名與繳費期間作為唯一 Key，有效避免同一個學生在同一期被拆成多筆記錄
+            // 核心修正：以「學生姓名 + 期間/月份」作為去重 Key，將同一學生的多張已付款帳單智慧合併為單筆總帳
             const uniqueKey = `${bill.studentName}_${period || yearMonthTW}`;
 
             if (!rawBillsMap[uniqueKey]) {
