@@ -673,6 +673,18 @@
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
         <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
         
+        <!-- 新增：未繳費查詢分頁頂部的批次勾選列印按鈕 -->
+        <div style="background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-weight: bold; color: #1E40AF; font-size: 13px;">☑️ 批次選取：</span>
+                <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(true)">全選</button>
+                <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
+            </div>
+            <div>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選的繳費通知單</button>
+            </div>
+        </div>
+
         <div class="filter-bar" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 140px;">
                 <label style="font-size: 12px; margin-bottom: 2px;">🔍 搜尋學生姓名：</label>
@@ -2234,6 +2246,7 @@
                 return `
                     <div class="unpaid-card">
                         <div class="unpaid-card-info">
+                            <input type="checkbox" class="unpaid-row-checkbox" value="${bill.id}" style="width:18px; height:18px; margin-right:4px;">
                             <span style="font-size: 13px; color: #64748B; font-weight: 600;">${periodText}</span>
                             <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong> ${noteBadge}</span>
                             <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
@@ -2249,6 +2262,30 @@
 
         primaryContainer.innerHTML = buildHtml(primaryUnpaid);
         juniorContainer.innerHTML = buildHtml(juniorUnpaid);
+    };
+
+    // 未繳費查詢頁面全選/取消全選
+    window.toggleSelectAllUnpaid = function(selectAll) {
+        document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
+    };
+
+    // 列印未繳費查詢頁面中所勾選學生的通知單
+    window.printCheckedUnpaidNotices = function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            alert('⚠️ 請先在未繳費名單中勾選至少一位學生！');
+            return;
+        }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+
+        if (targetBills.length === 0) {
+            alert('⚠️ 找不到所選的未繳費單據！');
+            return;
+        }
+
+        printNoticesBatchList(targetBills);
     };
 
     window.openPaymentConfirmModal = function(firestoreId, id) {
