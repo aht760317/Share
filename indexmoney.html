@@ -673,7 +673,7 @@
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
         <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
         
-        <!-- 新增：未繳費查詢分頁頂部的批次勾選列印按鈕 -->
+        <!-- 未繳費查詢分頁頂部的批次勾選列印按鈕 -->
         <div style="background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 6px;">
                 <span style="font-weight: bold; color: #1E40AF; font-size: 13px;">☑️ 批次選取：</span>
@@ -1760,57 +1760,11 @@
         }
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (營隊性質不自動續費) ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
-        try {
-            const isJr = window.isJuniorHigh(currentBill.className);
-            let nextPeriodStr = '';
-            let nextYearMonth = '';
-
-            if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
-                const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
-                const nextRange = window.calculateNext3MonthRangeFromEnd(endStr);
-                nextPeriodStr = nextRange.periodStr;
-                nextYearMonth = nextRange.start.substring(0, 7);
-            } else {
-                let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
-                if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
-                const [year, month] = baseYM.split('-').map(Number);
-                const nextDate = new Date(year, month, 1);
-                nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-                nextPeriodStr = nextYearMonth;
-            }
-
-            const alreadyExists = window.bills.some(b => 
-                b.studentName === currentBill.studentName && 
-                b.className === currentBill.className && 
-                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
-            );
-
-            if (!alreadyExists) {
-                const autoBill = {
-                    id: Date.now() + Math.floor(Math.random() * 100),
-                    date: getCurrentDateStr(),
-                    yearMonth: nextYearMonth,
-                    periodStr: nextPeriodStr,
-                    className: currentBill.className,
-                    studentName: currentBill.studentName,
-                    items: JSON.parse(JSON.stringify(currentBill.items || [])),
-                    total: currentBill.total || 0,
-                    isPaid: false,
-                    paidDate: null,
-                    billNote: currentBill.billNote || ''
-                };
-
-                const docRef = await addDoc(collection(db, "bills"), autoBill);
-                autoBill.firestoreId = docRef.id;
-                window.bills.unshift(autoBill);
-                console.log(`自動延續下一期成功：${currentBill.studentName} (${nextPeriodStr})`);
-            }
-        } catch (err) {
-            console.error("自動延續下一期失敗：", err);
-        }
+        // 營隊性質或其他無需自動續費的課程，此處直接返回，不自動建立下一期單據
+        return;
     }
 
     /* ---------- 其他通用功能 ---------- */
@@ -2343,7 +2297,6 @@
                 '</div>';
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            // 修正：單獨預覽繳費通知單時，只顯示一張精巧大小的單據，不重複顯示兩張
             fullHtml = getSingleReceiptHtml(bill, false, '', true);
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
         }
@@ -2373,7 +2326,6 @@
         const count = targetBills.length;
 
         if (count === 1) {
-            // 修正：如果只勾選一位同學印繳費通知單，印出來也只出現一張精巧大小，不佔滿全部頁面
             allHtml = getSingleReceiptHtml(targetBills[0], false, '', true);
         } else if (count === 2) {
             allHtml = '<div class="receipt-container-page page-two-items">' +
@@ -2573,7 +2525,7 @@
 
                 renderBillingStudentsTable();
                 renderRecords();
-                if(confirm('結帳成功！系統已自動為同學建立下一期繳費單。\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
+                if(confirm('結帳成功！\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
                     printDocument(id, 'receipt');
                 }
             } catch (e) {
@@ -2834,7 +2786,7 @@
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
         
-        // 修正：收據顯示「繳費日期」，通知單統一顯示「通知單日期」並抓取當天最新系統日期
+        // 修正：收據顯示「繳費日期」，通知單統一顯示「通知單日期」並動態抓取當天最新系統日期
         const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
         const issueDate = getCurrentDateStr();
         
@@ -3000,7 +2952,7 @@
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
         } else {
-            // 修正：單張列印繳費通知單時，只印出 1 張精巧大小的單據，不再自動變成兩份
+            // 單張列印繳費通知單時，只印出 1 張精巧大小的單據
             allHtml = getSingleReceiptHtml(bill, false, '', true);
         }
 
