@@ -369,13 +369,13 @@
             justify-content: space-between;
         }
         
+        /* 修正：當只有兩份或單獨預覽時，維持與三等分一致的小巧精緻高度，不佔滿全部畫面 */
         .receipt-container-page.page-two-items .receipt-box {
             flex: 0 0 48.5%;
         }
 
         .receipt-box.single-notice {
-            flex: none;
-            margin-bottom: 20px;
+            flex: 0 0 32%;
         }
 
         .receipt-title { text-align: center; font-size: 17px; font-weight: 900; line-height: 1.1; letter-spacing: 0.5px; }
@@ -1721,7 +1721,7 @@
             } else {
                 const newBill = {
                     id: Date.now(),
-                    date: new Date().toLocaleDateString(),
+                    date: getCurrentDateStr(),
                     yearMonth: yMonth,       
                     periodStr: displayPeriod, 
                     className: cls,
@@ -1780,7 +1780,7 @@
             if (!alreadyExists) {
                 const autoBill = {
                     id: Date.now() + Math.floor(Math.random() * 100),
-                    date: new Date().toLocaleDateString(),
+                    date: getCurrentDateStr(),
                     yearMonth: nextYearMonth,
                     periodStr: nextPeriodStr,
                     className: currentBill.className,
@@ -2307,8 +2307,12 @@
                 '</div>';
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            fullHtml = getSingleReceiptHtml(bill, false, '', true);
-            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
+            fullHtml = '<div class="receipt-container-page page-two-items">' +
+                getSingleReceiptHtml(bill, false, '', true) +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(bill, false, '', true) +
+                '</div>';
+            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽 (1頁2聯)`;
         }
 
         document.getElementById('billPreviewContent').innerHTML = fullHtml;
@@ -2336,12 +2340,16 @@
         const count = targetBills.length;
 
         if (count === 1) {
-            allHtml = getSingleReceiptHtml(targetBills[0], false, '', true);
+            allHtml = '<div class="receipt-container-page page-two-items">' +
+                getSingleReceiptHtml(targetBills[0], false, '', true) +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(targetBills[0], false, '', true) +
+                '</div>';
         } else if (count === 2) {
             allHtml = '<div class="receipt-container-page page-two-items">' +
-                getSingleReceiptHtml(targetBills[0], false, '') +
+                getSingleReceiptHtml(targetBills[0], false, '', true) +
                 '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(targetBills[1], false, '') +
+                getSingleReceiptHtml(targetBills[1], false, '', true) +
                 '</div>';
         } else {
             targetBills.forEach((bill, index) => {
@@ -2349,7 +2357,7 @@
                     allHtml += '<div class="receipt-container-page">';
                 }
 
-                allHtml += getSingleReceiptHtml(bill, false, '');
+                allHtml += getSingleReceiptHtml(bill, false, '', true);
 
                 if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
                     allHtml += '</div>';
@@ -2796,10 +2804,9 @@
         const displayMonth = bill.periodStr || bill.yearMonth;
         const fullClassName = formatFullClassName(bill.className);
         
-        // 修正：收據才顯示繳費日(paidDate)，繳費通知單則顯示開單日期(date)或當前系統日期
-        const issueDate = isReceipt 
-            ? (bill.paidDate || parseLegacyDateToIso(bill.date) || getCurrentDateStr())
-            : (parseLegacyDateToIso(bill.date) || getCurrentDateStr());
+        // 修正：收據顯示「繳費日期」，通知單統一顯示「通知單日期」並抓取當天最新系統日期
+        const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
+        const issueDate = getCurrentDateStr();
         
         let tableRows = bill.items.map((item, idx) => `
             <tr>
@@ -2853,11 +2860,11 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         } else {
-            html += `<div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:11.5px; white-space:nowrap; margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:11.5px; white-space:nowrap; margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
         }
 
         html += `</div>`;
@@ -2871,8 +2878,7 @@
         let classNamesArr = [];
         let periodStrsArr = [];
         
-        // 修正：收據才顯示繳費日(paidDate)，通知單則顯示開單日期(date)或當前系統日期
-        let issueDate = isReceipt ? getCurrentDateStr() : (parseLegacyDateToIso(bills[0]?.date) || getCurrentDateStr());
+        let issueDate = getCurrentDateStr();
 
         let globalIdx = 1;
         bills.forEach(bill => {
@@ -2881,10 +2887,6 @@
             if (!classNamesArr.includes(fullCls)) classNamesArr.push(fullCls);
             if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
             else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
-            
-            if (isReceipt && bill.paidDate && bill.paidDate > issueDate) {
-                issueDate = bill.paidDate;
-            }
 
             grandTotal += bill.total;
 
@@ -2904,6 +2906,7 @@
         const displayClass = classNamesArr.join('、');
         const displayNames = studentNamesArr.join('、');
         const displayPeriod = periodStrsArr.join(' / ');
+        const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
 
         const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
             <div style="margin-top: 3px; font-size: 8.5px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
@@ -2944,7 +2947,7 @@
         `;
 
         if(isReceipt) {
-            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">繳費日期:${issueDate} 收款經手人：___________</div></div>`;
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
             html += refundPolicyHtml;
             html += `</div>`;
         }
@@ -2967,7 +2970,12 @@
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
         } else {
-            allHtml = getSingleReceiptHtml(bill, false, '', true);
+            // 修正：單張列印通知單時，自動包裝為上下兩半（一頁兩份），保持與批次或雙份列印一致的小巧精緻高度與完美排版
+            allHtml = '<div class="receipt-container-page page-two-items">' +
+                getSingleReceiptHtml(bill, false, '', true) +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(bill, false, '', true) +
+                '</div>';
         }
 
         document.getElementById('printArea').innerHTML = allHtml;
