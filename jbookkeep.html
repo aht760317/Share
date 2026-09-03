@@ -430,7 +430,7 @@
     </div>
   </div>
 
-  <!-- 明細詳細資訊彈出視窗 -->
+  <!-- 明細詳細資訊彈出視窗 (支援密碼 0618 修改入帳時間與刪除) -->
   <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-3 sm:p-4 no-print">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
       <div id="detail-header" class="px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-indigo-600">
@@ -443,6 +443,9 @@
       </div>
 
       <div class="p-4 sm:p-6 space-y-3 text-xs sm:text-sm max-h-[75vh] overflow-y-auto">
+        <input type="hidden" id="detail-target-firestore-id">
+        <input type="hidden" id="detail-target-type">
+
         <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
           <span class="text-slate-500 font-semibold">系統模式</span>
           <span id="detail-campus" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">文理 財務系統</span>
@@ -474,17 +477,38 @@
           <span class="text-slate-500 font-semibold w-20 shrink-0">備註/資訊</span>
           <span id="detail-note" class="font-medium text-indigo-700 text-right bg-indigo-50/70 p-2 rounded-lg border border-indigo-100 w-full ml-2 break-all text-[11px] sm:text-xs">-</span>
         </div>
+        
+        <!-- 入帳時間 (支援密碼 0618 點擊修改) -->
         <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
           <span class="text-slate-500 font-semibold">入帳時間 (台灣24H)</span>
-          <span id="detail-time" class="font-mono text-slate-700 font-bold text-xs">-</span>
+          <div class="flex items-center space-x-2">
+            <span id="detail-time-display" class="font-mono text-slate-700 font-bold text-xs">-</span>
+            <button onclick="requestEditEntryTime()" class="no-print px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded text-[11px] font-bold transition flex items-center space-x-1" title="需密碼 0618">
+              <i class="fa-solid fa-pen"></i><span>更改時間</span>
+            </button>
+          </div>
         </div>
+
+        <!-- 隱藏的時間修改輸入框 -->
+        <div id="detail-time-edit-box" class="hidden pb-2.5 border-b border-slate-100 bg-amber-50/50 p-2.5 rounded-lg border border-amber-200 space-y-2">
+          <label class="block text-xs font-bold text-amber-900">更改入帳時間 (台灣24H)：</label>
+          <input type="datetime-local" id="detail-time-input" class="w-full border border-amber-300 rounded-lg px-2 py-1 text-xs bg-white font-bold text-slate-800 outline-none">
+          <div class="flex justify-end space-x-1.5">
+            <button onclick="cancelEditEntryTime()" class="px-2.5 py-1 bg-slate-200 text-slate-700 text-xs rounded font-bold">取消</button>
+            <button onclick="saveNewEntryTime()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded font-bold shadow">確認修改</button>
+          </div>
+        </div>
+
         <div class="flex justify-between items-center">
           <span class="text-slate-500 font-semibold">資料來源</span>
           <span id="detail-source" class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">自訂手動登記</span>
         </div>
       </div>
 
-      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+        <button type="button" onclick="deleteCurrentDetailItem()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-lg transition flex items-center">
+          <i class="fa-solid fa-trash mr-1"></i> 刪除此筆
+        </button>
         <button type="button" onclick="closeDetailModal()" class="px-4 py-1.5 sm:px-5 sm:py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition">
           關閉視窗
         </button>
@@ -495,7 +519,7 @@
   <!-- Firebase 模組與即時同步邏輯 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateModel, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -1136,6 +1160,8 @@
       const titleEl = document.getElementById('detail-modal-title');
 
       document.getElementById('detail-campus').innerText = state.currentCampus === 'wenli' ? '文理 財務系統' : '英文 財務系統';
+      document.getElementById('detail-target-firestore-id').value = item.firestoreId || item.firestoreDocId || '';
+      document.getElementById('detail-target-type').value = item.isTuitionSync ? 'tuition' : item.type;
 
       if (item.type === 'income') {
         header.className = "px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-emerald-600";
@@ -1156,8 +1182,14 @@
       document.getElementById('detail-summary').innerText = item.summary || '-';
       document.getElementById('detail-desc').innerText = item.desc || '-';
       document.getElementById('detail-note').innerText = item.note || '無備註資訊';
-      document.getElementById('detail-time').innerText = format24HDateTimeTW(item.createdAt);
+      document.getElementById('detail-time-display').innerText = format24HDateTimeTW(item.createdAt);
       document.getElementById('detail-source').innerText = item.isTuitionSync ? '學費系統 (多科目合併核算)' : '自訂手動登記';
+
+      // 隱藏時間編輯區與重設輸入框值
+      document.getElementById('detail-time-edit-box').classList.add('hidden');
+      let isoForInput = item.createdAt || '';
+      if (isoForInput.length > 16) isoForInput = isoForInput.substring(0, 16);
+      document.getElementById('detail-time-input').value = isoForInput;
 
       // 展開多科目/子明細清單
       const itemsContainer = document.getElementById('detail-items-container');
@@ -1188,6 +1220,76 @@
 
     window.closeDetailModal = function() {
       document.getElementById('detail-modal').classList.add('hidden');
+    };
+
+    window.requestEditEntryTime = function() {
+      verifyPassword("更改入帳時間", () => {
+        document.getElementById('detail-time-edit-box').classList.remove('hidden');
+      });
+    };
+
+    window.cancelEditEntryTime = function() {
+      document.getElementById('detail-time-edit-box').classList.add('hidden');
+    };
+
+    window.saveNewEntryTime = async function() {
+      const newTimeVal = document.getElementById('detail-time-input').value;
+      const firestoreId = document.getElementById('detail-target-firestore-id').value;
+      const recordType = document.getElementById('detail-target-type').value;
+
+      if (!newTimeVal) {
+        alert("請選擇有效的时间！");
+        return;
+      }
+
+      try {
+        if (recordType === 'tuition') {
+          // 修改 bills 中的 paidDate 或 date
+          const billRef = doc(db, "bills", firestoreId);
+          const billSnap = await getDoc(billRef);
+          if (billSnap.exists()) {
+            const billData = billSnap.data();
+            const updateField = billData.paidDate ? "paidDate" : "date";
+            await setDoc(billRef, { ...billData, [updateField]: newTimeVal });
+          }
+        } else {
+          // 修改自訂收支
+          const targetCollection = state.currentCampus === 'wenli' ? 'expenses_wenli' : 'expenses_english';
+          const expRef = doc(db, targetCollection, firestoreId);
+          const expSnap = await getDoc(expRef);
+          if (expSnap.exists()) {
+            await setDoc(expRef, { ...expSnap.data(), createdAt: newTimeVal });
+          }
+        }
+
+        alert("✅ 入帳時間已成功更新！");
+        closeDetailModal();
+      } catch (e) {
+        console.error("更新時間失敗：", e);
+        alert("❌ 更新時間失敗，請稍後再試。");
+      }
+    };
+
+    window.deleteCurrentDetailItem = async function() {
+      const firestoreId = document.getElementById('detail-target-firestore-id').value;
+      const recordType = document.getElementById('detail-target-type').value;
+
+      if (recordType === 'tuition') {
+        alert("⚠️ 學費連動項目請直接至「繳費紀錄」頁面進行取消收款或刪除單據。");
+        return;
+      }
+
+      verifyPassword("刪除此筆收支明細", async () => {
+        const targetCollection = state.currentCampus === 'wenli' ? 'expenses_wenli' : 'expenses_english';
+        try {
+          await deleteDoc(doc(db, targetCollection, firestoreId));
+          closeDetailModal();
+          alert("🗑️ 該筆明細已成功刪除！");
+        } catch (e) {
+          console.error("刪除失敗：", e);
+          alert("❌ 刪除失敗，請稍後再試。");
+        }
+      });
     };
 
     window.printReport = function() {
