@@ -455,6 +455,12 @@
             padding-top: 20px;
         }
 
+        .footer-links-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
         .footer-admin-link {
             background: none;
             border: none;
@@ -465,6 +471,7 @@
             align-items: center;
             gap: 5px;
             transition: color 0.2s;
+            text-decoration: none;
         }
         .footer-admin-link:hover {
             color: var(--accent-blue);
@@ -487,6 +494,10 @@
                 flex-direction: column;
                 gap: 12px;
                 text-align: center;
+            }
+            .footer-links-group {
+                flex-direction: column;
+                gap: 8px;
             }
         }
     </style>
@@ -606,6 +617,7 @@
                                 <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="good-school"> 官方網站</label>
                                 <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="class"> 線上課表</label>
                                 <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="indexmoney"> 繳費管理</label>
+                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="joy-english"> 英文部管理系統</label>
                             </div>
                         </div>
 
@@ -805,7 +817,10 @@
 
         <footer>
             <div>&copy; 斗六顧德文教機構 · 內部專用行政整合系統</div>
-            <div>
+            <div class="footer-links-group">
+                <a href="https://aht760317.github.io/Share/joyenglish.html" target="_blank" class="footer-admin-link" data-key="joy-english" onclick="logUserAction('點擊模組', '開啟 英文部管理系統')">
+                    <i class="fa-solid fa-language"></i> 英文部管理系統
+                </a>
                 <button onclick="openAdminPassModal()" class="footer-admin-link">
                     <i class="fa-solid fa-user-gear"></i> 權限與老師設定
                 </button>
@@ -847,7 +862,6 @@
                     const cloudTeachers = teachersDoc.data().list;
                     localStorage.setItem('good_school_teachers', JSON.stringify(cloudTeachers));
                 } else {
-                    // 若雲端尚無資料，建立預設並寫入雲端
                     let localTeachers = getTeachers();
                     await setDoc(doc(db, "classLogSettings", "teachers"), { list: localTeachers }, { merge: true });
                 }
@@ -937,7 +951,7 @@
                         school: "教育系", 
                         phone: "0900-000-000", 
                         note: "機構負責人", 
-                        perms: ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney"],
+                        perms: ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"],
                         classes: ["小四課後安親輔導班", "國二數學進階A班"]
                     }
                 ];
@@ -970,7 +984,6 @@
                 return;
             }
 
-            // 登入前若雲端可用，重新拉取最新名冊
             if (window.fetchCloudAllData) {
                 await window.fetchCloudAllData();
             }
@@ -995,7 +1008,6 @@
         }
 
         function applyUserPermissions(user) {
-            let cards = document.querySelectorAll('.grid-menu .card');
             let logoutBtn = document.getElementById('logoutBtn');
             let welcomeText = document.getElementById('welcomeText');
             let banner = document.getElementById('teacherClassBanner');
@@ -1003,17 +1015,20 @@
 
             logoutBtn.style.display = 'inline-flex';
 
+            let allowedPerms = [];
+            let assignedClasses = [];
+
             if (user === '雅鴻 (管理者)') {
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">雅鴻 (最高管理者)</span>`;
-                cards.forEach(card => card.classList.remove('locked'));
                 banner.style.display = 'none';
+                allowedPerms = ["rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"];
             } else {
                 welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
                 
                 let teachers = getTeachers();
                 let tData = teachers.find(t => t.name === user);
-                let allowedPerms = tData ? (tData.perms || []) : [];
-                let assignedClasses = tData ? (tData.classes || []) : [];
+                allowedPerms = tData ? (tData.perms || []) : [];
+                assignedClasses = tData ? (tData.classes || []) : [];
 
                 if (assignedClasses.length > 0) {
                     classText.innerText = assignedClasses.join('、');
@@ -1022,15 +1037,31 @@
                     classText.innerText = "目前未指派專屬班級";
                     banner.style.display = 'flex';
                 }
+            }
 
-                cards.forEach(card => {
-                    let key = card.getAttribute('data-key');
-                    if (allowedPerms.includes(key)) {
-                        card.classList.remove('locked');
-                    } else {
-                        card.classList.add('locked');
-                    }
-                });
+            // 卡片權限套用
+            let cards = document.querySelectorAll('.grid-menu .card');
+            cards.forEach(card => {
+                let key = card.getAttribute('data-key');
+                if (allowedPerms.includes(key)) {
+                    card.classList.remove('locked');
+                } else {
+                    card.classList.add('locked');
+                }
+            });
+
+            // 頁尾底部「英文部管理系統」連結權限套用
+            let joyLink = document.querySelector('a.footer-admin-link[data-key="joy-english"]');
+            if (joyLink) {
+                if (allowedPerms.includes("joy-english")) {
+                    joyLink.style.opacity = "1";
+                    joyLink.style.pointerEvents = "auto";
+                    joyLink.title = "";
+                } else {
+                    joyLink.style.opacity = "0.4";
+                    joyLink.style.pointerEvents = "none";
+                    joyLink.title = "您目前無此權限";
+                }
             }
         }
 
@@ -1194,7 +1225,8 @@
                 "ClassLog": "教學日誌",
                 "good-school": "官方網站",
                 "class": "線上課表",
-                "indexmoney": "繳費管理"
+                "indexmoney": "繳費管理",
+                "joy-english": "英文部管理系統"
             };
 
             teachers.forEach((t, index) => {
@@ -1249,7 +1281,6 @@
                 logUserAction('人事管理', `修改老師資料與權限：${name}`);
             }
 
-            // 同步寫入 LocalStorage 與 Firebase 雲端
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
             if (window.saveTeachersToCloud) {
                 await window.saveTeachersToCloud(teachers);
