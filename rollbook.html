@@ -201,7 +201,6 @@
         .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
         .btn:hover { opacity: 0.9; }
 
-        /* 純文字無邊框下載連結按鈕 */
         .text-download-btn {
             background: none;
             border: none;
@@ -952,7 +951,7 @@
 
         <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin:10px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                <label style="color:#166534; font-weight:bold; font-size:13px; margin:0;"><b>📖 修習班級課程與到班星期 (可加多科)：</b></label>
+                <label style="color:#166534; font-weight:bold; font-size:13px; margin:0;"><b>📖 修習班級課程 (一般學生依課表上課，特殊學生可自訂到班日)：</b></label>
                 <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
             </div>
             <div id="studentCoursesWrapper"></div>
@@ -1999,7 +1998,16 @@
         return html;
     }
 
-    // 動態新增修課列（內建特定到班日勾選）
+    // 取得指定課程原本在系統中設定的上課星期陣列
+    function getCourseDefaultDays(courseName) {
+        if (!courseName) return [];
+        const allCourses = getAllCoursesList();
+        const course = allCourses.find(c => c.name === courseName);
+        if (!course || !course.day) return [];
+        return WEEK_DAYS.filter(d => course.day.includes(d) || course.day.includes(d.replace('星期', '週')));
+    }
+
+    // 動態新增修課列（預設依班級課表，按鈕點擊後才展開自訂到班日）
     window.addCourseSelectRow = function(wrapperId, selectedValue = "", customDaysStr = "") {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
@@ -2011,13 +2019,22 @@
         topRow.style.display = "flex";
         topRow.style.gap = "6px";
         topRow.style.alignItems = "center";
+        topRow.style.flexWrap = "wrap";
 
         const select = document.createElement('select');
         select.className = "course-select-input select-styled";
         select.style.margin = "0";
         select.style.padding = "7px 10px";
-        select.style.flex = "1";
+        select.style.flex = "2";
+        select.style.minWidth = "180px";
         select.innerHTML = getCourseOptionsHtml(selectedValue);
+
+        const customBtn = document.createElement('button');
+        customBtn.type = "button";
+        customBtn.className = "btn";
+        customBtn.style.padding = "6px 10px";
+        customBtn.style.fontSize = "12px";
+        customBtn.style.whiteSpace = "nowrap";
 
         const removeBtn = document.createElement('button');
         removeBtn.type = "button";
@@ -2027,52 +2044,96 @@
         removeBtn.innerText = "✖ 刪除此科";
         removeBtn.onclick = () => row.remove();
 
-        topRow.appendChild(select);
-        topRow.appendChild(removeBtn);
-        row.appendChild(topRow);
-
         const daysContainer = document.createElement('div');
         daysContainer.className = "course-days-container";
-        daysContainer.style.display = "flex";
-        daysContainer.style.gap = "6px";
-        daysContainer.style.alignItems = "center";
-        daysContainer.style.flexWrap = "wrap";
         daysContainer.style.marginTop = "8px";
-        daysContainer.style.paddingTop = "6px";
-        daysContainer.style.borderTop = "1px dashed #e2e8f0";
+        daysContainer.style.paddingTop = "8px";
+        daysContainer.style.borderTop = "1px dashed #cbd5e1";
         daysContainer.style.fontSize = "12.5px";
 
-        const label = document.createElement('span');
-        label.style.fontWeight = "bold";
-        label.style.color = "#475569";
-        label.innerText = "📅 到班日：";
-        daysContainer.appendChild(label);
+        function updateDaysCheckboxesUI() {
+            const curCourseName = select.value.trim();
+            const courseDays = getCourseDefaultDays(curCourseName);
+            const availableDays = courseDays.length > 0 ? courseDays : WEEK_DAYS;
+            const selDaysArr = customDaysStr ? customDaysStr.split(/[,，、]/).map(d => d.trim()) : [];
 
-        const selDaysArr = customDaysStr ? customDaysStr.split(/[,，、]/).map(d => d.trim()) : [];
-        
-        WEEK_DAYS.forEach(day => {
-            const isChecked = selDaysArr.length > 0 ? selDaysArr.includes(day) : true;
-            const dayLabel = document.createElement('label');
-            dayLabel.style.display = "inline-flex";
-            dayLabel.style.alignItems = "center";
-            dayLabel.style.gap = "3px";
-            dayLabel.style.cursor = "pointer";
-            dayLabel.style.color = "#334155";
-            dayLabel.style.fontWeight = "bold";
-            dayLabel.style.marginRight = "6px";
-            dayLabel.innerHTML = `
-                <input type="checkbox" class="course-day-chk" value="${day}" ${isChecked ? 'checked' : ''} style="margin:0; width:auto; cursor:pointer;"> ${day.replace('星期', '週')}
+            let html = `
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-weight:bold; color:#b45309;">📅 勾選此學生固定出席星期：</span>
             `;
-            daysContainer.appendChild(dayLabel);
-        });
+            availableDays.forEach(day => {
+                const isChecked = selDaysArr.length > 0 ? selDaysArr.includes(day) : true;
+                html += `
+                    <label style="display:inline-flex; align-items:center; gap:3px; cursor:pointer; color:#334155; font-weight:bold; margin-right:4px;">
+                        <input type="checkbox" class="course-day-chk" value="${day}" ${isChecked ? 'checked' : ''} style="margin:0; width:auto; cursor:pointer;"> ${day.replace('星期', '週')}
+                    </label>
+                `;
+            });
+            html += `
+                    <button type="button" class="btn btn-outline reset-default-btn" style="padding:2px 8px; font-size:11px; margin-left:auto;">恢復全勤(依課表)</button>
+                </div>
+                <div style="font-size:11px; color:#64748b; margin-top:4px;">💡 僅需勾選孩子固定會到班的星期（例如只勾選週三、週四），其餘未勾選的日子系統將自動視為免到校，不會發出未到警報。</div>
+            `;
+            daysContainer.innerHTML = html;
 
-        const tip = document.createElement('span');
-        tip.style.color = "#94a3b8";
-        tip.style.fontSize = "11px";
-        tip.style.marginLeft = "auto";
-        tip.innerText = "💡 預設全勾為每日到班；特殊學生取消多餘星期即可";
-        daysContainer.appendChild(tip);
+            const resetBtn = daysContainer.querySelector('.reset-default-btn');
+            if (resetBtn) {
+                resetBtn.onclick = () => {
+                    customDaysStr = "";
+                    daysContainer.style.display = "none";
+                    customBtn.className = "btn btn-outline";
+                    customBtn.innerText = "⚙️ 指定到班日";
+                };
+            }
+        }
 
+        if (customDaysStr && customDaysStr.trim() !== '') {
+            daysContainer.style.display = "block";
+            customBtn.className = "btn btn-warning";
+            customBtn.innerText = "✏️ 修改到班日";
+        } else {
+            daysContainer.style.display = "none";
+            customBtn.className = "btn btn-outline";
+            customBtn.innerText = "⚙️ 指定到班日";
+        }
+
+        customBtn.onclick = () => {
+            if (daysContainer.style.display === "none") {
+                if (!select.value.trim()) return alert('請先選擇班級課程！');
+                daysContainer.style.display = "block";
+                customBtn.className = "btn btn-warning";
+                customBtn.innerText = "收合到班日設定";
+                updateDaysCheckboxesUI();
+            } else {
+                daysContainer.style.display = "none";
+                const checkedBoxes = daysContainer.querySelectorAll('.course-day-chk:checked');
+                const checkedDays = Array.from(checkedBoxes).map(cb => cb.value);
+                const curCourseDays = getCourseDefaultDays(select.value.trim());
+                const allAvailable = curCourseDays.length > 0 ? curCourseDays : WEEK_DAYS;
+
+                if (checkedDays.length > 0 && checkedDays.length < allAvailable.length) {
+                    customBtn.className = "btn btn-warning";
+                    customBtn.innerText = "✏️ 修改到班日";
+                } else {
+                    customDaysStr = "";
+                    customBtn.className = "btn btn-outline";
+                    customBtn.innerText = "⚙️ 指定到班日";
+                }
+            }
+        };
+
+        select.onchange = () => {
+            if (daysContainer.style.display !== "none") {
+                updateDaysCheckboxesUI();
+            }
+        };
+
+        updateDaysCheckboxesUI();
+
+        topRow.appendChild(select);
+        topRow.appendChild(customBtn);
+        topRow.appendChild(removeBtn);
+        row.appendChild(topRow);
         row.appendChild(daysContainer);
         wrapper.appendChild(row);
     };
@@ -2107,11 +2168,16 @@
 
             courses.push(cName);
 
-            const checkedBoxes = row.querySelectorAll('.course-day-chk:checked');
-            const checkedDays = Array.from(checkedBoxes).map(cb => cb.value);
+            const daysContainer = row.querySelector('.course-days-container');
+            if (daysContainer && daysContainer.style.display !== 'none') {
+                const checkedBoxes = daysContainer.querySelectorAll('.course-day-chk:checked');
+                const checkedDays = Array.from(checkedBoxes).map(cb => cb.value);
+                const curCourseDays = getCourseDefaultDays(cName);
+                const allAvailable = curCourseDays.length > 0 ? curCourseDays : WEEK_DAYS;
 
-            if (checkedDays.length > 0 && checkedDays.length < WEEK_DAYS.length) {
-                scheduleDays[cName] = checkedDays.join('、');
+                if (checkedDays.length > 0 && checkedDays.length < allAvailable.length) {
+                    scheduleDays[cName] = checkedDays.join('、');
+                }
             }
         });
 
