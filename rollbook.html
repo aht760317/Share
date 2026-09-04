@@ -332,10 +332,22 @@
             display: flex; flex-direction: column; justify-content: space-between; transition: 0.2s;
         }
 
-        .dynamic-course-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .dynamic-course-row {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
         .course-tag {
             display: inline-block; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px;
             background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; margin: 2px;
+        }
+        .schedule-badge {
+            display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+            background: #fef3c7; color: #92400e; border: 1px solid #fde68a; margin-left: 4px;
         }
         .phone-plain-cell { font-size: 12.5px; line-height: 1.4; text-align: center; color: #1e293b; }
 
@@ -415,7 +427,7 @@
 <header>
     <div class="header-title">
         <h2>斗六顧德補習班 智慧教務與點名系統</h2>
-        <p>全校學籍中央控制總庫 ｜ 支援單一生多科跨班選課 ｜ 課輔部、國小部、國中部連動</p>
+        <p>全校學籍中央控制總庫 ｜ 支援單一生多科跨班選課與自訂到班星期 ｜ 課輔部、國小部、國中部連動</p>
     </div>
     
     <div class="sync-controls no-print">
@@ -548,7 +560,7 @@
         <div class="card">
             <h3 style="color:var(--primary); margin-bottom:6px; font-size:17px;">🖨️ 點名表與成績總表生成專區</h3>
             <p style="font-size:13px; color:#666; margin-bottom:14px;">
-                請於下方下拉選單選擇班級並設定日期區間，系統將依據班級上課星期自動產出對應的點名表。
+                請於下方下拉選單選擇班級並設定日期區間，系統將依據班級上課星期自動產出對應的點名表。非每日出席之學生，在非到班日將以灰底「—」呈現。
             </p>
 
             <div style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:14px; border-radius:10px; margin-bottom:14px;">
@@ -940,7 +952,7 @@
 
         <div style="background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin:10px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                <label style="color:#166534; font-weight:bold; font-size:13px; margin:0;"><b>📖 修習班級課程 (可增加多科)：</b></label>
+                <label style="color:#166534; font-weight:bold; font-size:13px; margin:0;"><b>📖 修習班級課程與到班星期 (可加多科)：</b></label>
                 <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('studentCoursesWrapper')">➕ 增加一科</button>
             </div>
             <div id="studentCoursesWrapper"></div>
@@ -973,7 +985,7 @@
             <p style="font-size:13px; color:#555; margin:0;">為學生增減所修習的班級課程：</p>
             <button type="button" class="btn btn-success" style="padding:3px 10px; font-size:12px;" onclick="addCourseSelectRow('quickAssignWrapper')">➕ 增加一科</button>
         </div>
-        <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; max-height:240px; overflow-y:auto;"></div>
+        <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; max-height:280px; overflow-y:auto;"></div>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
             <button class="btn btn-success" onclick="saveQuickAssign()" style="padding:7px 14px; font-size:13px;">💾 確認加選並儲存</button>
             <button class="btn btn-outline" onclick="document.getElementById('quickAssignModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
@@ -1111,6 +1123,25 @@
         return `${y}-${m}-${d}`;
     }
 
+    // 核心判斷：學生在特定日期與星期是否應該出席該課程
+    function isStudentScheduledOnDate(student, courseName, dayName) {
+        if (!student) return false;
+        
+        // 1. 若該生針對該班級有客製到班星期設定
+        if (student.courseScheduleDays && student.courseScheduleDays[courseName]) {
+            const customDays = student.courseScheduleDays[courseName];
+            if (customDays && customDays.trim() !== '') {
+                return customDays.includes(dayName) || customDays.includes(dayName.replace('星期', '週'));
+            }
+        }
+        
+        // 2. 預設模式（所有原有學生）：依照課程原本的上課日全勤到班
+        const allCourses = getAllCoursesList();
+        const courseObj = allCourses.find(c => c.name === courseName);
+        if (!courseObj || !courseObj.day) return true;
+        return courseObj.day.includes(dayName) || courseObj.day.includes(dayName.replace('星期', '週'));
+    }
+
     window.onload = function() {
         const todayStr = getTaiwanDateString();
         document.getElementById('rollDateInput').value = todayStr;
@@ -1201,6 +1232,7 @@
                     firestoreId: d.id,
                     ...stuData,
                     courses: coursesArr,
+                    courseScheduleDays: stuData.courseScheduleDays || {},
                     course: coursesArr.join('、'),
                     pickupNotes: stuData.pickupNotes || ''
                 });
@@ -1214,7 +1246,7 @@
                 window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
             }
 
-            // 載入國定放假清單 (雲端 Firestore)
+            // 載入國定放假清單
             const holidaysDoc = await getDoc(doc(db, "classLogSettings", "holidays"));
             if (holidaysDoc.exists()) {
                 window.state.holidays = holidaysDoc.data().data || [];
@@ -1590,7 +1622,11 @@
                         const updatedCourses = courses.map(c => c === origName ? newName : c);
                         stu.courses = updatedCourses;
                         stu.course = updatedCourses.join('、');
-                        updatePromises.push(setDoc(doc(db, "classLogStudents", stu.firestoreId), { ...stu, courses: updatedCourses, course: stu.course }));
+                        if (stu.courseScheduleDays && stu.courseScheduleDays[origName]) {
+                            stu.courseScheduleDays[newName] = stu.courseScheduleDays[origName];
+                            delete stu.courseScheduleDays[origName];
+                        }
+                        updatePromises.push(setDoc(doc(db, "classLogStudents", stu.firestoreId), { ...stu, courses: updatedCourses, course: stu.course, courseScheduleDays: stu.courseScheduleDays || {} }));
                     }
                 });
                 if (updatePromises.length > 0) await Promise.all(updatePromises);
@@ -1635,7 +1671,11 @@
         const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '-' };
         const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '-' };
         const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '-' };
-        const stuCourses = getStudentCoursesArray(stu).map(c => `<span class="course-tag">${c}</span>`).join('') || '未選班級';
+        
+        const stuCourses = getStudentCoursesArray(stu).map(c => {
+            const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[c]) ? `<span class="schedule-badge">(${stu.courseScheduleDays[c]})</span>` : '';
+            return `<span class="course-tag">${c}${customDays}</span>`;
+        }).join('') || '未選班級';
 
         let html = `
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #cbd5e1;">
@@ -1676,7 +1716,6 @@
         renderMasterStudentsTable();
     };
 
-    // 搜尋防抖（Debounce），避免大量 DOM 頻繁重繪
     window.handleStudentSearchDebounced = function() {
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(() => {
@@ -1773,7 +1812,11 @@
                 let cardsHtml = '';
                 filtered.forEach((stu, idx) => {
                     const stuCourses = getStudentCoursesArray(stu);
-                    const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
+                    const coursesTags = stuCourses.map(c => {
+                        const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[c]) ? `<span class="schedule-badge">(${stu.courseScheduleDays[c]})</span>` : '';
+                        return `<span class="course-tag">${c}${customDays}</span>`;
+                    }).join('') || '<span style="color:#888;">未選班級</span>';
+                    
                     const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
                     const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
                     const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
@@ -1816,7 +1859,11 @@
             let html = '';
             filtered.forEach((stu, idx) => {
                 const stuCourses = getStudentCoursesArray(stu);
-                const coursesTags = stuCourses.map(c => `<span class="course-tag">${c}</span>`).join('') || '<span style="color:#888;">未選班級</span>';
+                const coursesTags = stuCourses.map(c => {
+                    const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[c]) ? `<span class="schedule-badge">(${stu.courseScheduleDays[c]})</span>` : '';
+                    return `<span class="course-tag">${c}${customDays}</span>`;
+                }).join('') || '<span style="color:#888;">未選班級</span>';
+
                 const p1 = (stu.phones && stu.phones[0]) || { label: '媽媽', number: '' };
                 const p2 = (stu.phones && stu.phones[1]) || { label: '爸爸', number: '' };
                 const p3 = (stu.phones && stu.phones[2]) || { label: '學生本人', number: '' };
@@ -1849,7 +1896,6 @@
         }
     };
 
-    // 匯出目前檢視之學生資料為 CSV 檔 (純文字按鈕觸發)
     window.exportCurrentStudentsToCSV = function() {
         const list = window.state.currentFilteredStudents || [];
         if (list.length === 0) {
@@ -1859,7 +1905,7 @@
         const headers = [
             "編號", "學生姓名", "性別", "身分證字號", "就讀學校", "年級座號",
             "生日", "學籍狀態", "電話1稱謂", "電話1號碼", "電話2稱謂",
-            "電話2號碼", "電話3稱謂", "電話3號碼", "修習課程", "接送備註",
+            "電話2號碼", "電話3稱謂", "電話3號碼", "修習課程與到班日", "接送備註",
             "父親職業", "母親職業", "健康狀況", "通訊地址", "詳細備註"
         ];
 
@@ -1875,7 +1921,11 @@
             const p1 = (stu.phones && stu.phones[0]) || { label: '', number: '' };
             const p2 = (stu.phones && stu.phones[1]) || { label: '', number: '' };
             const p3 = (stu.phones && stu.phones[2]) || { label: '', number: '' };
-            const stuCourses = getStudentCoursesArray(stu).join('、');
+            
+            const stuCourses = getStudentCoursesArray(stu).map(c => {
+                const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[c]) ? `[${stu.courseScheduleDays[c]}]` : '';
+                return `${c}${customDays}`;
+            }).join('、');
 
             const rowData = [
                 index + 1,
@@ -1903,7 +1953,6 @@
             rows.push(rowData.map(escapeCSV).join(","));
         });
 
-        // 包含 UTF-8 BOM 避免 Excel 打開中文變亂碼
         const csvContent = "\uFEFF" + rows.join("\r\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -1950,45 +1999,123 @@
         return html;
     }
 
-    window.addCourseSelectRow = function(wrapperId, selectedValue = "") {
+    // 動態新增修課列（內建特定到班日勾選）
+    window.addCourseSelectRow = function(wrapperId, selectedValue = "", customDaysStr = "") {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
+        
         const row = document.createElement('div');
         row.className = 'dynamic-course-row';
+
+        const topRow = document.createElement('div');
+        topRow.style.display = "flex";
+        topRow.style.gap = "6px";
+        topRow.style.alignItems = "center";
+
         const select = document.createElement('select');
+        select.className = "course-select-input select-styled";
         select.style.margin = "0";
-        select.style.padding = "7px";
+        select.style.padding = "7px 10px";
+        select.style.flex = "1";
         select.innerHTML = getCourseOptionsHtml(selectedValue);
+
         const removeBtn = document.createElement('button');
         removeBtn.type = "button";
         removeBtn.className = "btn btn-danger";
         removeBtn.style.padding = "6px 10px";
         removeBtn.style.fontSize = "12px";
-        removeBtn.innerText = "✖";
+        removeBtn.innerText = "✖ 刪除此科";
         removeBtn.onclick = () => row.remove();
-        row.appendChild(select);
-        row.appendChild(removeBtn);
+
+        topRow.appendChild(select);
+        topRow.appendChild(removeBtn);
+        row.appendChild(topRow);
+
+        const daysContainer = document.createElement('div');
+        daysContainer.className = "course-days-container";
+        daysContainer.style.display = "flex";
+        daysContainer.style.gap = "6px";
+        daysContainer.style.alignItems = "center";
+        daysContainer.style.flexWrap = "wrap";
+        daysContainer.style.marginTop = "8px";
+        daysContainer.style.paddingTop = "6px";
+        daysContainer.style.borderTop = "1px dashed #e2e8f0";
+        daysContainer.style.fontSize = "12.5px";
+
+        const label = document.createElement('span');
+        label.style.fontWeight = "bold";
+        label.style.color = "#475569";
+        label.innerText = "📅 到班日：";
+        daysContainer.appendChild(label);
+
+        const selDaysArr = customDaysStr ? customDaysStr.split(/[,，、]/).map(d => d.trim()) : [];
+        
+        WEEK_DAYS.forEach(day => {
+            const isChecked = selDaysArr.length > 0 ? selDaysArr.includes(day) : true;
+            const dayLabel = document.createElement('label');
+            dayLabel.style.display = "inline-flex";
+            dayLabel.style.alignItems = "center";
+            dayLabel.style.gap = "3px";
+            dayLabel.style.cursor = "pointer";
+            dayLabel.style.color = "#334155";
+            dayLabel.style.fontWeight = "bold";
+            dayLabel.style.marginRight = "6px";
+            dayLabel.innerHTML = `
+                <input type="checkbox" class="course-day-chk" value="${day}" ${isChecked ? 'checked' : ''} style="margin:0; width:auto; cursor:pointer;"> ${day.replace('星期', '週')}
+            `;
+            daysContainer.appendChild(dayLabel);
+        });
+
+        const tip = document.createElement('span');
+        tip.style.color = "#94a3b8";
+        tip.style.fontSize = "11px";
+        tip.style.marginLeft = "auto";
+        tip.innerText = "💡 預設全勾為每日到班；特殊學生取消多餘星期即可";
+        daysContainer.appendChild(tip);
+
+        row.appendChild(daysContainer);
         wrapper.appendChild(row);
     };
 
-    function populateDynamicCourses(wrapperId, coursesArr = []) {
+    function populateDynamicCourses(wrapperId, coursesArr = [], scheduleDaysObj = {}) {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
         wrapper.innerHTML = '';
-        if (!coursesArr || coursesArr.length === 0) addCourseSelectRow(wrapperId, "");
-        else coursesArr.forEach(cName => addCourseSelectRow(wrapperId, cName));
+        if (!coursesArr || coursesArr.length === 0) {
+            addCourseSelectRow(wrapperId, "", "");
+        } else {
+            coursesArr.forEach(cName => {
+                const customDays = (scheduleDaysObj && scheduleDaysObj[cName]) || "";
+                addCourseSelectRow(wrapperId, cName, customDays);
+            });
+        }
     }
 
-    function getSelectedCoursesFromWrapper(wrapperId) {
+    function getSelectedCoursesWithDays(wrapperId) {
         const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return [];
-        const selects = wrapper.querySelectorAll('select');
-        const list = [];
-        selects.forEach(sel => {
-            const val = sel.value.trim();
-            if (val && !list.includes(val)) list.push(val);
+        if (!wrapper) return { courses: [], scheduleDays: {} };
+
+        const rows = wrapper.querySelectorAll('.dynamic-course-row');
+        const courses = [];
+        const scheduleDays = {};
+
+        rows.forEach(row => {
+            const sel = row.querySelector('.course-select-input');
+            if (!sel) return;
+            const cName = sel.value.trim();
+            if (!cName || courses.includes(cName)) return;
+
+            courses.push(cName);
+
+            const checkedBoxes = row.querySelectorAll('.course-day-chk:checked');
+            const checkedDays = Array.from(checkedBoxes).map(cb => cb.value);
+
+            if (checkedDays.length > 0 && checkedDays.length < WEEK_DAYS.length) {
+                scheduleDays[cName] = checkedDays.join('、');
+            }
         });
-        return list;
+
+        return { courses, scheduleDays };
     }
 
     window.onSchoolSelectChange = function(val) {
@@ -2032,7 +2159,7 @@
         document.getElementById('m_stu_mother_job').value = "";
         document.getElementById('m_stu_health').value = "";
         document.getElementById('m_stu_notes').value = "";
-        populateDynamicCourses('studentCoursesWrapper', []);
+        populateDynamicCourses('studentCoursesWrapper', [], {});
         document.getElementById('studentModal').style.display = "flex";
     };
 
@@ -2094,7 +2221,8 @@
         document.getElementById('m_stu_mother_job').value = stu.motherJob || '';
         document.getElementById('m_stu_health').value = stu.health || '';
         document.getElementById('m_stu_notes').value = stu.notes || '';
-        populateDynamicCourses('studentCoursesWrapper', getStudentCoursesArray(stu));
+        
+        populateDynamicCourses('studentCoursesWrapper', getStudentCoursesArray(stu), stu.courseScheduleDays || {});
         document.getElementById('studentModal').style.display = "flex";
     };
 
@@ -2103,7 +2231,8 @@
     window.saveStudentMasterData = async function() {
         const firestoreId = document.getElementById('editStudentFirestoreId').value;
         const name = document.getElementById('m_stu_name').value.trim();
-        const selectedCourses = getSelectedCoursesFromWrapper('studentCoursesWrapper');
+        const { courses: selectedCourses, scheduleDays: courseScheduleDays } = getSelectedCoursesWithDays('studentCoursesWrapper');
+
         if (!name) return alert('⚠️ 學生姓名不能為空白！');
         if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
 
@@ -2122,6 +2251,7 @@
             studentClass: document.getElementById('m_stu_class').value.trim(),
             birthday: document.getElementById('m_stu_birthday').value,
             courses: selectedCourses,
+            courseScheduleDays: courseScheduleDays,
             course: selectedCourses.join('、'),
             status: document.getElementById('m_stu_status').value,
             phones: [
@@ -2156,7 +2286,7 @@
         if (!stu) return;
         document.getElementById('quickAssignTitle').innerText = `📋 為【${stu.name}】加選班級課程`;
         document.getElementById('quickAssignFirestoreId').value = firestoreId;
-        populateDynamicCourses('quickAssignWrapper', getStudentCoursesArray(stu));
+        populateDynamicCourses('quickAssignWrapper', getStudentCoursesArray(stu), stu.courseScheduleDays || {});
         document.getElementById('quickAssignModal').style.display = 'flex';
     };
 
@@ -2164,13 +2294,14 @@
         const firestoreId = document.getElementById('quickAssignFirestoreId').value;
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
-        const selectedCourses = getSelectedCoursesFromWrapper('quickAssignWrapper');
+        const { courses: selectedCourses, scheduleDays: courseScheduleDays } = getSelectedCoursesWithDays('quickAssignWrapper');
         if (selectedCourses.length === 0) return alert('⚠️ 請至少選擇一個修習班級！');
 
         try {
             stu.courses = selectedCourses;
+            stu.courseScheduleDays = courseScheduleDays;
             stu.course = selectedCourses.join('、');
-            await setDoc(doc(db, "classLogStudents", firestoreId), { ...stu, courses: selectedCourses, course: stu.course });
+            await setDoc(doc(db, "classLogStudents", firestoreId), { ...stu, courses: selectedCourses, courseScheduleDays: courseScheduleDays, course: stu.course });
             document.getElementById('quickAssignModal').style.display = 'none';
             alert(`✅ 已成功更新【${stu.name}】修課名冊！`);
             initCloudData();
@@ -2357,11 +2488,15 @@
         grid.innerHTML = '';
 
         const dateStr = document.getElementById('rollDateInput').value;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
         const c = window.state.currentCourse;
         
+        // 核心排課判斷：過濾今天需要到班的學生
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
-            return arr.includes(c.name) && s.status !== 'graduated';
+            const isEnrolled = arr.includes(c.name) && s.status !== 'graduated';
+            return isEnrolled && isStudentScheduledOnDate(s, c.name, curDayName);
         });
 
         let presentCount = 0;
@@ -2378,6 +2513,9 @@
             const isPresent = record.status === '出席';
             const isLeave = record.status === '請假';
 
+            const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[c.name]) || '';
+            const customDayBadge = customDays ? `<span style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">固定到班：${customDays}</span>` : '';
+
             const card = document.createElement('div');
             card.className = `student-card ${isPresent ? 'present' : (isLeave ? 'leave' : '')}`;
 
@@ -2385,6 +2523,7 @@
                 <div>
                     <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
                         <span style="font-size:16px; font-weight:bold; color:var(--primary);">${stu.name}</span>
+                        ${customDayBadge}
                         ${stu.pickupNotes ? `<span style="background:#fdf2f8; border:1.5px solid #fbcfe8; color:#9d174d; padding:2px 8px; border-radius:6px; font-size:12.5px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">🚗 接送/社團備註：${stu.pickupNotes}</span>` : ''}
                     </div>
                     <div style="font-size:12px; color:#555; margin-top:3px;">
@@ -2424,7 +2563,7 @@
 
         document.getElementById('paperCourseTitle').innerText = `斗六顧德補習班 - 【${c.name}】課堂點名總表`;
         document.getElementById('paperMetaInfo').innerText = `日期：${dateStr} | 教師：${c.teacher || '老師'} | 應到：${courseStudents.length} 人 | 實到：${presentCount} 人`;
-        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="6" style="padding:12px; color:#888;">此班級目前無在籍學生</td></tr>`;
+        document.getElementById('paperTableBody').innerHTML = paperRowsHtml || `<tr><td colspan="6" style="padding:12px; color:#888;">此班級本日無排課學生</td></tr>`;
         
         updateHomeAlertBanner();
     }
@@ -2457,11 +2596,16 @@
 
     window.quickMarkAll = function() {
         const dateStr = document.getElementById('rollDateInput').value;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
         const c = window.state.currentCourse;
+
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
-            return arr.includes(c.name) && s.status !== 'graduated';
+            const isEnrolled = arr.includes(c.name) && s.status !== 'graduated';
+            return isEnrolled && isStudentScheduledOnDate(s, c.name, curDayName);
         });
+
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${c.name}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
@@ -2491,10 +2635,14 @@
         if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！操作已取消。");
 
         const dateStr = document.getElementById('rollDateInput').value;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
         const c = window.state.currentCourse;
+
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
-            return arr.includes(c.name) && s.status !== 'graduated';
+            const isEnrolled = arr.includes(c.name) && s.status !== 'graduated';
+            return isEnrolled && isStudentScheduledOnDate(s, c.name, curDayName);
         });
 
         courseStudents.forEach(stu => {
@@ -2510,11 +2658,16 @@
 
     window.quickMarkAllModal = function() {
         const dateStr = window.state.quickRollContext.dateStr;
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
         const courseName = window.state.quickRollContext.courseName;
+
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
-            return arr.includes(courseName) && s.status !== 'graduated';
+            const isEnrolled = arr.includes(courseName) && s.status !== 'graduated';
+            return isEnrolled && isStudentScheduledOnDate(s, courseName, curDayName);
         });
+
         courseStudents.forEach(stu => {
             const key = `${dateStr}_${courseName}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
@@ -2538,7 +2691,8 @@
         todayCourses.forEach(c => {
             const courseStudents = window.state.students.filter(s => {
                 const arr = getStudentCoursesArray(s);
-                return arr.includes(c.name) && s.status !== 'graduated';
+                const isEnrolled = arr.includes(c.name) && s.status !== 'graduated';
+                return isEnrolled && isStudentScheduledOnDate(s, c.name, curDayName);
             });
 
             let hasAnyCheck = false;
@@ -2599,9 +2753,13 @@
         const statsEl = document.getElementById('quickRollStats');
         if (!container || !statsEl) return;
 
+        const curDate = new Date(dateStr);
+        const curDayName = WEEK_NAMES[curDate.getDay()];
+
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
-            return arr.includes(courseName) && s.status !== 'graduated';
+            const isEnrolled = arr.includes(courseName) && s.status !== 'graduated';
+            return isEnrolled && isStudentScheduledOnDate(s, courseName, curDayName);
         });
 
         let presentCount = 0;
@@ -2618,12 +2776,16 @@
             const isPresent = record.status === '出席';
             const isLeave = record.status === '請假';
 
+            const customDays = (stu.courseScheduleDays && stu.courseScheduleDays[courseName]) || '';
+            const customDayBadge = customDays ? `<span style="background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:6px;">固定到班：${customDays}</span>` : '';
+
             html += `
                 <div style="background:#fff; border:1.5px solid ${isPresent ? '#2ecc71' : (isLeave ? '#e74c3c' : '#cbd5e1')}; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
                             <span style="font-size:11.5px; color:#888; font-weight:bold;">#${idx+1}</span>
                             <b style="font-size:15px; color:var(--primary); margin-left:4px;">${stu.name}</b>
+                            ${customDayBadge}
                             ${stu.pickupNotes ? `<span style="background:#fdf2f8; border:1px solid #fbcfe8; color:#9d174d; padding:1px 6px; border-radius:4px; font-size:11.5px; font-weight:bold; margin-left:6px;">🚗 ${stu.pickupNotes}</span>` : ''}
                             <span style="font-size:12px; color:#555; margin-left:8px;">🏫 ${stu.school || '-'}</span>
                         </div>
@@ -2643,7 +2805,7 @@
         });
 
         if (courseStudents.length === 0) {
-            html = `<p style="text-align:center; color:#888; padding:20px;">此班級目前無在籍學生。</p>`;
+            html = `<p style="text-align:center; color:#888; padding:20px;">此班級本日無排課學生。</p>`;
         }
 
         statsEl.innerText = `應到：${courseStudents.length} 人 ｜ 出席：${presentCount} 人 ｜ 請假：${leaveCount} 人`;
@@ -2827,6 +2989,7 @@
                     dateStr: dateStr,
                     shortDate: `${cur.getMonth()+1}/${cur.getDate()}`,
                     dayName: dayName.replace('星期', '週'),
+                    fullDayName: dayName,
                     holiday: holidayMatch ? holidayMatch.name : null
                 });
             }
@@ -2834,7 +2997,7 @@
         }
 
         if (dateList.length === 0) {
-            dateList.push({ dateStr: startVal, shortDate: startVal.slice(5), dayName: '', holiday: null });
+            dateList.push({ dateStr: startVal, shortDate: startVal.slice(5), dayName: '', fullDayName: '', holiday: null });
         }
 
         const actualEndStr = dateList[dateList.length - 1].dateStr;
@@ -2874,19 +3037,25 @@
                 if (d.holiday) {
                     html += `<td class="holiday-col" style="font-size:7.5pt;">放假</td>`;
                 } else {
-                    const key = `${d.dateStr}_${course.name}_${stu.name}`;
-                    const rec = window.state.attendanceData[key];
-                    let mark = '';
-                    if (rec) {
-                        mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:11pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:11pt;">✔</span>' : '');
-                        if (rec.status === '請假' && rec.reason) {
-                            reasonsArr.push(`${d.shortDate}${rec.reason}`);
+                    const isScheduled = isStudentScheduledOnDate(stu, course.name, d.fullDayName);
+                    
+                    if (!isScheduled) {
+                        html += `<td style="background:#f1f5f9; color:#94a3b8; font-size:9pt;" title="非到班日">—</td>`;
+                    } else {
+                        const key = `${d.dateStr}_${course.name}_${stu.name}`;
+                        const rec = window.state.attendanceData[key];
+                        let mark = '';
+                        if (rec) {
+                            mark = rec.status === '請假' ? '<span style="color:#e74c3c;font-weight:bold;font-size:11pt;">▲</span>' : (rec.status === '出席' ? '<span style="color:#16a34a;font-weight:bold;font-size:11pt;">✔</span>' : '');
+                            if (rec.status === '請假' && rec.reason) {
+                                reasonsArr.push(`${d.shortDate}${rec.reason}`);
+                            }
                         }
-                    }
 
-                    html += `<td>
-                        <div style="height:20px; line-height:20px;">${mark}</div>
-                    </td>`;
+                        html += `<td>
+                            <div style="height:20px; line-height:20px;">${mark}</div>
+                        </td>`;
+                    }
                 }
             });
 
