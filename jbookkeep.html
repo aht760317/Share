@@ -130,9 +130,9 @@
 
           <select id="filter-mode" onchange="handleFilterModeSelect(this)" class="flex-1 sm:flex-none border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-900">
             <option value="daily" selected>☀️ 1. 當日</option>
-            <option value="monthly">📆 2. 當月</option>
-            <option value="range">📅 3. 區間 (🔒)</option>
-            <option value="all">🌐 4. 全部 (🔒)</option>
+            <option value="weekly">📆 2. 當週</option>
+            <option value="monthly">📅 3. 當月 (🔒)</option>
+            <option value="range">📊 4. 區間 (🔒)</option>
           </select>
 
           <!-- 模式 1: 當日 -->
@@ -140,12 +140,12 @@
             <input type="date" id="filter-day" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
           </div>
 
-          <!-- 模式 2: 當月 -->
+          <!-- 模式 3: 當月 -->
           <div id="input-monthly" class="hidden items-center">
             <input type="month" id="filter-month" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-2 py-1 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-bold bg-indigo-50/50">
           </div>
 
-          <!-- 模式 3: 區間 -->
+          <!-- 模式 4: 區間 -->
           <div id="input-range" class="hidden items-center space-x-1 flex-wrap">
             <input type="date" id="filter-start-date" onchange="renderDashboard()" class="border border-slate-300 rounded-lg px-1.5 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-medium w-32 sm:w-auto">
             <span class="text-xs text-slate-500 font-bold">至</span>
@@ -541,7 +541,7 @@
     const defaultEnglishExpense = ["電費", "水費", "外籍老師薪水", "中師薪水", "房租", "網路", "電話費", "勞健保", "獎金", "廣告費", "教材成本", "雜項與維護"];
 
     let state = {
-      currentCampus: 'wenli', // 'wenli' 或 'english'
+      currentCampus: 'wenli',
       previousFilterMode: 'daily',
       customWenliTransactions: [], 
       customEnglishTransactions: [],
@@ -621,6 +621,21 @@
       return `${p.year}-${p.month}`;
     }
 
+    function getCurrentWeekRangeTW() {
+      const nowParts = getTaiwanTimeParts();
+      const now = new Date(`${nowParts.year}-${nowParts.month}-${nowParts.day}T00:00:00+08:00`);
+      const dayOfWeek = now.getDay();
+      const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+      const monday = new Date(now.getTime() + diffToMonday * 86400000);
+      const sunday = new Date(monday.getTime() + 6 * 86400000);
+      const pMon = getTaiwanTimeParts(monday);
+      const pSun = getTaiwanTimeParts(sunday);
+      return {
+        start: `${pMon.year}-${pMon.month}-${pMon.day}`,
+        end: `${pSun.year}-${pSun.month}-${pSun.day}`
+      };
+    }
+
     window.getCurrentDateTimeLocalTW = function() {
       const p = getTaiwanTimeParts();
       return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
@@ -646,10 +661,11 @@
       initFirebaseSync();
     });
 
+    // 當月與區間均需密碼 0618
     window.handleFilterModeSelect = function(selectEl) {
       const targetMode = selectEl.value;
-      if (targetMode === 'range' || targetMode === 'all') {
-        const modeLabel = targetMode === 'range' ? '查詢區間報表' : '查詢全部報表';
+      if (targetMode === 'monthly' || targetMode === 'range') {
+        const modeLabel = targetMode === 'monthly' ? '查詢當月報表' : '查詢區間報表';
         verifyPassword(modeLabel, () => {
           state.previousFilterMode = targetMode;
           onFilterModeChange();
@@ -772,7 +788,7 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽文理繳費系統 (bills) - 智慧去重整合
+      // 1. 監聽文理繳費系統 (bills)
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const rawMap = {};
         snapshot.forEach((docSnap) => {
@@ -820,7 +836,7 @@
         renderDashboard();
       });
 
-      // 2. 監聽英文繳費系統 (joyEnglishBills) - 智慧去重整合
+      // 2. 監聽英文繳費系統 (joyEnglishBills)
       onSnapshot(collection(db, "joyEnglishBills"), (snapshot) => {
         const rawMap = {};
         snapshot.forEach((docSnap) => {
@@ -948,6 +964,14 @@
         dateFiltered = allRecords.filter(r => (r.dateOnly === selDay || (r.createdAt && r.createdAt.startsWith(selDay))));
         rangeDescription = `${selDay} (當日)`;
         titleDescription = `${schoolPrintName} 每日營運收支結算表 (${selDay})`;
+      } else if (mode === 'weekly') {
+        const week = getCurrentWeekRangeTW();
+        dateFiltered = allRecords.filter(r => {
+          const d = r.dateOnly || (r.createdAt ? r.createdAt.substring(0, 10) : '');
+          return d >= week.start && d <= week.end;
+        });
+        rangeDescription = `${week.start} 至 ${week.end} (本週)`;
+        titleDescription = `${schoolPrintName} 當週營運收支結算表 (${week.start} ~ ${week.end})`;
       } else if (mode === 'monthly') {
         const selMonth = document.getElementById('filter-month').value || getCurrentMonthStrTW();
         dateFiltered = allRecords.filter(r => (r.yearMonth === selMonth || (r.createdAt && r.createdAt.startsWith(selMonth))));
@@ -965,10 +989,6 @@
         });
         rangeDescription = `${start || '起始日'} 至 ${end || '結束日'}`;
         titleDescription = `${schoolPrintName} 區間營運收支結算表 (${rangeDescription})`;
-      } else {
-        dateFiltered = allRecords;
-        rangeDescription = `全部歷史累計`;
-        titleDescription = `${schoolPrintName} 全期營運收支總表`;
       }
 
       document.getElementById('print-report-title').innerText = titleDescription;
@@ -1159,7 +1179,7 @@
         amountEl.innerText = `+ NT$ ${Number(item.amount).toLocaleString()}`;
         titleEl.innerHTML = `<i class="fa-solid fa-circle-arrow-down mr-2"></i> 收入詳細資訊`;
       } else {
-        header.className = `px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white ${isWenli ? 'bg-rose-600' : 'bg-rose-600'}`;
+        header.className = `px-5 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center text-white bg-rose-600`;
         typeBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800";
         typeBadge.innerText = "支出項目";
         amountEl.className = "text-lg sm:text-xl font-black text-rose-600";
@@ -1224,7 +1244,7 @@
       const recordType = document.getElementById('detail-target-type').value;
 
       if (!newTimeVal) {
-        alert("請選擇有效的时间！");
+        alert("請選擇有效的時間！");
         return;
       }
 
