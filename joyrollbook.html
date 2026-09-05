@@ -1113,11 +1113,32 @@
         updateHomeAlertBanner();
     };
 
-    window.confirmRollCallAndSync = function() {
+    // 🔗 這裡已將你的 Make.com Webhook 網址整合進去
+    window.confirmRollCallAndSync = async function() {
         const input = prompt("🔒 請輸入確認點名密碼：");
         if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
+        
         saveAttendanceToCloud();
-        alert(`✅ 【${window.state.currentCourse.name}】今日點名紀錄已確認並同步！`);
+        
+        const WEBHOOK_URL = "https://hook.us2.make.com/ywveu6jm8om0bwie6h3fnts6n1u53xny";
+        const courseName = window.state.currentCourse.name;
+        const dateStr = document.getElementById('rollDateInput').value;
+        
+        const payload = {
+            message: `📢 【佳音英語斗六分校】教務通知\n\n班級：${courseName}\n日期：${dateStr}\n狀態：今日點名已完成並鎖定！`
+        };
+
+        try {
+            await fetch(WEBHOOK_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            alert(`✅ 【${courseName}】今日點名紀錄已確認、同步，並已發送 LINE 通知！`);
+        } catch (e) {
+            console.error(e);
+            alert(`✅ 點名已儲存，但 LINE 通知發送失敗。`);
+        }
     };
 
     window.resetRollCall = function() {
