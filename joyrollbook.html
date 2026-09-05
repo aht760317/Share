@@ -337,7 +337,7 @@
                 <div class="no-print" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:15px;">⚠️ 本日為分校停課放假日</span>
                     <button class="btn btn-success" onclick="quickMarkAll()">⚡ 全員到齊 (✔)</button>
-                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()">🔒 完成並鎖定點名</button>
+                    <button class="btn btn-purple" onclick="confirmRollCallAndSync()">🔒 完成並鎖定點名 (發送家長LINE)</button>
                     <button class="btn btn-danger" onclick="resetRollCall()">🔄 重新點名 (需密碼)</button>
                 </div>
             </div>
@@ -502,7 +502,7 @@
                     </div>
                     <div>
                         <label style="font-size:14.5px; font-weight:bold; color:var(--text-sub);">🔎 快速搜尋：</label>
-                        <input type="text" id="studentSearchInput" placeholder="搜尋中文名、英文名、學校、電話、接送..." oninput="renderMasterStudentsTable()" style="margin:0; font-size:15.5px;">
+                        <input type="text" id="studentSearchInput" placeholder="搜尋中文名、英文名、學校、電話、LINE ID..." oninput="renderMasterStudentsTable()" style="margin:0; font-size:15.5px;">
                     </div>
                 </div>
             </div>
@@ -516,16 +516,15 @@
                     <thead>
                         <tr>
                             <th style="width:40px;">序</th>
-                            <th style="width:130px;">班級</th>
-                            <th style="width:100px;">中文姓名</th>
-                            <th style="width:110px;">English Name</th>
-                            <th style="width:100px;">生日</th>
-                            <th style="width:130px;">學校年級</th>
-                            <th style="width:140px;" id="th_p1">爸爸</th>
-                            <th style="width:140px;" id="th_p2">媽媽</th>
-                            <th style="width:140px;" id="th_p3">阿嬤</th>
-                            <th style="width:160px;">接送/安親備註</th>
-                            <th style="width:130px;">操作</th>
+                            <th style="width:120px;">班級</th>
+                            <th style="width:90px;">中文姓名</th>
+                            <th style="width:100px;">English Name</th>
+                            <th style="width:120px;">學校年級</th>
+                            <th style="width:130px;" id="th_p1">爸爸</th>
+                            <th style="width:130px;" id="th_p2">媽媽</th>
+                            <th style="width:130px;" id="th_p3">阿嬤</th>
+                            <th style="width:150px;">家長 LINE ID</th>
+                            <th style="width:120px;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="masterStudentTableBody"></tbody>
@@ -694,26 +693,11 @@
         </div>
 
         <div class="form-section-card">
-            <div class="form-section-title">🏥 家長職業與健康狀況</div>
-            <div class="grid-2">
-                <div>
-                    <label style="font-size:14.5px; color:var(--text-sub);"><b>爸爸職業：</b></label>
-                    <input type="text" id="m_stu_dad_job" placeholder="例如：工程師" style="font-size:15.5px;">
-                </div>
-                <div>
-                    <label style="font-size:14.5px; color:var(--text-sub);"><b>媽媽職業：</b></label>
-                    <input type="text" id="m_stu_mom_job" placeholder="例如：教師" style="font-size:15.5px;">
-                </div>
-            </div>
-            <div class="grid-2" style="margin-top:10px;">
-                <div>
-                    <label style="font-size:14.5px; color:var(--text-sub);"><b>健康狀況 / 過敏：</b></label>
-                    <input type="text" id="m_stu_health" placeholder="例如：無過敏史、氣喘" style="font-size:15.5px; margin-bottom:0;">
-                </div>
-                <div>
-                    <label style="font-size:14.5px; color:var(--text-sub);"><b>通訊地址：</b></label>
-                    <input type="text" id="m_stu_address" placeholder="例如：雲林縣斗六市... " style="font-size:15.5px; margin-bottom:0;">
-                </div>
+            <div class="form-section-title">💬 LINE 通知綁定設定</div>
+            <div>
+                <label style="font-size:14.5px; font-weight:bold; color:var(--primary-dark);"><b>家長 LINE User ID (用於自動發送點名通知)*：</b></label>
+                <input type="text" id="m_stu_line_id" placeholder="貼上家長的 LINE User ID (例如 U123456...)" style="font-size:15.5px; margin-bottom:0;">
+                <p style="font-size:12.5px; color:#64748B; margin-top:4px;">提示：家長加過官方帳號後，可在後台對話紀錄或透過 Webhook 取得其 User ID。</p>
             </div>
         </div>
 
@@ -1010,7 +994,7 @@
                     <div>
                         <span style="font-size:18px; font-weight:800; color:var(--text-main);">${stu.name}</span>
                         ${stu.engName ? `<span style="font-size:15px; font-weight:700; color:var(--blue); margin-left:8px;">(${stu.engName})</span>` : ''}
-                        ${stu.pickup ? `<span style="background:#F1F5F9; color:#334155; border:1.5px solid #CBD5E1; padding:3px 8px; border-radius:6px; font-size:13.5px; margin-left:10px; font-weight:bold;">🚗 ${stu.pickup}</span>` : ''}
+                        ${stu.lineId ? `<span style="background:#DCFCE7; color:#166534; border:1.5px solid #86EFAC; padding:3px 8px; border-radius:6px; font-size:13px; margin-left:10px; font-weight:bold;">💬 已綁定LINE</span>` : `<span style="background:#FEE2E2; color:#991B1B; border:1.5px solid #FCA5A5; padding:3px 8px; border-radius:6px; font-size:13px; margin-left:10px; font-weight:bold;">⚠️ 未綁定LINE</span>`}
                     </div>
                     <div style="font-size:14px; font-weight:600; color:#334155; text-align:right;">${stu.school || ''} ${stu.grade || ''} ｜ 📞 ${phoneStr}</div>
                 </div>
@@ -1077,44 +1061,56 @@
         updateHomeAlertBanner();
     };
 
-    // 🚀 【免 Make.com 方案】直接由網頁發送 LINE 訊息
+    // 🚀 【自動群發家長 LINE 通知】點名鎖定時，自動向該班有綁定 LINE ID 的家長發送通知
     window.confirmRollCallAndSync = async function() {
         const input = prompt("🔒 請輸入確認點名密碼：");
         if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
         
         saveAttendanceToCloud();
         
-        // 已填入你的 Channel Access Token，只需將 TARGET_ID 換成你的目標 LINE User ID 或 Group ID
         const LINE_ACCESS_TOKEN = "KckgZcDccJeOKiX0Rjw9ST5J9VxUqAd4rdirp9zm/10o0mpEkaw+rSDHqevdgBrfQ7NeR7VwVil4ilHNusZEma6790HnpTxy8k4Cy3FzzIiRFc760Z/Sk4UNUym6T/T4vH0aTGjAxfTbAzTtRruQIgdB04t89/1O/w1cDnyilFU="; 
-        const TARGET_ID = "請在此貼上你的_LINE_ID或群組ID";
         
         const courseName = window.state.currentCourse.name;
         const dateStr = document.getElementById('rollDateInput').value;
         
-        const messageText = `📢 【佳音英語斗六分校】教務通知\n\n班級：${courseName}\n日期：${dateStr}\n狀態：今日點名已完成並鎖定！`;
+        const students = window.state.students.filter(s => {
+            if (Array.isArray(s.courses)) return s.courses.includes(courseName);
+            return s.courses === courseName;
+        });
 
-        try {
-            await fetch("https://api.line.me/v2/bot/message/push", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + LINE_ACCESS_TOKEN
-                },
-                body: JSON.stringify({
-                    "to": TARGET_ID,
-                    "messages": [
-                        {
-                            "type": "text",
-                            "text": messageText
-                        }
-                    ]
-                })
-            });
-            alert(`✅ 【${courseName}】點名已確認、同步，並已成功發送 LINE 通知！`);
-        } catch (e) {
-            console.error(e);
-            alert(`✅ 點名已儲存，但 LINE 通知發送失敗。`);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const stu of students) {
+            if (!stu.lineId) continue; // 若該學生沒有填寫 LINE ID 則跳過
+
+            const key = `${dateStr}_${courseName}_${stu.name}`;
+            const rec = window.state.attendanceData[key] || { status: '未到', reason: '' };
+            const statusText = rec.status === '出席' ? '🟢 已到班' : (rec.status === '請假' ? `🟡 請假 (${rec.reason || '無事由'})` : '🔴 未到班');
+
+            const messageText = `📢 【佳音英語斗六分校】學員出勤通知\n\n學員：${stu.name} (${stu.engName || '-'})\n班級：${courseName}\n日期：${dateStr}\n今日狀態：${statusText}\n\n感謝您的配合與支持！`;
+
+            try {
+                const res = await fetch("https://api.line.me/v2/bot/message/push", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + LINE_ACCESS_TOKEN
+                    },
+                    body: JSON.stringify({
+                        "to": stu.lineId.trim(),
+                        "messages": [{ "type": "text", "text": messageText }]
+                    })
+                });
+                if (res.ok) successCount++;
+                else failCount++;
+            } catch (e) {
+                console.error(e);
+                failCount++;
+            }
         }
+
+        alert(`✅ 【${courseName}】點名已確認並鎖定！\n💬 已成功發送 LINE 通知給 ${successCount} 位家長${failCount > 0 ? ` (失敗 ${failCount} 筆，請檢查 LINE ID 是否正確)` : ''}`);
     };
 
     window.resetRollCall = function() {
@@ -1718,7 +1714,7 @@
             const sCourses = Array.isArray(s.courses) ? s.courses : [s.courses];
             if (filterClass !== 'ALL' && !sCourses.includes(filterClass)) return false;
             if (keyword) {
-                const combined = `${s.name || ''} ${s.engName || ''} ${s.school || ''} ${s.grade || ''} ${s.p1 || ''} ${s.p2 || ''} ${s.p3 || ''} ${s.p1Num || ''} ${s.p2Num || ''} ${s.p3Num || ''} ${s.pickup || ''} ${sCourses.join(' ')}`.toLowerCase();
+                const combined = `${s.name || ''} ${s.engName || ''} ${s.school || ''} ${s.grade || ''} ${s.p1 || ''} ${s.p2 || ''} ${s.p3 || ''} ${s.p1Num || ''} ${s.p2Num || ''} ${s.p3Num || ''} ${s.lineId || ''} ${s.pickup || ''} ${sCourses.join(' ')}`.toLowerCase();
                 return combined.includes(keyword);
             }
             return true;
@@ -1753,6 +1749,7 @@
                         <div style="font-size:14.5px; color:#334155; line-height:1.6;">
                             <div>📖 <b>班級：</b>${courseTags}</div>
                             <div>📞 <b>電話：</b>${phoneStr}</div>
+                            <div>💬 <b>LINE ID：</b><span style="font-family:monospace; color:var(--blue);">${s.lineId || '未綁定'}</span></div>
                         </div>
                         <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
                             <button class="btn btn-blue" style="padding:5px 12px; font-size:13px;" onclick="openViewStudentModal('${s.firestoreId}')">👁️ 瀏覽</button>
@@ -1775,17 +1772,16 @@
                         <td style="text-align:left;">${courseTags}</td>
                         <td><b>${s.name}</b></td>
                         <td><b style="color:var(--blue);">${s.engName || '-'}</b></td>
-                        <td>${s.birthday || '-'}</td>
                         <td>${s.school || '-'}<br><b>${s.grade || ''}</b></td>
                         <td>${s.p1Num || s.p1 || '-'}</td>
                         <td>${s.p2Num || s.p2 || '-'}</td>
                         <td>${s.p3Num || s.p3 || '-'}</td>
-                        <td style="text-align:left;">${s.pickup || '-'}</td>
+                        <td><span style="font-family:monospace; font-size:12.5px; color:var(--blue);">${s.lineId || '<span style="color:#CBD5E1;">未綁定</span>'}</span></td>
                         <td><button class="btn btn-blue" style="padding:4px 8px; font-size:12px;" onclick="openViewStudentModal('${s.firestoreId}')">瀏覽</button> <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditStudentModal('${s.firestoreId}')">編輯</button></td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="11" style="padding:22px; color:#888;">查無學生資料</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="10" style="padding:22px; color:#888;">查無學生資料</td></tr>';
         }
     };
 
@@ -1799,6 +1795,7 @@
                 <div>🏫 <b>學校/年級：</b> ${s.school || '-'} / ${s.grade || '-'}</div>
                 <div>📖 <b>修習班級：</b> <span style="color:var(--primary); font-weight:bold;">${sCourses}</span></div>
                 <div>📞 <b>聯絡電話：</b> ${formatPhoneDisplay(s)}</div>
+                <div>💬 <b>家長 LINE ID：</b> <span style="font-family:monospace; color:var(--blue);">${s.lineId || '未綁定'}</span></div>
                 <div>🚗 <b>接送備註：</b> ${s.pickup || '-'}</div>
             </div>
         `;
@@ -1830,6 +1827,7 @@
         document.getElementById('m_stu_p1_num').value = "";
         document.getElementById('m_stu_p2_num').value = "";
         document.getElementById('m_stu_p3_num').value = "";
+        document.getElementById('m_stu_line_id').value = "";
         document.getElementById('m_stu_pickup').value = "";
         populateStudentCourseDropdown("");
         document.getElementById('studentModal').style.display = "flex";
@@ -1849,6 +1847,7 @@
         document.getElementById('m_stu_p1_num').value = s.p1Num || s.p1 || '';
         document.getElementById('m_stu_p2_num').value = s.p2Num || s.p2 || '';
         document.getElementById('m_stu_p3_num').value = s.p3Num || s.p3 || '';
+        document.getElementById('m_stu_line_id').value = s.lineId || '';
         document.getElementById('m_stu_pickup').value = s.pickup || '';
         const curCourse = Array.isArray(s.courses) ? s.courses[0] : s.courses;
         populateStudentCourseDropdown(curCourse || "");
@@ -1871,6 +1870,7 @@
             p1Num: document.getElementById('m_stu_p1_num').value.trim(),
             p2Num: document.getElementById('m_stu_p2_num').value.trim(),
             p3Num: document.getElementById('m_stu_p3_num').value.trim(),
+            lineId: document.getElementById('m_stu_line_id').value.trim(),
             pickup: document.getElementById('m_stu_pickup').value.trim(),
             courses: [selectedCourse]
         };
