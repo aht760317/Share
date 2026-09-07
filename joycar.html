@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JOYCAR - 斗六顧德補習班多時段專車調度系統</title>
+    <title>搭車系統 - 多時段專車調度與車費管理</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Leaflet CSS (地圖樣式) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        #map { height: 420px; width: 100%; border-radius: 1rem; }
-    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans">
 
@@ -19,11 +14,11 @@
         <header class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <div class="flex items-center gap-2 mb-2">
-                    <span class="bg-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">JOYCAR Dispatch</span>
-                    <span class="text-xs text-slate-300">斗六顧德補習班多時段專車調度系統</span>
+                    <span class="bg-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Bus Dispatch</span>
+                    <span class="text-xs text-slate-300">多時段專車、接送類型與車費管理系統</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🚐 專車時段、車號與搭車名單總覽</h1>
-                <p class="text-slate-300 text-sm mt-1">點擊特定時段與車次，即時檢視負責司機與車上學員名單</p>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🚐 專車時段、車號、接送類型與車費總覽</h1>
+                <p class="text-slate-300 text-sm mt-1">支援學校接送、到家接、送回家等多型態專車調度管理</p>
             </div>
             <!-- 快速統計數據 -->
             <div class="flex gap-3">
@@ -39,71 +34,52 @@
         </header>
 
         <!-- 功能分頁切換按鈕 -->
-        <div class="flex gap-2 mb-6">
+        <div class="flex gap-2 mb-6 flex-wrap">
             <button onclick="switchTab('dispatch')" id="tabBtnDispatch" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition">
                 🚌 時段車次發車檢視
             </button>
             <button onclick="switchTab('students')" id="tabBtnStudents" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition">
                 📋 全部搭車學生名冊
             </button>
+            <button onclick="switchTab('fees')" id="tabBtnFees" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition">
+                💰 車費與收費管理
+            </button>
             <button onclick="switchTab('settings')" id="tabBtnSettings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition">
                 ⚙️ 時段、學校與司機設定
             </button>
         </div>
 
-        <!-- ================= 區塊一：時段車次發車檢視 (核心互動區) ================= -->
-        <div id="sectionDispatch" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- 左側：時段與車次點擊清單 (佔 2 欄) -->
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl p-5 shadow-md">
-                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider mb-2">🕒 選擇搭車時段</h2>
-                    <div id="timeSlotButtons" class="flex flex-wrap gap-2 mb-6">
-                        <!-- 動態產生時段按鈕 -->
-                    </div>
+        <!-- ================= 區塊一：時段車次發車檢視 ================= -->
+        <div id="sectionDispatch" class="space-y-6 mb-6">
+            <div class="bg-white rounded-2xl p-5 shadow-md">
+                <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider mb-2">🕒 選擇搭車時段</h2>
+                <div id="timeSlotButtons" class="flex flex-wrap gap-2 mb-6"></div>
 
-                    <div class="border-t pt-4">
-                        <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider mb-3">🚐 點擊下方車次查看車上學生與司機</h2>
-                        <div id="busDispatchCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- 動態產生車次卡片 -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 點擊特定車次後展開的學生名單 -->
-                <div id="dispatchDetailCard" class="bg-white rounded-2xl p-6 shadow-md hidden">
-                    <div class="flex justify-between items-center border-b pb-3 mb-4">
-                        <div>
-                            <span id="detailSlotBadge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">時段</span>
-                            <h3 id="detailBusTitle" class="text-lg font-bold text-slate-800 mt-1">車號與司機資訊</h3>
-                        </div>
-                        <span id="detailStudentCount" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-xl">乘車人數：0 人</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
-                                    <th class="p-3">學生姓名</th>
-                                    <th class="p-3">就讀學校</th>
-                                    <th class="p-3">住家地址</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dispatchStudentTableBody" class="divide-y divide-slate-100 text-sm">
-                                <!-- 動態帶入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="border-t pt-4">
+                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider mb-3">🚐 點擊下方車次查看車上學生、接送類型與司機</h2>
+                    <div id="busDispatchCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
             </div>
 
-            <!-- 右側：地圖視覺化 -->
-            <div class="space-y-6">
-                <div class="bg-white rounded-2xl p-5 shadow-md">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider">🗺️ 雲林縣搭車地圖</h2>
-                        <span class="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded">GPS 同步</span>
+            <div id="dispatchDetailCard" class="bg-white rounded-2xl p-6 shadow-md hidden">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <div>
+                        <span id="detailSlotBadge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">時段</span>
+                        <h3 id="detailBusTitle" class="text-lg font-bold text-slate-800 mt-1">車號與司機資訊</h3>
                     </div>
-                    <div id="map"></div>
-                    <p class="text-xs text-slate-400 mt-3 text-center">顯示目前選定時段或全部學員位置</p>
+                    <span id="detailStudentCount" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-xl">乘車人數：0 人</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="p-3">學生姓名</th>
+                                <th class="p-3">接送類型</th>
+                                <th class="p-3">學校 / 地址</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispatchStudentTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -112,31 +88,72 @@
         <div id="sectionStudents" class="space-y-6 mb-6 hidden">
             <div class="bg-white rounded-2xl p-5 shadow-md space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
-                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider">📋 搭車學生建檔與時段/車號指派</h2>
-                    <button onclick="openAddStudentModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shadow">
-                        ＋ 新增搭車學生
-                    </button>
+                    <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider">📋 搭車學生建檔與車費設定</h2>
+                    <div class="flex gap-2">
+                        <button onclick="syncFromCloudStudents()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shadow">
+                            ☁️ 從雲端學生系統同步
+                        </button>
+                        <button onclick="openAddStudentModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shadow">
+                            ＋ 新增搭車學生
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
-                                <th class="p-4">學生姓名 / 學校</th>
-                                <th class="p-4">住家地址</th>
-                                <th class="p-4">搭車時段</th>
-                                <th class="p-4">指派車號與司機</th>
+                                <th class="p-4">學生姓名</th>
+                                <th class="p-4">接送類型</th>
+                                <th class="p-4">時段 / 車號</th>
+                                <th class="p-4">搭車費用</th>
+                                <th class="p-4">繳費狀態</th>
                                 <th class="p-4 text-center">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="allStudentsTableBody" class="divide-y divide-slate-100 text-sm">
-                            <!-- 動態生成 -->
-                        </tbody>
+                        <tbody id="allStudentsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ================= 區塊三：設定專區 (時段、學校、司機) ================= -->
+        <!-- ================= 區塊三：車費與收費管理專區 ================= -->
+        <div id="sectionFees" class="space-y-6 mb-6 hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-md border-l-4 border-indigo-500">
+                    <p class="text-xs text-slate-400 font-bold uppercase">預計總車費收入</p>
+                    <p id="feeTotalAmount" class="text-2xl font-extrabold text-slate-800 mt-1">NT$ 0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-md border-l-4 border-emerald-500">
+                    <p class="text-xs text-slate-400 font-bold uppercase">已收金額</p>
+                    <p id="feePaidAmount" class="text-2xl font-extrabold text-emerald-600 mt-1">NT$ 0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-md border-l-4 border-rose-500">
+                    <p class="text-xs text-slate-400 font-bold uppercase">未收金額（欠費）</p>
+                    <p id="feeUnpaidAmount" class="text-2xl font-extrabold text-rose-600 mt-1">NT$ 0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-md">
+                <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider mb-4">💰 全校學員車費繳費總表</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="p-4">學生姓名</th>
+                                <th class="p-4">接送類型</th>
+                                <th class="p-4">搭車時段與車號</th>
+                                <th class="p-4">金額 (NT$)</th>
+                                <th class="p-4">繳費狀態</th>
+                                <th class="p-4 text-center">快速切換</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feeTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 區塊四：設定專區 (時段、學校、司機) ================= -->
         <div id="sectionSettings" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 hidden">
             <!-- 時段設定 -->
             <div class="bg-white rounded-2xl p-6 shadow-md space-y-4">
@@ -149,7 +166,7 @@
                         <thead>
                             <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
                                 <th class="p-3">時段名稱與時間</th>
-                                <th class="p-3 text-center">操作</th>
+                                <th class="p-3 text-center">排序與操作</th>
                             </tr>
                         </thead>
                         <tbody id="slotTableBody" class="divide-y text-sm"></tbody>
@@ -168,7 +185,7 @@
                         <thead>
                             <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
                                 <th class="p-3">學校名稱</th>
-                                <th class="p-3 text-center">操作</th>
+                                <th class="p-3 text-center">排序與操作</th>
                             </tr>
                         </thead>
                         <tbody id="schoolTableBody" class="divide-y text-sm"></tbody>
@@ -187,7 +204,7 @@
                         <thead>
                             <tr class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
                                 <th class="p-3">車號與司機</th>
-                                <th class="p-3 text-center">操作</th>
+                                <th class="p-3 text-center">排序與操作</th>
                             </tr>
                         </thead>
                         <tbody id="driverTableBody" class="divide-y text-sm"></tbody>
@@ -208,12 +225,20 @@
                     <input type="text" id="stuName" placeholder="例如: 王小明" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">就讀學校</label>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">接送類型</label>
+                    <select id="stuPickupType" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-bold text-indigo-600">
+                        <option value="學校接送">🏫 從學校接送</option>
+                        <option value="到家裡接">🏠 到家裡接 (到班)</option>
+                        <option value="送回家">🏡 送回家 (從班回家)</option>
+                    </select>
+                </div>
+                <div id="schoolFieldWrapper">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">就讀學校 (若為學校接送)</label>
                     <select id="stuSchool" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm"></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">住家地址</label>
-                    <input type="text" id="stuAddress" placeholder="例如: 斗六市鎮南路100號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">住家地址 (若為到家接/送回家)</label>
+                    <input type="text" id="stuAddress" placeholder="例如: 鎮南路100號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">乘車時段</label>
@@ -222,6 +247,19 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">指派車號與司機</label>
                     <select id="stuBus" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">搭車費用 (NT$)</label>
+                        <input type="number" id="stuFee" value="1000" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">繳費狀態</label>
+                        <select id="stuPaidStatus" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
+                            <option value="unpaid">❌ 未繳費</option>
+                            <option value="paid">✔ 已繳費</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
@@ -282,13 +320,57 @@
         </div>
     </div>
 
-    <!-- 引入 Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- 引入 Firebase SDK (用於連動原本的雲端學生系統) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+            authDomain: "my-project-9999-479215.firebaseapp.com",
+            projectId: "my-project-9999-479215",
+            storageBucket: "my-project-9999-479215.firebasestorage.app",
+            messagingSenderId: "1020162825898",
+            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.fetchCloudStudents = async function() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "classLogStudents"));
+                let cloudStudents = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.status !== 'graduated') {
+                        cloudStudents.push({
+                            id: Date.now() + Math.random(),
+                            name: data.name || '',
+                            pickupType: '學校接送',
+                            school: data.school || '斗六國小',
+                            address: data.address || '',
+                            slot: slotDatabase.length > 0 ? slotDatabase[0].name : '下午 16:30 放學接送',
+                            busNumber: driverDatabase.length > 0 ? driverDatabase[0].busNo : 'KAA-8888',
+                            fee: 1000,
+                            paidStatus: 'unpaid'
+                        });
+                    }
+                });
+                return cloudStudents;
+            } catch (e) {
+                console.error("雲端同步失敗：", e);
+                return null;
+            }
+        };
+    </script>
+
     <script>
-        // 資料庫初始化 (支援 localStorage 記憶)
+        // 資料庫初始化
         let slotDatabase = JSON.parse(localStorage.getItem('joycar_slots')) || [
             { id: 1, name: "下午 16:30 放學接送" },
-            { id: 2, name: "晚上 21:00 晚自習專車" }
+            { id: 2, name: "晚上 21:00 晚自習專車" },
+            { id: 3, name: "中午12:40" }
         ];
 
         let schoolDatabase = JSON.parse(localStorage.getItem('joycar_schools')) || [
@@ -301,8 +383,8 @@
         ];
 
         let studentDatabase = JSON.parse(localStorage.getItem('joycar_students')) || [
-            { id: 1, name: "王小明", school: "斗六國小", address: "斗六市鎮南路100號", slot: "下午 16:30 放學接送", busNumber: "KAA-8888", lat: 23.7078, lng: 120.5433 },
-            { id: 2, name: "李小華", school: "雲林國小", address: "斗六市大學路三段120號", slot: "晚上 21:00 晚自習專車", busNumber: "KBB-6666", lat: 23.6950, lng: 120.5460 }
+            { id: 1, name: "王小明", pickupType: "學校接送", school: "斗六國小", address: "", slot: "下午 16:30 放學接送", busNumber: "KAA-8888", fee: 1200, paidStatus: "paid" },
+            { id: 2, name: "李小華", pickupType: "到家裡接", school: "", address: "大學路三段120號", slot: "晚上 21:00 晚自習專車", busNumber: "KBB-6666", fee: 1000, paidStatus: "unpaid" }
         ];
 
         function saveData() {
@@ -312,32 +394,32 @@
             localStorage.setItem('joycar_students', JSON.stringify(studentDatabase));
         }
 
-        // 初始化地圖
-        const map = L.map('map').setView([23.7078, 120.5433], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-        let markersLayer = L.layerGroup().addTo(map);
-
         let activeSlot = slotDatabase.length > 0 ? slotDatabase[0].name : "";
         let activeBus = "";
 
-        // 頁面分頁切換
         function switchTab(tab) {
             document.getElementById('sectionDispatch').classList.add('hidden');
             document.getElementById('sectionStudents').classList.add('hidden');
+            document.getElementById('sectionFees').classList.add('hidden');
             document.getElementById('sectionSettings').classList.add('hidden');
+            
             document.getElementById('tabBtnDispatch').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition";
             document.getElementById('tabBtnStudents').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition";
+            document.getElementById('tabBtnFees').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition";
             document.getElementById('tabBtnSettings').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition";
 
             if (tab === 'dispatch') {
                 document.getElementById('sectionDispatch').classList.remove('hidden');
                 document.getElementById('tabBtnDispatch').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition";
-                setTimeout(() => map.invalidateSize(), 200);
                 renderDispatchView();
             } else if (tab === 'students') {
                 document.getElementById('sectionStudents').classList.remove('hidden');
                 document.getElementById('tabBtnStudents').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition";
                 renderAllStudentsTable();
+            } else if (tab === 'fees') {
+                document.getElementById('sectionFees').classList.remove('hidden');
+                document.getElementById('tabBtnFees').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition";
+                renderFeeManagementTable();
             } else {
                 document.getElementById('sectionSettings').classList.remove('hidden');
                 document.getElementById('tabBtnSettings').className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition";
@@ -345,14 +427,9 @@
             }
         }
 
-        // 渲染發車檢視畫面
         function renderDispatchView() {
-            // 1. 渲染時段按鈕
             const slotContainer = document.getElementById('timeSlotButtons');
             slotContainer.innerHTML = '';
-            if(slotDatabase.length === 0) {
-                slotContainer.innerHTML = `<span class="text-xs text-slate-400">尚未設定乘車時段，請至設定分頁新增。</span>`;
-            }
             slotDatabase.forEach(slot => {
                 const isActive = activeSlot === slot.name;
                 slotContainer.innerHTML += `
@@ -362,14 +439,11 @@
                 `;
             });
 
-            // 2. 渲染該時段下的車次卡片
             const busCardsContainer = document.getElementById('busDispatchCards');
             busCardsContainer.innerHTML = '';
-            
             if (!activeSlot && slotDatabase.length > 0) activeSlot = slotDatabase[0].name;
 
             driverDatabase.forEach(driver => {
-                // 計算該時段、該車次的學生數
                 const studentsInBus = studentDatabase.filter(s => s.slot === activeSlot && s.busNumber === driver.busNo);
                 const isSelected = activeBus === driver.busNo;
 
@@ -385,14 +459,13 @@
                 `;
             });
 
-            // 3. 渲染選定車次的學生名單與地圖
             renderDispatchDetail();
             updateStats();
         }
 
         function selectSlot(slotName) {
             activeSlot = slotName;
-            activeBus = ""; // 切換時段時重置車次選擇
+            activeBus = "";
             document.getElementById('dispatchDetailCard').classList.add('hidden');
             renderDispatchView();
         }
@@ -421,51 +494,59 @@
             const tbody = document.getElementById('dispatchStudentTableBody');
             tbody.innerHTML = '';
 
-            markersLayer.clearLayers();
-
             if (filteredStudents.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">此車次在目前時段無搭乘學生</td></tr>`;
                 return;
             }
 
             filteredStudents.forEach(stu => {
+                const typeBadge = stu.pickupType === '學校接送' ? 
+                    `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">🏫 學校接送 (${stu.school || ''})</span>` :
+                    (stu.pickupType === '到家裡接' ? 
+                    `<span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">🏠 到家接</span>` :
+                    `<span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">🏡 送回家</span>`);
+
+                const locationText = stu.pickupType === '學校接送' ? (stu.school || '-') : (stu.address || '未填寫地址');
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-bold text-slate-800">${stu.name}</td>
-                        <td class="p-3 text-slate-600">${stu.school}</td>
-                        <td class="p-3 text-slate-500 text-xs">${stu.address}</td>
+                        <td class="p-3">${typeBadge}</td>
+                        <td class="p-3 text-slate-600 text-xs">${locationText}</td>
                     </tr>
                 `;
-
-                // 更新地圖標記
-                const marker = L.marker([stu.lat, stu.lng]).bindPopup(`
-                    <b>${stu.name}</b> (${stu.school})<br>
-                    時段：${stu.slot}<br>
-                    車號：<b style="color:blue;">${stu.busNumber}</b>
-                `);
-                markersLayer.addLayer(marker);
             });
         }
 
-        // 全部學生名冊管理
         function renderAllStudentsTable() {
             const tbody = document.getElementById('allStudentsTableBody');
             tbody.innerHTML = '';
             if (studentDatabase.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">目前尚無搭車學生</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">目前尚無搭車學生</td></tr>`;
                 return;
             }
             studentDatabase.forEach(s => {
-                const driverObj = driverDatabase.find(d => d.busNo === s.busNumber);
+                const isPaid = s.paidStatus === 'paid';
+                const typeBadge = s.pickupType === '學校接送' ? 
+                    `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">🏫 學校 (${s.school || ''})</span>` :
+                    (s.pickupType === '到家裡接' ? 
+                    `<span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">🏠 到家接 (${s.address || ''})</span>` :
+                    `<span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">🏡 送回家 (${s.address || ''})</span>`);
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
+                        <td class="p-4 font-bold text-slate-800">${s.name}</td>
+                        <td class="p-4">${typeBadge}</td>
                         <td class="p-4">
-                            <span class="font-bold text-slate-800">${s.name}</span>
-                            <p class="text-xs text-slate-400">${s.school}</p>
+                            <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-0.5 rounded">${s.slot}</span>
+                            <p class="text-xs text-indigo-600 font-bold mt-1">車號: ${s.busNumber}</p>
                         </td>
-                        <td class="p-4 text-slate-600 text-xs">${s.address}</td>
-                        <td class="p-4"><span class="bg-amber-50 text-amber-700 text-xs font-semibold px-2 py-1 rounded">${s.slot}</span></td>
-                        <td class="p-4"><span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2 py-1 rounded">${s.busNumber}</span></td>
+                        <td class="p-4 font-bold text-slate-700">NT$ ${s.fee || 1000}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                ${isPaid ? '✔ 已繳費' : '❌ 未繳費'}
+                            </span>
+                        </td>
                         <td class="p-4 text-center">
                             <button onclick="openEditStudentModal(${s.id})" class="bg-slate-100 hover:bg-indigo-50 text-slate-600 p-2 rounded-xl text-xs font-medium mr-2">編輯</button>
                             <button onclick="deleteStudent(${s.id})" class="text-rose-500 hover:text-rose-700 text-xs font-bold">刪除</button>
@@ -476,27 +557,111 @@
             updateStats();
         }
 
-        // 設定區表格渲染
+        function renderFeeManagementTable() {
+            const tbody = document.getElementById('feeTableBody');
+            tbody.innerHTML = '';
+            
+            let total = 0;
+            let paid = 0;
+            let unpaid = 0;
+
+            if (studentDatabase.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">目前尚無學員車費資料</td></tr>`;
+            } else {
+                studentDatabase.forEach(s => {
+                    const fee = Number(s.fee) || 1000;
+                    const isPaid = s.paidStatus === 'paid';
+                    total += fee;
+                    if (isPaid) paid += fee;
+                    else unpaid += fee;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-bold text-slate-800">${s.name}</td>
+                            <td class="p-4 text-xs font-semibold text-slate-600">${s.pickupType}</td>
+                            <td class="p-4 text-xs text-slate-500">${s.slot} (${s.busNumber})</td>
+                            <td class="p-4 font-bold text-slate-700">NT$ ${fee}</td>
+                            <td class="p-4">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                    ${isPaid ? '✔ 已繳費' : '❌ 未繳費'}
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button onclick="togglePaidStatus(${s.id})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${isPaid ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}">
+                                    ${isPaid ? '改為未繳' : '標記已繳'}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('feeTotalAmount').innerText = `NT$ ${total}`;
+            document.getElementById('feePaidAmount').innerText = `NT$ ${paid}`;
+            document.getElementById('feeUnpaidAmount').innerText = `NT$ ${unpaid}`;
+        }
+
+        function togglePaidStatus(id) {
+            const stu = studentDatabase.find(s => s.id === id);
+            if (stu) {
+                stu.paidStatus = stu.paidStatus === 'paid' ? 'unpaid' : 'paid';
+                saveData();
+                renderFeeManagementTable();
+            }
+        }
+
+        function moveItem(arr, index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= arr.length) return;
+            const temp = arr[index];
+            arr[index] = arr[targetIndex];
+            arr[targetIndex] = temp;
+            saveData();
+            renderSettingsTables();
+            renderDispatchView();
+        }
+
         function renderSettingsTables() {
-            // 時段設定
             const slotTbody = document.getElementById('slotTableBody');
             slotTbody.innerHTML = '';
-            slotDatabase.forEach(s => {
-                slotTbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3 font-medium text-slate-800">${s.name}</td><td class="p-3 text-center"><button onclick="deleteSlot(${s.id})" class="text-rose-500 text-xs font-bold">刪除</button></td></tr>`;
+            slotDatabase.forEach((s, idx) => {
+                slotTbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">${s.name}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="moveItem(slotDatabase, ${idx}, -1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▲</button>
+                            <button onclick="moveItem(slotDatabase, ${idx}, 1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▼</button>
+                            <button onclick="deleteSlot(${s.id})" class="text-rose-500 text-xs font-bold ml-2">刪除</button>
+                        </td>
+                    </tr>`;
             });
 
-            // 學校設定
             const schoolTbody = document.getElementById('schoolTableBody');
             schoolTbody.innerHTML = '';
-            schoolDatabase.forEach(s => {
-                schoolTbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3 font-medium text-slate-800">${s.name}</td><td class="p-3 text-center"><button onclick="deleteSchool(${s.id})" class="text-rose-500 text-xs font-bold">刪除</button></td></tr>`;
+            schoolDatabase.forEach((s, idx) => {
+                schoolTbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">${s.name}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="moveItem(schoolDatabase, ${idx}, -1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▲</button>
+                            <button onclick="moveItem(schoolDatabase, ${idx}, 1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▼</button>
+                            <button onclick="deleteSchool(${s.id})" class="text-rose-500 text-xs font-bold ml-2">刪除</button>
+                        </td>
+                    </tr>`;
             });
 
-            // 司機設定
             const driverTbody = document.getElementById('driverTableBody');
             driverTbody.innerHTML = '';
-            driverDatabase.forEach(d => {
-                driverTbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3 font-medium text-indigo-700">${d.busNo} - ${d.info}</td><td class="p-3 text-center"><button onclick="deleteDriver(${d.id})" class="text-rose-500 text-xs font-bold">刪除</button></td></tr>`;
+            driverDatabase.forEach((d, idx) => {
+                driverTbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-indigo-700">${d.busNo} - ${d.info}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="moveItem(driverDatabase, ${idx}, -1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▲</button>
+                            <button onclick="moveItem(driverDatabase, ${idx}, 1)" class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">▼</button>
+                            <button onclick="deleteDriver(${d.id})" class="text-rose-500 text-xs font-bold ml-2">刪除</button>
+                        </td>
+                    </tr>`;
             });
         }
 
@@ -505,7 +670,32 @@
             document.getElementById('driverCount').innerText = driverDatabase.length;
         }
 
-        // 學生表單控制
+        async function syncFromCloudStudents() {
+            if(!window.fetchCloudStudents) {
+                alert("雲端同步模組載入中，請稍後再試！");
+                return;
+            }
+            const cloudList = await window.fetchCloudStudents();
+            if(!cloudList || cloudList.length === 0) {
+                alert("未能從雲端讀取到學生名單！");
+                return;
+            }
+
+            let addedCount = 0;
+            cloudList.forEach(cloudStu => {
+                const exists = studentDatabase.some(s => s.name === cloudStu.name);
+                if(!exists) {
+                    studentDatabase.push(cloudStu);
+                    addedCount++;
+                }
+            });
+
+            saveData();
+            renderAllStudentsTable();
+            renderDispatchView();
+            alert(`✅ 成功從雲端學生系統同步！新增了 ${addedCount} 位學員到搭車名單中。`);
+        }
+
         function populateDropdowns() {
             const stuSchool = document.getElementById('stuSchool');
             const stuSlot = document.getElementById('stuSlot');
@@ -516,11 +706,25 @@
             stuBus.innerHTML = driverDatabase.map(d => `<option value="${d.busNo}">${d.busNo} (${d.info})</option>`).join('');
         }
 
+        document.getElementById('stuPickupType').onchange = function() {
+            const val = this.value;
+            const schoolWrapper = document.getElementById('schoolFieldWrapper');
+            if (val === '學校接送') {
+                schoolWrapper.style.display = 'block';
+            } else {
+                schoolWrapper.style.display = 'none';
+            }
+        };
+
         function openAddStudentModal() {
             document.getElementById('studentModalTitle').innerText = "新增搭車學生資料";
             document.getElementById('editStudentId').value = "";
             document.getElementById('stuName').value = "";
             document.getElementById('stuAddress').value = "";
+            document.getElementById('stuFee').value = "1000";
+            document.getElementById('stuPaidStatus').value = "unpaid";
+            document.getElementById('stuPickupType').value = "學校接送";
+            document.getElementById('schoolFieldWrapper').style.display = 'block';
             populateDropdowns();
             document.getElementById('studentModal').classList.remove('hidden');
         }
@@ -531,11 +735,15 @@
             document.getElementById('studentModalTitle').innerText = "編輯搭車學生資料";
             document.getElementById('editStudentId').value = stu.id;
             document.getElementById('stuName').value = stu.name;
-            document.getElementById('stuAddress').value = stu.address;
+            document.getElementById('stuAddress').value = stu.address || "";
             populateDropdowns();
-            document.getElementById('stuSchool').value = stu.school;
+            document.getElementById('stuPickupType').value = stu.pickupType || "學校接送";
+            document.getElementById('schoolFieldWrapper').style.display = stu.pickupType === '學校接送' ? 'block' : 'none';
+            if (stu.school) document.getElementById('stuSchool').value = stu.school;
             document.getElementById('stuSlot').value = stu.slot;
             document.getElementById('stuBus').value = stu.busNumber;
+            document.getElementById('stuFee').value = stu.fee || 1000;
+            document.getElementById('stuPaidStatus').value = stu.paidStatus || 'unpaid';
             document.getElementById('studentModal').classList.remove('hidden');
         }
 
@@ -544,23 +752,25 @@
         function saveStudentData() {
             const id = document.getElementById('editStudentId').value;
             const name = document.getElementById('stuName').value.trim();
-            const school = document.getElementById('stuSchool').value;
-            const address = document.getElementById('stuAddress').value.trim();
+            const pickupType = document.getElementById('stuPickupType').value;
+            const school = pickupType === '學校接送' ? document.getElementById('stuSchool').value : "";
+            const address = pickupType !== '學校接送' ? document.getElementById('stuAddress').value.trim() : "";
             const slot = document.getElementById('stuSlot').value;
             const busNumber = document.getElementById('stuBus').value;
+            const fee = Number(document.getElementById('stuFee').value) || 1000;
+            const paidStatus = document.getElementById('stuPaidStatus').value;
 
-            if (!name || !address) { alert('請填寫完整姓名與地址！'); return; }
+            if (!name) { alert('請填寫學生姓名！'); return; }
 
             if (id) {
                 const stu = studentDatabase.find(s => s.id == id);
                 if (stu) {
-                    stu.name = name; stu.school = school; stu.address = address; stu.slot = slot; stu.busNumber = busNumber;
+                    stu.name = name; stu.pickupType = pickupType; stu.school = school; stu.address = address; stu.slot = slot; stu.busNumber = busNumber; stu.fee = fee; stu.paidStatus = paidStatus;
                 }
             } else {
                 const newId = studentDatabase.length > 0 ? Math.max(...studentDatabase.map(s => s.id)) + 1 : 1;
                 studentDatabase.push({
-                    id: newId, name, school, address, slot, busNumber,
-                    lat: 23.7000 + (Math.random() * 0.04), lng: 120.5300 + (Math.random() * 0.04)
+                    id: newId, name, pickupType, school, address, slot, busNumber, fee, paidStatus
                 });
             }
             saveData();
@@ -577,7 +787,6 @@
             renderDispatchView();
         }
 
-        // 時段、學校、司機新增刪除
         function openSlotModal() { document.getElementById('slotModal').classList.remove('hidden'); }
         function closeSlotModal() { document.getElementById('slotModal').classList.add('hidden'); }
         function addNewSlot() {
@@ -585,8 +794,9 @@
             if(!name) return;
             slotDatabase.push({ id: Date.now(), name });
             saveData(); closeSlotModal(); renderSettingsTables();
+            renderDispatchView();
         }
-        function deleteSlot(id) { slotDatabase = slotDatabase.filter(s => s.id !== id); saveData(); renderSettingsTables(); }
+        function deleteSlot(id) { slotDatabase = slotDatabase.filter(s => s.id !== id); saveData(); renderSettingsTables(); renderDispatchView(); }
 
         function openSchoolModal() { document.getElementById('schoolModal').classList.remove('hidden'); }
         function closeSchoolModal() { document.getElementById('schoolModal').classList.add('hidden'); }
@@ -606,8 +816,9 @@
             const busNo = info.split(' ')[0];
             driverDatabase.push({ id: Date.now(), busNo, info });
             saveData(); closeDriverModal(); renderSettingsTables();
+            renderDispatchView();
         }
-        function deleteDriver(id) { driverDatabase = driverDatabase.filter(d => d.id !== id); saveData(); renderSettingsTables(); }
+        function deleteDriver(id) { driverDatabase = driverDatabase.filter(d => d.busNo !== d.busNo && d.id !== id); saveData(); renderSettingsTables(); renderDispatchView(); }
 
         window.onload = function() {
             renderDispatchView();
