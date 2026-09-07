@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>顧德與佳音文教 - 全日行政管理系統 (主任可編輯排程版)</title>
+    <title>顧德與佳音文教 - 全日行政管理系統 (時段區間支援版)</title>
     <style>
         :root {
             --primary-color: #0F172A;
@@ -17,7 +17,6 @@
             --bg-card: #FFFFFF;
             --border-color: #CBD5E1;
 
-            /* 四大類別柔和底色與強調邊框 */
             --bg-elem: #EFF6FF;
             --border-elem: #3B82F6;
             --text-elem: #1D4ED8;
@@ -40,10 +39,11 @@
         .container { max-width: 1300px; margin: 0 auto; }
         
         .header-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
             background: var(--bg-card); padding: 0.9rem 1.2rem; border-radius: 0.5rem; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06); margin-bottom: 1rem; border: 1.5px solid var(--border-color);
-            flex-wrap: wrap; gap: 0.6rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06); margin-bottom: 0.85rem; border: 1.5px solid var(--border-color);
+        }
+        .header-main-row {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;
         }
         .header-title h1 { font-size: 1.35rem; font-weight: 800; color: var(--primary-color); }
         .header-title p { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.15rem; }
@@ -53,6 +53,43 @@
         .date-picker-box { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.92rem; }
         .date-picker-box input { padding: 0.38rem 0.6rem; border: 1.5px solid var(--border-color); border-radius: 0.35rem; font-size: 0.92rem; font-weight: 600; background: #fff; }
         .sync-badge { font-size: 0.8rem; padding: 0.25rem 0.6rem; border-radius: 9999px; background: #D1FAE5; color: #065F46; font-weight: 800; }
+
+        .quick-nav-bar {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1.5px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .quick-nav-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-right: 0.2rem;
+        }
+        .quick-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 0.4rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .link-rollbook { background-color: #EFF6FF; color: #1D4ED8; border: 1.2px solid #BFDBFE; }
+        .link-rollbook:hover { background-color: #DBEAFE; color: #1E40AF; }
+        .link-gotogood { background-color: #FEF3C7; color: #B45309; border: 1.2px solid #FDE68A; }
+        .link-gotogood:hover { background-color: #FDE68A; color: #92400E; }
+        .link-classlog { background-color: #F0FDF4; color: #047857; border: 1.2px solid #BBF7D0; }
+        .link-classlog:hover { background-color: #DCFCE7; color: #065F46; }
 
         .tab-nav { 
             background: #ffffff; display: flex; justify-content: space-around; 
@@ -125,8 +162,8 @@
         .task-check-side { flex-shrink: 0; display: flex; align-items: center; }
         .huge-checkbox { width: 25px; height: 25px; cursor: pointer; accent-color: var(--accent-color); }
 
-        .task-time-side { min-width: 125px; flex-shrink: 0; }
-        .task-time-text { font-size: 1.35rem; font-weight: 900; color: var(--primary-color); letter-spacing: 0.5px; }
+        .task-time-side { min-width: 155px; flex-shrink: 0; }
+        .task-time-text { font-size: 1.25rem; font-weight: 900; color: var(--primary-color); letter-spacing: 0.5px; white-space: nowrap; }
 
         .task-badge-wrap { margin-top: 0.2rem; display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
         .badge { padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; font-weight: 800; display: inline-block; white-space: nowrap; }
@@ -136,7 +173,6 @@
         .badge-urgent { background-color: #FEE2E2; color: var(--text-urgent); }
         .badge-fixed { background-color: #E2E8F0; color: #475569; font-size: 0.72rem; padding: 0.12rem 0.35rem; border-radius: 4px; }
         
-        /* 角色標籤 */
         .badge-role-counter { background-color: #E0E7FF; color: #3730A3; border: 1px solid #C7D2FE; }
         .badge-role-teacher { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
 
@@ -157,6 +193,10 @@
         .form-group label { display: block; font-size: 0.88rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--accent-color); }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem; border: 1.5px solid var(--border-color); border-radius: 0.35rem; font-size: 0.95rem; background: #fff; }
         
+        .time-range-row {
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
         .btn { border: none; border-radius: 0.35rem; font-weight: 800; cursor: pointer; transition: opacity 0.2s; padding: 0.55rem 1rem; font-size: 0.95rem; }
         .btn:hover { opacity: 0.9; }
         .btn-primary { background-color: var(--accent-color); color: white; }
@@ -164,14 +204,13 @@
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
 
-        /* Modal 彈出視窗 */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(3px); z-index: 2000;
             justify-content: center; align-items: center; padding: 1rem;
         }
         .modal-card {
-            background: #fff; border-radius: 0.6rem; width: 100%; max-width: 600px;
+            background: #fff; border-radius: 0.6rem; width: 100%; max-width: 620px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 1.4rem; border: 1.5px solid var(--border-color);
             max-height: 90vh; overflow-y: auto;
         }
@@ -181,7 +220,6 @@
         }
         .modal-header h3 { font-size: 1.15rem; color: var(--accent-color); font-weight: 800; }
 
-        /* 手機版排版 */
         @media (max-width: 768px) {
             body { padding: 0.5rem; padding-bottom: 5.2rem; font-size: 0.92rem; }
             .header-bar { padding: 0.7rem 0.8rem; }
@@ -191,6 +229,9 @@
             .date-picker-box { font-size: 0.82rem; }
             .date-picker-box input { font-size: 0.82rem; padding: 0.25rem 0.45rem; }
             
+            .quick-nav-bar { gap: 0.4rem; }
+            .quick-link-btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
+
             .tab-nav {
                 position: fixed; bottom: 0; left: 0; right: 0; width: 100%;
                 z-index: 999; margin-bottom: 0; border-radius: 0;
@@ -204,7 +245,7 @@
 
             .task-block { flex-direction: column; align-items: flex-start; padding: 0.85rem; gap: 0.5rem; border-left-width: 5px; }
             .task-mobile-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-            .task-time-text { font-size: 1.2rem; }
+            .task-time-text { font-size: 1.15rem; }
             .badge { font-size: 0.72rem; padding: 0.15rem 0.45rem; }
             .badge-fixed { font-size: 0.68rem; }
             .task-desc-text { font-size: 0.95rem; line-height: 1.45; }
@@ -223,19 +264,34 @@
 <body>
 
 <div class="container">
-    <!-- 頂部資訊列 -->
     <div class="header-bar">
-        <div class="header-title">
-            <h1>顧德與佳音文教 - 全日行政管理系統</h1>
-            <p>櫃台執行 ｜ 老師回報 ｜ 主任派工與修改中心</p>
-        </div>
-        <div class="header-right">
-            <div class="date-picker-box">
-                <span>📅 排程日期：</span>
-                <input type="date" id="currentDate">
+        <div class="header-main-row">
+            <div class="header-title">
+                <h1>顧德與佳音文教 - 全日行政管理系統</h1>
+                <p>櫃台執行 ｜ 老師回報 ｜ 主任派工與修改中心</p>
             </div>
-            <div id="syncIndicator" class="sync-badge">☁️ 雲端在線</div>
-            <div class="current-time" id="clock">00:00:00</div>
+            <div class="header-right">
+                <div class="date-picker-box">
+                    <span>📅 排程日期：</span>
+                    <input type="date" id="currentDate">
+                </div>
+                <div id="syncIndicator" class="sync-badge">☁️ 雲端在線</div>
+                <div class="current-time" id="clock">00:00:00</div>
+            </div>
+        </div>
+
+        <!-- 系統快捷外鏈導覽列 -->
+        <div class="quick-nav-bar">
+            <span class="quick-nav-title">🔗 常用管理系統直達：</span>
+            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="quick-link-btn link-rollbook">
+                <span>📋</span> <span>線上點名表</span>
+            </a>
+            <a href="https://aht760317.github.io/Share/gotogood.html" target="_blank" class="quick-link-btn link-gotogood">
+                <span>🌉</span> <span>安心橋親師平台</span>
+            </a>
+            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="quick-link-btn link-classlog">
+                <span>📝</span> <span>教學日誌系統</span>
+            </a>
         </div>
     </div>
 
@@ -274,10 +330,8 @@
                     專屬老師排程 ｜ 點名、日誌、補課提醒
                 </span>
             </div>
-            <!-- 老師專屬任務看板 -->
             <div class="task-grid-container" id="teacherCardContainer" style="margin-bottom: 1.2rem;"></div>
 
-            <!-- 老師日常準則 -->
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 <div style="background: var(--bg-elem); border: 1.5px solid #BFDBFE; padding: 1rem; border-radius: 0.45rem;">
                     <h3 style="font-size: 1.05rem; color: var(--primary-color); margin-bottom: 0.4rem; font-weight: 800;">📝 教學日誌填寫規則</h3>
@@ -304,16 +358,21 @@
         <div class="card" style="border: 2px solid var(--accent-color); background: #FAF5FF;">
             <div class="card-header">
                 <h2 style="color: #6B21A8;">⚙️ 主任專屬 SOP 派工中心 (受管制)</h2>
-                <button class="btn btn-secondary" id="btnResetDefault" style="font-size: 0.85rem;">恢復預設 13 項標準 SOP</button>
+                <button class="btn btn-secondary" id="btnResetDefault" style="font-size: 0.85rem;">恢復預設標準 SOP</button>
             </div>
             
-            <!-- 新增表單 -->
+            <!-- 新增表單 (支援開始與結束時段) -->
             <form id="directorTaskForm" style="background: #fff; padding: 1rem; border-radius: 0.45rem; border: 1.5px solid var(--border-color); margin-bottom: 1rem;">
                 <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.65rem; color: var(--primary-color);">＋ 發布新時段排程事項</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="taskTime">執行時段 (HH:MM)</label>
-                        <input type="time" id="taskTime" required value="12:30">
+                        <label>執行時段 (開始時間 ～ 結束時間)</label>
+                        <div class="time-range-row">
+                            <input type="time" id="taskTime" required value="12:30">
+                            <span style="font-weight: 800; color: var(--text-muted);">至</span>
+                            <input type="time" id="taskTimeEnd" placeholder="結束時間 (選填)">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 0.2rem;">* 如為特定時間點，結束時間請留白</small>
                     </div>
                     <div class="form-group">
                         <label for="taskRole">負責對象 (分流至專屬分頁)</label>
@@ -345,7 +404,7 @@
                 <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem; font-size: 1rem;">＋ 新增排程項目 (即時同步推播)</button>
             </form>
 
-            <!-- 既有排程管理與過濾 -->
+            <!-- 既有排程管理 -->
             <div style="background: #fff; padding: 1rem; border-radius: 0.45rem; border: 1.5px solid var(--border-color);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <h3 style="font-size: 1rem; font-weight: 800; color: var(--primary-color); margin: 0;">📑 生效中排程管理</h3>
@@ -375,8 +434,12 @@
             <input type="hidden" id="editSopId">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="editSopTime">執行時段 (HH:MM)</label>
-                    <input type="time" id="editSopTime" required>
+                    <label>執行時段 (開始時間 ～ 結束時間)</label>
+                    <div class="time-range-row">
+                        <input type="time" id="editSopTime" required>
+                        <span style="font-weight: 800; color: var(--text-muted);">至</span>
+                        <input type="time" id="editSopTimeEnd" placeholder="結束時間 (選填)">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editSopRole">負責對象</label>
@@ -435,21 +498,18 @@
 
     let pendingConfirmation = {};
 
-    // 預設 13 項 SOP（新增 role 屬性分流：counter 或 teacher）
+    // 依據您的日常作業完整梳理（包含時間區段 timeEnd）
     const defaultTasks = [
-        { id: "task_1", role: "counter", date: "fixed", time: "12:30", category: "clean", desc: "到補習班：打掃一樓公共區域、擦拭玻璃門窗、洗手間全面檢查與耗材補充", done: false, record: "未完成" },
-        { id: "task_2", role: "counter", date: "fixed", time: "12:30", category: "elem", desc: "打開官方 Line 統整放學接送名單，主動提醒老師接送學生相關事項", done: false, record: "未完成" },
-        { id: "task_3", role: "counter", date: "fixed", time: "13:30", category: "elem", desc: "整理昨天學生出缺席資料，聯繫昨日補習課程未到同學通知安排補課", done: false, record: "未完成" },
-        { id: "task_4", role: "counter", date: "fixed", time: "14:00", category: "elem", desc: "檢查昨日老師的日誌，尚未填寫日誌的老師主動提醒盡速補登", done: false, record: "未完成" },
-        { id: "task_5", role: "counter", date: "fixed", time: "14:30", category: "elem", desc: "審核老師已完成的日誌，尚未傳送者先協助老師傳送推播給家長", done: false, record: "未完成" },
-        { id: "task_6", role: "counter", date: "fixed", time: "15:30", category: "elem", desc: "再次查看官方 Line，核對並整理下午等等要接送的學生名單", done: false, record: "未完成" },
-        { id: "task_7", role: "counter", date: "fixed", time: "16:00", category: "elem", desc: "提醒搭車上佳音英語的同學，並至大門口導護學生進班與出班動線", done: false, record: "未完成" },
-        { id: "task_8", role: "counter", date: "fixed", time: "16:30", category: "elem", desc: "執行晚餐訂餐作業、彙整全體訂單", done: false, record: "未完成" },
-        { id: "task_9", role: "teacher", date: "fixed", time: "16:40", category: "elem", desc: "各班任課老師上課 15 分鐘內落實點名，並回報櫃台缺席名單", done: false, record: "未完成" },
-        { id: "task_10", role: "counter", date: "fixed", time: "17:30", category: "elem", desc: "發餐：依照訂膳名冊發放學生晚餐，巡視用餐秩序", done: false, record: "未完成" },
-        { id: "task_11", role: "counter", date: "fixed", time: "18:15", category: "mid", desc: "國中生開始到班：確認教室設備與空調，提醒任課老師學生上課與點名", done: false, record: "未完成" },
-        { id: "task_12", role: "teacher", date: "fixed", time: "18:30", category: "mid", desc: "國中各班老師正式點名：核對到班名冊，回傳未到學生至系統", done: false, record: "未完成" },
-        { id: "task_13", role: "counter", date: "fixed", time: "18:45", category: "mid", desc: "國中部缺席追蹤：尚未到班同學必須打電話與 Line 詢問未到班原因", done: false, record: "未完成" }
+        { id: "task_1", role: "counter", date: "fixed", time: "12:30", timeEnd: "", category: "clean", desc: "到補習班：打掃一樓公共區域、擦拭玻璃門窗、洗手間全面檢查與耗材補充", done: false, record: "未完成" },
+        { id: "task_2", role: "counter", date: "fixed", time: "12:30", timeEnd: "13:20", category: "elem", desc: "打開官方 Line 統整放學接送名單，主動提醒老師接送學生相關事項", done: false, record: "未完成" },
+        { id: "task_3", role: "counter", date: "fixed", time: "13:30", timeEnd: "15:30", category: "elem", desc: "① 整理昨天學生出缺席資料，聯繫昨日補習課程未到同學通知安排補課<br>② 檢查昨日老師的日誌，尚未填寫日誌的老師主動提醒盡速補登<br>③ 老師日誌打了尚未傳出去先幫老師傳給家長", done: false, record: "未完成" },
+        { id: "task_4", role: "counter", date: "fixed", time: "15:30", timeEnd: "15:50", category: "elem", desc: "再次查看官方 Line，核對並整理下午等等要接送的學生名單", done: false, record: "未完成" },
+        { id: "task_5", role: "counter", date: "fixed", time: "16:00", timeEnd: "16:30", category: "elem", desc: "提醒搭車上佳音英語的同學，並至大門口導護學生進班與出班動線", done: false, record: "未完成" },
+        { id: "task_6", role: "counter", date: "fixed", time: "16:30", timeEnd: "16:50", category: "elem", desc: "訂餐、學生點名、通知各班老師點名、查詢未到同學趕快致電連絡", done: false, record: "未完成" },
+        { id: "task_7", role: "counter", date: "fixed", time: "17:30", timeEnd: "", category: "elem", desc: "發餐：依照訂膳名冊發放學生晚餐，巡視用餐秩序", done: false, record: "未完成" },
+        { id: "task_8", role: "teacher", date: "fixed", time: "18:15", timeEnd: "", category: "mid", desc: "國中生開始到班：確認教室設備與空調，提醒任課老師學生上課與點名", done: false, record: "未完成" },
+        { id: "task_9", role: "teacher", date: "fixed", time: "18:30", timeEnd: "", category: "mid", desc: "國中各班任課老師正式點名：核對到班名冊與實際人數", done: false, record: "未完成" },
+        { id: "task_10", role: "counter", date: "fixed", time: "18:45", timeEnd: "", category: "mid", desc: "國中部缺席追蹤：尚未到班同學必須打電話與 Line 詢問為什麼未到班", done: false, record: "未完成" }
     ];
 
     let cachedScheduleTasks = [];
@@ -476,7 +536,8 @@
             if (docSnap.exists() && docSnap.data().tasks) {
                 cachedScheduleTasks = docSnap.data().tasks.map(t => ({
                     ...t,
-                    role: t.role || 'counter' // 向下相容，舊資料預設為櫃台
+                    timeEnd: t.timeEnd || '', // 確保時段欄位存在
+                    role: t.role || 'counter'
                 }));
             } else {
                 cachedScheduleTasks = [...defaultTasks];
@@ -510,7 +571,14 @@
         }
     }
 
-    // 渲染通用卡片 (給櫃台或老師)
+    // 格式化時間呈現：若有結束時段呈現 12:30 - 13:20，若無呈現 12:30
+    function formatTaskTime(task) {
+        if (task.timeEnd && task.timeEnd.trim() !== '') {
+            return `${task.time} - ${task.timeEnd}`;
+        }
+        return task.time;
+    }
+
     function renderCardSection(containerId, targetRole) {
         const selectedDate = currentDateInput.value;
         let currentTasks = cachedScheduleTasks.filter(t => (t.date === 'fixed' || t.date === selectedDate) && t.role === targetRole);
@@ -529,6 +597,7 @@
         currentTasks.forEach(task => {
             const { blockClass, badgeClass, badgeText } = getThemeConfig(task.category);
             const fixedTag = task.date === 'fixed' ? '<span class="badge-fixed">固定</span>' : '';
+            const displayTime = formatTaskTime(task);
 
             const isPending = pendingConfirmation[task.id] !== undefined;
             const targetDoneState = isPending ? pendingConfirmation[task.id] : task.done;
@@ -553,7 +622,7 @@
                     <div class="task-mobile-header">
                         <div style="display:flex; align-items:center; gap: 0.6rem;">
                             <input type="checkbox" class="huge-checkbox" ${targetDoneState ? 'checked' : ''} onchange="window.triggerTaskPrompt('${task.id}', this.checked)">
-                            <span class="task-time-text">${task.time}</span>
+                            <span class="task-time-text">${displayTime}</span>
                         </div>
                         <div class="task-badge-wrap">
                             <span class="badge ${badgeClass}">${badgeText}</span>${fixedTag}
@@ -571,7 +640,7 @@
                         <input type="checkbox" class="huge-checkbox" ${targetDoneState ? 'checked' : ''} onchange="window.triggerTaskPrompt('${task.id}', this.checked)">
                     </div>
                     <div class="task-time-side">
-                        <div class="task-time-text">${task.time}</div>
+                        <div class="task-time-text">${displayTime}</div>
                         <div class="task-badge-wrap">
                             <span class="badge ${badgeClass}">${badgeText}</span>${fixedTag}
                         </div>
@@ -629,7 +698,6 @@
         renderTeacherViews();
     };
 
-    // 渲染主任專屬排程清單（含對象標籤、編輯、刪除按鈕）
     window.renderDirectorViews = function() {
         const selectedDate = currentDateInput.value;
         const filterRole = document.getElementById('filterDirectorRole') ? document.getElementById('filterDirectorRole').value : 'all';
@@ -653,14 +721,15 @@
             const roleBadge = task.role === 'teacher' 
                 ? `<span class="badge badge-role-teacher">👩‍🏫 老師</span>` 
                 : `<span class="badge badge-role-counter">🏫 櫃台</span>`;
+            const displayTime = formatTaskTime(task);
 
             const block = document.createElement('div');
             block.className = `task-block ${blockClass}`;
             block.style.padding = '0.9rem 1.1rem';
             
             block.innerHTML = `
-                <div class="task-time-side" style="min-width: 140px;">
-                    <div class="task-time-text" style="font-size: 1.3rem;">${task.time}</div>
+                <div class="task-time-side" style="min-width: 155px;">
+                    <div class="task-time-text" style="font-size: 1.2rem;">${displayTime}</div>
                     <div class="task-badge-wrap">
                         ${roleBadge}
                         <span class="badge ${badgeClass}">${badgeText}</span>
@@ -679,7 +748,6 @@
         });
     };
 
-    // 主任刪除任務
     window.deleteDirectorTask = async function(id) {
         if (confirm("確定要刪除這筆 SOP 項目嗎？（畫面將即時同步移除）")) {
             cachedScheduleTasks = cachedScheduleTasks.filter(t => t.id !== id);
@@ -687,13 +755,13 @@
         }
     };
 
-    // 打開編輯 Modal
     window.openEditModal = function(id) {
         const task = cachedScheduleTasks.find(t => t.id === id);
         if (!task) return;
 
         document.getElementById('editSopId').value = task.id;
         document.getElementById('editSopTime').value = task.time;
+        document.getElementById('editSopTimeEnd').value = task.timeEnd || '';
         document.getElementById('editSopRole').value = task.role || 'counter';
         document.getElementById('editSopCategory').value = task.category;
         document.getElementById('editIsFixedRoutine').checked = (task.date === 'fixed');
@@ -702,13 +770,11 @@
         document.getElementById('editSopModal').style.display = 'flex';
     };
 
-    // 關閉編輯 Modal
     window.closeEditModal = function() {
         document.getElementById('editSopModal').style.display = 'none';
         document.getElementById('editSopForm').reset();
     };
 
-    // 提交編輯 Modal
     document.getElementById('editSopForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('editSopId').value;
@@ -716,6 +782,7 @@
         if (!task) return;
 
         task.time = document.getElementById('editSopTime').value;
+        task.timeEnd = document.getElementById('editSopTimeEnd').value;
         task.role = document.getElementById('editSopRole').value;
         task.category = document.getElementById('editSopCategory').value;
         task.date = document.getElementById('editIsFixedRoutine').checked ? 'fixed' : currentDateInput.value;
@@ -726,10 +793,10 @@
         alert("✅ SOP 項目修改成功並已推播同步！");
     });
 
-    // 新增任務 (主任發布)
     document.getElementById('directorTaskForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const time = document.getElementById('taskTime').value;
+        const timeEnd = document.getElementById('taskTimeEnd').value;
         const role = document.getElementById('taskRole').value;
         const category = document.getElementById('taskCategory').value;
         const desc = document.getElementById('taskDesc').value.replace(/\n/g, '<br>');
@@ -741,6 +808,7 @@
             role: role,
             date: isFixed ? 'fixed' : selectedDate,
             time: time,
+            timeEnd: timeEnd,
             category: category,
             desc: desc,
             done: false,
@@ -751,11 +819,12 @@
         cachedScheduleTasks.push(newTask);
         await saveScheduleCloud();
         document.getElementById('taskDesc').value = '';
+        document.getElementById('taskTimeEnd').value = '';
         alert("✅ 新排程已發布並同步推播！");
     });
 
     document.getElementById('btnResetDefault').addEventListener('click', async () => {
-        if (confirm("確定要將所有排程重置回預設的 13 項標準 SOP 嗎？")) {
+        if (confirm("確定要將所有排程重置回預設的標準 SOP 嗎？")) {
             cachedScheduleTasks = [...defaultTasks];
             await saveScheduleCloud();
             alert("✅ 已成功重設！");
@@ -796,13 +865,15 @@
     currentDateInput.addEventListener('change', renderAllViews);
     window.addEventListener('resize', () => { renderCounterViews(); renderTeacherViews(); });
 
+    // 時間檢查邏輯：有結束時間依結束時間比對，無結束時間依開始時間比對
     function checkTaskTime(currentHM) {
         const selectedDate = currentDateInput.value;
         if (selectedDate !== getTodayStr()) return;
 
         let updated = false;
         cachedScheduleTasks.forEach(task => {
-            if ((task.date === 'fixed' || task.date === selectedDate) && !task.done && currentHM >= task.time) {
+            const targetTriggerTime = (task.timeEnd && task.timeEnd.trim() !== '') ? task.timeEnd : task.time;
+            if ((task.date === 'fixed' || task.date === selectedDate) && !task.done && currentHM >= targetTriggerTime) {
                 if (!task.isAlert) {
                     task.isAlert = true;
                     task.record = "⚠️ 時間已到，請執行！";
