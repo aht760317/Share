@@ -36,7 +36,6 @@
             gap: 24px;
         }
 
-        /* 模組外框卡片 */
         .module-card {
             background: var(--card-bg);
             border-radius: 10px;
@@ -58,7 +57,6 @@
             align-items: center;
         }
 
-        /* 設定區塊網格排版 */
         .settings-grid-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -96,7 +94,6 @@
             background-color: #fff;
         }
 
-        /* 規則表格樣式 */
         .rules-table {
             width: 100%;
             border-collapse: collapse;
@@ -142,7 +139,6 @@
             background: #dc2626;
         }
 
-        /* 第一區塊：薪資表展示與列印 */
         .salary-sheet-card {
             display: flex;
             flex-direction: column;
@@ -252,11 +248,7 @@
             <h2 class="module-title" style="border: none; margin: 0; padding: 0;">第一區塊：教師薪資單與列印預覽</h2>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <label style="font-size: 0.9em; font-weight: 600;">選擇核算月份：</label>
-                <select id="sel-month" onchange="updateView()" style="padding: 6px 10px; border-radius: 5px;">
-                    <option value="112年4月">112年4月</option>
-                    <option value="112年5月" selected>112年5月</option>
-                    <option value="112年6月">112年6月</option>
-                </select>
+                <select id="sel-month" onchange="updateView()" style="padding: 6px 10px; border-radius: 5px;"></select>
                 <button class="btn btn-primary" onclick="window.print()">列印薪資明細表</button>
             </div>
         </div>
@@ -265,11 +257,11 @@
             <div class="sheet-header" id="view-inst">冠抑文教有限公司</div>
             <div class="sheet-subheader">
                 <span>姓名：<strong id="view-name">陳怡芳</strong></span>
-                <span id="view-date">發放日期：112年5月10日</span>
+                <span id="view-date">發放日期：115年9月10日</span>
             </div>
             <div class="sheet-subheader" style="border-top: none;">
                 <span>出勤紀錄：正常無請假</span>
-                <strong id="view-title">112年5月份薪俸明細表</strong>
+                <strong id="view-title">115年9月份薪俸明細表</strong>
             </div>
 
             <table class="sheet-table">
@@ -284,7 +276,7 @@
                 </tr>
                 <tr>
                     <td>勞健保項目</td>
-                    <td colspan="2" class="text-center" id="view-ins-desc" style="font-size: 0.85em; color: #555;">5月(個人負擔)</td>
+                    <td colspan="2" class="text-center" id="view-ins-desc" style="font-size: 0.85em; color: #555;">9月(個人負擔)</td>
                 </tr>
                 <tr>
                     <td>勞保 (-)</td>
@@ -345,7 +337,7 @@
         </div>
     </div>
 
-    <!-- 第二區塊：薪資設定區塊 (左右雙面板) -->
+    <!-- 第二區塊：薪資設定區塊 -->
     <div class="settings-grid-layout no-print">
 
         <!-- 子區塊 A：固定常態薪資設定 -->
@@ -433,17 +425,13 @@
                         <th>操作</th>
                     </tr>
                 </thead>
-                <tbody id="rules-tbody">
-                    <!-- 動態載入規則 -->
-                </tbody>
+                <tbody id="rules-tbody"></tbody>
             </table>
 
             <div style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 10px;">
                 <label style="font-weight: 600; font-size: 0.85em; color: var(--text-sub);">當月帶班授課實際結算輸入：</label>
                 <div style="display: flex; gap: 8px; margin-top: 6px;">
-                    <select id="cur-course-select" style="flex: 1; padding: 6px; border-radius: 4px; border: 1px solid var(--border);">
-                        <!-- 依規則動態產生選項 -->
-                    </select>
+                    <select id="cur-course-select" style="flex: 1; padding: 6px; border-radius: 4px; border: 1px solid var(--border);"></select>
                     <input type="number" id="cur-student-count" placeholder="當月實際上課人數" style="width: 150px; padding: 6px; border-radius: 4px; border: 1px solid var(--border);" oninput="calculateAll()">
                 </div>
             </div>
@@ -454,18 +442,35 @@
 </div>
 
 <script>
-    // 預設教師資料庫
     const teachersData = {
         "陳怡芳": { hire: "103/7/1", base: 26400, lp: 634, lc: 2218, hp: 409, hc: 1286, other: 205, seniority: 0, special: 1000 },
         "林孟柔": { hire: "108/08/01", base: 28000, lp: 672, lc: 2350, hp: 434, hc: 1364, other: 0, seniority: 1000, special: 2600 },
         "張雅婷": { hire: "110/02/15", base: 25000, lp: 600, lc: 2100, hp: 390, hc: 1200, other: 0, seniority: 500, special: 500 }
     };
 
-    // 課程獎金條件清單
     let bonusRules = [
         { course: "國中數學進階班", minStudents: 10, bonusPerStudent: 200 },
         { course: "國小課輔看班", minStudents: 5, bonusPerStudent: 150 }
     ];
+
+    // 自動依據當前年份生成月份選單（民國 115 年）
+    function initMonthSelector() {
+        const sel = document.getElementById('sel-month');
+        sel.innerHTML = '';
+        const now = new Date();
+        const rocYear = now.getFullYear() - 1911;
+        const curMonth = now.getMonth() + 1;
+
+        for (let m = 1; m <= 12; m++) {
+            const opt = document.createElement('option');
+            opt.value = `${rocYear}年${m}月`;
+            opt.innerText = `${rocYear}年${m}月`;
+            if (m === curMonth) {
+                opt.selected = true;
+            }
+            sel.appendChild(opt);
+        }
+    }
 
     function renderRules() {
         const tbody = document.getElementById('rules-tbody');
@@ -551,10 +556,12 @@
     }
 
     function updateView() {
-        const month = document.getElementById('sel-month').value;
-        document.getElementById('view-title').innerText = `${month}薪俸明細表`;
-        document.getElementById('view-date').innerText = `發放日期：${month}10日`;
-        document.getElementById('view-ins-desc').innerText = `${month}(個人負擔)`;
+        const monthStr = document.getElementById('sel-month').value;
+        document.getElementById('view-title').innerText = `${monthStr}份薪俸明細表`;
+        document.getElementById('view-date').innerText = `發放日期：${monthStr}10日`;
+        
+        const m = monthStr.split('年')[1] || '';
+        document.getElementById('view-ins-desc').innerText = `${m}(個人負擔)`;
     }
 
     function calculateAll() {
@@ -569,7 +576,6 @@
         const seniority = Number(document.getElementById('cfg-seniority').value) || 0;
         const special = Number(document.getElementById('cfg-special').value) || 0;
 
-        // 計算獎金規則
         let courseBonus = 0;
         const ruleIdx = document.getElementById('cur-course-select').value;
         const stuCount = parseInt(document.getElementById('cur-student-count').value) || 0;
@@ -581,14 +587,12 @@
             }
         }
 
-        // 薪資計算公式
         const totalDeduct = lp + hp + otherDeduct;
         const netBase = base - totalDeduct;
         const totalAllowance = seniority + special + courseBonus;
         const grossSalary = base + totalAllowance;
         const finalSalary = netBase + totalAllowance;
 
-        // 更新至第一區塊畫面
         document.getElementById('view-name').innerText = name;
         document.getElementById('view-hiredate').innerText = hire;
         document.getElementById('view-base').innerText = base.toLocaleString();
@@ -607,6 +611,7 @@
     }
 
     window.onload = () => {
+        initMonthSelector();
         renderRules();
         loadTeacherProfile();
         updateView();
