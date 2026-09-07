@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>顧德與佳音文教 - 全日行政管理系統 (顯示具體日期版)</title>
+    <title>顧德與佳音文教 - 全日行政管理系統 (行政準則可自訂版)</title>
     <style>
         :root {
             --primary-color: #0F172A;
@@ -220,6 +220,11 @@
         }
         .modal-header h3 { font-size: 1.15rem; color: var(--accent-color); font-weight: 800; }
 
+        /* 準則展示容器 */
+        .guideline-content-text {
+            font-size: 0.95rem; color: var(--text-main); line-height: 1.65; font-weight: 600; white-space: pre-wrap;
+        }
+
         @media (max-width: 768px) {
             body { padding: 0.5rem; padding-bottom: 5.2rem; font-size: 0.92rem; }
             .header-bar { padding: 0.7rem 0.8rem; }
@@ -324,28 +329,19 @@
         <div class="card" style="border-left: 7px solid var(--accent-color);">
             <div class="card-header">
                 <h2>👩‍🏫 老師時段排程與行政回報中心</h2>
-                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                    專屬老師排程 ｜ 點名、日誌、補課提醒
-                </span>
+                <button class="btn btn-warning" onclick="openEditGuidelinesModal()" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">✏️ 編輯行政準則內容</button>
             </div>
             <div class="task-grid-container" id="teacherCardContainer" style="margin-bottom: 1.2rem;"></div>
 
+            <!-- 可自訂與修改之老師日常準則 -->
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 <div style="background: var(--bg-elem); border: 1.5px solid #BFDBFE; padding: 1rem; border-radius: 0.45rem;">
                     <h3 style="font-size: 1.05rem; color: var(--primary-color); margin-bottom: 0.4rem; font-weight: 800;">📝 教學日誌填寫規則</h3>
-                    <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-main); line-height: 1.6; font-weight: 600;">
-                        <li>每日課後 <strong>22:00 前</strong> 須完成當日各班進度、作業與聯絡簿登載。</li>
-                        <li>隔日 13:30 櫃台人員將覆核日誌並統一推播至家長端。</li>
-                        <li>若學員於課堂有特殊違紀、受傷或心理狀況，請主動通報櫃台登記於「安心橋」。</li>
-                    </ul>
+                    <div id="displayLogRules" class="guideline-content-text">載入中...</div>
                 </div>
                 <div style="background: var(--bg-mid); border: 1.5px solid #BBF7D0; padding: 1rem; border-radius: 0.45rem;">
                     <h3 style="font-size: 1.05rem; color: var(--primary-color); margin-bottom: 0.4rem; font-weight: 800;">🔄 未到補課管理機制</h3>
-                    <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-main); line-height: 1.6; font-weight: 600;">
-                        <li>任課老師上課 15 分鐘內落實點名，未到學生由櫃台立即電話聯繫家長。</li>
-                        <li>學員請假之補課安排，須於 <strong>3 日內</strong> 敲定輔導老師時段。</li>
-                        <li>補課完成後，輔導老師於系統直接勾選結案。</li>
-                    </ul>
+                    <div id="displayMakeupRules" class="guideline-content-text">載入中...</div>
                 </div>
             </div>
         </div>
@@ -419,7 +415,7 @@
     </div>
 </div>
 
-<!-- ================= 主任修改 SOP Modal 彈出視窗 ================= -->
+<!-- ================= 主任修改 SOP Modal ================= -->
 <div id="editSopModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -472,6 +468,30 @@
     </div>
 </div>
 
+<!-- ================= 主任修改老師行政準則 Modal ================= -->
+<div id="editGuidelinesModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>✏️ 編輯修改老師行政準則與規則</h3>
+            <button onclick="closeEditGuidelinesModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form id="editGuidelinesForm">
+            <div class="form-group">
+                <label for="editLogRulesInput">📝 教學日誌填寫規則 (每行一條)</label>
+                <textarea id="editLogRulesInput" rows="5" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editMakeupRulesInput">🔄 未到補課管理機制 (每行一條)</label>
+                <textarea id="editMakeupRulesInput" rows="5" required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditGuidelinesModal()">取消</button>
+                <button type="submit" class="btn btn-primary">儲存準則並同步</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Firebase 10.8.0 模組 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -493,6 +513,14 @@
     let isDirectorUnlocked = false;
 
     let pendingConfirmation = {};
+
+    // 預設老師準則內容
+    const defaultGuidelines = {
+        logRules: "每日課後 22:00 前 須完成當日各班進度、作業與聯絡簿登載。\n隔日 13:30 櫃台人員將覆核日誌並統一推播至家長端。\n若學員於課堂有特殊違紀、受傷或心理狀況，請主動通報櫃台登記於「安心橋」。",
+        makeupRules: "任課老師上課 15 分鐘內落實點名，未到學生由櫃台立即電話聯繫家長。\n學員請假之補課安排，須於 3 日內 敲定輔導老師時段。\n補課完成後，輔導老師於系統直接勾選結案。"
+    };
+
+    let cachedGuidelines = { ...defaultGuidelines };
 
     const defaultTasks = [
         { id: "task_1", role: "counter", date: "fixed", time: "12:30", timeEnd: "", category: "clean", desc: "到補習班：打掃一樓公共區域、擦拭玻璃門窗、洗手間全面檢查與耗材補充", done: false, record: "未完成" },
@@ -519,7 +547,10 @@
 
     async function saveScheduleCloud() {
         try {
-            await setDoc(doc(db, "settings", "counterScheduleData"), { tasks: cachedScheduleTasks });
+            await setDoc(doc(db, "settings", "counterScheduleData"), { 
+                tasks: cachedScheduleTasks,
+                guidelines: cachedGuidelines
+            });
         } catch (e) {
             console.error("雲端儲存失敗：", e);
         }
@@ -528,14 +559,21 @@
     function initRealtimeSync() {
         const scheduleDocRef = doc(db, "settings", "counterScheduleData");
         onSnapshot(scheduleDocRef, (docSnap) => {
-            if (docSnap.exists() && docSnap.data().tasks) {
-                cachedScheduleTasks = docSnap.data().tasks.map(t => ({
-                    ...t,
-                    timeEnd: t.timeEnd || '',
-                    role: t.role || 'counter'
-                }));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.tasks) {
+                    cachedScheduleTasks = data.tasks.map(t => ({
+                        ...t,
+                        timeEnd: t.timeEnd || '',
+                        role: t.role || 'counter'
+                    }));
+                }
+                if (data.guidelines) {
+                    cachedGuidelines = data.guidelines;
+                }
             } else {
                 cachedScheduleTasks = [...defaultTasks];
+                cachedGuidelines = { ...defaultGuidelines };
                 saveScheduleCloud();
             }
             renderAllViews();
@@ -552,6 +590,12 @@
         renderCounterViews();
         renderTeacherViews();
         renderDirectorViews();
+        renderGuidelinesView();
+    }
+
+    function renderGuidelinesView() {
+        document.getElementById('displayLogRules').innerText = cachedGuidelines.logRules || defaultGuidelines.logRules;
+        document.getElementById('displayMakeupRules').innerText = cachedGuidelines.makeupRules || defaultGuidelines.makeupRules;
     }
 
     function getThemeConfig(category) {
@@ -653,7 +697,6 @@
     }
 
     function renderCounterViews() {
-        // 直接顯示 YYYY-MM-DD 具體日期，不顯示「今日」
         document.getElementById('displayDateTitleCounter').textContent = currentDateInput.value;
         renderCardSection('counterCardContainer', 'counter');
     }
@@ -788,6 +831,36 @@
         alert("✅ SOP 項目修改成功並已推播同步！");
     });
 
+    // 打開編輯老師行政準則 Modal
+    window.openEditGuidelinesModal = function() {
+        const pwd = prompt("🔒 請輸入主任權限驗證密碼：");
+        if (pwd === null) return;
+        if (pwd.trim() !== DIRECTOR_PASSWORD) {
+            alert("❌ 密碼錯誤！");
+            return;
+        }
+
+        document.getElementById('editLogRulesInput').value = cachedGuidelines.logRules || defaultGuidelines.logRules;
+        document.getElementById('editMakeupRulesInput').value = cachedGuidelines.makeupRules || defaultGuidelines.makeupRules;
+        document.getElementById('editGuidelinesModal').style.display = 'flex';
+    };
+
+    window.closeEditGuidelinesModal = function() {
+        document.getElementById('editGuidelinesModal').style.display = 'none';
+        document.getElementById('editGuidelinesForm').reset();
+    };
+
+    document.getElementById('editGuidelinesForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        cachedGuidelines.logRules = document.getElementById('editLogRulesInput').value.trim();
+        cachedGuidelines.makeupRules = document.getElementById('editMakeupRulesInput').value.trim();
+
+        await saveScheduleCloud();
+        closeEditGuidelinesModal();
+        renderGuidelinesView();
+        alert("✅ 老師行政準則已成功儲存並同步！");
+    });
+
     document.getElementById('directorTaskForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const time = document.getElementById('taskTime').value;
@@ -821,6 +894,7 @@
     document.getElementById('btnResetDefault').addEventListener('click', async () => {
         if (confirm("確定要將所有排程重置回預設的標準 SOP 嗎？")) {
             cachedScheduleTasks = [...defaultTasks];
+            cachedGuidelines = { ...defaultGuidelines };
             await saveScheduleCloud();
             alert("✅ 已成功重設！");
         }
