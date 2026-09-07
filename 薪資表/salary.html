@@ -3,14 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薪資明細輸入與列印系統</title>
+    <title>多機構與多教師薪資管理系統</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            background-color: #555;
+            background-color: #444;
             margin: 0;
             padding: 20px;
         }
+        /* 管理控制面板樣式 */
+        .control-panel {
+            max-width: 700px;
+            margin: 0 auto 20px auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 150px;
+        }
+        .control-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .control-group select {
+            padding: 6px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* 薪資條主體樣式 */
         .payslip-container {
             width: 700px;
             margin: 0 auto 30px auto;
@@ -60,7 +94,6 @@
         .text-center {
             text-align: center;
         }
-        /* 讓輸入框融入表格外觀 */
         input[type="text"], input[type="number"] {
             width: 100%;
             border: 1px dashed #ccc;
@@ -106,44 +139,68 @@
                 background-color: #fff;
                 padding: 0;
             }
+            .control-panel, .print-btn-container {
+                display: none;
+            }
             .payslip-container {
                 border: 1px solid #000;
                 box-shadow: none;
                 margin: 0;
             }
-            .print-btn-container {
-                display: none;
-            }
-            /* 列印時隱藏輸入框邊框，看起來像純文字 */
             input {
                 border: none !important;
                 background: transparent !important;
-                appearance: none;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- 頂部切換控制台 -->
+    <div class="control-panel">
+        <div class="control-group">
+            <label>選擇機構：</label>
+            <select id="select-inst" onchange="loadTeacherData()">
+                <option value="顧德文教機構">顧德文教機構</option>
+                <option value="冠抑文教有限公司">冠抑文教有限公司</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>選擇月份：</label>
+            <select id="select-month" onchange="loadTeacherData()">
+                <option value="112年4月">112年4月</option>
+                <option value="112年5月">112年5月</option>
+                <option value="112年6月">112年6月</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>選擇老師：</label>
+            <select id="select-teacher" onchange="loadTeacherData()">
+                <option value="陳怡芳">陳怡芳</option>
+                <option value="林孟柔">林孟柔</option>
+                <option value="張雅婷">張雅婷</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 薪資條主體 -->
     <div class="payslip-container">
-        <!-- 機構與日期 -->
         <div class="header-title">
-            <input type="text" id="机构名称" value="顧德文教機構" style="text-align: center; font-weight: bold; font-size: 1.1em; width: 200px;">
+            <input type="text" id="field-inst" value="顧德文教機構" style="text-align: center; font-weight: bold; font-size: 1.1em; width: 200px;">
         </div>
         <div class="sub-header">
-            <span>姓名：<input type="text" id="教师姓名" value="陳怡芳" style="width: 90px;"></span>
-            <span>日期：<input type="text" id="列印日期" value="112年5月10日" style="width: 110px;"></span>
+            <span>姓名：<input type="text" id="field-name" value="陳怡芳" style="width: 90px;"></span>
+            <span>日期：<input type="text" id="field-date" value="112年5月10日" style="width: 110px;"></span>
         </div>
         <div class="sub-header" style="border-top: none;">
-            <span>今年累計請假：<input type="text" id="累计请假" value="婚假: 事假:" style="width: 130px;"></span>
-            <span><input type="text" id="薪资月份标题" value="112年4月份薪俸明細表" style="width: 160px; text-align: right;"></span>
+            <span>今年累計請假：<input type="text" id="field-leave" value="婚假: 事假:" style="width: 130px;"></span>
+            <span><input type="text" id="field-title" value="112年4月份薪俸明細表" style="width: 160px; text-align: right;"></span>
         </div>
 
-        <!-- 薪資明細表格 -->
         <table class="slip-table">
             <tr>
-                <td colspan="2">遲到: <input type="text" value="" style="width: 40px;"> 分, 無打卡: <input type="text" value="" style="width: 40px;"></td>
-                <td colspan="2">到職日：<input type="text" value="103/7/1" style="width: 90px;"></td>
+                <td colspan="2">遲到: <input type="text" id="field-late" value="" style="width: 40px;"> 分, 無打卡: <input type="text" id="field-nocard" value="" style="width: 40px;"></td>
+                <td colspan="2">到職日：<input type="text" id="field-hiredate" value="103/7/1" style="width: 90px;"></td>
             </tr>
             <tr>
                 <td rowspan="12" class="section-tag">薪轉</td>
@@ -152,7 +209,7 @@
             </tr>
             <tr>
                 <td>勞健保</td>
-                <td colspan="2" class="text-center"><input type="text" value="5月(個人負擔)" style="text-align: center;"></td>
+                <td colspan="2" class="text-center"><input type="text" id="field-ins-desc" value="5月(個人負擔)" style="text-align: center;"></td>
             </tr>
             <tr>
                 <td>勞保(-)</td>
@@ -166,15 +223,15 @@
             </tr>
             <tr>
                 <td>福利金(-)</td>
-                <td class="text-right" colspan="2"><input type="text" value="職保 53"></td>
+                <td class="text-right" colspan="2"><input type="text" id="field-welfare" value="職保 53"></td>
             </tr>
             <tr>
                 <td>勞退金</td>
-                <td class="text-right" colspan="2">公司 <input type="number" value="1584" style="width: 80px;"></td>
+                <td class="text-right" colspan="2">公司 <input type="number" id="comp-pension" value="1584" style="width: 80px;"></td>
             </tr>
             <tr>
                 <td>其它(-)</td>
-                <td class="text-right"><input type="text" value="眷屬(1位)"></td>
+                <td class="text-right"><input type="text" id="field-other-desc" value="眷屬(1位)"></td>
                 <td class="text-right"><input type="number" id="other-deduct" value="205" oninput="calculate()"></td>
             </tr>
             <tr>
@@ -197,7 +254,6 @@
                 <td>特殊加給</td>
                 <td class="text-right" colspan="2"><input type="number" id="allowance-special" value="1000" oninput="calculate()"></td>
             </tr>
-            <!-- 授課細節 -->
             <tr>
                 <td class="text-center">班級名稱</td>
                 <td class="text-center">人數</td>
@@ -205,19 +261,18 @@
                 <td class="text-center">堂數</td>
             </tr>
             <tr>
-                <td><input type="text" value="數學課"></td>
-                <td><input type="text" value=""></td>
+                <td><input type="text" id="class-name" value="數學課"></td>
+                <td><input type="text" id="class-people" value=""></td>
                 <td class="text-right">看班 <input type="number" id="class-pay" value="2000" style="width: 80px;" oninput="calculate()"></td>
-                <td><input type="text" value=""></td>
+                <td><input type="text" id="class-hours" value=""></td>
             </tr>
-            <!-- 勞健保投保級距對照區 -->
             <tr>
                 <td colspan="2" style="background-color: #ffff00;">勞健保 個人負擔</td>
-                <td colspan="2" style="background-color: #ffff00;" class="text-right"><input type="number" value="973" style="width: 80px; background: transparent;"></td>
+                <td colspan="2" style="background-color: #ffff00;" class="text-right"><input type="number" id="sum-personal-ins" value="973" style="width: 80px; background: transparent;"></td>
             </tr>
             <tr>
                 <td colspan="2" style="background-color: #ffff00;">勞健保 公司負擔</td>
-                <td colspan="2" style="background-color: #ffff00;" class="text-right"><input type="number" value="5141" style="width: 80px; background: transparent;"></td>
+                <td colspan="2" style="background-color: #ffff00;" class="text-right"><input type="number" id="sum-company-ins" value="5141" style="width: 80px; background: transparent;"></td>
             </tr>
             <tr>
                 <td>應領金額 (加給後)</td>
@@ -229,20 +284,70 @@
             </tr>
         </table>
 
-        <!-- 簽章區 -->
         <div class="signature-section">
             領款人簽章：
         </div>
     </div>
 
-    <!-- 列印按鈕 -->
     <div class="print-btn-container">
         <button class="print-btn" onclick="window.print()">列印此薪資明細表</button>
     </div>
 
 <script>
+    // 模擬內建資料庫（你可以隨時在這裡增加不同老師、不同月份的預設數值）
+    const salaryDatabase = {
+        "陳怡芳": {
+            "112年4月": { base: 26400, labor: 634, health: 409, compLabor: 2218, compHealth: 1286, other: 205, otherDesc: "眷屬(1位)", otherAllow: 2600, specialAllow: 1000, classPay: 2000, hireDate: "103/7/1" },
+            "112年5月": { base: 26400, labor: 634, health: 409, compLabor: 2218, compHealth: 1286, other: 0, otherDesc: "", otherAllow: 3000, specialAllow: 1000, classPay: 2200, hireDate: "103/7/1" },
+            "112年6月": { base: 27000, labor: 650, health: 420, compLabor: 2300, compHealth: 1300, other: 0, otherDesc: "", otherAllow: 2600, specialAllow: 1200, classPay: 2000, hireDate: "103/7/1" }
+        },
+        "林孟柔": {
+            "112年4月": { base: 26400, labor: 634, health: 409, compLabor: 2218, compHealth: 1286, other: 0, otherDesc: "", otherAllow: 1000, specialAllow: 2600, classPay: 5000, hireDate: "108/08/01" },
+            "112年5月": { base: 26400, labor: 634, health: 409, compLabor: 2218, compHealth: 1286, other: 0, otherDesc: "", otherAllow: 1500, specialAllow: 2600, classPay: 4500, hireDate: "108/08/01" },
+            "112年6月": { base: 26400, labor: 634, health: 409, compLabor: 2218, compHealth: 1286, other: 0, otherDesc: "", otherAllow: 1000, specialAllow: 2600, classPay: 5000, hireDate: "108/08/01" }
+        },
+        "張雅婷": {
+            "112年4月": { base: 25000, labor: 600, health: 390, compLabor: 2100, compHealth: 1200, other: 0, otherDesc: "", otherAllow: 2000, specialAllow: 500, classPay: 1800, hireDate: "110/02/15" },
+            "112年5月": { base: 25000, labor: 600, health: 390, compLabor: 2100, compHealth: 1200, other: 0, otherDesc: "", otherAllow: 2000, specialAllow: 500, classPay: 1800, hireDate: "110/02/15" },
+            "112年6月": { base: 25000, labor: 600, health: 390, compLabor: 2100, compHealth: 1200, other: 0, otherDesc: "", otherAllow: 2200, specialAllow: 500, classPay: 2000, hireDate: "110/02/15" }
+        }
+    };
+
+    function loadTeacherData() {
+        let inst = document.getElementById('select-inst').value;
+        let month = document.getElementById('select-month').value;
+        let teacher = document.getElementById('select-teacher').value;
+
+        // 填入上方標題
+        document.getElementById('field-inst').value = inst;
+        document.getElementById('field-name').value = teacher;
+        document.getElementById('field-date').value = month + "10日";
+        document.getElementById('field-title').value = month + "薪俸明細表";
+
+        // 取得對應資料庫數值
+        if (salaryDatabase[teacher] && salaryDatabase[teacher][month]) {
+            let data = salaryDatabase[teacher][month];
+            document.getElementById('base-salary').value = data.base;
+            document.getElementById('labor-fee').value = data.labor;
+            document.getElementById('health-fee').value = data.health;
+            document.getElementById('comp-labor').value = data.compLabor;
+            document.getElementById('comp-health').value = data.compHealth;
+            document.getElementById('other-deduct').value = data.other;
+            document.getElementById('field-other-desc').value = data.otherDesc;
+            document.getElementById('allowance-other').value = data.otherAllow;
+            document.getElementById('allowance-special').value = data.specialAllow;
+            document.getElementById('class-pay').value = data.classPay;
+            document.getElementById('field-hiredate').value = data.hireDate;
+
+            // 連動勞健保個人/公司加總
+            document.getElementById('sum-personal-ins').value = data.labor + data.health;
+            document.getElementById('sum-company-ins').value = data.compLabor + data.compHealth;
+        }
+
+        calculate();
+    }
+
     function calculate() {
-        // 取得各項數值
         let baseSalary = parseFloat(document.getElementById('base-salary').value) || 0;
         let laborFee = parseFloat(document.getElementById('labor-fee').value) || 0;
         let healthFee = parseFloat(document.getElementById('health-fee').value) || 0;
@@ -253,27 +358,23 @@
         let specialAllow = parseFloat(document.getElementById('allowance-special').value) || 0;
         let classPay = parseFloat(document.getElementById('class-pay').value) || 0;
 
-        // 計算扣除總計 (勞保 + 健保 + 其它)
+        // 扣除總計
         let totalDeduct = laborFee + healthFee + otherDeduct;
-        
-        // 本薪扣除後金額
         let netSalary = baseSalary - totalDeduct;
 
         // 加給總金額
         let totalAllowances = seniority + otherAllow + specialAllow + classPay;
 
-        // 總領金額 (本薪淨額 + 各項加給)
+        // 總領金額
         let finalTotal = netSalary + totalAllowances;
 
-        // 寫回畫面上
         document.getElementById('deduct-subtotal').innerText = totalDeduct;
         document.getElementById('net-salary').innerText = netSalary;
-        document.getElementById('subtotal-add').innerText = totalAllowances + baseSalary; // 對應原本表格邏輯
+        document.getElementById('subtotal-add').innerText = totalAllowances + baseSalary;
         document.getElementById('total-final').innerText = finalTotal;
     }
 
-    // 畫面載入時先計算一次
-    window.onload = calculate;
+    window.onload = loadTeacherData;
 </script>
 
 </body>
