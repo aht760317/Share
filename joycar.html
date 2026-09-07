@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JOYCAR - 雲林縣國小學童專車與路線調度系統</title>
+    <title>JOYCAR - 斗六顧德補習班專車與搭車調度系統</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Leaflet CSS (地圖樣式) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 420px; width: 100%; border-radius: 1rem; }
+        #map { height: 450px; width: 100%; border-radius: 1rem; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans">
@@ -20,10 +20,10 @@
             <div>
                 <div class="flex items-center gap-2 mb-2">
                     <span class="bg-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">JOYCAR Dispatch</span>
-                    <span class="text-xs text-slate-300">雲林縣國小學生專車內部調度管理系統</span>
+                    <span class="text-xs text-slate-300">斗六顧德補習班專車獨立調度系統</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🚐 顧德搭車系統 - 路線、學校與司機管理</h1>
-                <p class="text-slate-300 text-sm mt-1">整合雲林縣國小據點、車號司機配置、學生搭車名單與地圖視覺化</p>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🚐 專車搭車與路線地圖調度</h1>
+                <p class="text-slate-300 text-sm mt-1">獨立管理搭車學生、指定車號路線、對應雲林縣學校與地圖視覺化</p>
             </div>
             <!-- 快速統計數據 -->
             <div class="flex gap-3">
@@ -32,7 +32,7 @@
                     <p id="totalCount" class="text-xl font-bold text-white">0</p>
                 </div>
                 <div class="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-xl text-center">
-                    <p class="text-xs text-slate-300">營運車次/司機</p>
+                    <p class="text-xs text-slate-300">營運車次</p>
                     <p id="driverCount" class="text-xl font-bold text-emerald-400">0</p>
                 </div>
             </div>
@@ -41,23 +41,23 @@
         <!-- 功能分頁切換按鈕 -->
         <div class="flex gap-2 mb-6">
             <button onclick="switchTab('students')" id="tabBtnStudents" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition">
-                📋 學生搭車與路線調度
+                📋 搭車學生名冊與調度
             </button>
             <button onclick="switchTab('settings')" id="tabBtnSettings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition">
-                ⚙️ 學校與司機設定專區
+                ⚙️ 學校與司機車號設定
             </button>
         </div>
 
-        <!-- ================= 區塊一：學生搭車與調度主畫面 ================= -->
+        <!-- ================= 區塊一：搭車學生與調度主畫面 ================= -->
         <div id="sectionStudents" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             
             <!-- 左側操作與學生清單 (佔 2 欄) -->
             <div class="lg:col-span-2 space-y-6">
                 
-                <!-- 新增學生與快速篩選列 -->
+                <!-- 篩選與新增列 -->
                 <div class="bg-white rounded-2xl p-5 shadow-md space-y-4">
                     <div class="flex justify-between items-center border-b pb-3">
-                        <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider">📋 學生搭車名單管理</h2>
+                        <h2 class="font-bold text-slate-700 text-sm uppercase tracking-wider">📋 搭車學員總清單</h2>
                         <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shadow">
                             ＋ 新增搭車學生
                         </button>
@@ -71,7 +71,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">依車號/司機篩選</label>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">依車號篩選</label>
                             <select id="filterBus" onchange="filterData()" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                                 <option value="">全部車號</option>
                             </select>
@@ -86,8 +86,8 @@
                 <!-- 學生表格清單 -->
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-                        <h2 class="font-bold text-slate-700">乘車名細與車號對應表</h2>
-                        <span class="text-xs text-slate-400">點擊修改可重新指定路線與司機</span>
+                        <h2 class="font-bold text-slate-700">乘車明細與車號指派表</h2>
+                        <span class="text-xs text-slate-400">點擊修改可隨時變更接送車號</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -117,7 +117,7 @@
                     </div>
                     <!-- Leaflet 地圖容器 -->
                     <div id="map"></div>
-                    <p class="text-xs text-slate-400 mt-3 text-center">地圖自動標記學生住家與學校位置分佈</p>
+                    <p class="text-xs text-slate-400 mt-3 text-center">自動標記搭車學生住家與學校位置分佈</p>
                 </div>
             </div>
 
@@ -199,7 +199,7 @@
         </div>
     </div>
 
-    <!-- 視窗：新增學生 -->
+    <!-- 視窗：新增搭車學生 -->
     <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <h3 class="text-lg font-bold text-slate-800 mb-4">新增搭車學生資料</h3>
@@ -216,7 +216,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">住家地址</label>
-                    <input type="text" id="addAddress" placeholder="例如: 雲林縣大埤鄉大同路10號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="addAddress" placeholder="例如: 雲林縣斗六市大同路10號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">指派車號與司機</label>
@@ -239,11 +239,11 @@
             <div class="space-y-3 mb-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">學校名稱</label>
-                    <input type="text" id="newSchoolName" placeholder="例如: 雲林縣斗南國小" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
+                    <input type="text" id="newSchoolName" placeholder="例如: 雲林縣斗六國小" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">學校地址</label>
-                    <input type="text" id="newSchoolAddress" placeholder="例如: 雲林縣斗南鎮文昌路150號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
+                    <input type="text" id="newSchoolAddress" placeholder="例如: 雲林縣斗六市文昌路150號" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm">
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
@@ -277,31 +277,34 @@
     <!-- 引入 Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. 學校資料庫
-        let schoolDatabase = [
-            { id: 1, name: "大埤國小", address: "雲林縣大埤鄉中山路15號" },
-            { id: 2, name: "斗南國小", address: "雲林縣斗南鎮文昌路150號" },
-            { id: 3, name: "虎尾國小", address: "雲林縣虎尾鎮林森路二段250號" },
-            { id: 4, name: "興昌國小", address: "雲林縣大埤鄉興昌村20號" }
+        // 預設資料或從 localStorage 讀取
+        let schoolDatabase = JSON.parse(localStorage.getItem('joycar_schools')) || [
+            { id: 1, name: "斗六國小", address: "雲林縣斗六市府前街83號" },
+            { id: 2, name: "雲林國小", address: "雲林縣斗六市大學路三段120號" },
+            { id: 3, name: "鎮南國小", address: "雲林縣斗六市鎮南路100號" },
+            { id: 4, name: "鎮東國小", address: "雲林縣斗六市文化路180號" },
+            { id: 5, name: "大埤國小", address: "雲林縣大埤鄉中山路15號" }
         ];
 
-        // 2. 司機與車號資料庫
-        let driverDatabase = [
+        let driverDatabase = JSON.parse(localStorage.getItem('joycar_drivers')) || [
             { id: 1, busNo: "KAA-8888", driverInfo: "林大哥 (0911-111222)" },
             { id: 2, busNo: "KBB-6666", driverInfo: "王大哥 (0922-333444)" },
             { id: 3, busNo: "KCC-9999", driverInfo: "黃大姐 (0933-555666)" }
         ];
 
-        // 3. 學生搭車資料庫
-        let studentDatabase = [
-            { id: 1, name: "王小明", school: "大埤國小", address: "雲林縣大埤鄉中山路15號", busNumber: "KAA-8888", lat: 23.6335, lng: 120.4350 },
-            { id: 2, name: "李小華", school: "斗南國小", address: "雲林縣斗南鎮中正路100號", busNumber: "KAA-8888", lat: 23.6820, lng: 120.4780 },
-            { id: 3, name: "張大為", school: "虎尾國小", address: "雲林縣虎尾鎮林森路二段250號", busNumber: "KBB-6666", lat: 23.7080, lng: 120.4310 },
-            { id: 4, name: "陳美玲", school: "興昌國小", address: "雲林縣大埤鄉興昌村20號", busNumber: "KCC-9999", lat: 23.6200, lng: 120.4500 }
+        let studentDatabase = JSON.parse(localStorage.getItem('joycar_students')) || [
+            { id: 1, name: "王小明", school: "斗六國小", address: "斗六市鎮南路100號", busNumber: "KAA-8888", lat: 23.7078, lng: 120.5433 },
+            { id: 2, name: "李小華", school: "雲林國小", address: "斗六市大學路三段120號", busNumber: "KBB-6666", lat: 23.6950, lng: 120.5460 }
         ];
 
-        // 初始化 Leaflet 地圖
-        const map = L.map('map').setView([23.6700, 120.4500], 12);
+        function saveData() {
+            localStorage.setItem('joycar_schools', JSON.stringify(schoolDatabase));
+            localStorage.setItem('joycar_drivers', JSON.stringify(driverDatabase));
+            localStorage.setItem('joycar_students', JSON.stringify(studentDatabase));
+        }
+
+        // 初始化 Leaflet 地圖 (以斗六市中心為視圖)
+        const map = L.map('map').setView([23.7078, 120.5433], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -321,7 +324,7 @@
                 secSettings.classList.add('hidden');
                 btnStudents.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow transition";
                 btnSettings.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-slate-600 hover:bg-slate-200 shadow transition";
-                invalidateMapSize();
+                setTimeout(() => { map.invalidateSize(); }, 200);
             } else {
                 secStudents.classList.add('hidden');
                 secSettings.classList.remove('hidden');
@@ -331,11 +334,7 @@
             }
         }
 
-        function invalidateMapSize() {
-            setTimeout(() => { map.invalidateSize(); }, 200);
-        }
-
-        // 更新下拉選單選項
+        // 更新下拉選單
         function updateSelectOptions() {
             const filterSchool = document.getElementById('filterSchool');
             const filterBus = document.getElementById('filterBus');
@@ -343,7 +342,6 @@
             const addBusNumber = document.getElementById('addBusNumber');
             const editBusNumber = document.getElementById('editBusNumber');
 
-            // 保持原本選取值
             const currentFilterSchool = filterSchool.value;
             const currentFilterBus = filterBus.value;
 
@@ -368,7 +366,6 @@
 
         // 渲染設定區表格
         function renderSettingsTables() {
-            // 學校表格
             const schoolTbody = document.getElementById('schoolTableBody');
             schoolTbody.innerHTML = '';
             schoolDatabase.forEach(s => {
@@ -383,7 +380,6 @@
                 `;
             });
 
-            // 司機表格
             const driverTbody = document.getElementById('driverTableBody');
             driverTbody.innerHTML = '';
             driverDatabase.forEach(d => {
@@ -420,7 +416,7 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">沒有符合條件的學生搭車資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">目前尚無搭車學生資料</td></tr>`;
                 return;
             }
 
@@ -446,6 +442,7 @@
                         <button onclick="openEditModal(${item.id})" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 p-2 rounded-xl text-xs font-medium transition border border-slate-200">
                             ✏️ 修改車號
                         </button>
+                        <button onclick="deleteStudent(${item.id})" class="text-rose-500 hover:text-rose-700 text-xs font-bold ml-2">刪除</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -488,7 +485,15 @@
             const newBus = document.getElementById('editBusNumber').value;
             const student = studentDatabase.find(s => s.id === id);
             if (student) student.busNumber = newBus;
+            saveData();
             closeEditModal();
+            filterData();
+        }
+
+        function deleteStudent(id) {
+            if(!confirm('確定要從搭車名單中移除這位學生嗎？')) return;
+            studentDatabase = studentDatabase.filter(s => s.id !== id);
+            saveData();
             filterData();
         }
 
@@ -510,9 +515,10 @@
             const newId = studentDatabase.length > 0 ? Math.max(...studentDatabase.map(s => s.id)) + 1 : 1;
             studentDatabase.push({
                 id: newId, name, school, address, busNumber,
-                lat: 23.6300 + (Math.random() * 0.08),
-                lng: 120.4200 + (Math.random() * 0.08)
+                lat: 23.7000 + (Math.random() * 0.04),
+                lng: 120.5300 + (Math.random() * 0.04)
             });
+            saveData();
             closeAddModal();
             filterData();
         }
@@ -525,12 +531,14 @@
             const address = document.getElementById('newSchoolAddress').value.trim();
             if(!name) { alert('請填寫學校名稱'); return; }
             schoolDatabase.push({ id: Date.now(), name, address });
+            saveData();
             closeSchoolModal();
             updateSelectOptions();
             renderSettingsTables();
         }
         function deleteSchool(id) {
             schoolDatabase = schoolDatabase.filter(s => s.id !== id);
+            saveData();
             updateSelectOptions();
             renderSettingsTables();
         }
@@ -542,16 +550,18 @@
             const driverInfo = document.getElementById('newDriverInfo').value.trim();
             if(!busNo) { alert('請填寫車號'); return; }
             driverDatabase.push({ id: Date.now(), busNo, driverInfo });
+            saveData();
             closeDriverModal();
             updateSelectOptions();
             renderSettingsTables();
-            renderTable(studentDatabase);
+            filterData();
         }
         function deleteDriver(id) {
             driverDatabase = driverDatabase.filter(d => d.id !== id);
+            saveData();
             updateSelectOptions();
             renderSettingsTables();
-            renderTable(studentDatabase);
+            filterData();
         }
 
         // 頁面初始化
