@@ -1137,7 +1137,12 @@
         // 2. 預設模式（所有原有學生）：依照課程原本的上課日全勤到班
         const allCourses = getAllCoursesList();
         const courseObj = allCourses.find(c => c.name === courseName);
-        if (!courseObj || !courseObj.day) return true;
+        
+        if (!courseObj) return true;
+        // 如果課程上課星期為空（完全未勾選），代表無限期保留/停課中，不排入點名
+        if (courseObj.day === '') return false;
+        if (courseObj.day === undefined || courseObj.day === null) return true;
+        
         return courseObj.day.includes(dayName) || courseObj.day.includes(dayName.replace('星期', '週'));
     }
 
@@ -1199,10 +1204,10 @@
 
     function getSelectedDaysFromWrapper(wrapperId) {
         const wrapper = document.getElementById(wrapperId);
-        if (!wrapper) return '星期一';
+        if (!wrapper) return '';
         const checkedBoxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
         const list = Array.from(checkedBoxes).map(cb => cb.value);
-        return list.length > 0 ? list.join('、') : '星期一';
+        return list.join('、');
     }
 
     async function initCloudData() {
@@ -1425,7 +1430,7 @@
                             <span style="font-size:11px; font-weight:bold; color:${deptBadge}; border:1px solid ${deptBadge}; padding:2px 6px; border-radius:4px;">${deptName}</span>
                         </div>
                         <div style="font-size:15px; font-weight:bold; color:var(--primary); margin:6px 0 3px;">🏫 ${cName}</div>
-                        <div style="font-size:12px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay}</b></div>
+                        <div style="font-size:12px; color:#555;">授課：<b>${cTeacher}</b> | <b>${cDay || '無排課(保留)'}</b></div>
                         <div style="font-size:11.5px; color:#777; margin-top:2px;">時段：${cTime}</div>
                         <div style="font-size:12px; color:#666; margin-top:4px;">修課學生：<b>${stuCount}</b> 人</div>
                     </div>
@@ -2392,7 +2397,7 @@
 
     window.openAddClassModal = function() {
         document.getElementById('m_new_class_name').value = '';
-        renderDayCheckboxes('m_new_class_days_wrapper', '星期一');
+        renderDayCheckboxes('m_new_class_days_wrapper', '');
         document.getElementById('m_new_class_time').value = '';
         document.getElementById('m_new_class_teacher').value = '';
         document.getElementById('addClassModal').style.display = 'flex';
@@ -2435,7 +2440,7 @@
                 list.push({
                     dept: dept,
                     name: name,
-                    day: typeof c === 'object' ? (c.day || '') : '',
+                    day: typeof c === 'object' ? (c.day !== undefined ? c.day : '') : '',
                     time: typeof c === 'object' ? (c.time || '') : '',
                     teacher: typeof c === 'object' ? (c.teacher || '') : '',
                     startDate: (typeof c === 'object' && c.startDate) ? c.startDate : defaultStart,
@@ -2485,7 +2490,7 @@
 
         const allCourses = getAllCoursesList();
         const mode = window.state.courseFilterMode || 'today';
-        const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+        const todayCourses = allCourses.filter(c => c.day && (c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'))));
 
         let filteredCourses = [];
         if (mode === 'today') filteredCourses = todayCourses;
@@ -2501,7 +2506,7 @@
         }
 
         filteredCourses.forEach(c => {
-            const isToday = c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'));
+            const isToday = c.day && (c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
             const deptLabel = c.dept === 'care' ? '課輔部' : (c.dept === 'elementary' ? '國小部' : '國中部');
             const deptColor = c.dept === 'care' ? '#e0f2fe' : (c.dept === 'elementary' ? '#dcfce7' : '#fef3c7');
             const deptTxt = c.dept === 'care' ? '#0369a1' : (c.dept === 'elementary' ? '#15803d' : '#b45309');
@@ -2749,7 +2754,7 @@
         const dayIdx = curDate.getDay();
         const curDayName = WEEK_NAMES[dayIdx];
         const allCourses = getAllCoursesList();
-        const todayCourses = allCourses.filter(c => c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週')));
+        const todayCourses = allCourses.filter(c => c.day && (c.day.includes(curDayName) || c.day.includes(curDayName.replace('星期', '週'))));
 
         let unassignedClasses = [];
         let absentStudentsList = [];
@@ -3181,7 +3186,7 @@
                 html += `<tr>
                     <td><b>${c.name}</b></td>
                     <td>${deptName}</td>
-                    <td style="font-size:12px; color:#555;">${c.day || '未設定'}</td>
+                    <td style="font-size:12px; color:#555;">${c.day || '未設定(無排課)'}</td>
                     <td>
                         <input type="date" value="${c.startDate || ''}" onchange="updateCourseDate('${c.dept}', '${c.name}', 'startDate', this.value)" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:115px; margin:0; font-size:13px;">
                     </td>
