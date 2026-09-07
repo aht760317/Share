@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顧德與佳音文教 - 招生雲端管理與安心橋親師平台</title>
-    <!-- 引入 SortableJS 支援手機與電腦的滑順拖曳排序 -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <title>顧德與佳音文教 - 櫃台全日 SOP 時段管理看板 (雲端同步版)</title>
     <style>
         :root {
             --primary-color: #0F172A;
@@ -21,1836 +19,368 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-main); padding: 0.75rem; padding-bottom: 2rem; font-size: 0.92rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding: 0.85rem; padding-bottom: 2rem; font-size: 0.92rem; }
+        .container { max-width: 1320px; margin: 0 auto; }
         
-        .page-header { margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
-        .page-header h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
-        .page-header p { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.15rem; }
-
-        /* 網頁版導覽列樣式 (預設) */
-        .tab-nav { 
-            background: #ffffff; 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 0.5rem; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border-color);
-            gap: 0.5rem;
+        .header-bar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: var(--bg-card); padding: 1rem 1.25rem; border-radius: 0.5rem; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1rem; border: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 0.75rem;
         }
-        .tab-btn { 
-            background: #F1F5F9; 
-            border: 1px solid var(--border-color); 
-            padding: 0.6rem 1rem; 
-            border-radius: 0.4rem; 
-            font-weight: 700; 
-            cursor: pointer; 
-            color: var(--text-muted); 
-            transition: all 0.2s; 
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            flex: 1;
-        }
-        .tab-btn:hover { background: #E2E8F0; color: var(--primary-color); }
-        .tab-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
-
-        /* 手機版專屬樣式：自動將導覽列置底固定 */
-        @media (max-width: 768px) {
-            body {
-                padding-bottom: 5.5rem;
-            }
-            .tab-nav {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                z-index: 999;
-                margin-bottom: 0;
-                border-radius: 0;
-                border-top: 1px solid var(--border-color);
-                border-left: none;
-                border-right: none;
-                border-bottom: none;
-                padding: 0.4rem 0.25rem;
-                padding-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px));
-                background: rgba(255, 255, 255, 0.98);
-                backdrop-filter: blur(10px);
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-                gap: 0.3rem;
-            }
-            .tab-btn {
-                flex-direction: column;
-                gap: 0.15rem;
-                padding: 0.35rem 0.2rem;
-                font-size: 0.75rem;
-                border-radius: 0.35rem;
-            }
-            .tab-btn span:first-child {
-                font-size: 1.15rem;
-            }
-        }
-
-        .card { background: var(--bg-card); border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 1.1rem; margin-bottom: 1rem; }
-        .card h3 { font-size: 1.15rem; margin-bottom: 1rem; color: var(--accent-color); display: flex; align-items: center; gap: 0.4rem; font-weight: 700; }
+        .header-title h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
+        .header-title p { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.15rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .current-time { font-size: 1.35rem; font-weight: 700; color: var(--accent-color); font-variant-numeric: tabular-nums; }
         
-        .btn { background-color: var(--accent-color); color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.3rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; width: 100%; }
-        .btn:hover { opacity: 0.9; }
-        .btn-success { background-color: var(--success-color); color: white; }
-        .btn-warning { background-color: var(--warning-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-secondary { background-color: #64748b; color: white; }
-        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; width: auto; }
+        .date-picker-box { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+        .date-picker-box input { padding: 0.35rem 0.6rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; background: #fff; }
+        .sync-badge { font-size: 0.78rem; padding: 0.25rem 0.6rem; border-radius: 9999px; background: #D1FAE5; color: #065F46; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem; }
+
+        .main-layout { display: flex; gap: 1rem; }
+        .left-panel { flex: 7; background: var(--bg-card); padding: 1.1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border-color); }
+        .right-panel { flex: 3; background: var(--bg-card); padding: 1.1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border-color); height: fit-content; }
         
-        #trackingCardContainer { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.75rem; min-height: 80px; }
-        .tracking-block { background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--accent-color); border-radius: 0.4rem; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: relative; cursor: grab; user-select: none; }
-        .tracking-block:active { cursor: grabbing; }
-        .tracking-block.dragging { opacity: 0.5; background: #E0E7FF; border: 2px dashed var(--accent-color); }
-
-        .block-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; pointer-events: none; }
-        .block-header * { pointer-events: auto; } 
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.65rem; margin-bottom: 0.85rem; }
+        h2 { font-size: 1.05rem; color: var(--accent-color); font-weight: 700; }
         
-        .block-title { font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
-        .block-top-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-
-        .block-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; font-size: 0.9rem; margin-bottom: 0.75rem; }
-        .block-footer { background: #F8FAFC; padding: 0.6rem; border-radius: 0.3rem; border: 1px solid var(--border-color); font-size: 0.85rem; line-height: 1.4; }
-
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.4rem; min-width: 850px; }
-        th, td { padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
-        th { background-color: #F1F5F9; color: var(--text-muted); font-weight: 700; font-size: 0.92rem; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 0.88rem; vertical-align: middle; }
+        th { background-color: #F1F5F9; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+        .done { text-decoration: line-through; color: #94A3B8; background-color: #F8FAFC; }
         
-        .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; }
-        .badge-line { background: #D1FAE5; color: #065F46; }
-        .badge-enrolled { background: #D1FAE5; color: #065F46; }
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-processing { background: #e0f2fe; color: #0369a1; }
-        .badge-review { background: #ede9fe; color: #6d28d9; }
-        .badge-approved { background: #dcfce7; color: #166534; }
-        .badge-rejected { background: #fee2e2; color: #991b1b; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 0.75rem; }
-        .modal-content { background: white; padding: 1.25rem; border-radius: 0.5rem; width: 100%; max-width: 680px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
-        .modal-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
+        .badge { padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 700; display: inline-block; white-space: nowrap; }
+        .badge-clean { background-color: #FEF3C7; color: #B45309; }
+        .badge-elem { background-color: #E0E7FF; color: #3730A3; }
+        .badge-mid { background-color: #DCFCE7; color: #166534; }
+        .badge-urgent { background-color: #FEE2E2; color: #991B1B; }
+        .badge-fixed { background-color: #F1F5F9; color: #64748B; font-size: 0.7rem; margin-left: 0.3rem; padding: 0.1rem 0.35rem; border-radius: 3px; }
         
-        /* 表單三欄排版樣式 */
-        .form-three-col-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.85rem;
-            margin-bottom: 0.85rem;
-        }
+        .form-group { margin-bottom: 0.85rem; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--accent-color); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; background: #fff; }
+        .checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--text-main); }
+        .checkbox-label input { width: auto; }
 
-        @media (max-width: 768px) {
-            .form-three-col-row {
-                grid-template-columns: 1fr;
-                gap: 0.65rem;
-            }
-        }
+        .btn { border: none; border-radius: 0.3rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-add { background-color: var(--accent-color); color: white; padding: 0.65rem; width: 100%; font-size: 0.9rem; }
+        .btn-del { background-color: var(--danger-color); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .btn-reset { background-color: #64748B; color: white; padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+        
+        .timestamp { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+        .time-alert { color: var(--danger-color); font-weight: 700; animation: blink 1.2s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
 
-        .form-block-item { background: #F8FAFC; border: 1.2px solid var(--border-color); border-radius: 0.4rem; padding: 0.75rem; }
-        .form-block-item label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.35rem; }
-        .form-block-item input, .form-block-item select, .form-block-item textarea { width: 100%; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem; background: #ffffff; cursor: text; }
-        .form-block-item select { height: 40px; }
-
-        .form-blocks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
-
-        @keyframes pulseAlert {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        @keyframes pulseYellow {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
-            50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
-        .new-alert-banner {
-            display: none;
-            background-color: var(--danger-color);
-            color: white;
-            padding: 0.75rem;
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border-radius: 0.4rem;
-            margin-bottom: 0.75rem;
-            animation: pulseAlert 2s infinite;
-            cursor: pointer;
-        }
-
-        .bridge-alert-banner {
-            display: none;
-            background-color: var(--warning-color);
-            color: white;
-            padding: 0.75rem;
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border-radius: 0.4rem;
-            margin-bottom: 1rem;
-            animation: pulseYellow 2s infinite;
-            cursor: pointer;
-        }
-
-        .btn-solid-yellow {
-            background-color: #F59E0B;
-            color: white;
-            font-weight: 700;
-            border: none;
-            transition: opacity 0.2s;
-        }
-        .btn-solid-yellow:hover { opacity: 0.85; }
-
-        .single-stats-bar {
-            background: white;
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            border-left: 4px solid var(--accent-color);
-        }
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.9rem;
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
+            .header-bar { flex-direction: column; align-items: flex-start; }
+            .header-right { width: 100%; justify-content: space-between; margin-top: 0.5rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- 提醒條 -->
-        <div id="newInquiryAlert" class="new-alert-banner" onclick="document.getElementById('navBtnInquiry').click()">
-            🚨 提醒：有新同學問班資料進來了！點擊此處前往「新同學問班」查看處理。
+<div class="container">
+    <div class="header-bar">
+        <div class="header-title">
+            <h1>顧德與佳音文教 - 櫃台全日 SOP 時段管理看板</h1>
+            <p>即時雲端雙向連線：安親班接送、補課安排、聯絡簿跟催、訂餐與國中部出勤追蹤</p>
         </div>
-        <div id="bridgeIssueAlert" class="bridge-alert-banner" onclick="document.getElementById('navBtnBridge').click()">
-            黃色注意：有新的家長反應或老師回報事項（安心橋）待處理！點擊此處前往處理。
+        <div class="header-right">
+            <div class="date-picker-box">
+                <span>📅 日期：</span>
+                <input type="date" id="currentDate">
+            </div>
+            <div id="syncIndicator" class="sync-badge">☁️ 雲端同步連線中</div>
+            <div class="current-time" id="clock">00:00:00</div>
         </div>
+    </div>
 
-        <div class="page-header">
-            <div>
-                <h1>顧德與佳音文教 - 招生進班與親師「安心橋」系統</h1>
-                <p>親師安心橋平台、新資料匯入、尚未進班區塊化追蹤、正式進班與獎金雲端管理</p>
+    <div class="main-layout">
+        <!-- 左側：排程清單 -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <h2>📋 <span id="displayDateTitle">今日</span> 櫃台標準作業清單</h2>
+                <button class="btn btn-reset" id="resetDefaultBtn">載入完整預設 SOP (主任)</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="45">確認</th>
+                            <th width="85">時段</th>
+                            <th width="90">類別</th>
+                            <th>SOP 任務項目與細節說明</th>
+                            <th width="130">執行紀錄</th>
+                            <th width="45">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody"></tbody>
+                </table>
             </div>
         </div>
 
-        <!-- 切換導覽列 (手機自動固定於底部，電腦維持上方) -->
-        <div class="tab-nav">
-            <button id="navBtnBridge" class="tab-btn active" onclick="switchTab('bridgeTab', this)"><span>🌉</span> <span>安心橋平台</span></button>
-            <button id="navBtnInquiry" class="tab-btn" onclick="switchTab('newInquiryTab', this)"><span>✨</span> <span>新同學問班</span></button>
-            <button class="tab-btn" onclick="switchTab('trackingTab', this)"><span>📋</span> <span>尚未進班</span></button>
-            <button class="tab-btn" onclick="switchTab('enrolledTab', this)"><span>🎓</span> <span>正式進班</span></button>
-        </div>
-
-        <!-- 頁面零：「安心橋」親師處理平台 -->
-        <div id="bridgeTab" class="tab-content active">
-            <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                <div>
-                    <h2 style="font-size: 1.1rem; color: var(--accent-color); margin-bottom: 0.15rem;">🌉 「安心橋」親師處理與主任批考平台</h2>
-                    <p style="color: var(--text-muted); font-size: 0.82rem;">即時記錄家長反應與老師處理進度，並透過主任審核把關營造最安心的教學品質。</p>
+        <!-- 右側：主任派工面板 -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <h2>⚙️ 主任派工與 SOP 設定</h2>
+            </div>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="taskTime">執行時段 (HH:MM)</label>
+                    <input type="time" id="taskTime" required value="12:30">
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <label for="currentRole" style="font-weight: 600; color: var(--text-muted); font-size: 0.85rem;">身份切換：</label>
-                    <select id="currentRole" onchange="switchBridgeRole()" style="padding: 0.35rem 0.5rem; border-radius: 0.3rem; border: 1px solid var(--border-color); font-weight: 600; font-size: 0.85rem;">
-                        <option value="teacher">👩‍🏫 老師 / 櫃台端</option>
-                        <option value="director">👨‍⚖️ 主任審核端</option>
+                <div class="form-group">
+                    <label for="taskCategory">任務類別</label>
+                    <select id="taskCategory">
+                        <option value="elem">國小安親／佳音</option>
+                        <option value="mid">國中部作業</option>
+                        <option value="clean">環境清潔</option>
+                        <option value="urgent">重要交辦</option>
                     </select>
                 </div>
-            </div>
-
-            <!-- 單一統計列 -->
-            <div class="single-stats-bar">
-                <div class="stat-item">
-                    <span style="font-weight: 700; color: var(--danger-color);">待處理</span>
-                    <strong id="statPendingSummary" style="color: var(--danger-color);">佳音 0 件 ｜ 顧德 0 件</strong>
+                <div class="form-group">
+                    <label for="taskDesc">SOP 項目內容說明</label>
+                    <textarea id="taskDesc" rows="3" placeholder="請輸入作業項目說明..." required></textarea>
                 </div>
-                <div class="stat-item" style="border-left: 1px solid var(--border-color); padding-left: 0.75rem;">
-                    <span style="font-weight: 700; color: var(--accent-color);">已退回</span>
-                    <strong id="statRejectedSummary" style="color: var(--accent-color);">佳音 0 件 ｜ 顧德 0 件</strong>
-                </div>
-                <div class="stat-item" style="border-left: 1px solid var(--border-color); padding-left: 0.75rem;">
-                    <span style="font-weight: 700; color: var(--text-muted);">待主任批考</span>
-                    <strong id="bridgeStatReview" style="color: var(--text-main);">0 件</strong>
-                </div>
-                <div class="stat-item" style="border-left: 1px solid var(--border-color); padding-left: 0.75rem;">
-                    <span style="font-weight: 700; color: var(--text-muted);">已結案批考</span>
-                    <strong id="bridgeStatApproved" style="color: var(--text-main);">0 件</strong>
-                </div>
-            </div>
-
-            <!-- 📋 安心橋尚未結案追蹤清單 -->
-            <div class="card" style="border: 1.5px solid var(--accent-color);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0;">📋 安心橋尚未結案追蹤清單 (處理中 / 待批考)</h3>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">狀態篩選：</label>
-                        <select id="bridgeFilterStatus" onchange="renderBridgeTable()" style="padding: 5px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.85rem;">
-                            <option value="all">全部尚未結案</option>
-                            <option value="pending">待處理</option>
-                            <option value="processing">處理中</option>
-                            <option value="pending_review">待主任批考</option>
-                            <option value="rejected">已退回 (需重新聯繫)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>編號 / 時間</th>
-                                <th>分校 / 班級</th>
-                                <th>學生姓名</th>
-                                <th>家長與分類</th>
-                                <th>負責 / 處理老師</th>
-                                <th>問題描述</th>
-                                <th>處理狀況 / 解決方案</th>
-                                <th>目前狀態</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bridgeTableBody" style="font-size: 0.9rem;"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 老師端：新增家長問題表單 -->
-            <div class="card" id="newBridgeIssueCard" style="background-color: #FFF1F2; border: 1.5px solid #FECDD3; padding: 1.1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <h3 style="color: #1E3A8A; margin-bottom: 0; font-size: 1.1rem; font-weight: 700;">📝 登記新的家長問題 / 老師反應</h3>
-                    <div style="display: flex; gap: 0.4rem; align-items: center;">
-                        <button type="button" class="btn btn-sm" style="background-color: #2563EB; color: white; font-size: 0.78rem; padding: 0.3rem 0.55rem;" onclick="openHistoryModal()">🔍 查詢已結案歷史</button>
-                        <button type="button" class="btn btn-sm" style="background-color: #0F172A; color: white; font-size: 0.78rem; padding: 0.3rem 0.55rem;" onclick="openAllHistoryModal()">📚 全部歷史檔案</button>
-                    </div>
-                </div>
-                <form id="bridgeIssueForm" onsubmit="handleBridgeFormSubmit(event)">
-                    <!-- 第一行：分校別、詢問/就讀班級、問題分類 -->
-                    <div class="form-three-col-row">
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">分校別</label>
-                            <select id="bridgeClassName" required style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                                <option value="顧德補習班">顧德補習班</option>
-                                <option value="佳音英語斗六校">佳音英語斗六校</option>
-                            </select>
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">詢問/就讀班級</label>
-                            <select id="bridgeStudentClass" required style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                                <option value="">載入班級中...</option>
-                            </select>
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">問題分類</label>
-                            <select id="bridgeIssueCategory" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                                <option value="課業學習">課業學習</option>
-                                <option value="生活常規">生活常規</option>
-                                <option value="行政收費">行政收費</option>
-                                <option value="交通接送">交通接送</option>
-                                <option value="其他">其他</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 第二行：學生姓名、家長稱謂、負責老師 -->
-                    <div class="form-three-col-row">
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">學生姓名</label>
-                            <input type="text" id="bridgeStudentName" required placeholder="例如：吳典恩" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">家長稱謂</label>
-                            <input type="text" id="bridgeParentName" required placeholder="例如：吳爸爸" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                        </div>
-                        <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF;">
-                            <label style="color: #1E3A8A; font-weight: 700;">負責老師</label>
-                            <input type="text" id="bridgeAssignedTeacher" required placeholder="例如：王老師" style="background-color: #FFFFFF; color: #000000; font-weight: 600;">
-                        </div>
-                    </div>
-
-                    <div class="form-block-item" style="background-color: #FFF1F2; border-color: #FDA4AF; margin-bottom: 1rem;">
-                        <label style="color: #1E3A8A; font-weight: 700;">家長提出的問題描述與訴求</label>
-                        <textarea id="bridgeIssueContent" required rows="2" placeholder="請詳細記錄家長反應的狀況..." style="background-color: #FFFFFF; color: #000000; font-weight: 500;"></textarea>
-                    </div>
-                    <button type="submit" class="btn" style="background-color: #E11D48; color: white; padding: 0.6rem; font-size: 0.9rem; font-weight: 700;">送出問題單至安心橋</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- 頁面一：新同學問班 -->
-        <div id="newInquiryTab" class="tab-content">
-            <div class="card">
-                <h3>✨ 新同學問班列表 (待處理)</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">家長填寫表單後，資料會優先匯入至此。點擊「轉入追蹤」後，必須填寫負責老師才能順利轉入「尚未進班」追蹤看板。</p>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="color: var(--accent-color);">問班日期與時間</th>
-                                <th>學生姓名</th>
-                                <th>學校</th>
-                                <th>年級</th>
-                                <th>詢問者</th>
-                                <th>詢問課程 (家長勾選)</th>
-                                <th>聯絡電話</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inquiryTableBody" style="font-size: 0.9rem;"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 頁面二：尚未進班追蹤區塊看板 -->
-        <div id="trackingTab" class="tab-content">
-            <div class="card">
-                <h3>📊 招生追蹤區塊看板</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">可直接拖曳下方卡片改變排列順序。點擊「✏️ 完善資料」或「✓ 已通知」可更新最新狀態與試聽日期。</p>
-                <div id="trackingCardContainer"></div>
-            </div>
-        </div>
-
-        <!-- 頁面三：已正式進班名單 -->
-        <div id="enrolledTab" class="tab-content">
-            <div class="card">
-                <h3>🎓 已正式進班同學名單總表</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">主任確定學生已進班繳費後，可在此表格點擊「確認發放」來記錄獎金發放金額與理由。</p>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>姓名</th>
-                                <th>學校 / 年級</th>
-                                <th>預約課程</th>
-                                <th>電話</th>
-                                <th>進班日期</th>
-                                <th>狀態</th>
-                                <th>追蹤紀錄歷程 / 介紹人</th>
-                                <th>操作與獎金發放管理</th>
-                            </tr>
-                        </thead>
-                        <tbody id="enrolledTableBody" style="font-size: 0.9rem;"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 編輯 Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content" style="max-width: 680px;">
-            <div class="modal-header"><span id="editModalTitle" style="font-size: 1.05rem;">✏️ 記錄通知與完善招生資料</span><button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeEditModal()">&times;</button></div>
-            <form id="editForm">
-                <div class="form-blocks-grid">
-                    <div class="form-block-item">
-                        <label>學生姓名</label>
-                        <input type="text" id="editName">
-                    </div>
-                    <div class="form-block-item">
-                        <label>就讀學校</label>
-                        <input type="text" id="editSchool" placeholder="例如：斗六國小">
-                    </div>
-                    <div class="form-block-item">
-                        <label>就讀年級</label>
-                        <input type="text" id="editGrade" placeholder="例如：小五">
-                    </div>
-                    <div class="form-block-item">
-                        <label>詢問者</label>
-                        <input type="text" id="editInquirer">
-                    </div>
-                    
-                    <div class="form-block-item" style="grid-column: span 2; background: #FEF3C7; border-color: #F59E0B;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                            <label style="color: #B45309; margin-bottom: 0;">有意願課程 (可按 + 增加多科)</label>
-                            <button type="button" class="btn btn-sm" style="background-color: #D97706; color: white; padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="appendCourseSelectRow()">➕ 增加課程</button>
-                        </div>
-                        <div id="courseSelectsContainer" style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem;"></div>
-                        <input type="hidden" id="editCourse">
-                    </div>
-
-                    <div class="form-block-item">
-                        <label>聯絡電話</label>
-                        <input type="text" id="editPhone">
-                    </div>
-                    <div class="form-block-item">
-                        <label>預定試聽日期</label>
-                        <input type="date" id="editDate">
-                    </div>
-                    <div class="form-block-item">
-                        <label>目前狀態</label>
-                        <select id="editStatusSelect">
-                            <option value="初次諮詢">初次諮詢</option>
-                            <option value="預約試聽中">預約試聽中</option>
-                            <option value="試聽完成持續追蹤">試聽完成持續追蹤</option>
-                            <option value="已正式進班">已正式進班</option>
-                        </select>
-                    </div>
-                    <div class="form-block-item" style="border: 2px solid var(--accent-color); background: #EFF6FF;">
-                        <label style="color: var(--accent-color);">負責追蹤老師 (必填)</label>
-                        <input type="text" id="editTeacher" required placeholder="例如：陳老師">
-                    </div>
-                    <div class="form-block-item">
-                        <label>推薦人</label>
-                        <input type="text" id="editReferrer">
-                    </div>
-                </div>
-
-                <div class="form-block-item" style="margin-bottom: 0.85rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                        <label style="margin-bottom: 0;">追蹤紀錄歷程與多次聯繫 (可直接在此刪除或修改文字)</label>
-                        <button type="button" class="btn btn-sm btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.78rem;" onclick="appendNewContactRow()">➕ 增加聯繫紀錄</button>
-                    </div>
-                    <textarea id="editLogTextarea" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; resize: vertical; background: #FFF; line-height: 1.5;"></textarea>
-                    <div id="newContactsContainer" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;"></div>
-                </div>
-
-                <input type="hidden" id="editSource" value="LINE">
-                <div style="display: flex; gap: 0.4rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem;" onclick="deleteStudentRecord()">🗑️ 刪除</button>
-                    <div style="display: flex; gap: 0.4rem;">
-                        <button type="button" id="returnToTrackingBtn" class="btn btn-sm btn-warning" style="display: none; font-size: 0.85rem; color: white;" onclick="returnStudentToTracking()">↩️ 退回尚未進班</button>
-                        <button type="button" class="btn btn-sm" style="background-color: var(--text-muted); font-size: 0.85rem;" onclick="closeEditModal()">取消</button>
-                        <button type="button" class="btn btn-sm btn-success" style="font-size: 0.85rem;" onclick="saveEditModal()">儲存</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 獎金 Modal -->
-    <div id="bonusModal" class="modal">
-        <div class="modal-content" style="max-width: 480px;">
-            <div class="modal-header">
-                <span id="bonusModalTitle" style="font-size: 1.05rem;">🎁 確認發放推薦獎金</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeBonusModal()">&times;</button>
-            </div>
-            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.85rem;">請填寫本次發放的獎金金額與發放理由/備註：</p>
-            <div style="margin-bottom: 0.85rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-muted); font-size: 0.85rem;">發放金額 (元)</label>
-                <input type="number" id="bonusAmountInput" placeholder="例如：1000" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem;">
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-muted); font-size: 0.85rem;">發放理由 / 備註</label>
-                <textarea id="bonusReasonInput" rows="3" placeholder="例如：介紹新生入學推薦獎金..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem; resize: vertical;"></textarea>
-            </div>
-            <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
-                <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem;" onclick="closeBonusModal()">取消</button>
-                <button type="button" class="btn btn-sm btn-success" style="font-size: 0.85rem;" onclick="saveBonusRecord()">確認發放</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 查詢學生歷史 Modal -->
-    <div id="historyModal" class="modal">
-        <div class="modal-content" style="max-width: 550px;">
-            <div class="modal-header">
-                <span style="font-size: 1.05rem;">🔍 查詢學生已結案歷史問題</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeHistoryModal()">&times;</button>
-            </div>
-            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.75rem;">輸入學生姓名，即可快速調閱該生過去所有經主任審核通過的處理紀錄與親師對話。</p>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem;">
-                <input type="text" id="bridgeSearchStudentInput" placeholder="請輸入學生姓名 (例如：吳典恩)..." style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem;">
-                <button type="button" class="btn btn-sm" style="background-color: var(--accent-color); padding: 0.5rem 1rem;" onclick="searchApprovedBridgeStudent()">🔍 查詢</button>
-            </div>
-            <div id="bridgeSearchResultContainer" style="display: none; background: #F8FAFC; padding: 0.75rem; border-radius: 0.4rem; border: 1px solid var(--border-color); max-height: 350px; overflow-y: auto; font-size: 0.88rem;"></div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 0.85rem;">
-                <button type="button" class="btn btn-sm btn-secondary" onclick="closeHistoryModal()">關閉視窗</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 查看全部歷史檔案 Modal -->
-    <div id="allHistoryModal" class="modal">
-        <div class="modal-content" style="max-width: 750px;">
-            <div class="modal-header">
-                <span style="font-size: 1.05rem;">📚 安心橋全部已結案歷史檔案庫</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeAllHistoryModal()">&times;</button>
-            </div>
-            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.75rem;">以下為所有曾經結案的歷史檔案，點擊任一筆可查看大畫面。主任可勾選項目後進行批次退回或刪除。</p>
-            
-            <!-- 批次管理工具列 -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #F1F5F9; padding: 0.6rem 0.75rem; border-radius: 0.4rem; margin-bottom: 0.75rem; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; color: var(--primary-color);">
-                        <input type="checkbox" id="selectAllHistoryCheckbox" onchange="toggleSelectAllHistory(this.checked)"> 全選 / 取消全選
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="isFixedRoutine" checked> 
+                        設為 <strong>每日固定例行任務</strong> (每天自動出現)
                     </label>
-                    <span id="selectedHistoryCount" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">(已選 0 筆)</span>
                 </div>
-                <div style="display: flex; gap: 0.4rem;">
-                    <button type="button" class="btn btn-sm btn-warning" style="font-size: 0.8rem; color: white; padding: 0.3rem 0.6rem;" onclick="batchUnapproveWithPassword()">↩️ 勾選項目退回重審</button>
-                    <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem; background-color: #991B1B;" onclick="batchDeleteWithPassword()">🗑️ 勾選項目徹底刪除</button>
-                </div>
-            </div>
-
-            <div id="allHistoryContainer" style="background: #F8FAFC; padding: 0.75rem; border-radius: 0.4rem; border: 1px solid var(--border-color); max-height: 400px; overflow-y: auto; font-size: 0.88rem;"></div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 0.85rem;">
-                <button type="button" class="btn btn-sm btn-secondary" onclick="closeAllHistoryModal()">關閉視窗</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 檢視已結案歷史詳細內容 Modal -->
-    <div id="historyDetailModal" class="modal">
-        <div class="modal-content" style="max-width: 650px;">
-            <div class="modal-header">
-                <span style="font-size: 1.05rem;">📖 已結案歷史紀錄詳情</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeHistoryDetailModal()">&times;</button>
-            </div>
-            <div id="historyDetailContent" style="font-size: 0.92rem; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 0.4rem; border: 1px solid var(--border-color); margin-bottom: 1rem;"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                    <button type="button" id="unapproveBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem;" onclick="unapproveCase()">🔓 主任退回重批 (移回待批考)</button>
-                    <button type="button" id="deleteApprovedBtn" class="btn btn-sm btn-danger" style="display: none; font-size: 0.85rem; background-color: #991B1B;" onclick="deleteApprovedCase()">🗑️ 刪除案件</button>
-                </div>
-                <button type="button" class="btn btn-sm btn-secondary" style="margin-left: auto; font-size: 0.85rem;" onclick="closeHistoryDetailModal()">關閉</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 安心橋：老師填寫處理方式 Modal -->
-    <div class="modal" id="bridgeSolveModal">
-        <div class="modal-content" style="max-width: 650px;">
-            <div class="modal-header">
-                <span style="font-size: 1.05rem;">✍️ 填寫處理經過與解決方案</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeBridgeModal('bridgeSolveModal')">&times;</button>
-            </div>
-            <form id="bridgeSolveForm" onsubmit="handleBridgeSolveSubmit(event)">
-                <input type="hidden" id="bridgeSolveId">
-                <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 0.4rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.5;">
-                    <div id="bridgeSolveModalInfo"></div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
-                    <div>
-                        <label style="display: block; font-weight: 700; margin-bottom: 0.3rem; color: var(--accent-color); font-size: 0.82rem;">負責老師</label>
-                        <input type="text" id="bridgeAssignedTeacherDisplay" readonly style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; background: #F1F5F9; font-weight: 600; font-size: 0.9rem;">
-                    </div>
-                    <div>
-                        <label style="display: block; font-weight: 700; margin-bottom: 0.3rem; color: var(--accent-color); font-size: 0.82rem;">實際處理老師</label>
-                        <input type="text" id="bridgeSolverNameInput" required placeholder="例如：陳老師" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem; background: #fff;">
-                    </div>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-weight: 700; margin-bottom: 0.35rem; color: var(--accent-color); font-size: 0.82rem;">老師處理說明與解決方案</label>
-                    <textarea id="bridgeTeacherSolutionInput" required rows="3" placeholder="請說明已向家長溝通的內容、輔導方式或後續處理結果..." style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem;"></textarea>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem;" onclick="deleteBridgeIssue()">🗑️ 刪除此問題單</button>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem;" onclick="closeBridgeModal('bridgeSolveModal')">取消</button>
-                        <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.85rem;">送出交由主任批考</button>
-                    </div>
-                </div>
+                <button type="submit" class="btn btn-add">＋ 新增排程項目 (即時同步)</button>
             </form>
         </div>
     </div>
+</div>
 
-    <!-- 安心橋：主任批考審核 Modal -->
-    <div class="modal" id="bridgeReviewModal">
-        <div class="modal-content" style="max-width: 550px;">
-            <div class="modal-header">
-                <span style="font-size: 1.05rem;">👨‍⚖️ 主任批考審核</span>
-                <button style="background:none; border:none; font-size:1.1rem; cursor:pointer;" onclick="closeBridgeModal('bridgeReviewModal')">&times;</button>
-            </div>
-            <form id="bridgeReviewForm">
-                <input type="hidden" id="bridgeReviewId">
-                <div style="margin-bottom: 0.85rem;">
-                    <p id="bridgeReviewModalInfo" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; background: #F8FAFC; padding: 0.6rem; border-radius: 0.3rem; border: 1px solid var(--border-color);"></p>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; color: var(--accent-color); font-size: 0.85rem;">主任批考評語與指導</label>
-                    <textarea id="bridgeDirectorCommentInput" rows="2" placeholder="輸入批考意見、結案指示或退回原因..." style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.9rem;"></textarea>
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem;" onclick="closeBridgeModal('bridgeReviewModal')">取消</button>
-                    <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem;" onclick="submitBridgeReviewAction('rejected')">退回修改</button>
-                    <button type="button" class="btn btn-sm btn-success" style="font-size: 0.85rem;" onclick="submitBridgeReviewAction('approved')">批考通過 (結案)</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<!-- 採用與您系統一致的 Firebase 10.8.0 模組化架構 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <!-- Firebase 模組 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // 使用您既有的 Firebase 專案配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
+        authDomain: "my-project-9999-479215.firebaseapp.com",
+        projectId: "my-project-9999-479215",
+        storageBucket: "my-project-9999-479215.firebasestorage.app",
+        messagingSenderId: "1020162825898",
+        appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+    };
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
-            authDomain: "my-project-9999-479215.firebaseapp.com",
-            projectId: "my-project-9999-479215",
-            storageBucket: "my-project-9999-479215.firebasestorage.app",
-            messagingSenderId: "1020162825898",
-            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 主任權限驗證密碼
+    const DIRECTOR_PASSWORD = "0618";
+
+    // 13 項標準 SOP 預設範本
+    const defaultTasks = [
+        { id: "task_1", date: "fixed", time: "12:30", category: "clean", desc: "到補習班：打掃一樓公共區域、擦拭玻璃門窗、洗手間全面檢查與耗材補充", done: false, record: "未完成" },
+        { id: "task_2", date: "fixed", time: "12:30", category: "elem", desc: "打開官方 Line 統整放學接送名單，主動提醒老師接送學生相關事項", done: false, record: "未完成" },
+        { id: "task_3", date: "fixed", time: "13:30", category: "elem", desc: "整理昨天學生出缺席資料，聯繫昨日補習課程未到同學通知安排補課", done: false, record: "未完成" },
+        { id: "task_4", date: "fixed", time: "14:00", category: "elem", desc: "檢查昨日老師的日誌，尚未填寫日誌的老師主動提醒盡速補登", done: false, record: "未完成" },
+        { id: "task_5", date: "fixed", time: "14:30", category: "elem", desc: "審核老師已完成的日誌，尚未傳送者先協助老師傳送推播給家長", done: false, record: "未完成" },
+        { id: "task_6", date: "fixed", time: "15:30", category: "elem", desc: "再次查看官方 Line，核對並整理下午等等要接送的學生名單", done: false, record: "未完成" },
+        { id: "task_7", date: "fixed", time: "16:00", category: "elem", desc: "提醒搭車上佳音英語的同學，並至大門口導護學生進班與出班動線", done: false, record: "未完成" },
+        { id: "task_8", date: "fixed", time: "16:30", category: "elem", desc: "執行晚餐訂餐作業、彙整全體訂單", done: false, record: "未完成" },
+        { id: "task_9", date: "fixed", time: "16:40", category: "elem", desc: "學生點名、通知各班老師落實點名，查詢未到同學趕快致電連絡", done: false, record: "未完成" },
+        { id: "task_10", date: "fixed", time: "17:30", category: "elem", desc: "發餐：依照訂膳名冊發放學生晚餐，巡視用餐秩序", done: false, record: "未完成" },
+        { id: "task_11", date: "fixed", time: "18:15", category: "mid", desc: "國中生開始到班：確認教室設備與空調，提醒任課老師學生上課與點名", done: false, record: "未完成" },
+        { id: "task_12", date: "fixed", time: "18:30", category: "mid", desc: "國中生正式點名：核對各班到班名冊與實際人數", done: false, record: "未完成" },
+        { id: "task_13", date: "fixed", time: "18:45", category: "mid", desc: "國中部缺席追蹤：尚未到班同學必須打電話與 Line 詢問未到班原因", done: false, record: "未完成" }
+    ];
+
+    let cachedScheduleTasks = [];
+
+    function getTodayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    const currentDateInput = document.getElementById('currentDate');
+    currentDateInput.value = getTodayStr();
+
+    // 儲存至雲端 Firestore (路徑: settings/counterScheduleData)
+    async function saveScheduleCloud() {
+        try {
+            await setDoc(doc(db, "settings", "counterScheduleData"), { tasks: cachedScheduleTasks });
+        } catch (e) {
+            console.error("雲端儲存失敗：", e);
+        }
+    }
+
+    // 啟動 Firestore 即時監聽 (雙向無延遲同步)
+    function initRealtimeSync() {
+        const scheduleDocRef = doc(db, "settings", "counterScheduleData");
+        onSnapshot(scheduleDocRef, (docSnap) => {
+            if (docSnap.exists() && docSnap.data().tasks) {
+                cachedScheduleTasks = docSnap.data().tasks;
+            } else {
+                cachedScheduleTasks = [...defaultTasks];
+                saveScheduleCloud();
+            }
+            renderTable();
+        }, (error) => {
+            console.error("Firestore 即時監聽異常：", error);
+            document.getElementById('syncIndicator').innerText = "⚠️ 離線暫存模式";
+            document.getElementById('syncIndicator').style.background = "#FEE2E2";
+            document.getElementById('syncIndicator').style.color = "#991B1B";
+        });
+    }
+
+    // 渲染排程表格
+    function renderTable() {
+        const selectedDate = currentDateInput.value;
+        document.getElementById('displayDateTitle').textContent = (selectedDate === getTodayStr()) ? "今日" : selectedDate;
+
+        let currentTasks = cachedScheduleTasks.filter(t => t.date === 'fixed' || t.date === selectedDate);
+        currentTasks.sort((a, b) => a.time.localeCompare(b.time));
+
+        const tbody = document.getElementById('taskTableBody');
+        tbody.innerHTML = '';
+
+        if (currentTasks.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 25px;">當日無排程任務。</td></tr>`;
+            return;
+        }
+
+        currentTasks.forEach(task => {
+            const tr = document.createElement('tr');
+            if (task.done) tr.classList.add('done');
+            
+            let badgeClass = 'badge-elem';
+            let badgeText = '國小安親';
+            if (task.category === 'clean') { badgeClass = 'badge-clean'; badgeText = '環境清潔'; }
+            if (task.category === 'mid') { badgeClass = 'badge-mid'; badgeText = '國中部'; }
+            if (task.category === 'urgent') { badgeClass = 'badge-urgent'; badgeText = '重要交辦'; }
+
+            const fixedTag = task.date === 'fixed' ? '<span class="badge-fixed">固定</span>' : '';
+
+            tr.innerHTML = `
+                <td><input type="checkbox" style="transform: scale(1.25); cursor: pointer;" ${task.done ? 'checked' : ''} data-id="${task.id}"></td>
+                <td><strong>${task.time}</strong></td>
+                <td><span class="badge ${badgeClass}">${badgeText}</span>${fixedTag}</td>
+                <td>${task.desc}</td>
+                <td><span class="timestamp ${task.isAlert ? 'time-alert' : ''}">${task.record || '未完成'}</span></td>
+                <td><button class="btn btn-del" data-del-id="${task.id}">刪</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // 綁定動態事件
+        tbody.querySelectorAll('input[type="checkbox"]').forEach(box => {
+            box.addEventListener('click', (e) => toggleTask(e.target.dataset.id, e.target.checked));
+        });
+        tbody.querySelectorAll('button[data-del-id]').forEach(btn => {
+            btn.addEventListener('click', (e) => deleteTask(e.target.dataset.delId));
+        });
+    }
+
+    // 打勾或取消完成
+    async function toggleTask(id, isChecked) {
+        const task = cachedScheduleTasks.find(t => t.id === id);
+        if (task) {
+            task.done = isChecked;
+            if (task.done) {
+                const now = new Date();
+                const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                task.record = `已完成 (${timeString})`;
+                task.isAlert = false;
+            } else {
+                task.record = "未完成";
+            }
+            await saveScheduleCloud();
+        }
+    }
+
+    // 刪除任務
+    async function deleteTask(id) {
+        cachedScheduleTasks = cachedScheduleTasks.filter(t => t.id !== id);
+        await saveScheduleCloud();
+    }
+
+    // 新增任務 (主任派工)
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const time = document.getElementById('taskTime').value;
+        const category = document.getElementById('taskCategory').value;
+        const desc = document.getElementById('taskDesc').value.replace(/\n/g, '<br>');
+        const isFixed = document.getElementById('isFixedRoutine').checked;
+        const selectedDate = currentDateInput.value;
+
+        const newTask = {
+            id: 'task_' + Date.now(),
+            date: isFixed ? 'fixed' : selectedDate,
+            time: time,
+            category: category,
+            desc: desc,
+            done: false,
+            record: "未完成",
+            isAlert: false
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        cachedScheduleTasks.push(newTask);
+        await saveScheduleCloud();
+        document.getElementById('taskDesc').value = '';
+    });
 
-        window.db = db;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.getDocs = getDocs;
-        window.deleteDoc = deleteDoc;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-
-        window.admissionData = {
-            inquiries: [],
-            tracking: [],
-            enrolled: [],
-            referrerBonus: {},
-            bridgeIssues: []
-        };
-
-        async function initAdmissionCloud() {
-            try {
-                // 優先讀取點名表開課班級
-                try {
-                    const rollDoc = await getDoc(doc(db, "settings", "rollbookData"));
-                    if (rollDoc.exists() && rollDoc.data().classes) {
-                        window.rollbookClasses = rollDoc.data().classes.map(c => typeof c === 'string' ? c : (c.name || c.className)).filter(Boolean);
-                    }
-                } catch(err) {
-                    console.log("讀取點名表雲端班級略過：", err);
-                }
-
-                const docSnap = await getDoc(doc(db, "settings", "admissionSystemData"));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    window.admissionData.inquiries = data.inquiries || [];
-                    window.admissionData.tracking = data.tracking || [];
-                    window.admissionData.enrolled = data.enrolled || [];
-                    window.admissionData.referrerBonus = data.referrerBonus || {};
-                    window.admissionData.bridgeIssues = data.bridgeIssues || [];
-                } else {
-                    window.admissionData.tracking = [
-                        {
-                            id: Date.now(),
-                            name: "林美華",
-                            school: "斗六國小",
-                            grade: "小五",
-                            inquirer: "林媽媽",
-                            referrer: "李大同",
-                            course: "全科暑期班",
-                            phone: "0923-456789",
-                            trialDate: "2026-09-01",
-                            teacher: "陳老師",
-                            status: "預約試聽中",
-                            log: '<strong style="color:var(--accent-color);">[陳老師]</strong> 08/28 14:30 - 已約定週二試聽。'
-                        }
-                    ];
-                }
-                loadRollbookClassOptions();
-                renderAllViews();
-            } catch (e) {
-                console.error("載入招生雲端資料失敗：", e);
-                loadRollbookClassOptions();
-            }
+    // 重設回 13 項標準 SOP
+    document.getElementById('resetDefaultBtn').addEventListener('click', async () => {
+        const pwd = prompt("🔒 請輸入主任權限驗證密碼：");
+        if (pwd === null) return;
+        if (pwd.trim() !== DIRECTOR_PASSWORD) {
+            alert("❌ 密碼錯誤！");
+            return;
         }
 
-        window.saveAdmissionCloud = async function() {
-            try {
-                await setDoc(doc(db, "settings", "admissionSystemData"), window.admissionData);
-                checkAlerts();
-            } catch (e) {
-                console.error("儲存招生雲端資料失敗：", e);
-            }
+        if (confirm("確定要將排程重置為預設的 13 項標準 SOP 並推送到雲端嗎？")) {
+            cachedScheduleTasks = [...defaultTasks];
+            await saveScheduleCloud();
+            alert("✅ 已成功重設！");
         }
+    });
 
-        initAdmissionCloud();
-    </script>
-
-    <script>
-        let currentEditingElement = null; 
-        let isEditingEnrolled = false; 
-        let trackingSortableInstance = null;
-        let currentBridgeRole = 'teacher';
-        let currentActiveHistoryItem = null;
-        let activeBonusRecordKey = null;
-
-        // 主任操作專用密碼
-        const DIRECTOR_PASSWORD = "0618";
-
-        function verifyDirectorPassword() {
-            const pwd = prompt("🔒 請輸入主任權限驗證密碼：");
-            if (pwd === null) return false;
-            if (pwd.trim() === DIRECTOR_PASSWORD) {
-                return true;
-            } else {
-                alert("❌ 密碼錯誤，無法執行管理操作！");
-                return false;
-            }
+    // 時鐘與時間比對
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        
+        if (currentDateInput.value === getTodayStr()) {
+            checkTaskTime(`${hours}:${minutes}`);
         }
+    }
+    setInterval(updateClock, 1000);
+    currentDateInput.addEventListener('change', renderTable);
 
-        const AVAILABLE_COURSES = [
-            "小兒童英文班（中班到小二）",
-            "大兒童英文班（小三以上同學）",
-            "國中英文班",
-            "全民英檢班",
-            "小一正音班",
-            "安親課輔班",
-            "國小數學班",
-            "國小英文班",
-            "國小作文班",
-            "國中國文 (帝都國文)",
-            "國中數學班",
-            "國中自然班",
-            "寒暑假冬夏令營",
-            "國三會考班（全科）"
-        ];
+    function checkTaskTime(currentHM) {
+        const selectedDate = currentDateInput.value;
+        if (selectedDate !== getTodayStr()) return;
 
-        // 自動動態同步點名表 (rollbook.html) 的所有班級
-        function loadRollbookClassOptions() {
-            const selectEl = document.getElementById('bridgeStudentClass');
-            if (!selectEl) return;
-
-            let classList = [];
-
-            // 1. 優先從點名表 LocalStorage 抓取
-            try {
-                const localClasses = localStorage.getItem('rollbook_classes') || localStorage.getItem('classesData') || localStorage.getItem('rollbookClasses');
-                if (localClasses) {
-                    const parsed = JSON.parse(localClasses);
-                    if (Array.isArray(parsed)) {
-                        classList = parsed.map(c => typeof c === 'string' ? c : (c.name || c.className)).filter(Boolean);
-                    }
-                }
-            } catch(e) {}
-
-            // 2. 若無則從 Firebase 點名表集合或預設課程抓取
-            if (!classList || classList.length === 0) {
-                if (window.rollbookClasses && window.rollbookClasses.length > 0) {
-                    classList = window.rollbookClasses;
-                } else {
-                    classList = AVAILABLE_COURSES;
+        let updated = false;
+        cachedScheduleTasks.forEach(task => {
+            if ((task.date === 'fixed' || task.date === selectedDate) && !task.done && currentHM >= task.time) {
+                if (!task.isAlert) {
+                    task.isAlert = true;
+                    task.record = "⚠️ 時間已到，請執行！";
+                    updated = true;
                 }
             }
+        });
 
-            // 去除重複班級
-            classList = Array.from(new Set(classList));
+        if (updated) renderTable();
+    }
 
-            let html = '<option value="">-- 請選擇班級 --</option>';
-            classList.forEach(cls => {
-                html += `<option value="${cls}">${cls}</option>`;
-            });
-            html += `<option value="其他班級 / 尚未入班">其他班級 / 尚未入班</option>`;
+    // 啟動連線
+    initRealtimeSync();
+</script>
 
-            selectEl.innerHTML = html;
-        }
-
-        function getFormattedTimestamp() {
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            return `${month}/${day} ${hours}:${minutes}`;
-        }
-
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
-
-            if (tabId === 'enrolledTab') {
-                renderEnrolledTable();
-            } else if (tabId === 'bridgeTab') {
-                loadRollbookClassOptions();
-                renderBridgeTable();
-            }
-        }
-
-        function checkAlerts() {
-            const inqAlertBox = document.getElementById('newInquiryAlert');
-            if (window.admissionData.inquiries && window.admissionData.inquiries.length > 0) {
-                inqAlertBox.style.display = 'block';
-            } else {
-                inqAlertBox.style.display = 'none';
-            }
-
-            const bridgeAlertBox = document.getElementById('bridgeIssueAlert');
-            const bridgeList = window.admissionData.bridgeIssues || [];
-            const hasPendingBridge = bridgeList.some(item => item.status === 'pending' || item.status === 'pending_review' || item.status === 'rejected');
-            if (hasPendingBridge) {
-                bridgeAlertBox.style.display = 'block';
-            } else {
-                bridgeAlertBox.style.display = 'none';
-            }
-        }
-
-        function renderAllViews() {
-            renderInquiries();
-            renderTrackingBlocks();
-            renderEnrolledTable();
-            renderBridgeTable();
-            checkAlerts();
-        }
-
-        function renderInquiries() {
-            const tbody = document.getElementById('inquiryTableBody');
-            tbody.innerHTML = '';
-            if (!window.admissionData.inquiries || window.admissionData.inquiries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">目前沒有新同學問班資料</td></tr>`;
-                return;
-            }
-            window.admissionData.inquiries.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color: var(--accent-color); font-weight: 600; font-size: 0.88rem;">${item.askDate || '未記錄'}</td>
-                    <td style="font-size: 0.95rem;"><strong>${item.name}</strong></td>
-                    <td>${item.school || '未填寫'}</td>
-                    <td>${item.grade || '未填寫'}</td>
-                    <td>${item.inquirer || '未提供'}</td>
-                    <td><span style="color: var(--accent-color); font-weight: 600;">${item.course || '未提供'}</span></td>
-                    <td>${item.phone || '未提供'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="openInquiryToTrackingModal(${item.id})">轉入追蹤 ➔</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteInquiry(${item.id})" style="margin-left: 0.25rem;">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.openInquiryToTrackingModal = function(id) {
-            const inq = window.admissionData.inquiries.find(x => x.id === id);
-            if (!inq) return;
-
-            window.currentEditingId = id;
-            isEditingEnrolled = false;
-
-            document.getElementById('editModalTitle').innerText = '✏️ 記錄通知與完善招生資料 (轉入追蹤)';
-            document.getElementById('editName').value = inq.name;
-            document.getElementById('editSchool').value = inq.school || '';
-            document.getElementById('editGrade').value = inq.grade || '';
-            document.getElementById('editInquirer').value = inq.inquirer || '';
-            document.getElementById('editReferrer').value = '';
-            document.getElementById('editPhone').value = inq.phone || '';
-            document.getElementById('editDate').value = '';
-            document.getElementById('editTeacher').value = '';
-            document.getElementById('editStatusSelect').value = '初次諮詢';
-            
-            document.getElementById('editLogTextarea').value = `[系統] ${getFormattedTimestamp()} - 從新問班系統匯入建立`;
-            document.getElementById('newContactsContainer').innerHTML = '';
-
-            buildCourseSelects(inq.course || '');
-            document.getElementById('returnToTrackingBtn').style.display = 'none';
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        window.deleteInquiry = function(id) {
-            if (confirm("確定要直接刪除這筆新問班資料嗎？")) {
-                window.admissionData.inquiries = window.admissionData.inquiries.filter(x => x.id !== id);
-                window.saveAdmissionCloud();
-                renderAllViews();
-            }
-        }
-
-        function renderTrackingBlocks() {
-            const container = document.getElementById('trackingCardContainer');
-            container.innerHTML = '';
-            if (!window.admissionData.tracking || window.admissionData.tracking.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:25px; font-size: 0.95rem;">目前尚無尚未進班追蹤紀錄</div>`;
-                return;
-            }
-            window.admissionData.tracking.forEach(item => {
-                const block = document.createElement('div');
-                block.className = 'tracking-block';
-                block.dataset.id = item.id;
-                block.innerHTML = `
-                    <div class="block-header">
-                        <div class="block-title">
-                            <span style="font-size: 1.25rem;">📌</span> 
-                            <strong class="s-name">${item.name}</strong>
-                            <span style="font-size: 0.850rem; color: var(--text-muted); font-weight: normal;">(${item.school || '未填學校'} / ${item.grade || '未填年級'})</span>
-                            <button class="btn btn-solid-yellow" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 3px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
-                            <span class="badge badge-line s-status" style="margin-left: 0.4rem;">${item.status}</span>
-                        </div>
-                        <div class="block-top-actions">
-                            <button class="btn btn-sm btn-success" onclick="openEditModalById(${item.id}, false)" style="font-size:0.8rem; padding:0.25rem 0.5rem;">✓ 已通知</button>
-                            <button class="btn btn-sm btn-primary" onclick="moveToEnrolledById(${item.id})" style="font-size:0.8rem; padding:0.25rem 0.5rem;">進班 ➔</button>
-                        </div>
-                    </div>
-                    <div class="block-body">
-                        <div><strong style="color:var(--text-muted);">預約課程：</strong> <span class="s-course">${item.course}</span></div>
-                        <div><strong style="color:var(--text-muted);">聯絡電話：</strong> <span class="s-phone">${item.phone}</span></div>
-                        <div><strong style="color:var(--text-muted);">試聽日期：</strong> <span class="s-date" style="color: var(--warning-color); font-weight:700;">${item.trialDate}</span></div>
-                    </div>
-                    <div class="block-footer">
-                        <div class="s-log">${item.log}</div>
-                    </div>
-                `;
-                container.appendChild(block);
-            });
-            if (trackingSortableInstance) trackingSortableInstance.destroy();
-            trackingSortableInstance = new Sortable(container, {
-                animation: 150,
-                ghostClass: 'dragging',
-                onEnd: function () { syncDOMToData(); }
-            });
-        }
-
-        window.syncDOMToData = function() {
-            const blocks = document.querySelectorAll('#trackingCardContainer .tracking-block');
-            let newTracking = [];
-            blocks.forEach(b => {
-                const id = parseInt(b.dataset.id);
-                const item = window.admissionData.tracking.find(x => x.id === id);
-                if (item) newTracking.push(item);
-            });
-            window.admissionData.tracking = newTracking;
-            window.saveAdmissionCloud();
-        }
-
-        function renderEnrolledTable() {
-            const tbody = document.getElementById('enrolledTableBody');
-            tbody.innerHTML = '';
-            if (!window.admissionData.enrolled || window.admissionData.enrolled.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">尚無正式進班學員紀錄</td></tr>`;
-                return;
-            }
-            window.admissionData.enrolled.forEach((item, index) => {
-                const recordKey = `enrolled_id_${item.id}`;
-                if (!window.admissionData.referrerBonus[recordKey]) {
-                    window.admissionData.referrerBonus[recordKey] = {
-                        paid: false,
-                        date: '',
-                        amount: '',
-                        reason: ''
-                    };
-                }
-                const store = window.admissionData.referrerBonus[recordKey];
-                const hasReferrer = item.referrer && item.referrer.trim() !== '';
-
-                let bonusStatusHtml = '';
-                if (store.paid) {
-                    bonusStatusHtml = `
-                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 0.4rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
-                            <span style="color: var(--success-color); font-weight: 700;">✓ 已發放</span> 
-                            <span style="color: var(--text-main);">($${store.amount || 0})</span><br>
-                            <span style="color: var(--text-muted); font-size: 0.75rem;">理由：${store.reason || '無'}</span><br>
-                            <span style="color: var(--text-muted); font-size: 0.72rem;">(${store.date})</span>
-                            <button class="btn btn-sm btn-secondary" style="padding: 0.1rem 0.3rem; font-size: 0.7rem; margin-top: 0.2rem;" onclick="openBonusModal('${recordKey}', '${item.name}')">修改</button>
-                        </div>
-                    `;
-                } else {
-                    bonusStatusHtml = `
-                        <button class="btn btn-sm btn-solid-yellow" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;" onclick="openBonusModal('${recordKey}', '${item.name}')">
-                            🎁 確認發放
-                        </button>
-                    `;
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong class="s-name" style="font-size: 0.95rem;">${item.name}</strong></td>
-                    <td><span>${item.school || '-'} / ${item.grade || '-'}</span></td>
-                    <td><span>${item.course}</span></td>
-                    <td><span>${item.phone}</span></td>
-                    <td><span style="font-weight:600; color: var(--success-color);">${item.enrollDate}</span></td>
-                    <td><span class="badge badge-enrolled">已正式進班</span></td>
-                    <td>
-                        <div style="margin-bottom: 0.2rem;"><strong>介紹人：</strong> <span style="color:var(--accent-color); font-weight:600;">${hasReferrer ? item.referrer : '無'}</span></div>
-                        <div>${item.log}</div>
-                    </td>
-                    <td>
-                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                            <button class="btn btn-sm btn-warning" onclick="openEditModalById(${item.id}, true)" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">✏️ 修改資料</button>
-                            ${bonusStatusHtml}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.openBonusModal = function(recordKey, studentName) {
-            activeBonusRecordKey = recordKey;
-            if (!window.admissionData.referrerBonus[recordKey]) {
-                window.admissionData.referrerBonus[recordKey] = { paid: false, date: '', amount: '', reason: '' };
-            }
-            const store = window.admissionData.referrerBonus[recordKey];
-            document.getElementById('bonusModalTitle').innerText = `🎁 確認發放推薦獎金 [${studentName}]`;
-            document.getElementById('bonusAmountInput').value = store.amount || '';
-            document.getElementById('bonusReasonInput').value = store.reason || '介紹新生入學推薦獎金';
-            document.getElementById('bonusModal').style.display = 'flex';
-        }
-
-        window.closeBonusModal = function() {
-            document.getElementById('bonusModal').style.display = 'none';
-            activeBonusRecordKey = null;
-        }
-
-        window.saveBonusRecord = function() {
-            if (!activeBonusRecordKey) return;
-            const amount = document.getElementById('bonusAmountInput').value.trim();
-            const reason = document.getElementById('bonusReasonInput').value.trim();
-
-            if (!amount) {
-                alert('請填寫發放金額！');
-                return;
-            }
-
-            const now = new Date();
-            const dStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-
-            window.admissionData.referrerBonus[activeBonusRecordKey] = {
-                paid: true,
-                date: dStr,
-                amount: amount,
-                reason: reason || '無'
-            };
-
-            window.saveAdmissionCloud();
-            closeBonusModal();
-            renderEnrolledTable();
-            alert('獎金發放紀錄已成功儲存！');
-        }
-
-        function buildCourseSelects(courseString) {
-            const container = document.getElementById('courseSelectsContainer');
-            container.innerHTML = '';
-
-            let courses = courseString ? courseString.split(/[,，、]\s*/).map(s => s.trim()).filter(Boolean) : [];
-            if (courses.length === 0) courses = [''];
-
-            courses.forEach(c => {
-                addCourseSelectRow(c);
-            });
-        }
-
-        window.addCourseSelectRow = function(selectedValue = '') {
-            const container = document.getElementById('courseSelectsContainer');
-            const rowId = 'course_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-
-            let optionsHtml = `<option value="">-- 請選擇有意願課程 --</option>`;
-            AVAILABLE_COURSES.forEach(c => {
-                const selected = (c === selectedValue) ? 'selected' : '';
-                optionsHtml += `<option value="${c}" ${selected}>${c}</option>`;
-            });
-
-            const div = document.createElement('div');
-            div.id = rowId;
-            div.style.cssText = "display: flex; gap: 0.4rem; align-items: center;";
-            div.innerHTML = `
-                <select class="course-select-item" style="flex: 1; padding: 0.45rem; border: 1px solid var(--border-color); border-radius: 0.3rem; font-size: 0.88rem; background: #FFF;">
-                    ${optionsHtml}
-                </select>
-                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background: var(--danger-color); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.3rem; cursor: pointer; font-size: 0.8rem;">❌</button>
-            `;
-            container.appendChild(div);
-        }
-
-        window.appendCourseSelectRow = function() {
-            addCourseSelectRow('');
-        }
-
-        window.openEditModalById = function(id, isEnrolled) {
-            isEditingEnrolled = isEnrolled;
-            const list = isEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
-            const item = list.find(x => x.id === id);
-            if (!item) return;
-            window.currentEditingId = id;
-
-            let teacher = '未指定';
-            const teacherMatch = item.log.match(/\[(.*?)\]/);
-            if (teacherMatch) teacher = teacherMatch[1];
-
-            document.getElementById('editModalTitle').innerText = isEnrolled ? '✏️ 修改學生正式進班資料' : '✏️ 記錄通知與完善招生資料';
-            document.getElementById('editName').value = item.name;
-            document.getElementById('editSchool').value = item.school || '';
-            document.getElementById('editGrade').value = item.grade || '';
-            document.getElementById('editInquirer').value = item.inquirer || '';
-            document.getElementById('editReferrer').value = item.referrer || '';
-            document.getElementById('editPhone').value = item.phone || '';
-            document.getElementById('editDate').value = item.trialDate && item.trialDate !== '未定' && !item.trialDate.includes('轉入') ? item.trialDate : '';
-            document.getElementById('editTeacher').value = teacher === '系統' ? '' : teacher;
-            document.getElementById('editStatusSelect').value = isEnrolled ? '已正式進班' : item.status;
-            
-            document.getElementById('editLogTextarea').value = item.log.replace(/<br\s*[\/]?>/gi, '\n');
-            document.getElementById('newContactsContainer').innerHTML = '';
-
-            buildCourseSelects(item.course || '');
-
-            const returnBtn = document.getElementById('returnToTrackingBtn');
-            if (isEnrolled) {
-                returnBtn.style.display = 'inline-block';
-            } else {
-                returnBtn.style.display = 'none';
-            }
-
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        window.returnStudentToTracking = function() {
-            if (!window.currentEditingId || !isEditingEnrolled) return;
-            const enrolledIndex = window.admissionData.enrolled.findIndex(x => x.id === window.currentEditingId);
-            if (enrolledIndex > -1) {
-                const item = window.admissionData.enrolled[enrolledIndex];
-                if (confirm(`⚠️ 確定要將「${item.name}」退回至尚未進班追蹤區塊嗎？`)) {
-                    window.admissionData.enrolled.splice(enrolledIndex, 1);
-                    item.status = '試聽完成持續追蹤';
-                    const timestamp = getFormattedTimestamp();
-                    item.log += `<br><span style="color:var(--warning-color);">[${timestamp} 主任退回尚未進班]</span>`;
-                    window.admissionData.tracking.push(item);
-                    window.saveAdmissionCloud();
-                    renderAllViews();
-                    closeEditModal();
-                    alert('已成功將學員退回至尚未進班追蹤區塊！');
-                }
-            }
-        }
-
-        window.appendNewContactRow = function() {
-            const container = document.getElementById('newContactsContainer');
-            const rowId = 'contact_row_' + Date.now();
-            const timestamp = getFormattedTimestamp();
-
-            const div = document.createElement('div');
-            div.id = rowId;
-            div.style.cssText = "background: #F1F5F9; border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 0.3rem; display: flex; flex-direction: column; gap: 0.3rem;";
-            div.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-color);">新聯繫紀錄 (${timestamp})</span>
-                    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 0.85rem;">❌ 移除</button>
-                </div>
-                <input type="text" class="new-contact-teacher" placeholder="聯繫老師姓名 (例如：陳老師)" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-size: 0.85rem;">
-                <textarea class="new-contact-memo" rows="2" placeholder="請輸入本次聯繫對話內容或進度..." style="width: 100%; padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-size: 0.85rem; resize: vertical;"></textarea>
-            `;
-            container.appendChild(div);
-        }
-
-        window.closeEditModal = function() {
-            document.getElementById('editModal').style.display = 'none';
-            window.currentEditingId = null;
-        }
-
-        window.deleteStudentRecord = function() {
-            if (!window.currentEditingId) return;
-            const name = document.getElementById('editName').value;
-            if (confirm(`確定刪除「${name}」？`)) {
-                if (isEditingEnrolled) {
-                    window.admissionData.enrolled = window.admissionData.enrolled.filter(x => x.id !== window.currentEditingId);
-                } else {
-                    window.admissionData.tracking = window.admissionData.tracking.filter(x => x.id !== window.currentEditingId);
-                }
-                window.saveAdmissionCloud();
-                renderAllViews();
-                closeEditModal();
-                alert('已刪除！');
-            }
-        }
-
-        window.saveEditModal = function() {
-            if (!window.currentEditingId) return;
-            const name = document.getElementById('editName').value.trim();
-            const school = document.getElementById('editSchool').value.trim();
-            const grade = document.getElementById('editGrade').value.trim();
-            const inquirer = document.getElementById('editInquirer').value.trim();
-            const referrer = document.getElementById('editReferrer').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
-            let date = document.getElementById('editDate').value || '未定';
-            const teacher = document.getElementById('editTeacher').value.trim();
-            const status = document.getElementById('editStatusSelect').value;
-
-            const courseSelects = document.querySelectorAll('.course-select-item');
-            let courseArr = [];
-            courseSelects.forEach(sel => {
-                if (sel.value) courseArr.push(sel.value);
-            });
-            const course = courseArr.join(', ');
-
-            if(!name) { alert('姓名不能為空！'); return; }
-
-            if (!teacher || teacher === '未指定') {
-                alert('⚠️ 為了教學行政管理，負責追蹤老師為必填欄位，請務必填寫！');
-                document.getElementById('editTeacher').focus();
-                return;
-            }
-
-            let updatedLog = document.getElementById('editLogTextarea').value.trim().replace(/\n/g, '<br>');
-            
-            const contactRows = document.querySelectorAll('#newContactsContainer > div');
-            contactRows.forEach(row => {
-                const tName = row.querySelector('.new-contact-teacher').value.trim() || teacher;
-                const memo = row.querySelector('.new-contact-memo').value.trim();
-                const timestamp = getFormattedTimestamp();
-                if (memo) {
-                    updatedLog += `<br><span style="color: var(--success-color);">[${timestamp} ${tName}] ${memo}</span>`;
-                }
-            });
-
-            if (updatedLog.includes('[')) {
-                updatedLog = updatedLog.replace(/\[.*?\]/, `[${teacher}]`);
-            } else {
-                updatedLog = `[${teacher}] ` + updatedLog;
-            }
-
-            const inquiryIndex = window.admissionData.inquiries.findIndex(x => x.id === window.currentEditingId);
-
-            if (inquiryIndex > -1) {
-                const inqItem = window.admissionData.inquiries[inquiryIndex];
-                const newItem = {
-                    id: Date.now(),
-                    name: name,
-                    school: school || inqItem.school || '',
-                    grade: grade || inqItem.grade || '',
-                    inquirer: inquirer,
-                    referrer: referrer,
-                    course: course,
-                    phone: phone,
-                    trialDate: date,
-                    teacher: teacher,
-                    status: status,
-                    log: updatedLog
-                };
-                window.admissionData.tracking.push(newItem);
-                window.admissionData.inquiries.splice(inquiryIndex, 1);
-                window.saveAdmissionCloud();
-                renderAllViews();
-                closeEditModal();
-                alert('已成功將新問班資料轉入「尚未進班」追蹤區塊！');
-                document.querySelector('.tab-btn[onclick*="trackingTab"]').click();
-                return;
-            }
-
-            const sourceList = isEditingEnrolled ? window.admissionData.enrolled : window.admissionData.tracking;
-            const itemIndex = sourceList.findIndex(x => x.id === window.currentEditingId);
-
-            if (itemIndex > -1) {
-                let item = sourceList[itemIndex];
-                item.name = name;
-                item.school = school;
-                item.grade = grade;
-                item.inquirer = inquirer;
-                item.referrer = referrer;
-                item.course = course;
-                item.phone = phone;
-                item.trialDate = date;
-                item.teacher = teacher;
-                item.log = updatedLog;
-
-                if (isEditingEnrolled && status !== '已正式進班') {
-                    if (confirm(`狀態改為「${status}」，要將學員移回追蹤區塊嗎？`)) {
-                        sourceList.splice(itemIndex, 1);
-                        item.status = status;
-                        const timestamp = getFormattedTimestamp();
-                        item.log += `<br><span style="color:var(--danger-color);">[${timestamp} 退回追蹤]</span>`;
-                        window.admissionData.tracking.push(item);
-                        window.saveAdmissionCloud();
-                        renderAllViews();
-                        closeEditModal();
-                        alert('已移回追蹤清單！');
-                        return;
-                    }
-                } else if (!isEditingEnrolled && status === '已正式進班') {
-                    if (confirm(`狀態改為「已正式進班」，要移至正式名單嗎？`)) {
-                        sourceList.splice(itemIndex, 1);
-                        const timestamp = getFormattedTimestamp();
-                        item.enrollDate = `${timestamp.split(' ')[0]} 轉入`;
-                        item.log += `<br><span style="color:var(--accent-color);">[${timestamp} 轉入正式]</span>`;
-                        window.admissionData.enrolled.push(item);
-                        window.saveAdmissionCloud();
-                        renderAllViews();
-                        closeEditModal();
-                        alert('已移至正式進班名單！');
-                        return;
-                    }
-                } else {
-                    if (!isEditingEnrolled) item.status = status;
-                }
-            }
-
-            window.saveAdmissionCloud();
-            renderAllViews();
-            closeEditModal();
-            alert('修改成功！');
-        }
-
-        window.moveToEnrolledById = function(id) {
-            const itemIndex = window.admissionData.tracking.findIndex(x => x.id === id);
-            if (itemIndex === -1) return;
-            const item = window.admissionData.tracking[itemIndex];
-            if (confirm(`確定將「${item.name}」移至正式進班？`)) {
-                window.admissionData.tracking.splice(itemIndex, 1);
-                const timestamp = getFormattedTimestamp();
-                item.enrollDate = `${timestamp.split(' ')[0]} 轉入`;
-                item.log += `<br><span style="color:var(--accent-color);">[${timestamp} 轉入正式]</span>`;
-                window.admissionData.enrolled.push(item);
-                window.saveAdmissionCloud();
-                renderAllViews();
-                alert('已移至正式進班！');
-            }
-        }
-
-        // ================= 安心橋邏輯 =================
-        function switchBridgeRole() {
-            currentBridgeRole = document.getElementById('currentRole').value;
-            const newIssueCard = document.getElementById('newBridgeIssueCard');
-            if (currentBridgeRole === 'director') {
-                newIssueCard.style.display = 'none';
-            } else {
-                newIssueCard.style.display = 'block';
-            }
-            renderBridgeTable();
-        }
-
-        function handleBridgeFormSubmit(e) {
-            e.preventDefault();
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
-            const randomNum = String(Math.floor(Math.random() * 900) + 100);
-
-            const newIssue = {
-                id: `ISSUE-${dateStr}-${randomNum}`,
-                studentName: document.getElementById('bridgeStudentName').value,
-                className: document.getElementById('bridgeClassName').value,
-                studentClass: document.getElementById('bridgeStudentClass').value || '未選擇班級',
-                parentName: document.getElementById('bridgeParentName').value,
-                issueCategory: document.getElementById('bridgeIssueCategory').value,
-                assignedTeacher: document.getElementById('bridgeAssignedTeacher').value.trim() || '未指定',
-                solverName: '',
-                issueContent: document.getElementById('bridgeIssueContent').value,
-                reportedAt: now.toLocaleString('zh-TW', { hour12: false }),
-                reportedBy: '老師',
-                teacherSolution: '',
-                teacherSubmittedAt: '',
-                status: 'pending',
-                directorComment: '',
-                directorReviewedAt: ''
-            };
-
-            if(!window.admissionData.bridgeIssues) window.admissionData.bridgeIssues = [];
-            window.admissionData.bridgeIssues.unshift(newIssue);
-            window.saveAdmissionCloud();
-            document.getElementById('bridgeIssueForm').reset();
-            renderBridgeTable();
-            alert('已登記至安心橋！');
-        }
-
-        function renderBridgeTable() {
-            const tbodyDesktop = document.getElementById('bridgeTableBody');
-            const filterStatus = document.getElementById('bridgeFilterStatus').value;
-            
-            tbodyDesktop.innerHTML = '';
-
-            let reviewCount = 0;
-            let approvedCount = 0;
-
-            let gudePending = 0;
-            let joyPending = 0;
-            let gudeRejected = 0;
-            let joyRejected = 0;
-
-            const issues = window.admissionData.bridgeIssues || [];
-
-            issues.forEach(item => {
-                const isPendingOrProcessing = (item.status === 'pending' || item.status === 'processing');
-                if (isPendingOrProcessing) {
-                    if (item.className.includes('顧德')) gudePending++;
-                    else if (item.className.includes('佳音')) joyPending++;
-                }
-
-                if (item.status === 'rejected') {
-                    if (item.className.includes('顧德')) gudeRejected++;
-                    else if (item.className.includes('佳音')) joyRejected++;
-                }
-
-                if (item.status === 'pending_review') reviewCount++;
-                if (item.status === 'approved') approvedCount++;
-
-                if (item.status === 'approved') return;
-                if (filterStatus !== 'all' && item.status !== filterStatus) return;
-
-                let badgeHtml = '';
-                switch(item.status) {
-                    case 'pending': badgeHtml = '<span class="badge badge-pending" style="font-size:0.75rem; padding:0.15rem 0.4rem;">待處理</span>'; break;
-                    case 'processing': badgeHtml = '<span class="badge badge-processing" style="font-size:0.75rem; padding:0.15rem 0.4rem;">處理中</span>'; break;
-                    case 'pending_review': badgeHtml = '<span class="badge badge-review" style="font-size:0.75rem; padding:0.15rem 0.4rem;">待批考</span>'; break;
-                    case 'rejected': badgeHtml = '<span class="badge badge-rejected" style="font-size:0.75rem; padding:0.15rem 0.4rem;">已退回</span>'; break;
-                }
-
-                let actionHtml = '';
-                if (currentBridgeRole === 'teacher') {
-                    if (item.status === 'pending' || item.status === 'rejected' || item.status === 'processing') {
-                        const btnText = item.status === 'rejected' ? '重新聯繫' : '填寫處理';
-                        const btnClass = item.status === 'rejected' ? 'btn btn-sm btn-danger' : 'btn btn-sm';
-                        actionHtml += `<button class="${btnClass}" style="padding:0.25rem 0.5rem; font-size:0.8rem;" onclick="openBridgeSolveModal('${item.id}')">${btnText}</button>`;
-                    } else if (item.status === 'pending_review') {
-                        actionHtml += `<span style="color:var(--text-muted); font-size:0.78rem;">審核中</span>`;
-                    }
-                } else {
-                    if (item.status === 'pending_review') {
-                        actionHtml += `<button class="btn btn-sm btn-success" style="padding:0.25rem 0.5rem; font-size:0.8rem;" onclick="openBridgeReviewModal('${item.id}')">批考</button>`;
-                    } else {
-                        actionHtml += `<button class="btn btn-sm btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;" onclick="openBridgeReviewModal('${item.id}')">詳情</button>`;
-                    }
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><small style="font-size:0.78rem;">${item.reportedAt}</small><br><strong>${item.id}</strong></td>
-                    <td>
-                        <strong style="color: var(--accent-color);">${item.className}</strong>
-                        ${item.studentClass ? `<br><span style="color: #64748b; font-size: 0.8rem; font-weight: 600;">[${item.studentClass}]</span>` : ''}
-                    </td>
-                    <td><span style="font-size: 0.95rem; font-weight: 700;">${item.studentName}</span></td>
-                    <td>${item.parentName}<br><span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:0.1rem 0.3rem;">${item.issueCategory}</span></td>
-                    <td>
-                        <div><strong>負責：</strong><span style="color:var(--accent-color);">${item.assignedTeacher || '未指定'}</span></div>
-                        <div><strong>處理：</strong><span style="color:var(--success-color);">${item.solverName || '未填寫'}</span></div>
-                    </td>
-                    <td style="max-width: 160px; font-size:0.85rem; word-break: break-all;">${item.issueContent}</td>
-                    <td style="max-width: 180px; font-size:0.85rem; word-break: break-all;">
-                        ${item.teacherSolution ? `<strong>方案：</strong>${item.teacherSolution}<br>` : '<span style="color:var(--text-muted);">無方案</span>'}
-                        ${item.directorComment ? `<strong style="color:var(--danger-color);">退回/批語：</strong>${item.directorComment}` : ''}
-                    </td>
-                    <td>${badgeHtml}</td>
-                    <td>${actionHtml}</td>
-                `;
-                tbodyDesktop.appendChild(tr);
-            });
-
-            if (tbodyDesktop.innerHTML === '') {
-                tbodyDesktop.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1rem;">目前沒有未結案事件</td></tr>`;
-            }
-
-            document.getElementById('statPendingSummary').innerText = `佳音 ${joyPending} 件 ｜ 顧德 ${gudePending} 件`;
-            document.getElementById('statRejectedSummary').innerText = `佳音 ${joyRejected} 件 ｜ 顧德 ${gudeRejected} 件`;
-            document.getElementById('bridgeStatReview').innerText = `${reviewCount} 件`;
-            document.getElementById('bridgeStatApproved').innerText = `${approvedCount} 件`;
-            checkAlerts();
-        }
-
-        window.openHistoryModal = function() {
-            document.getElementById('historyModal').style.display = 'flex';
-        }
-
-        window.closeHistoryModal = function() {
-            document.getElementById('historyModal').style.display = 'none';
-            document.getElementById('bridgeSearchStudentInput').value = '';
-            document.getElementById('bridgeSearchResultContainer').style.display = 'none';
-            document.getElementById('bridgeSearchResultContainer').innerHTML = '';
-        }
-
-        window.openAllHistoryModal = function() {
-            const container = document.getElementById('allHistoryContainer');
-            const issues = window.admissionData.bridgeIssues || [];
-            const approvedList = issues.filter(i => i.status === 'approved');
-
-            document.getElementById('selectAllHistoryCheckbox').checked = false;
-            updateSelectedHistoryCount();
-
-            if (approvedList.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 0.85rem;">目前尚無任何已結案歷史檔案。</p>`;
-            } else {
-                let html = '';
-                approvedList.forEach((item, idx) => {
-                    const escapedContent = encodeURIComponent(JSON.stringify(item));
-                    html += `
-                        <div style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; transition: all 0.2s; display: flex; gap: 0.75rem; align-items: flex-start;">
-                            <div style="padding-top: 0.2rem;">
-                                <input type="checkbox" class="history-select-item" value="${item.id}" onchange="updateSelectedHistoryCount()" style="width: 18px; height: 18px; cursor: pointer;">
-                            </div>
-                            <div style="flex: 1; cursor: pointer;" onclick="openHistoryDetail('${escapedContent}')">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                                    <span>#${idx+1} [${item.issueCategory}] ${item.className} ${item.studentClass ? `(${item.studentClass})` : ''} - ${item.studentName}</span>
-                                    <span style="color: var(--text-muted); font-size: 0.78rem;">${item.reportedAt}</span>
-                                </div>
-                                <p style="font-size: 0.85rem; margin-bottom: 0.15rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
-                                <p style="font-size: 0.8rem; color: var(--accent-color);"><strong>處理老師：</strong>${item.solverName || '未填寫'} (負責：${item.assignedTeacher || '未指定'})</p>
-                                <div style="text-align: right; margin-top: 0.2rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看大畫面 ➔</span></div>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            }
-            document.getElementById('allHistoryModal').style.display = 'flex';
-        }
-
-        window.closeAllHistoryModal = function() {
-            document.getElementById('allHistoryModal').style.display = 'none';
-        }
-
-        window.toggleSelectAllHistory = function(isChecked) {
-            const checkboxes = document.querySelectorAll('.history-select-item');
-            checkboxes.forEach(cb => cb.checked = isChecked);
-            updateSelectedHistoryCount();
-        }
-
-        window.updateSelectedHistoryCount = function() {
-            const selected = document.querySelectorAll('.history-select-item:checked');
-            document.getElementById('selectedHistoryCount').innerText = `(已選 ${selected.length} 筆)`;
-        }
-
-        function getSelectedHistoryIds() {
-            const checkedBoxes = document.querySelectorAll('.history-select-item:checked');
-            return Array.from(checkedBoxes).map(cb => cb.value);
-        }
-
-        window.batchUnapproveWithPassword = function() {
-            const selectedIds = getSelectedHistoryIds();
-            if (selectedIds.length === 0) {
-                alert("⚠️ 請先勾選要退回重審的歷史檔案！");
-                return;
-            }
-
-            if (!verifyDirectorPassword()) return;
-
-            if (confirm(`⚠️ 確定要將已勾選的 ${selectedIds.length} 筆案件退回「待主任批考」重新審核嗎？`)) {
-                window.admissionData.bridgeIssues.forEach(item => {
-                    if (selectedIds.includes(item.id)) {
-                        item.status = 'pending_review';
-                        item.directorComment = '【系統】主任已解除結案，退回重新審核。';
-                    }
-                });
-                window.saveAdmissionCloud();
-                renderBridgeTable();
-                openAllHistoryModal();
-                alert(`✅ 已成功將 ${selectedIds.length} 筆案件退回待批考狀態！`);
-            }
-        }
-
-        window.batchDeleteWithPassword = function() {
-            const selectedIds = getSelectedHistoryIds();
-            if (selectedIds.length === 0) {
-                alert("⚠️ 請先勾選要刪除的歷史檔案！");
-                return;
-            }
-
-            if (!verifyDirectorPassword()) return;
-
-            if (confirm(`🚨 嚴重警告：確定要徹底刪除已勾選的 ${selectedIds.length} 筆案件嗎？刪除後無法復原！`)) {
-                window.admissionData.bridgeIssues = window.admissionData.bridgeIssues.filter(item => !selectedIds.includes(item.id));
-                window.saveAdmissionCloud();
-                renderBridgeTable();
-                openAllHistoryModal();
-                alert(`✅ 已成功徹底刪除 ${selectedIds.length} 筆歷史紀錄！`);
-            }
-        }
-
-        window.searchApprovedBridgeStudent = function() {
-            const query = document.getElementById('bridgeSearchStudentInput').value.trim();
-            const container = document.getElementById('bridgeSearchResultContainer');
-            if (!query) {
-                alert('請輸入姓名！');
-                return;
-            }
-
-            const issues = window.admissionData.bridgeIssues || [];
-            const matched = issues.filter(i => i.studentName.includes(query) && i.status === 'approved');
-
-            container.style.display = 'block';
-            if (matched.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 8px; font-size: 0.82rem;">找不到 「${query}」 的已結案紀錄。</p>`;
-                return;
-            }
-
-            let html = `<h4 style="color: var(--accent-color); margin-bottom: 0.5rem; font-size: 0.95rem;">📖 「${query}」 的已結案 (${matched.length} 筆)：</h4>`;
-            
-            matched.forEach((item, idx) => {
-                const escapedContent = encodeURIComponent(JSON.stringify(item));
-                html += `
-                    <div style="background: #FFF; border: 1.2px solid var(--border-color); border-left: 4px solid var(--success-color); padding: 0.75rem; margin-bottom: 0.6rem; border-radius: 4px; transition: all 0.2s; position: relative;">
-                        <div onclick="openHistoryDetail('${escapedContent}')" style="cursor: pointer;" onmouseover="this.parentElement.style.borderColor='#2563EB'" onmouseout="this.parentElement.style.borderColor='#CBD5E1'">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.88rem; font-weight: 700; color: var(--primary-color);">
-                                <span>#${idx+1} [${item.issueCategory}] 分校：${item.className} ${item.studentClass ? `(${item.studentClass})` : ''}</span>
-                                <span style="color: var(--text-muted); font-size: 0.78rem;">回報時間：${item.reportedAt}</span>
-                            </div>
-                            <p style="margin-bottom: 0.2rem; font-size: 0.85rem;"><strong>家長(${item.parentName})訴求：</strong>${item.issueContent}</p>
-                            <div style="text-align: right; margin-top: 0.3rem;"><span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 600;">🔍 點擊查看完整大畫面 ➔</span></div>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        window.openHistoryDetail = function(encodedItem) {
-            const item = JSON.parse(decodeURIComponent(encodedItem));
-            currentActiveHistoryItem = item;
-
-            const detailHtml = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; font-size: 0.88rem;">
-                    <div><strong>編號：</strong> ${item.id}</div>
-                    <div><strong>回報時間：</strong> ${item.reportedAt}</div>
-                    <div><strong>分校：</strong> ${item.className}</div>
-                    <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
-                    <div><strong>學生：</strong> ${item.studentName}</div>
-                    <div><strong>家長：</strong> ${item.parentName}</div>
-                    <div><strong>分類：</strong> ${item.issueCategory}</div>
-                    <div><strong>負責：</strong> ${item.assignedTeacher || '未指定'}</div>
-                    <div><strong>處理：</strong> ${item.solverName || '未填寫'}</div>
-                </div>
-                <div style="margin-bottom: 0.85rem; font-size: 0.88rem;">
-                    <strong style="color: var(--accent-color);">📝 訴求：</strong>
-                    <div style="background: #FFF; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.2rem;">${item.issueContent}</div>
-                </div>
-                <div style="margin-bottom: 0.85rem; font-size: 0.88rem;">
-                    <strong style="color: var(--success-color);">✍️ 方案：</strong>
-                    <div style="background: #FFF; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.2rem;">${item.teacherSolution || '無'}</div>
-                </div>
-                <div style="font-size: 0.88rem;">
-                    <strong style="color: var(--primary-color);">👨‍⚖️ 批語：</strong>
-                    <div style="background: #FFF; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.2rem; color: var(--success-color); font-weight: 600;">${item.directorComment || '已通過結案'}</div>
-                </div>
-            `;
-            document.getElementById('historyDetailContent').innerHTML = detailHtml;
-
-            const unapproveBtn = document.getElementById('unapproveBtn');
-            const deleteApprovedBtn = document.getElementById('deleteApprovedBtn');
-            if (currentBridgeRole === 'director') {
-                unapproveBtn.style.display = 'inline-block';
-                deleteApprovedBtn.style.display = 'inline-block';
-            } else {
-                unapproveBtn.style.display = 'none';
-                deleteApprovedBtn.style.display = 'none';
-            }
-
-            document.getElementById('historyDetailModal').style.display = 'flex';
-        }
-
-        window.closeHistoryDetailModal = function() {
-            document.getElementById('historyDetailModal').style.display = 'none';
-            currentActiveHistoryItem = null;
-        }
-
-        window.unapproveCase = function() {
-            if (!currentActiveHistoryItem) return;
-            if (!verifyDirectorPassword()) return;
-            if (confirm(`⚠️ 確定要將學生「${currentActiveHistoryItem.studentName}」的這筆歷史結案退回嗎？`)) {
-                const target = window.admissionData.bridgeIssues.find(i => i.id === currentActiveHistoryItem.id);
-                if (target) {
-                    target.status = 'pending_review';
-                    target.directorComment = '【系統】主任已解除結案，退回重新審核。';
-                    window.saveAdmissionCloud();
-                    renderBridgeTable();
-                    closeHistoryDetailModal();
-                    closeHistoryModal();
-                    closeAllHistoryModal();
-                    alert('已成功將該筆案件退回至主任批考端！');
-                }
-            }
-        }
-
-        window.deleteApprovedCase = function() {
-            if (!currentActiveHistoryItem) return;
-            if (!verifyDirectorPassword()) return;
-            if (confirm(`⚠️ 警告：確定要徹底刪除學生「${currentActiveHistoryItem.studentName}」的這筆已結案紀錄嗎？刪除後將無法復原！`)) {
-                window.admissionData.bridgeIssues = window.admissionData.bridgeIssues.filter(i => i.id !== currentActiveHistoryItem.id);
-                window.saveAdmissionCloud();
-                renderBridgeTable();
-                closeHistoryDetailModal();
-                closeHistoryModal();
-                closeAllHistoryModal();
-                alert('已成功徹底刪除該筆已結案紀錄！');
-            }
-        }
-
-        window.openBridgeSolveModal = function(id) {
-            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
-            if (!item) return;
-            document.getElementById('bridgeSolveId').value = item.id;
-            
-            let infoHtml = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.4rem; font-size: 0.88rem;">
-                    <div><strong>編號：</strong> ${item.id}</div>
-                    <div><strong>時間：</strong> ${item.reportedAt}</div>
-                    <div><strong>分校：</strong> ${item.className}</div>
-                    <div><strong>班級：</strong> ${item.studentClass || '未指定'}</div>
-                    <div><strong>學生：</strong> ${item.studentName}</div>
-                    <div><strong>家長：</strong> ${item.parentName}</div>
-                    <div><strong>分類：</strong> ${item.issueCategory}</div>
-                </div>
-                <div style="border-top: 1px dashed var(--border-color); padding-top: 0.4rem; margin-top: 0.4rem; font-size: 0.88rem;">
-                    <strong>問題描述與訴求：</strong><br><span style="color:var(--text-main);">${item.issueContent}</span>
-                </div>
-            `;
-            if (item.status === 'rejected') {
-                infoHtml += `<div style="margin-top: 0.4rem; color: var(--danger-color); font-weight: 700; font-size: 0.85rem;">⚠️ 退回原因：${item.directorComment}</div>`;
-            }
-
-            document.getElementById('bridgeSolveModalInfo').innerHTML = infoHtml;
-            document.getElementById('bridgeAssignedTeacherDisplay').value = item.assignedTeacher || '未指定';
-            document.getElementById('bridgeSolverNameInput').value = item.solverName || item.assignedTeacher || '';
-            document.getElementById('bridgeTeacherSolutionInput').value = item.teacherSolution || '';
-            document.getElementById('bridgeSolveModal').style.display = 'flex';
-        }
-
-        window.deleteBridgeIssue = function() {
-            const id = document.getElementById('bridgeSolveId').value;
-            if (confirm("⚠️ 確定要刪除這筆打錯的問題單嗎？")) {
-                window.admissionData.bridgeIssues = window.admissionData.bridgeIssues.filter(i => i.id !== id);
-                window.saveAdmissionCloud();
-                renderBridgeTable();
-                closeBridgeModal('bridgeSolveModal');
-                alert('已成功刪除該問題單！');
-            }
-        }
-
-        window.handleBridgeSolveSubmit = function(e) {
-            e.preventDefault();
-            const id = document.getElementById('bridgeSolveId').value;
-            const solverName = document.getElementById('bridgeSolverNameInput').value.trim();
-            const solution = document.getElementById('bridgeTeacherSolutionInput').value;
-            const item = window.admissionData.bridgeIssues.items.find(i => i.id === id) || window.admissionData.bridgeIssues.find(i => i.id === id);
-            if (item) {
-                item.solverName = solverName;
-                item.teacherSolution = solution;
-                item.teacherSubmittedAt = new Date().toLocaleString('zh-TW', { hour12: false });
-                item.status = 'pending_review';
-                window.saveAdmissionCloud();
-                closeBridgeModal('bridgeSolveModal');
-                renderBridgeTable();
-                alert('已送出交由主任批考！');
-            }
-        }
-
-        window.openBridgeReviewModal = function(id) {
-            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
-            if (!item) return;
-            document.getElementById('bridgeReviewId').value = item.id;
-            document.getElementById('bridgeReviewModalInfo').innerHTML = `<strong>學生：</strong>${item.studentName} (${item.className} - ${item.studentClass || '未指定'})<br><strong>負責：</strong>${item.assignedTeacher || '未指定'} ｜ <strong>處理：</strong>${item.solverName || '未填'}<br><strong>訴求：</strong>${item.issueContent}<br><strong>方案：</strong>${item.teacherSolution || '無'}`;
-            document.getElementById('bridgeDirectorCommentInput').value = item.directorComment || '';
-            document.getElementById('bridgeReviewModal').style.display = 'flex';
-        }
-
-        window.submitBridgeReviewAction = function(actionStatus) {
-            const id = document.getElementById('bridgeReviewId').value;
-            const comment = document.getElementById('bridgeDirectorCommentInput').value;
-            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
-            if (item) {
-                item.directorComment = comment;
-                item.directorReviewedAt = new Date().toLocaleString('zh-TW', { hour12: false });
-                item.status = actionStatus;
-                window.saveAdmissionCloud();
-                closeBridgeModal('bridgeReviewModal');
-                renderBridgeTable();
-                alert(actionStatus === 'approved' ? '已正式結案！' : '已退回修改！');
-            }
-        }
-
-        window.closeBridgeModal = function(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-    </script>
 </body>
 </html>
