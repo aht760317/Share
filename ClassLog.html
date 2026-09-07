@@ -182,7 +182,6 @@
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .grid-3 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         
-        /* 展開/收合切換按鈕樣式 */
         .toggle-more-btn {
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
@@ -203,7 +202,6 @@
             color: #0369a1;
         }
 
-        /* 學生操作同一列精簡按鈕列 */
         .student-actions-inline {
             display: flex;
             align-items: center;
@@ -565,7 +563,6 @@
                     </div>
                 </div>
                 
-                <!-- 簡約三大部門下拉選擇區 -->
                 <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 10px; margin-bottom: 15px;">
                     <div class="grid-3" style="gap: 15px; margin: 0;">
                         <div>
@@ -1071,7 +1068,6 @@
             });
         };
 
-        // 渲染三大部門班級下拉選單
         window.renderClassDropdowns = function() {
             const selJunior = document.getElementById('profile-select-junior');
             const selElem = document.getElementById('profile-select-elementary');
@@ -1109,7 +1105,6 @@
             }
         };
 
-        // 下拉切換互斥聯動控制
         window.onClassSelectChange = function(selectedDept) {
             const depts = ['junior', 'elementary', 'care'];
             const curSelect = document.getElementById(`profile-select-${selectedDept}`);
@@ -1126,7 +1121,6 @@
             window.renderProfileStudents();
         };
 
-        // 展開/收合切換函式
         window.toggleSectionExpand = function(studentId, type) {
             if (!window.state.expandedStudents[studentId]) {
                 window.state.expandedStudents[studentId] = { att: false, score: false, note: false };
@@ -1194,16 +1188,14 @@
                 }
                 const expState = window.state.expandedStudents[s.firestoreId];
 
-                // 1. 篩選出該科出席日誌
                 const classLogs = (s.attendanceLogs || []).filter(l => {
-                    const matchClass = (l.course === className || (!l.course && getStudentCoursesArray(s).length === 1));
+                    const matchCourse = (l.course === className || (!l.course && getStudentCoursesArray(s).length === 1));
                     let matchDate = true;
                     if (filterStart && l.date < filterStart) matchDate = false;
                     if (filterEnd && l.date > filterEnd) matchDate = false;
-                    return matchClass && matchDate;
+                    return matchCourse && matchDate;
                 });
 
-                // 2. 出席狀況 (預設 3 筆)
                 let attItems = [];
                 classLogs.forEach((l) => {
                     const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
@@ -1230,7 +1222,6 @@
                     attHtml = '<span style="color:#999; font-size:13px;">本科尚無此區間出席紀錄</span>';
                 }
 
-                // 3. 測驗成績 (預設 3 筆)
                 let scoreItems = [];
                 classLogs.forEach((l) => {
                     if (l.score !== null && l.score !== undefined && l.score !== '') {
@@ -1260,7 +1251,6 @@
                     scoreHtml = '<span style="color:#999; font-size:13px;">本科尚無此區間測驗紀錄</span>';
                 }
 
-                // 4. 課堂備註與親師電聯 QA (預設 3 筆)
                 let noteItems = [];
                 classLogs.forEach((l) => {
                     if (l.detail) {
@@ -1327,6 +1317,7 @@
             window.renderLogStudents(dept);
         };
 
+        // 核心修正：待辦提醒面板渲染與防呆清除
         window.renderPendingTodoPanels = function() {
             ['junior', 'elementary'].forEach(dept => {
                 const container = document.getElementById(`${dept}-pending-todo-list`);
@@ -1339,50 +1330,96 @@
                 let pendingItems = [];
 
                 window.state.students.forEach(s => {
+                    if (s.status === 'graduated') return;
                     const stuCourses = getStudentCoursesArray(s);
-                    const matchCourse = stuCourses.find(c => targetCourses.includes(c));
 
-                    if(matchCourse && s.status !== 'graduated') {
-                        (s.attendanceLogs || []).forEach((l) => {
-                            const currentLogCourse = l.course || matchCourse;
-                            if (targetCourses.includes(currentLogCourse)) {
-                                const needsMakeup = (l.status === '請假' || l.status === '曠課') && !l.makeupDone;
-                                const passScore = l.passScore || 80;
-                                const needsRetest = l.score !== null && l.score !== '' && Number(l.score) < passScore && !l.retestDone;
+                    (s.attendanceLogs || []).forEach((l, lIdx) => {
+                        const currentLogCourse = l.course || (stuCourses.length === 1 ? stuCourses[0] : '');
+                        
+                        // 判定是否屬於當前部門的課程
+                        const isDeptCourse = targetCourses.some(c => c === currentLogCourse || (currentLogCourse && currentLogCourse.includes(c)) || (c && c.includes(currentLogCourse)));
+                        if (!isDeptCourse) return;
 
-                                if(needsMakeup) {
-                                    pendingItems.push(`
-                                        <div class="todo-badge-item">
-                                            <span><b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse}</span><span style="color:var(--danger); font-weight:bold;">[須補課]</span></span>
-                                            <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>
-                                        </div>
-                                    `);
-                                }
-                                if(needsRetest) {
-                                    pendingItems.push(`
-                                        <div class="todo-badge-item">
-                                            <span><b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse}</span><span style="color:var(--danger); font-weight:bold;">[須補考 (${l.score}分)]</span></span>
-                                            <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>
-                                        </div>
-                                    `);
-                                }
-                            }
-                        });
+                        // 判斷該學生是否還在該科名單
+                        const isStudentEnrolledInCourse = stuCourses.includes(currentLogCourse);
 
-                        (s.callQAs || []).forEach((qa) => {
-                            if(qa.status === 'unresolved') {
-                                pendingItems.push(`
-                                    <div class="todo-badge-item">
-                                        <span><b>${s.name}</b> - <span style="color:var(--danger); font-weight:bold;">[未處理電聯: ${qa.question.slice(0, 12)}...]</span></span>
-                                        <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${matchCourse}', '${s.firestoreId}')">去處理</button>
+                        const needsMakeup = (l.status === '請假' || l.status === '曠課') && !l.makeupDone;
+                        const passScore = l.passScore || 80;
+                        const needsRetest = l.score !== null && l.score !== '' && Number(l.score) < passScore && !l.retestDone;
+
+                        if (needsMakeup) {
+                            pendingItems.push(`
+                                <div class="todo-badge-item">
+                                    <span>
+                                        <b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse || '未指定班級'}</span>
+                                        <span style="color:var(--danger); font-weight:bold;">[須補課]</span>
+                                        ${!isStudentEnrolledInCourse ? '<span style="color:#b91c1c; font-size:12px; margin-left:4px;">(已不在班級名單)</span>' : ''}
+                                    </span>
+                                    <div style="display:flex; gap:6px;">
+                                        ${isStudentEnrolledInCourse ? `<button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>` : ''}
+                                        <button class="btn btn-small btn-danger" onclick="forceRemoveStudentAttendanceLog('${s.firestoreId}', ${lIdx}, '${s.name}', '${l.date}', '${currentLogCourse}')">🗑️ 強制清除</button>
                                     </div>
-                                `);
-                            }
-                        });
-                    }
+                                </div>
+                            `);
+                        }
+
+                        if (needsRetest) {
+                            pendingItems.push(`
+                                <div class="todo-badge-item">
+                                    <span>
+                                        <b>${s.name}</b> (${l.date}) - <span class="course-tag-badge">${currentLogCourse || '未指定班級'}</span>
+                                        <span style="color:var(--danger); font-weight:bold;">[須補考 (${l.score}分)]</span>
+                                        ${!isStudentEnrolledInCourse ? '<span style="color:#b91c1c; font-size:12px; margin-left:4px;">(已不在班級名單)</span>' : ''}
+                                    </span>
+                                    <div style="display:flex; gap:6px;">
+                                        ${isStudentEnrolledInCourse ? `<button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${currentLogCourse}', '${s.firestoreId}')">去處理</button>` : ''}
+                                        <button class="btn btn-small btn-danger" onclick="forceRemoveStudentAttendanceLog('${s.firestoreId}', ${lIdx}, '${s.name}', '${l.date}', '${currentLogCourse}')">🗑️ 強制清除</button>
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    });
+
+                    (s.callQAs || []).forEach((qa, qaIdx) => {
+                        if (qa.status === 'unresolved') {
+                            const firstCourse = stuCourses[0] || '';
+                            pendingItems.push(`
+                                <div class="todo-badge-item">
+                                    <span><b>${s.name}</b> - <span style="color:var(--danger); font-weight:bold;">[未處理電聯: ${qa.question.slice(0, 12)}...]</span></span>
+                                    <div style="display:flex; gap:6px;">
+                                        <button class="btn btn-small btn-success" onclick="jumpToStudentProfile('${firstCourse}', '${s.firestoreId}')">去處理</button>
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    });
                 });
 
                 container.innerHTML = pendingItems.length > 0 ? pendingItems.join('') : `<p style="color:#28a745; font-size:14px; margin:0;">🎉 太棒了！此部門目前無任何待辦事項。</p>`;
+            });
+        };
+
+        // 一鍵強制刪除某筆卡住的孤兒補課/點名紀錄
+        window.forceRemoveStudentAttendanceLog = function(firestoreId, logIndex, studentName, dateStr, courseName) {
+            window.requestSecureAction(async () => {
+                const student = window.state.students.find(s => s.firestoreId === firestoreId);
+                if (!student || !student.attendanceLogs) return;
+
+                student.attendanceLogs.splice(logIndex, 1);
+
+                try {
+                    await setDoc(doc(db, "classLogStudents", firestoreId), {
+                        ...student,
+                        attendanceLogs: student.attendanceLogs
+                    });
+
+                    alert(`✅ 已成功從雲端清除【${studentName}】在 ${dateStr} (${courseName}) 的補課/出席紀錄！`);
+                    window.renderPendingTodoPanels();
+                    window.renderProfileStudents();
+                } catch (e) {
+                    console.error(e);
+                    alert('清除失敗，請檢查網路連線或稍後再試！');
+                }
             });
         };
 
