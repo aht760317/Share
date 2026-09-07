@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斗六市國小學童專車暨車號查詢系統</title>
+    <!-- 引入 Tailwind CSS 樣式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <div class="max-w-4xl mx-auto p-4 sm:p-6">
+        <!-- 標題區 -->
+        <header class="bg-indigo-600 text-white rounded-2xl p-6 shadow-lg mb-6 text-center">
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2">🚌 斗六市國小學童接送與車號查詢系統</h1>
+            <p class="text-indigo-100 text-sm sm:text-base">輸入車號或學生姓名，快速查詢搭車路線、學校及導航地圖</p>
+        </header>
+
+        <!-- 搜尋與操作區 -->
+        <div class="bg-white rounded-2xl p-6 shadow-md mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">選擇就讀學校</label>
+                    <select id="schoolSelect" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="">全部學校</option>
+                        <option value="斗六國小">斗六國小</option>
+                        <option value="雲林國小">雲林國小</option>
+                        <option value="鎮南國小">鎮南國小</option>
+                        <option value="鎮東國小">鎮東國小</option>
+                        <option value="久安國小">久安國小</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">輸入車號或學生姓名關鍵字</label>
+                    <input type="text" id="searchInput" placeholder="例: KAB-8888 或 王小明" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="searchData()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium p-2.5 rounded-xl transition shadow">
+                        🔍 立即查詢
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果顯示區 -->
+        <div class="bg-white rounded-2xl p-6 shadow-md">
+            <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">搭車路線與車號對應清單</h2>
+            <div id="resultList" class="space-y-4">
+                <!-- 動態載入結果 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模擬資料庫：斗六市學生搭車清單、學校、車號與地圖連結
+        const busDatabase = [
+            {
+                studentName: "王小明",
+                school: "斗六國小",
+                grade: "三年1班",
+                homeAddress: "斗六市鎮南路100號",
+                busNumber: "KAA-1234",
+                routeName: "斗六線 01 車（南迴線）",
+                mapUrl: "https://maps.google.com/?cid=16780180117981321240"
+            },
+            {
+                studentName: "李小華",
+                school: "雲林國小",
+                grade: "二年2班",
+                homeAddress: "斗六市大學路三段120號",
+                busNumber: "KAB-5678",
+                routeName: "大學路專車 02 車",
+                mapUrl: "https://maps.google.com/?cid=9879529245312359921"
+            },
+            {
+                studentName: "張大為",
+                school: "鎮南國小",
+                grade: "五年1班",
+                homeAddress: "斗六市中正路50號",
+                busNumber: "KAA-1234",
+                routeName: "斗六線 01 車（南迴線）",
+                mapUrl: "https://maps.google.com/?cid=9750692868257637079"
+            },
+            {
+                studentName: "陳美玲",
+                school: "鎮東國小",
+                grade: "一年3班",
+                homeAddress: "斗六市文化路180號",
+                busNumber: "KAC-9999",
+                routeName: "東區接送專車 03 車",
+                mapUrl: "https://maps.google.com/?cid=5445690132605564460"
+            },
+            {
+                studentName: "林志豪",
+                school: "久安國小",
+                grade: "四年1班",
+                homeAddress: "斗六市久安路20號",
+                busNumber: "KAD-8888",
+                routeName: "久安鄉間線 04 車",
+                mapUrl: "https://maps.google.com/?cid=5406404556906840221"
+            }
+        ];
+
+        // 渲染畫面函數
+        function renderResults(data) {
+            const container = document.getElementById('resultList');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-center py-8">沒有找到符合條件的搭車資訊，請嘗試其他關鍵字。</p>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">${item.school}</span>
+                            <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">車號: ${item.busNumber}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800">${item.studentName} <span class="text-sm font-normal text-slate-500">(${item.grade})</span></h3>
+                        <p class="text-sm text-slate-600 mt-1">🏠 住址：${item.homeAddress}</p>
+                        <p class="text-sm text-slate-600">🚌 路線：<span class="font-medium text-indigo-600">${item.routeName}</span></p>
+                    </div>
+                    <div>
+                        <a href="${item.mapUrl}" target="_blank" class="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition shadow">
+                            🗺️ 查看學校與地圖
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 搜尋邏輯
+        function searchData() {
+            const schoolVal = document.getElementById('schoolSelect').value;
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const filtered = busDatabase.filter(item => {
+                const matchSchool = schoolVal === "" || item.school === schoolVal;
+                const matchKeyword = keyword === "" || 
+                    item.studentName.toLowerCase().includes(keyword) || 
+                    item.busNumber.toLowerCase().includes(keyword) ||
+                    item.routeName.toLowerCase().includes(keyword);
+                return matchSchool && matchKeyword;
+            });
+
+            renderResults(filtered);
+        }
+
+        // 初始化載入全部
+        window.onload = function() {
+            renderResults(busDatabase);
+        };
+    </script>
+</body>
+</html>
