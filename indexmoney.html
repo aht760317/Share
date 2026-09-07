@@ -1065,7 +1065,17 @@
     let jQuickSortable = null;
     let oQuickSortable = null;
 
-    // 計算 3 個月的自然月區間：某年某月1日 ～ 第3個月的最後一日
+    // 計算 1 個月的單月區間：某年某月1日 ～ 該月最後一日
+    window.calculate1MonthRange = function(year, month) {
+        const startD = new Date(year, month - 1, 1);
+        const endD = new Date(year, month, 0); // 該月最後一天
+        
+        const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
+        const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+        return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
+    };
+
+    // 計算 3 個月的自然月區間（保留給需要三個月的特殊情況）
     window.calculate3MonthRange = function(year, month) {
         const startD = new Date(year, month - 1, 1);
         const endD = new Date(year, month - 1 + 3, 0);
@@ -1075,11 +1085,11 @@
         return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
     };
 
-    // 計算下一期 3 個月自然月週期
-    window.calculateNext3MonthRangeFromEnd = function(endDateStr) {
+    // 計算下一期 1 個月自然月週期
+    window.calculateNext1MonthRangeFromEnd = function(endDateStr) {
         const [eY, eM, eD] = endDateStr.split('-').map(Number);
         const nextStartD = new Date(eY, eM, 1);
-        return window.calculate3MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
+        return window.calculate1MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
     };
 
     // 檢查某月份是否落入單據所屬期間
@@ -1485,7 +1495,6 @@
         const selectedMonth = window.getSelectedGlobalYearMonth();
         let students = [...(window.config.classes[cls] || [])];
 
-        // 依繁體中文姓氏筆劃排序 (zh-Hant)
         students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
 
         if (students.length === 0) {
@@ -1522,9 +1531,10 @@
                 } else {
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
-            } else if (window.isJuniorHigh(cls)) {
+            } else {
+                // 預設採用單月 (1個月) 區間，不再預設強制三個月
                 const [y, m] = selectedMonth.split('-').map(Number);
-                const r = window.calculate3MonthRange(y, m);
+                const r = window.calculate1MonthRange(y, m);
                 displayPeriod = r.periodStr;
             }
 
@@ -1549,7 +1559,6 @@
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
         window.currentStudent = stu;
-        const isJr = window.isJuniorHigh(cls);
 
         document.getElementById('modalBillClassName').value = cls;
         document.getElementById('modalBillStudentName').value = stu;
@@ -1560,19 +1569,14 @@
         document.getElementById('modalBillYearSelect').value = curY;
         document.getElementById('modalBillMonthSelect').value = curM;
 
-        const defaultRange = window.calculate3MonthRange(Number(curY), Number(curM));
+        // 預設採用單月日期區間
+        const defaultRange = window.calculate1MonthRange(Number(curY), Number(curM));
 
-        if (isJr) {
-            document.getElementById('modalCustomPeriodToggle').checked = true;
-            document.getElementById('modalCustomDateContainer').style.display = 'flex';
-            document.getElementById('modalStartDate').value = defaultRange.start;
-            document.getElementById('modalEndDate').value = defaultRange.end;
-        } else {
-            document.getElementById('modalCustomPeriodToggle').checked = false;
-            document.getElementById('modalCustomDateContainer').style.display = 'none';
-            document.getElementById('modalStartDate').value = defaultRange.start;
-            document.getElementById('modalEndDate').value = defaultRange.end;
-        }
+        document.getElementById('modalCustomPeriodToggle').checked = false;
+        document.getElementById('modalCustomDateContainer').style.display = 'none';
+        document.getElementById('modalMonthSelectContainer').style.display = 'flex';
+        document.getElementById('modalStartDate').value = defaultRange.start;
+        document.getElementById('modalEndDate').value = defaultRange.end;
 
         populateQuickDropdownForModal(cls);
 
@@ -1590,6 +1594,7 @@
                 const [sDate, eDate] = existingBill.periodStr.split('~').map(x => x.trim());
                 document.getElementById('modalCustomPeriodToggle').checked = true;
                 document.getElementById('modalCustomDateContainer').style.display = 'flex';
+                document.getElementById('modalMonthSelectContainer').style.display = 'none';
                 document.getElementById('modalStartDate').value = sDate;
                 document.getElementById('modalEndDate').value = eDate;
             }
@@ -1608,7 +1613,7 @@
     window.onModalMonthSelectChange = function() {
         const y = Number(document.getElementById('modalBillYearSelect').value);
         const m = Number(document.getElementById('modalBillMonthSelect').value);
-        const r = window.calculate3MonthRange(y, m);
+        const r = window.calculate1MonthRange(y, m);
         document.getElementById('modalStartDate').value = r.start;
         document.getElementById('modalEndDate').value = r.end;
     };
@@ -1720,7 +1725,9 @@
             const y = document.getElementById('modalBillYearSelect').value;
             const m = document.getElementById('modalBillMonthSelect').value;
             yMonth = `${y}-${m}`;
-            displayPeriod = yMonth;
+            // 預設帶出該月的完整起訖日期 (若需要單純顯示月份，也可直接用 yMonth，這裡用 calculate1MonthRange 的 periodStr 讓印出來有精確期限)
+            const r = window.calculate1MonthRange(Number(y), Number(m));
+            displayPeriod = r.periodStr;
         }
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
@@ -1813,22 +1820,20 @@
         });
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 (支援「不要自動續費」勾選判斷) ---------- */
+    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
         try {
-            // 如果該單據勾選了「不要自動續費」，則直接略過不建立下期單據
             if (currentBill.noAutoRenew) {
                 return;
             }
 
-            const isJr = window.isJuniorHigh(currentBill.className);
             let nextPeriodStr = '';
             let nextYearMonth = '';
 
-            if (isJr && currentBill.periodStr && currentBill.periodStr.includes('~')) {
+            if (currentBill.periodStr && currentBill.periodStr.includes('~')) {
                 const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
-                const nextRange = window.calculateNext3MonthRangeFromEnd(endStr);
+                const nextRange = window.calculateNext1MonthRangeFromEnd(endStr);
                 nextPeriodStr = nextRange.periodStr;
                 nextYearMonth = nextRange.start.substring(0, 7);
             } else {
@@ -1837,7 +1842,8 @@
                 const [year, month] = baseYM.split('-').map(Number);
                 const nextDate = new Date(year, month, 1);
                 nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-                nextPeriodStr = nextYearMonth;
+                const nextRange = window.calculate1MonthRange(nextDate.getFullYear(), nextDate.getMonth() + 1);
+                nextPeriodStr = nextRange.periodStr;
             }
 
             const alreadyExists = window.bills.some(b => 
@@ -2422,7 +2428,6 @@
         printDocument(id, type);
     };
 
-    // 完美排版之批次/勾選列表列印分配器 (自動計算每頁3聯分配，單獨、兩個、三個或多個同學均自動完美排版)
     window.printNoticesBatchList = function(targetBills) {
         if (!targetBills || targetBills.length === 0) return;
 
