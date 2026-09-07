@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薪資設定中心 - 冠抑文教</title>
+    <title>冠抑文教 - 薪資明細表</title>
     <style>
         :root {
             --primary: #1e3a8a;
-            --primary-hover: #1e40af;
-            --bg: #f8fafc;
-            --border: #cbd5e1;
-            --danger: #ef4444;
+            --bg: #e2e8f0;
+            --highlight: #ffff00;
         }
 
         * {
@@ -21,509 +19,473 @@
         body {
             background-color: var(--bg);
             margin: 0;
-            padding: 24px;
-            color: #0f172a;
+            padding: 20px;
         }
 
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .action-panel {
+            max-width: 720px;
+            margin: 0 auto 16px auto;
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .top-bar {
+        .top-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .card h2 {
-            margin-top: 0;
-            font-size: 1.15em;
-            color: var(--primary);
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 10px;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        .form-group {
+        .select-group {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-bottom: 10px;
+            gap: 10px;
+            align-items: center;
         }
 
-        .form-group label {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        input, select {
-            padding: 8px;
-            border: 1px solid var(--border);
+        select, input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
             border-radius: 4px;
             font-size: 0.9em;
         }
 
         .btn {
-            cursor: pointer;
-            border: none;
+            padding: 7px 14px;
             border-radius: 4px;
-            padding: 8px 14px;
-            font-size: 0.9em;
             font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-block;
+            border: none;
         }
 
         .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-danger { background: var(--danger); color: #fff; padding: 4px 8px; font-size: 0.8em; }
-        .btn-edit { background: #0284c7; color: #fff; padding: 4px 8px; font-size: 0.8em; margin-right: 4px; }
-        .btn-outline { background: #fff; border: 1px solid var(--border); color: #334155; }
+        .btn-settings { background: #475569; color: #fff; }
+        .btn-add { background: #0284c7; color: #fff; padding: 5px 10px; font-size: 0.85em; }
+        .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 3px; cursor: pointer; padding: 2px 6px; font-size: 0.8em; }
 
-        table.data-table {
+        .course-assign-box {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+
+        .course-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        /* 紙本薪資表格式 */
+        .payslip-sheet {
+            width: 720px;
+            margin: 0 auto;
+            background: #fff;
+            border: 2px solid #000;
+            padding: 14px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .sheet-header {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            background-color: var(--highlight);
+            border: 1px solid #000;
+            padding: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sheet-subheader {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 8px;
+            border: 1px solid #000;
+            border-top: none;
+            font-size: 0.9em;
+            align-items: center;
+        }
+
+        table.sheet-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 4px;
             font-size: 0.88em;
-            margin-top: 10px;
         }
 
-        table.data-table th, table.data-table td {
-            border: 1px solid var(--border);
-            padding: 8px 10px;
-            text-align: left;
+        table.sheet-table th, table.sheet-table td {
+            border: 1px solid #000;
+            padding: 5px 8px;
         }
 
-        table.data-table th {
-            background-color: #f1f5f9;
+        .tag-cell {
+            background-color: var(--highlight);
+            text-align: center;
+            font-weight: bold;
+            width: 35px;
+        }
+
+        .text-right {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .text-center { text-align: center; }
+
+        .leave-badge {
+            display: inline-block;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin: 1px 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .signature-box {
+            border: 1px solid #000;
+            border-top: none;
+            padding: 26px 12px 10px 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .no-print { display: none !important; }
+            .payslip-sheet { border: 1px solid #000; box-shadow: none; width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="top-bar">
-        <h1 style="font-size: 1.4em; margin: 0; color: var(--primary);">⚙️ 冠抑文教 - 系統設定中心</h1>
-        <a href="salary.html" class="btn btn-outline">⬅️ 返回薪資明細表</a>
-    </div>
+    <div class="action-panel no-print">
+        <div class="top-controls">
+            <div class="select-group">
+                <label>計薪月份：</label>
+                <select id="sel-month" onchange="renderSheet()"></select>
+                <label>教師：</label>
+                <select id="sel-teacher" onchange="onTeacherChange()"></select>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="settings.html" class="btn btn-settings">⚙️ 獨立設定中心</a>
+                <button class="btn btn-primary" onclick="window.print()">🖨️ 列印薪資單</button>
+            </div>
+        </div>
 
-    <!-- 1. 機構抬頭設定 -->
-    <div class="card">
-        <h2>機構抬頭設定</h2>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="cfg-inst" style="flex: 1;" placeholder="輸入機構名稱">
-            <button class="btn btn-primary" onclick="saveInst()">更新機構抬頭</button>
+        <div class="course-assign-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.9em; font-weight: bold; color: #334155;">📚 本月授課課程（可點擊加入多門）：</span>
+                <button class="btn btn-add" onclick="addCourseRow()">➕ 加入一門授課</button>
+            </div>
+            <div id="course-list-inputs"></div>
         </div>
     </div>
 
-    <!-- 2. 教師請假登記表 (日曆登記) -->
-    <div class="card">
-        <h2>📅 教師請假日曆登記表</h2>
-        <div class="grid-4" style="align-items: flex-end;">
-            <div class="form-group">
-                <label>選擇教師</label>
-                <select id="leave-teacher"></select>
-            </div>
-            <div class="form-group">
-                <label>計薪月份</label>
-                <select id="leave-month"></select>
-            </div>
-            <div class="form-group">
-                <label>請假具體日期</label>
-                <input type="date" id="leave-date">
-            </div>
-            <div class="form-group">
-                <label>假別</label>
-                <select id="leave-type">
-                    <option value="事假">事假 (全扣日薪)</option>
-                    <option value="病假">病假 (扣半薪)</option>
-                    <option value="公假">公假 (不扣薪)</option>
-                    <option value="特休">特休 (不扣薪)</option>
-                </select>
-            </div>
+    <div class="payslip-sheet">
+        <div class="sheet-header" id="view-inst">冠抑文教有限公司</div>
+        <div class="sheet-subheader">
+            <span>姓名：<strong id="view-name">---</strong></span>
+            <span id="view-date">發放日期：---</span>
         </div>
-        <button class="btn btn-primary" onclick="addLeaveRecord()" style="margin-top: 8px;">登記此請假紀錄</button>
+        <div class="sheet-subheader" style="border-top: none;">
+            <div>本月請假：<span id="view-leaves">無請假紀錄</span></div>
+            <strong id="view-title">---</strong>
+        </div>
 
-        <table class="data-table" style="margin-top: 15px;">
-            <thead>
-                <tr>
-                    <th>教師姓名</th>
-                    <th>月份</th>
-                    <th>請假日期</th>
-                    <th>假別</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="leave-tbody"></tbody>
+        <table class="sheet-table">
+            <tr>
+                <td colspan="2">遲到: 0 分, 無打卡: 0</td>
+                <td colspan="2">到職日：<span id="view-hiredate">---</span></td>
+            </tr>
+            <tr>
+                <td rowspan="9" class="tag-cell">薪轉</td>
+                <td style="width: 35%;">本薪</td>
+                <td class="text-right" colspan="2" id="view-base">0</td>
+            </tr>
+            <tr>
+                <td>勞健保</td>
+                <td colspan="2" class="text-center" id="view-ins-desc" style="color: #666; font-size: 0.85em;">個人負擔</td>
+            </tr>
+            <tr>
+                <td>勞保(-)</td>
+                <td class="text-right" style="color:#666;">公司 <span id="view-comp-labor">0</span></td>
+                <td class="text-right" id="view-labor">0</td>
+            </tr>
+            <tr>
+                <td>健保(-)</td>
+                <td class="text-right" style="color:#666;">公司 <span id="view-comp-health">0</span></td>
+                <td class="text-right" id="view-health">0</td>
+            </tr>
+            <tr>
+                <td>福利金(-)</td>
+                <td class="text-right" colspan="2">職保 <span id="view-occ-ins">53</span></td>
+            </tr>
+            <tr>
+                <td>勞退金</td>
+                <td class="text-right" colspan="2">公司 <span id="view-pension">0</span></td>
+            </tr>
+            <tr>
+                <td>請假缺勤扣款(-)</td>
+                <td class="text-right" id="view-leave-desc">累計 0 天</td>
+                <td class="text-right" id="view-leave-deduct">0</td>
+            </tr>
+            <tr>
+                <td>其它(-)</td>
+                <td class="text-right">眷屬/固定扣款</td>
+                <td class="text-right" id="view-other-deduct">0</td>
+            </tr>
+            <tr style="background-color: #f8fafc; font-weight: bold;">
+                <td>應領金額 (本薪扣除後)</td>
+                <td class="text-right" id="view-deduct-total" style="color: #666;">扣除總額: 0</td>
+                <td class="text-right" id="view-net-base" style="color: #000;">0</td>
+            </tr>
+
+            <!-- 加給項目 -->
+            <tr>
+                <td class="tag-cell" id="add-tag" rowspan="4">加給</td>
+                <td>年資津貼</td>
+                <td class="text-right" colspan="2" id="view-seniority">0</td>
+            </tr>
+            <tr>
+                <td>特殊加給</td>
+                <td class="text-right" colspan="2" id="view-special">0</td>
+            </tr>
+
+            <!-- 多門課程動態插入容器 -->
+            <tbody id="course-rows-container"></tbody>
+
+            <!-- 勞健保對照區 -->
+            <tr>
+                <td colspan="2" style="background-color: var(--highlight); font-weight: bold;">勞健保 個人負擔</td>
+                <td colspan="2" class="text-right" id="view-sum-personal" style="background-color: var(--highlight); font-weight: bold;">0</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="background-color: var(--highlight); font-weight: bold;">勞健保 公司負擔</td>
+                <td colspan="2" class="text-right" id="view-sum-company" style="background-color: var(--highlight); font-weight: bold;">0</td>
+            </tr>
+
+            <tr style="background-color: #f8fafc; font-weight: bold;">
+                <td colspan="2">應領金額 (含各項加給)</td>
+                <td class="text-right" colspan="2" id="view-gross-salary">0</td>
+            </tr>
+            <tr style="background-color: var(--highlight); font-size: 1.1em; font-weight: bold;">
+                <td colspan="2">總領金額 (實發金額)</td>
+                <td class="text-right" colspan="2" id="view-final-salary" style="color: #b91c1c;">NT$ 0</td>
+            </tr>
         </table>
+
+        <div class="signature-box">
+            <span>經辦人：</span>
+            <span>機構負責人：</span>
+            <span>領款人簽章：</span>
+        </div>
     </div>
-
-    <!-- 3. 教師常態薪資 CRUD -->
-    <div class="card">
-        <h2>教師資料管理（新增 / 編輯）</h2>
-        <input type="hidden" id="t-id">
-        <div class="grid-3">
-            <div class="form-group">
-                <label>教師姓名 *</label>
-                <input type="text" id="t-name">
-            </div>
-            <div class="form-group">
-                <label>到職日</label>
-                <input type="text" id="t-hire" placeholder="例如：108/08/01">
-            </div>
-            <div class="form-group">
-                <label>每月本薪 *</label>
-                <input type="number" id="t-base" oninput="calcInsurance()">
-            </div>
-        </div>
-        <div class="grid-4">
-            <div class="form-group">
-                <label>勞保 (自負)</label>
-                <input type="number" id="t-lp">
-            </div>
-            <div class="form-group">
-                <label>勞保 (公司提撥)</label>
-                <input type="number" id="t-lc">
-            </div>
-            <div class="form-group">
-                <label>健保 (自負)</label>
-                <input type="number" id="t-hp">
-            </div>
-            <div class="form-group">
-                <label>健保 (公司提撥)</label>
-                <input type="number" id="t-hc">
-            </div>
-        </div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>年資津貼</label>
-                <input type="number" id="t-seniority" value="0">
-            </div>
-            <div class="form-group">
-                <label>特殊職務加給</label>
-                <input type="number" id="t-special" value="0">
-            </div>
-            <div class="form-group">
-                <label>固定其它代扣</label>
-                <input type="number" id="t-other" value="0">
-            </div>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <button class="btn btn-primary" onclick="submitTeacher()">儲存教師資料</button>
-            <button class="btn btn-outline" onclick="resetTeacherForm()">清空欄位</button>
-        </div>
-
-        <table class="data-table" style="margin-top: 20px;">
-            <thead>
-                <tr>
-                    <th>姓名</th>
-                    <th>到職日</th>
-                    <th>本薪</th>
-                    <th>勞保 (自/公)</th>
-                    <th>健保 (自/公)</th>
-                    <th>加給 (年資/職務)</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="teacher-tbody"></tbody>
-        </table>
-    </div>
-
-    <!-- 4. 課程獎金規則管理 -->
-    <div class="card">
-        <h2>課程開班與學生人數獎金規則</h2>
-        <div class="grid-3" style="align-items: flex-end;">
-            <div class="form-group">
-                <label>課程名稱</label>
-                <input type="text" id="r-course" placeholder="例如：國小資優數學">
-            </div>
-            <div class="form-group">
-                <label>門檻人數</label>
-                <input type="number" id="r-min" placeholder="例如：5">
-            </div>
-            <div class="form-group">
-                <label>每位學生發放金額</label>
-                <input type="number" id="r-bonus" placeholder="例如：200">
-            </div>
-        </div>
-        <button class="btn btn-primary" onclick="addRule()" style="margin-top: 8px;">新增獎金規則</button>
-
-        <table class="data-table" style="margin-top: 15px;">
-            <thead>
-                <tr>
-                    <th>課程名稱</th>
-                    <th>開班人數門檻</th>
-                    <th>單生獎金金額</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="rule-tbody"></tbody>
-        </table>
-    </div>
-</div>
 
 <script>
-    let teachers = JSON.parse(localStorage.getItem('gy_teachers')) || [
-        { id: "1", name: "陳怡芳", hire: "103/7/1", base: 26400, lp: 634, lc: 2218, hp: 409, hc: 1286, other: 205, seniority: 0, special: 1000 },
-        { id: "2", name: "林孟柔", hire: "108/08/01", base: 28000, lp: 672, lc: 2350, hp: 434, hc: 1364, other: 0, seniority: 1000, special: 2600 }
-    ];
+    let assignedCourses = [];
 
-    let rules = JSON.parse(localStorage.getItem('gy_rules')) || [
-        { id: "1", course: "國中數學進階班", minStudents: 10, bonus: 200 },
-        { id: "2", course: "國小課輔看班", minStudents: 5, bonus: 150 }
-    ];
-
-    let leaves = JSON.parse(localStorage.getItem('gy_leaves')) || [];
-
-    function saveAll() {
-        localStorage.setItem('gy_teachers', JSON.stringify(teachers));
-        localStorage.setItem('gy_rules', JSON.stringify(rules));
-        localStorage.setItem('gy_leaves', JSON.stringify(leaves));
+    function loadData() {
+        return {
+            teachers: JSON.parse(localStorage.getItem('gy_teachers')) || [],
+            rules: JSON.parse(localStorage.getItem('gy_rules')) || [],
+            inst: localStorage.getItem('gy_inst') || "冠抑文教有限公司",
+            leaves: JSON.parse(localStorage.getItem('gy_leaves')) || []
+        };
     }
 
-    function initMonths() {
-        const sel = document.getElementById('leave-month');
+    function initMonthSelector() {
+        const sel = document.getElementById('sel-month');
         sel.innerHTML = '';
         const now = new Date();
         const rocYear = now.getFullYear() - 1911;
-        const curM = now.getMonth() + 1;
+        const curMonth = now.getMonth() + 1;
+
         for (let m = 1; m <= 12; m++) {
             const opt = document.createElement('option');
             opt.value = `${rocYear}年${m}月`;
             opt.innerText = `${rocYear}年${m}月`;
-            if (m === curM) opt.selected = true;
+            if (m === curMonth) opt.selected = true;
             sel.appendChild(opt);
         }
     }
 
-    function saveInst() {
-        const val = document.getElementById('cfg-inst').value.trim();
-        if (!val) return alert('請輸入機構名稱');
-        localStorage.setItem('gy_inst', val);
-        alert('機構抬頭已更新！');
-    }
-
-    function calcInsurance() {
-        const base = parseFloat(document.getElementById('t-base').value) || 0;
-        document.getElementById('t-lp').value = Math.round(base * 0.115 * 0.2);
-        document.getElementById('t-lc').value = Math.round(base * 0.115 * 0.7);
-        document.getElementById('t-hp').value = Math.round(base * 0.0517 * 0.3);
-        document.getElementById('t-hc').value = Math.round(base * 0.0517 * 0.6);
-    }
-
-    function refreshTeacherSelect() {
-        const sel = document.getElementById('leave-teacher');
-        sel.innerHTML = '';
+    function refreshDropdowns() {
+        const { teachers } = loadData();
+        const tSel = document.getElementById('sel-teacher');
+        tSel.innerHTML = '';
         teachers.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.id;
             opt.innerText = t.name;
-            sel.appendChild(opt);
+            tSel.appendChild(opt);
         });
     }
 
-    /* 請假管理邏輯 */
-    function addLeaveRecord() {
-        const teacherId = document.getElementById('leave-teacher').value;
-        const month = document.getElementById('leave-month').value;
-        const date = document.getElementById('leave-date').value;
-        const type = document.getElementById('leave-type').value;
-
-        if (!teacherId || !date) return alert('請選擇教師並指定日期！');
-
-        leaves.push({ id: Date.now().toString(), teacherId, month, date, type });
-        saveAll();
-        renderLeaves();
-        document.getElementById('leave-date').value = '';
+    function onTeacherChange() {
+        assignedCourses = [];
+        renderCourseInputs();
+        renderSheet();
     }
 
-    function deleteLeave(id) {
-        leaves = leaves.filter(l => l.id !== id);
-        saveAll();
-        renderLeaves();
+    function addCourseRow() {
+        const { rules } = loadData();
+        if (rules.length === 0) return alert('目前無課程規則，請先至設定中心建立！');
+        assignedCourses.push({ ruleId: rules[0].id, students: 0 });
+        renderCourseInputs();
+        renderSheet();
     }
 
-    function renderLeaves() {
-        const tbody = document.getElementById('leave-tbody');
-        tbody.innerHTML = '';
-        leaves.forEach(l => {
-            const teacher = teachers.find(t => t.id === l.teacherId);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${teacher ? teacher.name : '未知'}</strong></td>
-                <td>${l.month}</td>
-                <td>${l.date}</td>
-                <td>${l.type}</td>
-                <td><button class="btn btn-danger" onclick="deleteLeave('${l.id}')">刪除</button></td>
+    function removeCourseRow(idx) {
+        assignedCourses.splice(idx, 1);
+        renderCourseInputs();
+        renderSheet();
+    }
+
+    function renderCourseInputs() {
+        const { rules } = loadData();
+        const container = document.getElementById('course-list-inputs');
+        container.innerHTML = '';
+
+        assignedCourses.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.className = 'course-row';
+
+            let options = rules.map(r => 
+                `<option value="${r.id}" ${r.id === item.ruleId ? 'selected' : ''}>${r.course} (門檻 ${r.minStudents} 人，每生 $${r.bonus})</option>`
+            ).join('');
+
+            row.innerHTML = `
+                <select onchange="updateCourseSelection(${idx}, this.value)">${options}</select>
+                <input type="number" style="width: 120px;" placeholder="學生人數" value="${item.students}" min="0" oninput="updateCourseStudents(${idx}, this.value)">
+                <button class="btn-del" onclick="removeCourseRow(${idx})">移除</button>
             `;
-            tbody.appendChild(tr);
+            container.appendChild(row);
         });
     }
 
-    /* 教師管理邏輯 */
-    function renderTeachers() {
-        const tbody = document.getElementById('teacher-tbody');
-        tbody.innerHTML = '';
-        teachers.forEach(t => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${t.name}</strong></td>
-                <td>${t.hire}</td>
-                <td>${t.base.toLocaleString()}</td>
-                <td>${t.lp} / ${t.lc}</td>
-                <td>${t.hp} / ${t.hc}</td>
-                <td>${t.seniority} / ${t.special}</td>
-                <td>
-                    <button class="btn btn-edit" onclick="editTeacher('${t.id}')">編輯</button>
-                    <button class="btn btn-danger" onclick="deleteTeacher('${t.id}')">刪除</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-        refreshTeacherSelect();
+    function updateCourseSelection(idx, val) {
+        assignedCourses[idx].ruleId = val;
+        renderSheet();
     }
 
-    function submitTeacher() {
-        const name = document.getElementById('t-name').value.trim();
-        const base = Number(document.getElementById('t-base').value) || 0;
-        if (!name || base <= 0) return alert('請完整填寫教師姓名及每月本薪');
+    function updateCourseStudents(idx, val) {
+        assignedCourses[idx].students = parseInt(val) || 0;
+        renderSheet();
+    }
 
-        const editId = document.getElementById('t-id').value;
-        const profile = {
-            id: editId || Date.now().toString(),
-            name,
-            hire: document.getElementById('t-hire').value.trim(),
-            base,
-            lp: Number(document.getElementById('t-lp').value) || 0,
-            lc: Number(document.getElementById('t-lc').value) || 0,
-            hp: Number(document.getElementById('t-hp').value) || 0,
-            hc: Number(document.getElementById('t-hc').value) || 0,
-            seniority: Number(document.getElementById('t-seniority').value) || 0,
-            special: Number(document.getElementById('t-special').value) || 0,
-            other: Number(document.getElementById('t-other').value) || 0
-        };
+    function renderSheet() {
+        const { teachers, rules, inst, leaves } = loadData();
+        const teacherId = document.getElementById('sel-teacher').value;
+        const teacher = teachers.find(t => t.id === teacherId) || teachers[0];
+        if (!teacher) return;
 
-        if (editId) {
-            const idx = teachers.findIndex(t => t.id === editId);
-            if (idx >= 0) teachers[idx] = profile;
+        const monthStr = document.getElementById('sel-month').value;
+        const m = monthStr.split('年')[1] || '';
+
+        document.getElementById('view-inst').innerText = inst;
+        document.getElementById('view-name').innerText = teacher.name;
+        document.getElementById('view-hiredate').innerText = teacher.hire;
+        document.getElementById('view-date').innerText = `發放日期：${monthStr}10日`;
+        document.getElementById('view-title').innerText = `${monthStr}份薪俸明細表`;
+        document.getElementById('view-ins-desc').innerText = `${m}(個人負擔)`;
+
+        // 請假紀錄篩選
+        const teacherLeaves = leaves.filter(l => l.teacherId === teacher.id && l.month === monthStr);
+        const leaveContainer = document.getElementById('view-leaves');
+        if (teacherLeaves.length > 0) {
+            leaveContainer.innerHTML = teacherLeaves.map(l => `<span class="leave-badge">${l.date.substring(5)} (${l.type})</span>`).join('');
         } else {
-            teachers.push(profile);
+            leaveContainer.innerHTML = '<span style="color:#15803d; font-weight:bold;">全勤無請假</span>';
         }
 
-        saveAll();
-        renderTeachers();
-        resetTeacherForm();
-        alert('教師資料已成功儲存！');
-    }
+        // 請假扣款 (事假全扣、病假半扣)
+        const dailyRate = Math.round(teacher.base / 30);
+        let leaveDeduct = 0;
+        teacherLeaves.forEach(l => {
+            if (l.type === '事假') leaveDeduct += dailyRate;
+            if (l.type === '病假') leaveDeduct += Math.round(dailyRate / 2);
+        });
+        document.getElementById('view-leave-desc').innerText = `累計 ${teacherLeaves.length} 天`;
+        document.getElementById('view-leave-deduct').innerText = leaveDeduct.toLocaleString();
 
-    function editTeacher(id) {
-        const t = teachers.find(item => item.id === id);
-        if (!t) return;
-        document.getElementById('t-id').value = t.id;
-        document.getElementById('t-name').value = t.name;
-        document.getElementById('t-hire').value = t.hire;
-        document.getElementById('t-base').value = t.base;
-        document.getElementById('t-lp').value = t.lp;
-        document.getElementById('t-lc').value = t.lc;
-        document.getElementById('t-hp').value = t.hp;
-        document.getElementById('t-hc').value = t.hc;
-        document.getElementById('t-seniority').value = t.seniority;
-        document.getElementById('t-special').value = t.special;
-        document.getElementById('t-other').value = t.other;
-    }
+        // 課程獎金動態清單
+        const tableBody = document.getElementById('course-rows-container');
+        tableBody.innerHTML = '';
+        let totalCourseBonus = 0;
 
-    function deleteTeacher(id) {
-        const t = teachers.find(item => item.id === id);
-        if (!t) return;
-        if (confirm(`確定要刪除教師【${t.name}】嗎？`)) {
-            teachers = teachers.filter(item => item.id !== id);
-            saveAll();
-            renderTeachers();
-            renderLeaves();
-        }
-    }
+        assignedCourses.forEach(item => {
+            const rule = rules.find(r => r.id === item.ruleId);
+            if (!rule) return;
 
-    function resetTeacherForm() {
-        document.getElementById('t-id').value = '';
-        document.getElementById('t-name').value = '';
-        document.getElementById('t-hire').value = '';
-        document.getElementById('t-base').value = '';
-        document.getElementById('t-lp').value = '';
-        document.getElementById('t-lc').value = '';
-        document.getElementById('t-hp').value = '';
-        document.getElementById('t-hc').value = '';
-        document.getElementById('t-seniority').value = 0;
-        document.getElementById('t-special').value = 0;
-        document.getElementById('t-other').value = 0;
-    }
+            let earned = 0;
+            let detailDesc = `${rule.course} (人數: ${item.students})`;
+            if (item.students >= rule.minStudents) {
+                earned = item.students * rule.bonus;
+            } else {
+                detailDesc += ` [未達門檻 ${rule.minStudents}人]`;
+            }
 
-    /* 課程規則邏輯 */
-    function renderRules() {
-        const tbody = document.getElementById('rule-tbody');
-        tbody.innerHTML = '';
-        rules.forEach(r => {
+            totalCourseBonus += earned;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${r.course}</strong></td>
-                <td>達 ${r.minStudents} 人</td>
-                <td>NT$ ${r.bonus} / 生</td>
-                <td><button class="btn btn-danger" onclick="deleteRule('${r.id}')">刪除</button></td>
+                <td>${detailDesc}</td>
+                <td class="text-right" colspan="2" style="color: #15803d; font-weight: bold;">${earned.toLocaleString()}</td>
             `;
-            tbody.appendChild(tr);
+            tableBody.appendChild(tr);
         });
-    }
 
-    function addRule() {
-        const course = document.getElementById('r-course').value.trim();
-        const minStudents = parseInt(document.getElementById('r-min').value) || 0;
-        const bonus = parseInt(document.getElementById('r-bonus').value) || 0;
-        if (!course || minStudents <= 0 || bonus <= 0) return alert('請完整填寫規則欄位');
+        // 動態更新加給 rowspan (基本2項 + 課程數 + 勞健保2項)
+        document.getElementById('add-tag').setAttribute('rowspan', 4 + assignedCourses.length);
 
-        rules.push({ id: Date.now().toString(), course, minStudents, bonus });
-        saveAll();
-        renderRules();
-        document.getElementById('r-course').value = '';
-        document.getElementById('r-min').value = '';
-        document.getElementById('r-bonus').value = '';
-    }
+        // 勞退金提撥（優先讀取設定，若無則以本薪 6% 計算）
+        const pensionAmount = teacher.pension !== undefined ? teacher.pension : Math.round(teacher.base * 0.06);
+        const occInsAmount = teacher.occIns !== undefined ? teacher.occIns : 53;
 
-    function deleteRule(id) {
-        rules = rules.filter(r => r.id !== id);
-        saveAll();
-        renderRules();
+        // 勞健保加總
+        const personalInsSum = teacher.lp + teacher.hp;
+        const companyInsSum = teacher.lc + teacher.hc + occInsAmount + pensionAmount;
+
+        // 薪資金額計算
+        const totalDeduct = teacher.lp + teacher.hp + teacher.other + leaveDeduct;
+        const netBase = teacher.base - totalDeduct;
+        const totalAllowance = teacher.seniority + teacher.special + totalCourseBonus;
+        const gross = teacher.base + totalAllowance;
+        const finalSalary = netBase + totalAllowance;
+
+        document.getElementById('view-base').innerText = teacher.base.toLocaleString();
+        document.getElementById('view-labor').innerText = teacher.lp.toLocaleString();
+        document.getElementById('view-comp-labor').innerText = teacher.lc.toLocaleString();
+        document.getElementById('view-health').innerText = teacher.hp.toLocaleString();
+        document.getElementById('view-comp-health').innerText = teacher.hc.toLocaleString();
+        document.getElementById('view-occ-ins').innerText = occInsAmount.toLocaleString();
+        document.getElementById('view-pension').innerText = pensionAmount.toLocaleString();
+        document.getElementById('view-other-deduct').innerText = teacher.other.toLocaleString();
+        document.getElementById('view-deduct-total').innerText = `扣除總額: ${totalDeduct.toLocaleString()}`;
+        document.getElementById('view-net-base').innerText = netBase.toLocaleString();
+
+        document.getElementById('view-seniority').innerText = teacher.seniority.toLocaleString();
+        document.getElementById('view-special').innerText = teacher.special.toLocaleString();
+        document.getElementById('view-sum-personal').innerText = personalInsSum.toLocaleString();
+        document.getElementById('view-sum-company').innerText = companyInsSum.toLocaleString();
+        document.getElementById('view-gross-salary').innerText = gross.toLocaleString();
+        document.getElementById('view-final-salary').innerText = `NT$ ${finalSalary.toLocaleString()}`;
     }
 
     window.onload = () => {
-        document.getElementById('cfg-inst').value = localStorage.getItem('gy_inst') || "冠抑文教有限公司";
-        initMonths();
-        renderTeachers();
-        renderRules();
-        renderLeaves();
+        initMonthSelector();
+        refreshDropdowns();
+        renderSheet();
     };
 </script>
 
