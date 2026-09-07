@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>顧德與佳音文教 - 全日行政管理系統 (時段區間支援版)</title>
+    <title>顧德與佳音文教 - 全日行政管理系統 (密碼已改0000版)</title>
     <style>
         :root {
             --primary-color: #0F172A;
@@ -357,11 +357,11 @@
     <div id="tabDirector" class="tab-content">
         <div class="card" style="border: 2px solid var(--accent-color); background: #FAF5FF;">
             <div class="card-header">
-                <h2 style="color: #6B21A8;">⚙️ 主任專屬 SOP 派工中心 (受管制)</h2>
+                <h2 style="color: #6B21A8;">⚙️ 主任專屬 SOP 派工中心 (密碼: 0000)</h2>
                 <button class="btn btn-secondary" id="btnResetDefault" style="font-size: 0.85rem;">恢復預設標準 SOP</button>
             </div>
             
-            <!-- 新增表單 (支援開始與結束時段) -->
+            <!-- 新增表單 -->
             <form id="directorTaskForm" style="background: #fff; padding: 1rem; border-radius: 0.45rem; border: 1.5px solid var(--border-color); margin-bottom: 1rem;">
                 <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.65rem; color: var(--primary-color);">＋ 發布新時段排程事項</h3>
                 <div class="form-grid">
@@ -493,12 +493,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const DIRECTOR_PASSWORD = "0618";
+    // 主任驗證密碼已更新為 0000
+    const DIRECTOR_PASSWORD = "0000";
     let isDirectorUnlocked = false;
 
     let pendingConfirmation = {};
 
-    // 依據您的日常作業完整梳理（包含時間區段 timeEnd）
     const defaultTasks = [
         { id: "task_1", role: "counter", date: "fixed", time: "12:30", timeEnd: "", category: "clean", desc: "到補習班：打掃一樓公共區域、擦拭玻璃門窗、洗手間全面檢查與耗材補充", done: false, record: "未完成" },
         { id: "task_2", role: "counter", date: "fixed", time: "12:30", timeEnd: "13:20", category: "elem", desc: "打開官方 Line 統整放學接送名單，主動提醒老師接送學生相關事項", done: false, record: "未完成" },
@@ -536,7 +536,7 @@
             if (docSnap.exists() && docSnap.data().tasks) {
                 cachedScheduleTasks = docSnap.data().tasks.map(t => ({
                     ...t,
-                    timeEnd: t.timeEnd || '', // 確保時段欄位存在
+                    timeEnd: t.timeEnd || '',
                     role: t.role || 'counter'
                 }));
             } else {
@@ -571,7 +571,6 @@
         }
     }
 
-    // 格式化時間呈現：若有結束時段呈現 12:30 - 13:20，若無呈現 12:30
     function formatTaskTime(task) {
         if (task.timeEnd && task.timeEnd.trim() !== '') {
             return `${task.time} - ${task.timeEnd}`;
@@ -865,7 +864,6 @@
     currentDateInput.addEventListener('change', renderAllViews);
     window.addEventListener('resize', () => { renderCounterViews(); renderTeacherViews(); });
 
-    // 時間檢查邏輯：有結束時間依結束時間比對，無結束時間依開始時間比對
     function checkTaskTime(currentHM) {
         const selectedDate = currentDateInput.value;
         if (selectedDate !== getTodayStr()) return;
