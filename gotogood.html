@@ -122,7 +122,7 @@
         .block-footer { background: #F8FAFC; padding: 0.6rem; border-radius: 0.3rem; border: 1px solid var(--border-color); font-size: 0.85rem; line-height: 1.4; }
 
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.4rem; min-width: 750px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.4rem; min-width: 850px; }
         th, td { padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: top; }
         th { background-color: #F1F5F9; color: var(--text-muted); font-weight: 700; font-size: 0.92rem; }
         
@@ -402,6 +402,8 @@
                             <tr>
                                 <th style="color: var(--accent-color);">問班日期與時間</th>
                                 <th>學生姓名</th>
+                                <th>學校</th>
+                                <th>年級</th>
                                 <th>詢問者</th>
                                 <th>詢問課程 (家長勾選)</th>
                                 <th>聯絡電話</th>
@@ -433,6 +435,7 @@
                         <thead>
                             <tr>
                                 <th>姓名</th>
+                                <th>學校 / 年級</th>
                                 <th>預約課程</th>
                                 <th>電話</th>
                                 <th>進班日期</th>
@@ -457,6 +460,14 @@
                     <div class="form-block-item">
                         <label>學生姓名</label>
                         <input type="text" id="editName">
+                    </div>
+                    <div class="form-block-item">
+                        <label>就讀學校</label>
+                        <input type="text" id="editSchool" placeholder="例如：斗六國小">
+                    </div>
+                    <div class="form-block-item">
+                        <label>就讀年級</label>
+                        <input type="text" id="editGrade" placeholder="例如：小五">
                     </div>
                     <div class="form-block-item">
                         <label>詢問者</label>
@@ -732,6 +743,8 @@
                         {
                             id: Date.now(),
                             name: "林美華",
+                            school: "斗六國小",
+                            grade: "小五",
                             inquirer: "林媽媽",
                             referrer: "李大同",
                             course: "全科暑期班",
@@ -894,7 +907,7 @@
             const tbody = document.getElementById('inquiryTableBody');
             tbody.innerHTML = '';
             if (!window.admissionData.inquiries || window.admissionData.inquiries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">目前沒有新同學問班資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">目前沒有新同學問班資料</td></tr>`;
                 return;
             }
             window.admissionData.inquiries.forEach(item => {
@@ -902,6 +915,8 @@
                 tr.innerHTML = `
                     <td style="color: var(--accent-color); font-weight: 600; font-size: 0.88rem;">${item.askDate || '未記錄'}</td>
                     <td style="font-size: 0.95rem;"><strong>${item.name}</strong></td>
+                    <td>${item.school || '未填寫'}</td>
+                    <td>${item.grade || '未填寫'}</td>
                     <td>${item.inquirer || '未提供'}</td>
                     <td><span style="color: var(--accent-color); font-weight: 600;">${item.course || '未提供'}</span></td>
                     <td>${item.phone || '未提供'}</td>
@@ -923,6 +938,8 @@
 
             document.getElementById('editModalTitle').innerText = '✏️ 記錄通知與完善招生資料 (轉入追蹤)';
             document.getElementById('editName').value = inq.name;
+            document.getElementById('editSchool').value = inq.school || '';
+            document.getElementById('editGrade').value = inq.grade || '';
             document.getElementById('editInquirer').value = inq.inquirer || '';
             document.getElementById('editReferrer').value = '';
             document.getElementById('editPhone').value = inq.phone || '';
@@ -962,6 +979,7 @@
                         <div class="block-title">
                             <span style="font-size: 1.25rem;">📌</span> 
                             <strong class="s-name">${item.name}</strong>
+                            <span style="font-size: 0.850rem; color: var(--text-muted); font-weight: normal;">(${item.school || '未填學校'} / ${item.grade || '未填年級'})</span>
                             <button class="btn btn-solid-yellow" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 3px; width: auto;" onclick="openEditModalById(${item.id}, false)">✏️ 完善資料</button>
                             <span class="badge badge-line s-status" style="margin-left: 0.4rem;">${item.status}</span>
                         </div>
@@ -1005,7 +1023,7 @@
             const tbody = document.getElementById('enrolledTableBody');
             tbody.innerHTML = '';
             if (!window.admissionData.enrolled || window.admissionData.enrolled.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">尚無正式進班學員紀錄</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">尚無正式進班學員紀錄</td></tr>`;
                 return;
             }
             window.admissionData.enrolled.forEach((item, index) => {
@@ -1043,6 +1061,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong class="s-name" style="font-size: 0.95rem;">${item.name}</strong></td>
+                    <td><span>${item.school || '-'} / ${item.grade || '-'}</span></td>
                     <td><span>${item.course}</span></td>
                     <td><span>${item.phone}</span></td>
                     <td><span style="font-weight:600; color: var(--success-color);">${item.enrollDate}</span></td>
@@ -1156,6 +1175,8 @@
 
             document.getElementById('editModalTitle').innerText = isEnrolled ? '✏️ 修改學生正式進班資料' : '✏️ 記錄通知與完善招生資料';
             document.getElementById('editName').value = item.name;
+            document.getElementById('editSchool').value = item.school || '';
+            document.getElementById('editGrade').value = item.grade || '';
             document.getElementById('editInquirer').value = item.inquirer || '';
             document.getElementById('editReferrer').value = item.referrer || '';
             document.getElementById('editPhone').value = item.phone || '';
@@ -1240,6 +1261,8 @@
         window.saveEditModal = function() {
             if (!window.currentEditingId) return;
             const name = document.getElementById('editName').value.trim();
+            const school = document.getElementById('editSchool').value.trim();
+            const grade = document.getElementById('editGrade').value.trim();
             const inquirer = document.getElementById('editInquirer').value.trim();
             const referrer = document.getElementById('editReferrer').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
@@ -1283,9 +1306,12 @@
             const inquiryIndex = window.admissionData.inquiries.findIndex(x => x.id === window.currentEditingId);
 
             if (inquiryIndex > -1) {
+                const inqItem = window.admissionData.inquiries[inquiryIndex];
                 const newItem = {
                     id: Date.now(),
                     name: name,
+                    school: school || inqItem.school || '',
+                    grade: grade || inqItem.grade || '',
                     inquirer: inquirer,
                     referrer: referrer,
                     course: course,
@@ -1311,6 +1337,8 @@
             if (itemIndex > -1) {
                 let item = sourceList[itemIndex];
                 item.name = name;
+                item.school = school;
+                item.grade = grade;
                 item.inquirer = inquirer;
                 item.referrer = referrer;
                 item.course = course;
@@ -1783,7 +1811,7 @@
             const id = document.getElementById('bridgeSolveId').value;
             const solverName = document.getElementById('bridgeSolverNameInput').value.trim();
             const solution = document.getElementById('bridgeTeacherSolutionInput').value;
-            const item = window.admissionData.bridgeIssues.find(i => i.id === id);
+            const item = window.admissionData.bridgeIssues.items.find(i => i.id === id) || window.admissionData.bridgeIssues.find(i => i.id === id);
             if (item) {
                 item.solverName = solverName;
                 item.teacherSolution = solution;
