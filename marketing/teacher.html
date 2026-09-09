@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 老師端：全學年學生成長與能力追蹤系統</title>
+    <title>斗六顧德補習班 - 老師端：學生成長與多科能力追蹤系統</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -12,6 +12,7 @@
             --danger: #e74c3c;
             --success: #2ecc71;
             --warning: #f39c12;
+            --purple: #8e44ad;
             --bg: #f4f6f9;
             --border: #ccd1d9;
         }
@@ -26,6 +27,7 @@
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         }
         header h2 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+        .header-btns { display: flex; gap: 8px; align-items: center; }
         .sync-quick-btn {
             background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4);
             padding: 7px 14px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s;
@@ -42,6 +44,7 @@
         .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; }
         .btn:hover { opacity: 0.9; }
         .btn-warning { background: var(--warning); color: #fff; }
+        .btn-purple { background: var(--purple); color: #fff; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -59,39 +62,64 @@
             background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; font-size: 14px;
         }
 
-        /* 預覽與複製區塊 */
         .preview-box {
             background: #ebf8ff; border: 1px solid #b6d4fe; padding: 15px; border-radius: 8px; margin-top: 15px; display: none;
         }
         .preview-box textarea { background: #fff; font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; }
+
+        /* 設定區折疊面板 */
+        .settings-panel {
+            background: #fdf8f6; border: 2px dashed #f6ad55; padding: 20px; border-radius: 10px; margin-bottom: 25px; display: none;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>📊 顧德補習班 - 老師端：學生成長與能力追蹤</h2>
-        <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端學生總庫</button>
+        <h2>📊 顧德補習班 - 學生成長與多科能力追蹤系統</h2>
+        <div class="header-btns">
+            <button class="sync-quick-btn" onclick="toggleSettingsPanel()">⚙️ 系統設定區</button>
+            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端總庫</button>
+        </div>
     </header>
 
     <div class="container">
         
-        <!-- 第一步：選擇與檢測輸入面板 -->
+        <!-- ⚙️ 系統設定區 (可自訂科目與單元目錄) -->
+        <div class="settings-panel" id="settings-panel">
+            <h3 style="margin-top:0; color:#c05621;">⚙️ 系統設定區 (擴充科目與單元)</h3>
+            <p style="font-size:14px; color:#666;">未來若要新增國文、英文或其他科目，可在此直接定義科目名稱與預設單元結構。</p>
+            
+            <div class="grid-2">
+                <div>
+                    <label>新增科目名稱：</label>
+                    <input type="text" id="new-subject-input" placeholder="例如：國文、英文">
+                </div>
+                <div>
+                    <label>預設單元清單 (用逗號分隔)：</label>
+                    <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課, 第三課">
+                </div>
+            </div>
+            <button class="btn btn-purple" style="width: auto; padding: 8px 20px;" onclick="addNewSubjectConfig()">➕ 儲存新科目設定</button>
+        </div>
+
+        <!-- 🎯 核心檢測登錄面板 (嚴格順序：年級 ➔ 學生 ➔ 科目 ➔ 單元) -->
         <div class="card">
             <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">學員能力診斷與檢測登錄</h3>
             
             <div class="grid-2">
                 <div>
-                    <label>1. 選擇學制區分：</label>
-                    <select id="filter-grade" onchange="filterStudentsByGrade()">
-                        <option value="">-- 全部學制 --</option>
-                        <option value="國小">國小部</option>
-                        <option value="國中">國中部</option>
+                    <label>1. 選擇年級 / 學制：</label>
+                    <select id="filter-grade" onchange="onGradeChange()">
+                        <option value="">-- 請先選擇年級 --</option>
+                        <option value="國小">國小部 (小一～小六)</option>
+                        <option value="國中">國中部 (國一～國三)</option>
                     </select>
                 </div>
                 <div>
                     <label>2. 選擇學生姓名：</label>
-                    <select id="student-select" onchange="loadStudentGrowthProfile()">
-                        <option value="">-- 請先選擇學生 --</option>
+                    <select id="student-select" disabled onchange="loadStudentGrowthProfile()">
+                        <option value="">-- 請先選擇年級 --</option>
                     </select>
                 </div>
             </div>
@@ -99,12 +127,27 @@
             <div id="evaluation-form-wrapper" style="display:none; margin-top:15px; border-top:1px dashed #cbd5e1; padding-top:20px;">
                 <div class="grid-2">
                     <div>
-                        <label>檢測學科 / 單元主題：</label>
-                        <input type="text" id="eval-subject-unit" placeholder="例如：數學 - 第二章分數運算">
+                        <label>3. 選擇檢測科目：</label>
+                        <select id="subject-select" onchange="updateUnitDropdown()">
+                            <option value="數學">數學</option>
+                        </select>
                     </div>
+                    <div>
+                        <label>4. 選擇測驗單元：</label>
+                        <select id="unit-select">
+                            <option value="">-- 請先選擇單元 --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
                     <div>
                         <label>本次評量分數：</label>
                         <input type="number" id="eval-score" min="0" max="100" placeholder="例如：85">
+                    </div>
+                    <div>
+                        <label>細項說明 / 補充：</label>
+                        <input type="text" id="eval-sub-note" placeholder="例如：第一章綜合小考">
                     </div>
                 </div>
 
@@ -135,7 +178,7 @@
             </div>
         </div>
 
-        <!-- 第二步：視覺化分析儀表板 -->
+        <!-- 📊 視覺化分析儀表板 -->
         <div class="card" id="dashboard-card" style="display:none;">
             <h3 id="dashboard-title" style="color:var(--primary); margin-top:0;">學員多維度成長儀表板</h3>
             
@@ -175,6 +218,21 @@
         window.state = { students: [] };
         let radarInstance = null;
 
+        // 科目與單元設定資料庫 (預設內建數學 9 大單元，未來可透過設定區擴充國文、英文)
+        window.subjectSyllabus = {
+            "數學": [
+                "單元1 最大公因數與最小公倍數",
+                "單元2 分數的除法",
+                "單元3 規律問題",
+                "單元4 比與比值",
+                "單元5 小數除法",
+                "單元6 兩量關係與比",
+                "單元7 圓周長與扇形周長",
+                "單元8 放大、縮小與比例尺",
+                "單元9 怎樣解題"
+            ]
+        };
+
         async function initCloudData(showToast = false) {
             try {
                 const snapshot = await getDocs(collection(db, "classLogStudents"));
@@ -182,7 +240,16 @@
                 snapshot.forEach(docSnap => {
                     window.state.students.push({ firestoreId: docSnap.id, ...docSnap.data() });
                 });
-                renderStudentDropdown();
+                
+                // 如果雲端有自訂科目設定則載入
+                const settingsSnap = await getDocs(collection(db, "systemSettings"));
+                settingsSnap.forEach(sDoc => {
+                    if (sDoc.id === "syllabusConfig" && sDoc.data().syllabus) {
+                        window.subjectSyllabus = sDoc.data().syllabus;
+                    }
+                });
+
+                updateSubjectDropdown();
                 if (showToast) alert(`✅ 成功同步！目前雲端共有 ${window.state.students.length} 位學生。`);
             } catch (e) {
                 console.error(e);
@@ -191,26 +258,37 @@
         }
         window.initCloudData = initCloudData;
 
-        function renderStudentDropdown(gradeFilter = '') {
-            const select = document.getElementById('student-select');
-            select.innerHTML = '<option value="">-- 請選擇學生 --</option>';
+        window.toggleSettingsPanel = function() {
+            const panel = document.getElementById('settings-panel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.onGradeChange = function() {
+            const grade = document.getElementById('filter-grade').value;
+            const studentSelect = document.getElementById('student-select');
+            
+            if (!grade) {
+                studentSelect.innerHTML = '<option value="">-- 請先選擇年級 --</option>';
+                studentSelect.disabled = true;
+                document.getElementById('evaluation-form-wrapper').style.display = 'none';
+                document.getElementById('dashboard-card').style.display = 'none';
+                return;
+            }
+
+            studentSelect.disabled = false;
+            studentSelect.innerHTML = '<option value="">-- 請選擇學生姓名 --</option>';
 
             window.state.students.forEach(s => {
                 const studentClass = s.studentClass || s.course || '';
-                if (gradeFilter) {
-                    if (gradeFilter === '國小' && !studentClass.includes('小') && !studentClass.includes('六') && !studentClass.includes('五') && !studentClass.includes('四')) return;
-                    if (gradeFilter === '國中' && !studentClass.includes('國') && !studentClass.includes('七') && !studentClass.includes('八') && !studentClass.includes('九')) return;
+                let match = false;
+                if (grade === '國小' && (studentClass.includes('小') || studentClass.includes('六') || studentClass.includes('五') || studentClass.includes('四') || studentClass.includes('三') || studentClass.includes('二') || studentClass.includes('一'))) match = true;
+                if (grade === '國中' && (studentClass.includes('國') || studentClass.includes('七') || studentClass.includes('八') || studentClass.includes('九'))) match = true;
+                
+                // 若學生沒填寫班級，預設全列入以防找不到
+                if (!studentClass || match) {
+                    studentSelect.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass || '未分類班級'})</option>`;
                 }
-                select.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass || '未分類班級'})</option>`;
             });
-        }
-
-        window.filterStudentsByGrade = function() {
-            const grade = document.getElementById('filter-grade').value;
-            renderStudentDropdown(grade);
-            document.getElementById('evaluation-form-wrapper').style.display = 'none';
-            document.getElementById('dashboard-card').style.display = 'none';
-            document.getElementById('line-preview-box').style.display = 'none';
         };
 
         window.loadStudentGrowthProfile = function() {
@@ -221,7 +299,6 @@
             if (!id) {
                 formWrapper.style.display = 'none';
                 dashboard.style.display = 'none';
-                document.getElementById('line-preview-box').style.display = 'none';
                 return;
             }
 
@@ -238,6 +315,54 @@
             renderRadar(records);
         };
 
+        function updateSubjectDropdown() {
+            const subjectSelect = document.getElementById('subject-select');
+            subjectSelect.innerHTML = '';
+            for (let sub in window.subjectSyllabus) {
+                subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            }
+            updateUnitDropdown();
+        }
+
+        window.updateUnitDropdown = function() {
+            const sub = document.getElementById('subject-select').value;
+            const unitSelect = document.getElementById('unit-select');
+            unitSelect.innerHTML = '<option value="">-- 請選擇測驗單元 --</option>';
+            
+            if (window.subjectSyllabus[sub]) {
+                window.subjectSyllabus[sub].forEach(u => {
+                    unitSelect.innerHTML += `<option value="${u}">${u}</option>`;
+                });
+            }
+        };
+
+        window.addNewSubjectConfig = async function() {
+            const subName = document.getElementById('new-subject-input').value.trim();
+            const unitsStr = document.getElementById('new-units-input').value.trim();
+
+            if (!subName || !unitsStr) {
+                alert('請完整填寫科目名稱與預設單元！');
+                return;
+            }
+
+            const unitsArr = unitsStr.split(/[,，]/).map(u => u.trim()).filter(u => u);
+            window.subjectSyllabus[subName] = unitsArr;
+
+            try {
+                await setDoc(doc(db, "systemSettings", "syllabusConfig"), {
+                    syllabus: window.subjectSyllabus
+                });
+                alert(`✅ 成功新增科目【${subName}】與對應單元！`);
+                document.getElementById('new-subject-input').value = '';
+                document.getElementById('new-units-input').value = '';
+                updateSubjectDropdown();
+                toggleSettingsPanel();
+            } catch (e) {
+                console.error(e);
+                alert('儲存設定失敗');
+            }
+        };
+
         function renderHistoryLogs(records) {
             const container = document.getElementById('history-logs-container');
             if (records.length === 0) {
@@ -247,7 +372,7 @@
 
             container.innerHTML = records.map(r => `
                 <div class="history-item">
-                    <b>📅 ${r.date} ｜ 🎯 ${r.subjectUnit}</b><br>
+                    <b>📅 ${r.date} ｜ 📚 [${r.subject}] ${r.unit}</b><br>
                     <span>📈 得分：<b>${r.score} 分</b> ｜ ⚠️ 弱點：${r.tags.join('、') || '無'}</span><br>
                     <span style="color:#4a5568;">💬 評語：${r.comment || '無'}</span>
                 </div>
@@ -284,13 +409,15 @@
 
         window.saveGrowthRecord = async function() {
             const id = document.getElementById('student-select').value;
-            const subjectUnit = document.getElementById('eval-subject-unit').value.trim();
+            const subject = document.getElementById('subject-select').value;
+            const unit = document.getElementById('unit-select').value;
             const score = document.getElementById('eval-score').value;
+            const subNote = document.getElementById('eval-sub-note').value.trim();
             const comment = document.getElementById('eval-comment').value.trim();
             const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
 
-            if (!id || !subjectUnit || !score) {
-                alert('請完整填寫檢測單元與評量分數！');
+            if (!id || !unit || !score) {
+                alert('請完整選擇學生、測驗單元與評量分數！');
                 return;
             }
 
@@ -301,7 +428,8 @@
 
             const newRecord = {
                 date: new Date().toISOString().slice(0, 10),
-                subjectUnit,
+                subject,
+                unit: subNote ? `${unit} (${subNote})` : unit,
                 score: Number(score),
                 tags,
                 comment
@@ -324,13 +452,14 @@
 
         window.generateParentReport = function() {
             const id = document.getElementById('student-select').value;
-            const subjectUnit = document.getElementById('eval-subject-unit').value.trim();
+            const subject = document.getElementById('subject-select').value;
+            const unit = document.getElementById('unit-select').value;
             const score = document.getElementById('eval-score').value;
             const comment = document.getElementById('eval-comment').value.trim();
             const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
 
-            if (!id || !subjectUnit || !score) {
-                alert('請先填寫上方單元、分數與評語，才能產生報表！');
+            if (!id || !unit || !score) {
+                alert('請先填寫單元與分數，才能產生報表！');
                 return;
             }
 
@@ -344,7 +473,8 @@
 ------------------------
 📅 檢測日期：${today}
 👨‍🎓 學生姓名：${student.name} 同學
-🎯 評量主題：${subjectUnit}
+📚 檢測科目：${subject}
+🎯 評量單元：${unit}
 📈 本次得分：${score} 分
 ⚠️ 需加強單元/弱點：${tags.join('、') || '表現穩健，無特別盲點'}
 💬 導師評語與建議：${comment || '學習態度良好，持續保持！'}
