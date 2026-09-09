@@ -67,7 +67,6 @@
         }
         .preview-box textarea { background: #fff; font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; }
 
-        /* 設定區折疊面板 */
         .settings-panel {
             background: #fdf8f6; border: 2px dashed #f6ad55; padding: 20px; border-radius: 10px; margin-bottom: 25px; display: none;
         }
@@ -85,11 +84,10 @@
 
     <div class="container">
         
-        <!-- ⚙️ 系統設定區 (可自訂科目與單元目錄) -->
+        <!-- ⚙️ 系統設定區 -->
         <div class="settings-panel" id="settings-panel">
             <h3 style="margin-top:0; color:#c05621;">⚙️ 系統設定區 (擴充科目與單元)</h3>
-            <p style="font-size:14px; color:#666;">未來若要新增國文、英文或其他科目，可在此直接定義科目名稱與預設單元結構。</p>
-            
+            <p style="font-size:14px; color:#666;">未來若要擴充國文、英文或其他科目，可在此直接定義。</p>
             <div class="grid-2">
                 <div>
                     <label>新增科目名稱：</label>
@@ -97,23 +95,30 @@
                 </div>
                 <div>
                     <label>預設單元清單 (用逗號分隔)：</label>
-                    <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課, 第三課">
+                    <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課">
                 </div>
             </div>
             <button class="btn btn-purple" style="width: auto; padding: 8px 20px;" onclick="addNewSubjectConfig()">➕ 儲存新科目設定</button>
         </div>
 
-        <!-- 🎯 核心檢測登錄面板 (嚴格順序：年級 ➔ 學生 ➔ 科目 ➔ 單元) -->
+        <!-- 🎯 核心檢測登錄面板 -->
         <div class="card">
             <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">學員能力診斷與檢測登錄</h3>
             
             <div class="grid-2">
                 <div>
-                    <label>1. 選擇年級 / 學制：</label>
+                    <label>1. 選擇精準年級：</label>
                     <select id="filter-grade" onchange="onGradeChange()">
                         <option value="">-- 請先選擇年級 --</option>
-                        <option value="國小">國小部 (小一～小六)</option>
-                        <option value="國中">國中部 (國一～國三)</option>
+                        <option value="小一">國小一年級</option>
+                        <option value="小二">國小二年級</option>
+                        <option value="小三">國小三年級</option>
+                        <option value="小四">國小四年級</option>
+                        <option value="小五">國小五年級</option>
+                        <option value="小六">國小六年級</option>
+                        <option value="國一">國中一年級</option>
+                        <option value="國二">國中二年級</option>
+                        <option value="國三">國中三年級</option>
                     </select>
                 </div>
                 <div>
@@ -133,7 +138,7 @@
                         </select>
                     </div>
                     <div>
-                        <label>4. 選擇測驗單元：</label>
+                        <label>4. 選擇精準測驗單元：</label>
                         <select id="unit-select">
                             <option value="">-- 請先選擇單元 --</option>
                         </select>
@@ -151,18 +156,18 @@
                     </div>
                 </div>
 
-                <label>核心能力弱點標籤 (可複選)：</label>
+                <label>核心能力弱點標籤 (可複選 ➔ 自動生成因材施教方案)：</label>
                 <div class="tags-container" id="weakness-tags">
-                    <label class="tag-label"><input type="checkbox" name="tags" value="基本觀念不熟">基本觀念不熟</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="計算過程粗心">計算過程粗心</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="文字題列式錯誤">文字題列式錯誤</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="應用題邏輯打結">應用題邏輯打結</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="公式套用錯誤">公式套用錯誤</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="熟練度與速度不足">熟練度與速度不足</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="計算過程粗心與符號誤判" onchange="autoGenerateComment()">計算過程粗心與符號誤判</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="基本觀念與定義不夠扎實" onchange="autoGenerateComment()">基本觀念與定義不夠扎實</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="文字敘述題意理解困難" onchange="autoGenerateComment()">文字敘述題意理解困難</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="應用題列式與邏輯打結" onchange="autoGenerateComment()">應用題列式與邏輯打結</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="公式套用錯誤或不熟練" onchange="autoGenerateComment()">公式套用錯誤或不熟練</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="解題速度與熟練度不足" onchange="autoGenerateComment()">解題速度與熟練度不足</label>
                 </div>
 
-                <label>導師綜合評語與輔導建議：</label>
-                <textarea id="eval-comment" rows="3" placeholder="請輸入本階段學員表現總結與後續輔導方向..."></textarea>
+                <label>導師綜合評語與因材施教輔導方案：</label>
+                <textarea id="eval-comment" rows="4" placeholder="勾選上方弱點後，系統將自動產生專業因材施教方案，老師亦可直接手動修改..."></textarea>
 
                 <div class="grid-2">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存該學員成長紀錄至雲端</button>
@@ -172,7 +177,7 @@
                 <!-- 產出貼至 LINE 的預覽框 -->
                 <div class="preview-box" id="line-preview-box">
                     <label style="color:#0369a1;">📱 可直接複製貼到 LINE 給家長的報表內容：</label>
-                    <textarea id="line-report-text" rows="6" readonly></textarea>
+                    <textarea id="line-report-text" rows="7" readonly></textarea>
                     <button class="btn" style="background:#38a169; padding:8px;" onclick="copyLineReport()">📋 一鍵複製文字內容</button>
                 </div>
             </div>
@@ -189,9 +194,7 @@
                 </div>
                 <div>
                     <h4 style="color:#555;">歷史檢測與輔導紀錄</h4>
-                    <div id="history-logs-container" style="max-height: 280px; overflow-y: auto; padding-right: 5px;">
-                        <!-- 動態插入歷史紀錄 -->
-                    </div>
+                    <div id="history-logs-container" style="max-height: 280px; overflow-y: auto; padding-right: 5px;"></div>
                 </div>
             </div>
         </div>
@@ -218,18 +221,18 @@
         window.state = { students: [] };
         let radarInstance = null;
 
-        // 科目與單元設定資料庫 (預設內建數學 9 大單元，未來可透過設定區擴充國文、英文)
+        // 數學各年級詳細單元目錄
         window.subjectSyllabus = {
             "數學": [
-                "單元1 最大公因數與最小公倍數",
-                "單元2 分數的除法",
-                "單元3 規律問題",
-                "單元4 比與比值",
-                "單元5 小數除法",
-                "單元6 兩量關係與比",
-                "單元7 圓周長與扇形周長",
-                "單元8 放大、縮小與比例尺",
-                "單元9 怎樣解題"
+                "【小一】10以內的加減法", "【小一】形狀與空間", "【小一】分與合",
+                "【小二】公分與公尺", "【小二】乘法表與直式計算", "【小二】認識錢幣與時間",
+                "【小三】兩步驟應用題", "【小三】分數的認識", "【小三】周長與面積",
+                "【小四】整數四則運算", "【小四】角度與三角形", "【小四】小數的加減",
+                "【小五】因數與倍數", "【小五】三角形與多邊形面積", "【小五】分數的乘除法",
+                "【小六】最大公因數與最小公倍數", "【小六】分數與小數的除法", "【小六】比與比值", "【小六】圓周長與扇形", "【小六】放大縮小與比例尺",
+                "【國一】正負數與數線", "【國一】一元一次方程式", "【國一】二元一次聯立方程式", "【國一】直角坐標與函數",
+                "【國二】乘法公式與多項式", "【國二】根式運算與商高定理", "【國二】平行與邊角關係", "【國二】梯形與鳶形性質",
+                "【國三】相似形與比例線段", "【國三】圓形性質與弦切角", "【國三】二次函數最大最小值", "【國三】統計與機率"
             ]
         };
 
@@ -241,7 +244,6 @@
                     window.state.students.push({ firestoreId: docSnap.id, ...docSnap.data() });
                 });
                 
-                // 如果雲端有自訂科目設定則載入
                 const settingsSnap = await getDocs(collection(db, "systemSettings"));
                 settingsSnap.forEach(sDoc => {
                     if (sDoc.id === "syllabusConfig" && sDoc.data().syllabus) {
@@ -276,19 +278,23 @@
             }
 
             studentSelect.disabled = false;
-            studentSelect.innerHTML = '<option value="">-- 請選擇學生姓名 --</option>';
+            studentSelect.innerHTML = '<option value="">-- 請選擇該年級學生 --</option>';
 
             window.state.students.forEach(s => {
                 const studentClass = s.studentClass || s.course || '';
-                let match = false;
-                if (grade === '國小' && (studentClass.includes('小') || studentClass.includes('六') || studentClass.includes('五') || studentClass.includes('四') || studentClass.includes('三') || studentClass.includes('二') || studentClass.includes('一'))) match = true;
-                if (grade === '國中' && (studentClass.includes('國') || studentClass.includes('七') || studentClass.includes('八') || studentClass.includes('九'))) match = true;
-                
-                // 若學生沒填寫班級，預設全列入以防找不到
-                if (!studentClass || match) {
-                    studentSelect.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass || '未分類班級'})</option>`;
+                // 檢查學生班級是否包含所選年級關鍵字 (例如 "小六" 或 "六")
+                if (studentClass.includes(grade) || studentClass.includes(grade.replace('小','').replace('國',''))) {
+                    studentSelect.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass})</option>`;
                 }
             });
+
+            // 如果該年級剛好沒有對應標籤，把全部學生列出供彈性選擇
+            if (studentSelect.options.length <= 1) {
+                window.state.students.forEach(s => {
+                    const studentClass = s.studentClass || s.course || '未分類';
+                    studentSelect.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass})</option>`;
+                });
+            }
         };
 
         window.loadStudentGrowthProfile = function() {
@@ -336,6 +342,30 @@
             }
         };
 
+        // 智慧因材施教方案自動生成引擎
+        window.autoGenerateComment = function() {
+            const checkedTags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+            const commentBox = document.getElementById('eval-comment');
+            const score = document.getElementById('eval-score').value || '80';
+
+            if (checkedTags.length === 0) {
+                commentBox.value = "";
+                return;
+            }
+
+            let solutions = [];
+            checkedTags.forEach(tag => {
+                if (tag.includes('粗心')) solutions.push("啟動「驗算步驟雙軌制」，每次計算要求強制回算一次以降低失誤率。");
+                if (tag.includes('觀念')) solutions.push("安排於晚自習進行「觀念重組與定義釐清」，透過圖解幫助建構核心邏輯。");
+                if (tag.includes('文字')) solutions.push("進行「關鍵字圈選與題意拆解訓練」，培養將國語文意轉化為數學列式的能力。");
+                if (tag.includes('應用題')) solutions.push("採用「逐步引導式提問」，陪同孩子拆解題目的已知條件與未知目標。");
+                if (tag.includes('公式')) solutions.push("發放「公式推導手冊」，加強公式背後的由來與變形運用練習。");
+                if (tag.includes('速度')) solutions.push("實施「計時限時小考演練」，提升考場上的專注度與答題節奏。");
+            });
+
+            commentBox.value = `本次測驗表現得分 ${score} 分。針對目前遇到的盲點（${checkedTags.join('、')}），導師已擬定專屬因材施教方案：${solutions.join(' ')} 老師會持續陪同孩子穩步前進，請家長放心！`;
+        };
+
         window.addNewSubjectConfig = async function() {
             const subName = document.getElementById('new-subject-input').value.trim();
             const unitsStr = document.getElementById('new-units-input').value.trim();
@@ -374,7 +404,7 @@
                 <div class="history-item">
                     <b>📅 ${r.date} ｜ 📚 [${r.subject}] ${r.unit}</b><br>
                     <span>📈 得分：<b>${r.score} 分</b> ｜ ⚠️ 弱點：${r.tags.join('、') || '無'}</span><br>
-                    <span style="color:#4a5568;">💬 評語：${r.comment || '無'}</span>
+                    <span style="color:#4a5568;">💬 評語與因材施教方案：${r.comment || '無'}</span>
                 </div>
             `).join('');
         }
@@ -477,7 +507,7 @@
 🎯 評量單元：${unit}
 📈 本次得分：${score} 分
 ⚠️ 需加強單元/弱點：${tags.join('、') || '表現穩健，無特別盲點'}
-💬 導師評語與建議：${comment || '學習態度良好，持續保持！'}
+💬 導師評語與因材施教方案：${comment || '學習態度良好，持續保持！'}
 ------------------------
 感謝您的支持與配合，顧德補習班關心孩子的每一步成長！`;
 
