@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 老師端：學生成長與多科能力追蹤系統</title>
+    <title>斗六顧德補習班 - 老師端：學生成長與多科能力追蹤系統 (旗艦優化版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -34,7 +34,7 @@
         }
         .sync-quick-btn:hover { background: rgba(255,255,255,0.35); }
 
-        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        .container { max-width: 1300px; margin: 25px auto; padding: 0 15px; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
         
         label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--primary); font-size: 14.5px; }
@@ -47,7 +47,11 @@
         .btn-purple { background: var(--purple); color: #fff; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { 
+            .grid-2 { grid-template-columns: 1fr 1fr; } 
+            .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        }
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .tag-label {
@@ -70,6 +74,13 @@
         .settings-panel {
             background: #fdf8f6; border: 2px dashed #f6ad55; padding: 20px; border-radius: 10px; margin-bottom: 25px; display: none;
         }
+
+        .badge-score {
+            display: inline-block; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px;
+        }
+        .score-high { background: #def7ec; color: #03543f; }
+        .score-mid { background: #fef08a; color: #854d0e; }
+        .score-low { background: #fde8e8; color: #9b1c1c; }
     </style>
 </head>
 <body>
@@ -148,7 +159,7 @@
                 <div class="grid-2">
                     <div>
                         <label>本次評量分數：</label>
-                        <input type="number" id="eval-score" min="0" max="100" placeholder="例如：85">
+                        <input type="number" id="eval-score" min="0" max="100" placeholder="例如：85" oninput="autoGenerateComment()">
                     </div>
                     <div>
                         <label>細項說明 / 補充：</label>
@@ -167,7 +178,7 @@
                 </div>
 
                 <label>導師綜合評語與因材施教輔導方案：</label>
-                <textarea id="eval-comment" rows="4" placeholder="勾選上方弱點後，系統將自動產生專業因材施教方案，老師亦可直接手動修改..."></textarea>
+                <textarea id="eval-comment" rows="4" placeholder="勾選上方弱點後，系統將自動產生專業因材施教方案..."></textarea>
 
                 <div class="grid-2">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存該學員成長紀錄至雲端</button>
@@ -187,15 +198,20 @@
         <div class="card" id="dashboard-card" style="display:none;">
             <h3 id="dashboard-title" style="color:var(--primary); margin-top:0;">學員多維度成長儀表板</h3>
             
-            <div class="grid-2" style="align-items: center;">
+            <div class="grid-2" style="align-items: center; margin-bottom: 25px;">
                 <div>
                     <h4 style="text-align:center; color:#555;">核心能力雷達分析</h4>
-                    <canvas id="growthRadarChart" style="max-height: 280px;"></canvas>
+                    <canvas id="growthRadarChart" style="max-height: 270px;"></canvas>
                 </div>
                 <div>
-                    <h4 style="color:#555;">歷史檢測與輔導紀錄</h4>
-                    <div id="history-logs-container" style="max-height: 280px; overflow-y: auto; padding-right: 5px;"></div>
+                    <h4 style="text-align:center; color:#555;">歷次小考成績趨勢</h4>
+                    <canvas id="growthLineChart" style="max-height: 270px;"></canvas>
                 </div>
+            </div>
+
+            <div>
+                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:15px;">歷史檢測與輔導紀錄</h4>
+                <div id="history-logs-container" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
             </div>
         </div>
 
@@ -220,8 +236,8 @@
 
         window.state = { students: [] };
         let radarInstance = null;
+        let lineInstance = null;
 
-        // 數學各年級詳細單元目錄
         window.subjectSyllabus = {
             "數學": [
                 "【小一】10以內的加減法", "【小一】形狀與空間", "【小一】分與合",
@@ -282,13 +298,11 @@
 
             window.state.students.forEach(s => {
                 const studentClass = s.studentClass || s.course || '';
-                // 檢查學生班級是否包含所選年級關鍵字 (例如 "小六" 或 "六")
                 if (studentClass.includes(grade) || studentClass.includes(grade.replace('小','').replace('國',''))) {
                     studentSelect.innerHTML += `<option value="${s.firestoreId}">${s.name} (${studentClass})</option>`;
                 }
             });
 
-            // 如果該年級剛好沒有對應標籤，把全部學生列出供彈性選擇
             if (studentSelect.options.length <= 1) {
                 window.state.students.forEach(s => {
                     const studentClass = s.studentClass || s.course || '未分類';
@@ -318,7 +332,7 @@
 
             const records = student.growthRecords || [];
             renderHistoryLogs(records);
-            renderRadar(records);
+            renderCharts(records);
         };
 
         function updateSubjectDropdown() {
@@ -342,28 +356,26 @@
             }
         };
 
-        // 智慧因材施教方案自動生成引擎
         window.autoGenerateComment = function() {
             const checkedTags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
             const commentBox = document.getElementById('eval-comment');
             const score = document.getElementById('eval-score').value || '80';
 
-            if (checkedTags.length === 0) {
-                commentBox.value = "";
-                return;
-            }
-
             let solutions = [];
             checkedTags.forEach(tag => {
-                if (tag.includes('粗心')) solutions.push("啟動「驗算步驟雙軌制」，每次計算要求強制回算一次以降低失誤率。");
-                if (tag.includes('觀念')) solutions.push("安排於晚自習進行「觀念重組與定義釐清」，透過圖解幫助建構核心邏輯。");
-                if (tag.includes('文字')) solutions.push("進行「關鍵字圈選與題意拆解訓練」，培養將國語文意轉化為數學列式的能力。");
-                if (tag.includes('應用題')) solutions.push("採用「逐步引導式提問」，陪同孩子拆解題目的已知條件與未知目標。");
-                if (tag.includes('公式')) solutions.push("發放「公式推導手冊」，加強公式背後的由來與變形運用練習。");
-                if (tag.includes('速度')) solutions.push("實施「計時限時小考演練」，提升考場上的專注度與答題節奏。");
+                if (tag.includes('粗心')) solutions.push("啟動「驗算步驟雙軌制」，每次計算要求強制回算一次。");
+                if (tag.includes('觀念')) solutions.push("安排於晚自習進行「觀念重組與定義釐清」，透過圖解重建邏輯。");
+                if (tag.includes('文字')) solutions.push("進行「關鍵字圈選與題意拆解訓練」，培養將國語文意轉化為算式的能力。");
+                if (tag.includes('應用題')) solutions.push("採用「逐步引導式提問」，陪同孩子拆解題目的已知與未知。");
+                if (tag.includes('公式')) solutions.push("發放「公式推導手冊」，加強公式背後的由來與變形運用。");
+                if (tag.includes('速度')) solutions.push("實施「計時限時小考演練」，提升考場專注度與答題節奏。");
             });
 
-            commentBox.value = `本次測驗表現得分 ${score} 分。針對目前遇到的盲點（${checkedTags.join('、')}），導師已擬定專屬因材施教方案：${solutions.join(' ')} 老師會持續陪同孩子穩步前進，請家長放心！`;
+            if (checkedTags.length === 0) {
+                commentBox.value = `本次測驗表現得分 ${score} 分。學習狀態穩定，觀念掌握度高，請繼續保持！`;
+            } else {
+                commentBox.value = `本次測驗得分 ${score} 分。針對目前盲點（${checkedTags.join('、')}），導師已擬定因材施教方案：${solutions.join(' ')} 老師會持續陪同孩子穩步前進！`;
+            }
         };
 
         window.addNewSubjectConfig = async function() {
@@ -400,16 +412,26 @@
                 return;
             }
 
-            container.innerHTML = records.map(r => `
-                <div class="history-item">
-                    <b>📅 ${r.date} ｜ 📚 [${r.subject}] ${r.unit}</b><br>
-                    <span>📈 得分：<b>${r.score} 分</b> ｜ ⚠️ 弱點：${r.tags.join('、') || '無'}</span><br>
-                    <span style="color:#4a5568;">💬 評語與因材施教方案：${r.comment || '無'}</span>
-                </div>
-            `).join('');
+            container.innerHTML = records.map(r => {
+                const sc = Number(r.score);
+                const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
+                const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需加強');
+
+                return `
+                    <div class="history-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <b>📅 ${r.date} ｜ 📚 [${r.subject}] ${r.unit}</b>
+                            <span class="badge-score ${badgeCls}">${r.score} 分 (${badgeText})</span>
+                        </div>
+                        <span>⚠️ 弱點：${r.tags.join('、') || '無'}</span><br>
+                        <span style="color:#4a5568;">💬 方案：${r.comment || '無'}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function renderRadar(records) {
+        function renderCharts(records) {
+            // 1. 雷達圖資料計算
             let dims = [75, 75, 75, 75, 75];
             if (records.length > 0) {
                 const latest = records[0];
@@ -417,10 +439,10 @@
                 dims = [sc, Math.max(50, sc - 5), Math.min(100, sc + 5), Math.max(60, sc - 10), sc];
             }
 
-            const ctx = document.getElementById('growthRadarChart').getContext('2d');
+            const ctxRadar = document.getElementById('growthRadarChart').getContext('2d');
             if (radarInstance) radarInstance.destroy();
 
-            radarInstance = new Chart(ctx, {
+            radarInstance = new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
                     labels: ['基礎觀念扎實', '計算精準度', '文字題邏輯', '應用靈活性', '學習穩定度'],
@@ -434,6 +456,33 @@
                     }]
                 },
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } } }
+            });
+
+            // 2. 折線圖資料計算 (歷次成績趨勢)
+            const sortedRecords = [...records].reverse(); // 時間由舊到新
+            const labels = sortedRecords.map(r => r.date.slice(5)); // 取 MM-DD
+            const scores = sortedRecords.map(r => r.score);
+
+            const ctxLine = document.getElementById('growthLineChart').getContext('2d');
+            if (lineInstance) lineInstance.destroy();
+
+            lineInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labels.length > 0 ? labels : ['初始評量'],
+                    datasets: [{
+                        label: '小考成績走勢',
+                        data: scores.length > 0 ? scores : [75],
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    scales: { y: { min: 0, max: 100 } }
+                }
             });
         }
 
