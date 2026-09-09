@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (AI 旗艦摘要版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (特訓重考旗艦版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -52,6 +52,7 @@
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-purple { background: var(--purple); color: #fff; }
         .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
+        .btn-small { padding: 6px 12px; font-size: 13px; width: auto; box-shadow: none; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -103,7 +104,10 @@
         .score-low { background: #fee2e2; color: #991b1b; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(3px); }
-        .modal-box { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; }
+        .modal-box { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; }
+
+        /* 重測紀錄區塊樣式 */
+        .retest-block { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 8px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -198,7 +202,7 @@
                 </div>
 
                 <label>導師綜合評語與因材施教輔導方案：</label>
-                <textarea id="eval-comment" rows="4" placeholder="勾選上方標籤後自動生成，老師亦可直接修改..."></textarea>
+                <textarea id="eval-comment" rows="5" placeholder="勾選上方標籤後自動生成，老師亦可直接修改..."></textarea>
 
                 <div class="grid-2" style="margin-top:12px;">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長紀錄</button>
@@ -213,7 +217,6 @@
                     </div>
                     
                     <div class="report-body">
-                        <!-- 💡 AI 智慧學力健檢摘要 -->
                         <div class="ai-summary-box">
                             <b>💡 AI 智慧學力健檢摘要 (Learning Health Check)：</b>
                             學力診斷是用來透視孩子真實學習盲點的關鍵方式。本次評估超越單純的學校分數與班級排名，透過作答細節精準找出學習起點、打破潛在瓶頸，並據此規劃專屬進度與指導方案，幫助孩子穩步超越！
@@ -222,7 +225,6 @@
                         <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
                         <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
                         
-                        <!-- 診斷盲點與方案 -->
                         <p style="margin-top:12px;"><b>⚠️ 診斷盲點：</b><span id="rep-tags" style="color:#e11d48; font-weight:bold;">無</span></p>
                         <p style="background:#f1f5f9; padding:14px; border-radius:8px; margin-top:8px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment" style="color:#334155; line-height:1.6;">-</span></p>
 
@@ -269,26 +271,26 @@
             </div>
 
             <div>
-                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊可修改/刪除)</h4>
+                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊可修改/刪除/重測)</h4>
                 <div id="history-logs-container" style="max-height: 240px; overflow-y: auto; padding-right: 4px;"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- ✏️ 歷史紀錄編輯彈窗 -->
+    <!-- ✏️ 歷史紀錄編輯與多重重測彈窗 -->
     <div class="modal-overlay" id="edit-record-modal">
         <div class="modal-box">
-            <h3 style="margin-top:0; color:var(--primary); font-size:17px;">✏️ 編輯或刪除紀錄</h3>
+            <h3 style="margin-top:0; color:var(--primary); font-size:17px;">✏️ 編輯檢測紀錄、輔導追蹤與重測</h3>
             <input type="hidden" id="edit-record-index">
 
             <div class="grid-2">
                 <div>
-                    <label>日期：</label>
+                    <label>檢測日期：</label>
                     <input type="date" id="edit-record-date">
                 </div>
                 <div>
-                    <label>分數：</label>
+                    <label>原始分數：</label>
                     <input type="number" id="edit-record-score" min="0" max="100">
                 </div>
             </div>
@@ -304,14 +306,37 @@
                 </div>
             </div>
 
-            <label>評語與輔導方案：</label>
-            <textarea id="edit-record-comment" rows="3"></textarea>
+            <div class="grid-2">
+                <div>
+                    <label>👨‍🏫 老師輔導意見：</label>
+                    <input type="text" id="edit-record-teacher-note" placeholder="例如：已完成錯題訂正與觀念重組">
+                </div>
+                <div>
+                    <label>✅ 輔導完成日期：</label>
+                    <input type="date" id="edit-record-done-date">
+                </div>
+            </div>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap: 8px;">
-                <button class="btn btn-danger" style="width: auto; padding: 10px 16px;" onclick="deleteGrowthRecord()">🗑️ 刪除</button>
-                <div style="display: flex; gap: 8px; width: 100%; justify-content: flex-end;">
-                    <button class="btn" style="width: auto; padding: 10px 16px;" onclick="updateGrowthRecord()">💾 儲存</button>
-                    <button class="btn" style="width: auto; padding: 10px 16px; background:#94a3b8;" onclick="document.getElementById('edit-record-modal').style.display='none'">取消</button>
+            <label>評語與因材施教輔導方案：</label>
+            <textarea id="edit-record-comment" rows="4"></textarea>
+
+            <!-- 🔄 二次/三次重測紀錄專區 -->
+            <div class="retest-block">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label style="margin:0; color:#b45309;">🔄 重測與補考紀錄 (不合格可多次重測)：</label>
+                    <button class="btn btn-purple btn-small" onclick="addRetestField()">➕ 新增重測成績</button>
+                </div>
+                <div id="retest-list-container">
+                    <!-- 動態帶入重測輸入框 -->
+                </div>
+            </div>
+
+            <!-- 按鈕列：刪除、儲存、取消 (按鈕縮小，評語放大) -->
+            <div style="display: flex; justify-content: space-between; align-items:center; margin-top: 20px; gap: 8px;">
+                <button class="btn btn-danger btn-small" onclick="deleteGrowthRecord()">🗑️ 刪除</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-success btn-small" onclick="updateGrowthRecord()">💾 儲存修改</button>
+                    <button class="btn btn-small" style="background:#94a3b8;" onclick="document.getElementById('edit-record-modal').style.display='none'">取消</button>
                 </div>
             </div>
         </div>
@@ -518,14 +543,16 @@
                 const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
                 const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需加強');
                 const tagsStr = (r.tags && Array.isArray(r.tags)) ? r.tags.join('、') : (r.tags || '無');
+                const doneTag = r.doneDate ? ` ｜ ✅ 已於 ${r.doneDate} 輔導完成` : '';
+                const retestInfo = (r.retests && r.retests.length > 0) ? ` ｜ 🔄 重測: ${r.retests.map(rt => rt.score + '分').join(', ')}` : '';
 
                 return `
                     <div class="history-item" onclick="openEditRecordModal(${index})">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <b>📅 ${r.date || '未記錄'} ｜ [${r.subject || '數學'}] ${r.unit || ''}</b>
-                            <span class="badge-score ${badgeCls}">${r.score} 分 (${badgeText})</span>
+                            <span class="badge-score ${badgeCls}">${r.score} 分 (${badgeText})${retestInfo}</span>
                         </div>
-                        <span style="color:#64748b;">⚠️ 弱點：${tagsStr}</span><br>
+                        <span style="color:#64748b;">⚠️ 弱點：${tagsStr}</span>${doneTag}<br>
                         <span style="color:#334155;">💬 方案：${r.comment || '無'}</span>
                     </div>
                 `;
@@ -543,9 +570,55 @@
             document.getElementById('edit-record-score').value = record.score || '';
             document.getElementById('edit-record-subject').value = record.subject || '數學';
             document.getElementById('edit-record-unit').value = record.unit || '';
+            document.getElementById('edit-record-teacher-note').value = record.teacherNote || '';
+            document.getElementById('edit-record-done-date').value = record.doneDate || '';
             document.getElementById('edit-record-comment').value = record.comment || '';
 
+            // 渲染重測清單
+            renderRetestList(record.retests || []);
+
             document.getElementById('edit-record-modal').style.display = 'flex';
+        };
+
+        function renderRetestList(retests) {
+            const container = document.getElementById('retest-list-container');
+            if (retests.length === 0) {
+                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄 (若成績不合格可點擊上方按鈕新增)</span>`;
+                return;
+            }
+
+            container.innerHTML = retests.map((rt, rIdx) => `
+                <div style="display:flex; gap:8px; margin-bottom:6px; align-items:center;">
+                    <span style="font-size:13px; font-weight:bold; color:#b45309;">第 ${rIdx + 1} 次重測：</span>
+                    <input type="date" class="retest-date" value="${rt.date || ''}" style="margin:0; padding:6px; font-size:13px; width:130px;">
+                    <input type="number" class="retest-score" value="${rt.score || ''}" placeholder="分數" style="margin:0; padding:6px; font-size:13px; width:80px;">
+                    <button class="btn btn-danger btn-small" style="padding:6px 10px;" onclick="removeRetestField(this)">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        window.addRetestField = function() {
+            const container = document.getElementById('retest-list-container');
+            if (container.innerHTML.includes('尚無重測紀錄')) container.innerHTML = '';
+            const today = new Date().toISOString().slice(0, 10);
+            
+            const div = document.createElement('div');
+            div.style.cssText = "display:flex; gap:8px; margin-bottom:6px; align-items:center;";
+            div.innerHTML = `
+                <span style="font-size:13px; font-weight:bold; color:#b45309;">重測：</span>
+                <input type="date" class="retest-date" value="${today}" style="margin:0; padding:6px; font-size:13px; width:130px;">
+                <input type="number" class="retest-score" placeholder="分數" style="margin:0; padding:6px; font-size:13px; width:80px;">
+                <button class="btn btn-danger btn-small" style="padding:6px 10px;" onclick="removeRetestField(this)">🗑️</button>
+            `;
+            container.appendChild(div);
+        };
+
+        window.removeRetestField = function(btn) {
+            btn.parentElement.remove();
+            const container = document.getElementById('retest-list-container');
+            if (container.children.length === 0) {
+                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄</span>`;
+            }
         };
 
         window.updateGrowthRecord = async function() {
@@ -554,15 +627,28 @@
             const student = window.state.students.find(s => s.firestoreId === id);
             if (!student || !student.growthRecords[index]) return;
 
+            // 收集重測資料
+            const retests = [];
+            document.querySelectorAll('#retest-list-container > div').forEach(div => {
+                const dateInput = div.querySelector('.retest-date');
+                const scoreInput = div.querySelector('.retest-score');
+                if (dateInput && scoreInput && scoreInput.value !== '') {
+                    retests.push({ date: dateInput.value, score: Number(scoreInput.value) });
+                }
+            });
+
             student.growthRecords[index].date = document.getElementById('edit-record-date').value;
             student.growthRecords[index].score = Number(document.getElementById('edit-record-score').value);
             student.growthRecords[index].unit = document.getElementById('edit-record-unit').value;
+            student.growthRecords[index].teacherNote = document.getElementById('edit-record-teacher-note').value.trim();
+            student.growthRecords[index].doneDate = document.getElementById('edit-record-done-date').value;
             student.growthRecords[index].comment = document.getElementById('edit-record-comment').value;
+            student.growthRecords[index].retests = retests;
 
             try {
                 await setDoc(doc(db, "classLogStudents", id), { ...student, growthRecords: student.growthRecords });
                 document.getElementById('edit-record-modal').style.display = 'none';
-                alert('✅ 紀錄已更新！');
+                alert('✅ 紀錄與重測追蹤已成功更新！');
                 loadStudentGrowthProfile();
             } catch (e) { alert('更新失敗'); }
         };
@@ -677,7 +763,10 @@
                 unit: subNote ? `${unit} (${subNote})` : unit,
                 score: Number(score),
                 tags,
-                comment
+                comment,
+                teacherNote: '',
+                doneDate: '',
+                retests: []
             };
 
             student.growthRecords.unshift(newRecord);
