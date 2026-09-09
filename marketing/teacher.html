@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (專業旗艦版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (專業旗艦視覺版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -71,21 +71,24 @@
         }
         .history-item:hover { background: #f1f5f9; border-color: var(--accent); }
 
-        /* 精美家長報告預覽卡片 */
+        /* 💎 精美家長報告預覽卡片 (內嵌動態圖表) */
         .report-preview-card {
-            background: #ffffff; border: 2px solid #2563eb; border-radius: 12px; padding: 24px; margin-top: 20px;
-            box-shadow: 0 10px 25px rgba(37,99,235,0.08); display: none; position: relative; overflow: hidden;
+            background: #ffffff; border: 3px solid #2563eb; border-radius: 16px; padding: 25px; margin-top: 20px;
+            box-shadow: 0 15px 35px rgba(37,99,235,0.12); display: none; position: relative; overflow: hidden;
         }
-        .report-preview-card::before {
-            content: "GOOD EDUCATION"; position: absolute; right: -20px; bottom: -30px; font-size: 90px; font-weight: bold; color: rgba(37,99,235,0.03); z-index: 0; pointer-events: none;
+        .report-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
+        .report-header h3 { margin: 0; color: var(--primary); font-size: 21px; }
+        .report-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+        
+        .report-charts-grid {
+            display: grid; grid-template-columns: 1fr; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 15px 0;
         }
-        .report-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; position: relative; z-index: 1; }
-        .report-header h3 { margin: 0; color: var(--primary); font-size: 20px; }
-        .report-header p { margin: 5px 0 0; color: #64748b; font-size: 13.5px; }
-        .report-body { position: relative; z-index: 1; font-size: 14.5px; line-height: 1.6; }
-        .report-footer { text-align: center; margin-top: 20px; font-size: 12.5px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 10px; }
+        @media (min-width: 768px) { .report-charts-grid { grid-template-columns: 1fr 1fr; } }
 
-        .badge-score { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12.5px; }
+        .report-body { font-size: 14.5px; line-height: 1.6; }
+        .report-footer { text-align: center; margin-top: 20px; font-size: 12.5px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
+
+        .badge-score { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; }
         .score-high { background: #dcfce7; color: #166534; }
         .score-mid { background: #fef9c3; color: #854d0e; }
         .score-low { background: #fee2e2; color: #991b1b; }
@@ -171,7 +174,7 @@
                     </div>
                 </div>
 
-                <label>學生常見盲點與弱點標籤 (可複選 ➔ 自動連動雷達圖與輔導方案)：</label>
+                <label>學生常見盲點與弱點標籤 (可複選 ➔ 自動連動圖表與方案)：</label>
                 <div class="tags-container" id="weakness-tags">
                     <label class="tag-label"><input type="checkbox" name="tags" value="計算粗心與正負號/小數點誤判" onchange="autoGenerateComment()">計算粗心與符號誤判</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="基本定義與核心觀念不扎實" onchange="autoGenerateComment()">基本觀念不扎實</label>
@@ -190,24 +193,40 @@
 
                 <div class="grid-2" style="margin-top:12px;">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長紀錄</button>
-                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書</button>
+                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書 (含圖表)</button>
                 </div>
 
-                <!-- 💎 專業家長版診斷書預覽卡片 -->
+                <!-- 💎 專業家長版診斷書預覽卡片 (內嵌雷達圖與線圖) -->
                 <div class="report-preview-card" id="pro-report-card">
                     <div class="report-header">
                         <h3>斗六顧德補習班 ｜ 學員學力追蹤與診斷報告</h3>
                         <p id="rep-date-student">2026-09-10 ｜ 學生姓名</p>
                     </div>
+                    
                     <div class="report-body">
                         <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
                         <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
+                        
+                        <!-- 內嵌雙圖表預覽區 -->
+                        <div class="report-charts-grid">
+                            <div>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">綜合能力雷達圖</h4>
+                                <canvas id="reportRadarChart" style="max-height: 180px;"></canvas>
+                            </div>
+                            <div>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">成績走勢折線圖</h4>
+                                <canvas id="reportLineChart" style="max-height: 180px;"></canvas>
+                            </div>
+                        </div>
+
                         <p><b>⚠️ 診斷盲點：</b><span id="rep-tags">無</span></p>
                         <p style="background:#f1f5f9; padding:12px; border-radius:8px; margin-top:10px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment">-</span></p>
                     </div>
+
                     <div class="report-footer">
                         顧德補習班關心您的孩子每一天的進步與成長 ｜ 專屬親師共育系統
                     </div>
+                    
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <button class="btn btn-success" onclick="copyProReport()">📋 一鍵複製精美診斷書至 LINE</button>
                         <button class="btn" style="background:#64748b; width:auto;" onclick="document.getElementById('pro-report-card').style.display='none'">收起預覽</button>
@@ -216,7 +235,7 @@
             </div>
         </div>
 
-        <!-- 📊 視覺化分析儀表板 -->
+        <!-- 📊 老師端後台視覺化分析儀表板 -->
         <div class="card" id="dashboard-card" style="display:none;">
             <h3 id="dashboard-title" style="color:var(--primary); margin-top:0; font-size:17px;">學員成長儀表板</h3>
             
@@ -300,6 +319,8 @@
         window.state = { students: [] };
         let radarInstance = null;
         let lineInstance = null;
+        let repRadarInstance = null;
+        let repLineInstance = null;
 
         window.subjectSyllabus = {
             "數學": [
@@ -395,7 +416,7 @@
 
             const records = student.growthRecords || [];
             renderHistoryLogs(records);
-            renderCharts(records);
+            renderCharts(records, 'growthRadarChart', 'growthLineChart', 'radar', 'line');
         };
 
         function updateSubjectDropdown() {
@@ -546,13 +567,12 @@
             } catch (e) { alert('刪除失敗'); }
         };
 
-        function renderCharts(records) {
+        function renderCharts(records, radarCanvasId, lineCanvasId, radarType, lineType) {
             let dims = [75, 75, 75, 75, 75];
             if (records.length > 0) {
                 const latest = records[0];
                 const sc = Number(latest.score) || 75;
                 const tags = latest.tags || [];
-                let penalty = tags.length * 4;
                 dims = [
                     Math.max(40, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
                     Math.max(40, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
@@ -562,10 +582,11 @@
                 ];
             }
 
-            const ctxRadar = document.getElementById('growthRadarChart').getContext('2d');
-            if (radarInstance) radarInstance.destroy();
+            const ctxRadar = document.getElementById(radarCanvasId).getContext('2d');
+            if (radarType === 'radar' && radarInstance) radarInstance.destroy();
+            if (radarType === 'repRadar' && repRadarInstance) repRadarInstance.destroy();
 
-            radarInstance = new Chart(ctxRadar, {
+            const newRadar = new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
                     labels: ['基礎觀念扎實', '計算精準度', '文字題邏輯', '應用靈活性', '學習穩定度'],
@@ -581,14 +602,18 @@
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } } }
             });
 
+            if (radarType === 'radar') radarInstance = newRadar;
+            if (radarType === 'repRadar') repRadarInstance = newRadar;
+
             const sortedRecords = [...records].reverse();
             const labels = sortedRecords.map(r => r.date ? r.date.slice(5) : '未知');
             const scores = sortedRecords.map(r => r.score);
 
-            const ctxLine = document.getElementById('growthLineChart').getContext('2d');
-            if (lineInstance) lineInstance.destroy();
+            const ctxLine = document.getElementById(lineCanvasId).getContext('2d');
+            if (lineType === 'line' && lineInstance) lineInstance.destroy();
+            if (lineType === 'repLine' && repLineInstance) repLineInstance.destroy();
 
-            lineInstance = new Chart(ctxLine, {
+            const newLine = new Chart(ctxLine, {
                 type: 'line',
                 data: {
                     labels: labels.length > 0 ? labels : ['初始'],
@@ -604,6 +629,9 @@
                 },
                 options: { scales: { y: { min: 0, max: 100 } } }
             });
+
+            if (lineType === 'line') lineInstance = newLine;
+            if (lineType === 'repLine') repLineInstance = newLine;
         }
 
         window.saveGrowthRecord = async function() {
@@ -678,6 +706,10 @@
             const card = document.getElementById('pro-report-card');
             card.style.display = 'block';
             card.scrollIntoView({ behavior: 'smooth' });
+
+            // 產出卡片內的圖表
+            const records = student.growthRecords || [];
+            renderCharts(records, 'reportRadarChart', 'reportLineChart', 'repRadar', 'repLine');
         };
 
         window.copyProReport = function() {
@@ -710,7 +742,7 @@ ${comment}
             document.execCommand('copy');
             document.body.removeChild(tempTextArea);
 
-            alert('✅ 專業診斷報告已複製！可直接貼至 LINE 給家長。');
+            alert('✅ 專業診斷報告文字已複製！可直接貼至 LINE 給家長。');
         };
 
         window.onload = function() { initCloudData(); };
