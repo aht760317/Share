@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (專業旗艦視覺版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (旗艦視覺完美版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -71,7 +71,7 @@
         }
         .history-item:hover { background: #f1f5f9; border-color: var(--accent); }
 
-        /* 💎 精美家長報告預覽卡片 (內嵌動態圖表) */
+        /* 💎 精美家長報告預覽卡片 (重組順序：盲點與方案移至上方) */
         .report-preview-card {
             background: #ffffff; border: 3px solid #2563eb; border-radius: 16px; padding: 25px; margin-top: 20px;
             box-shadow: 0 15px 35px rgba(37,99,235,0.12); display: none; position: relative; overflow: hidden;
@@ -80,12 +80,16 @@
         .report-header h3 { margin: 0; color: var(--primary); font-size: 21px; }
         .report-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
         
+        .report-body { font-size: 14.5px; line-height: 1.6; }
         .report-charts-grid {
             display: grid; grid-template-columns: 1fr; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 15px 0;
         }
         @media (min-width: 768px) { .report-charts-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .unit-indicator {
+            text-align: center; font-size: 13px; font-weight: bold; color: #2563eb; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; margin-top: 6px;
+        }
 
-        .report-body { font-size: 14.5px; line-height: 1.6; }
         .report-footer { text-align: center; margin-top: 20px; font-size: 12.5px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
 
         .badge-score { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; }
@@ -196,7 +200,7 @@
                     <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書 (含圖表)</button>
                 </div>
 
-                <!-- 💎 專業家長版診斷書預覽卡片 (內嵌雷達圖與線圖) -->
+                <!-- 💎 專業家長版診斷書預覽卡片 (順序調整：盲點與方案在上，圖表在下) -->
                 <div class="report-preview-card" id="pro-report-card">
                     <div class="report-header">
                         <h3>斗六顧德補習班 ｜ 學員學力追蹤與診斷報告</h3>
@@ -207,20 +211,23 @@
                         <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
                         <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
                         
-                        <!-- 內嵌雙圖表預覽區 -->
+                        <!-- 診斷盲點與方案移至上方 -->
+                        <p style="margin-top:12px;"><b>⚠️ 診斷盲點：</b><span id="rep-tags" style="color:#e11d48; font-weight:bold;">無</span></p>
+                        <p style="background:#f1f5f9; padding:14px; border-radius:8px; margin-top:8px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment" style="color:#334155; line-height:1.6;">-</span></p>
+
+                        <!-- 雙圖表區塊 (附單元能力掌握度說明) -->
                         <div class="report-charts-grid">
                             <div>
-                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">綜合能力雷達圖</h4>
-                                <canvas id="reportRadarChart" style="max-height: 180px;"></canvas>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">綜合能力雷達分析</h4>
+                                <canvas id="reportRadarChart" style="max-height: 160px;"></canvas>
+                                <div class="unit-indicator" id="rep-radar-unit-label">單元能力掌握度</div>
                             </div>
                             <div>
-                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">成績走勢折線圖</h4>
-                                <canvas id="reportLineChart" style="max-height: 180px;"></canvas>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">學生個人成績走勢圖</h4>
+                                <canvas id="reportLineChart" style="max-height: 160px;"></canvas>
+                                <div class="unit-indicator" id="rep-line-name-label" style="background:#dcfce7; color:#166534;">學生走勢</div>
                             </div>
                         </div>
-
-                        <p><b>⚠️ 診斷盲點：</b><span id="rep-tags">無</span></p>
-                        <p style="background:#f1f5f9; padding:12px; border-radius:8px; margin-top:10px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment">-</span></p>
                     </div>
 
                     <div class="report-footer">
@@ -322,14 +329,15 @@
         let repRadarInstance = null;
         let repLineInstance = null;
 
+        // 完整涵蓋國小一至六年級與國中數學單元目錄
         window.subjectSyllabus = {
             "數學": [
-                "【小一】10以內的加減法", "【小一】形狀與空間", "【小一】分與合",
-                "【小二】公分與公尺", "【小二】乘法表與直式計算", "【小二】認識錢幣與時間",
-                "【小三】兩步驟應用題", "【小三】分數的認識", "【小三】周長與面積",
-                "【小四】整數四則運算", "【小四】角度與三角形", "【小四】小數的加減",
-                "【小五】因數與倍數", "【小五】三角形與多邊形面積", "【小五】分數的乘除法",
-                "【小六】最大公因數與最小公倍數", "【小六】分數與小數的除法", "【小六】比與比值", "【小六】圓周長與扇形", "【小六】放大縮小與比例尺",
+                "【小一】10以內的數與加減法", "【小一】比長短、比高矮、比輕重", "【小一】順序與多少、分與合", "【小一】認識形狀(方盒、圓罐、球)", "【小一】20以內的數與加減法", "【小一】認識時鐘(整點與半點)",
+                "【小二】100以內的數與直式加減", "【小二】公分與公尺(長度量測)", "【小二】乘法的意義與九九乘法表", "【小二】分類與簡單統計圖表", "【小二】錢幣的換算與使用", "【小二】幾何圖形(面、邊、角)",
+                "【小三】萬以內的數與大數", "【小三】除法的直式計算與有餘數", "【小三】分數的初步認識", "【小三】容量、重量與單位換算", "【小三】圓的認識與圓規操作", "【小三】年、月、日的計算",
+                "【小四】一億以內的數與位值概念", "【小四】多位數的乘除法直式運算", "【小四】小數的認識與加減法", "【小四】三角形與四邊形的性質", "【小四】面積與周長的計算", "【小四】折線圖與統計表",
+                "【小五】多位小數與分數的計算", "【小五】因數與倍數、公因數與公倍數", "【小五】扇形與圓心角", "【小五】長方體和正方體的體積與表面積", "【小五】簡單比例與容積容量關係",
+                "【小六】分數與小數的除法運算", "【小六】比、比值與正反比例", "【小六】速率的計算(距離/時間/速度)", "【小六】圓周長與圓面積的綜合應用", "【小六】統計圖表與機率初步", "【小六】兩量關係與代數列式",
                 "【國一】正負數與數線", "【國一】一元一次方程式", "【國一】二元一次聯立方程式", "【國一】直角坐標與函數",
                 "【國二】乘法公式與多項式", "【國二】根式運算與商高定理", "【國二】平行與邊角關係", "【國二】梯形與鳶形性質",
                 "【國三】相似形與比例線段", "【國三】圓形性質與弦切角", "【國三】二次函數最大最小值", "【國三】統計與機率"
@@ -416,7 +424,7 @@
 
             const records = student.growthRecords || [];
             renderHistoryLogs(records);
-            renderCharts(records, 'growthRadarChart', 'growthLineChart', 'radar', 'line');
+            renderCharts(records, 'growthRadarChart', 'growthLineChart', 'radar', 'line', student.name);
         };
 
         function updateSubjectDropdown() {
@@ -567,7 +575,7 @@
             } catch (e) { alert('刪除失敗'); }
         };
 
-        function renderCharts(records, radarCanvasId, lineCanvasId, radarType, lineType) {
+        function renderCharts(records, radarCanvasId, lineCanvasId, radarType, lineType, studentName) {
             let dims = [75, 75, 75, 75, 75];
             if (records.length > 0) {
                 const latest = records[0];
@@ -618,7 +626,7 @@
                 data: {
                     labels: labels.length > 0 ? labels : ['初始'],
                     datasets: [{
-                        label: '成績走勢',
+                        label: `${studentName} 成績走勢`,
                         data: scores.length > 0 ? scores : [75],
                         borderColor: '#059669',
                         backgroundColor: 'rgba(5, 150, 105, 0.1)',
@@ -703,13 +711,16 @@
             document.getElementById('rep-tags').innerText = tags.join('、') || '表現穩健，無特別盲點';
             document.getElementById('rep-comment').innerText = comment || '學習態度良好，觀念掌握扎實，請繼續保持！';
 
+            // 更新雷達圖下方說明文字
+            document.getElementById('rep-radar-unit-label').innerText = `🎯 ${unit} 能力掌握度`;
+            document.getElementById('rep-line-name-label').innerText = `📈 ${student.name} 成績走勢`;
+
             const card = document.getElementById('pro-report-card');
             card.style.display = 'block';
             card.scrollIntoView({ behavior: 'smooth' });
 
-            // 產出卡片內的圖表
             const records = student.growthRecords || [];
-            renderCharts(records, 'reportRadarChart', 'reportLineChart', 'repRadar', 'repLine');
+            renderCharts(records, 'reportRadarChart', 'reportLineChart', 'repRadar', 'repLine', student.name);
         };
 
         window.copyProReport = function() {
