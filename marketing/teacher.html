@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 全學年學生成長追蹤與能力診斷系統</title>
+    <title>斗六顧德補習班 - 老師端：全學年學生成長與能力追蹤系統</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -41,6 +41,7 @@
         }
         .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; }
         .btn:hover { opacity: 0.9; }
+        .btn-warning { background: var(--warning); color: #fff; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -57,12 +58,18 @@
         .history-item {
             background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; font-size: 14px;
         }
+
+        /* 預覽與複製區塊 */
+        .preview-box {
+            background: #ebf8ff; border: 1px solid #b6d4fe; padding: 15px; border-radius: 8px; margin-top: 15px; display: none;
+        }
+        .preview-box textarea { background: #fff; font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>📊 顧德補習班 - 學生全學年成長與能力追蹤系統</h2>
+        <h2>📊 顧德補習班 - 老師端：學生成長與能力追蹤</h2>
         <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端學生總庫</button>
     </header>
 
@@ -74,11 +81,11 @@
             
             <div class="grid-2">
                 <div>
-                    <label>1. 選擇年級區分：</label>
+                    <label>1. 選擇學制區分：</label>
                     <select id="filter-grade" onchange="filterStudentsByGrade()">
-                        <option value="">-- 全部年級 --</option>
-                        <option value="國小">國小部 (小一至小六)</option>
-                        <option value="國中">國中部 (國一至國三)</option>
+                        <option value="">-- 全部學制 --</option>
+                        <option value="國小">國小部</option>
+                        <option value="國中">國中部</option>
                     </select>
                 </div>
                 <div>
@@ -93,7 +100,7 @@
                 <div class="grid-2">
                     <div>
                         <label>檢測學科 / 單元主題：</label>
-                        <input type="text" id="eval-subject-unit" placeholder="例如：國二數學 - 第二章乘法公式">
+                        <input type="text" id="eval-subject-unit" placeholder="例如：數學 - 第二章分數運算">
                     </div>
                     <div>
                         <label>本次評量分數：</label>
@@ -114,7 +121,17 @@
                 <label>導師綜合評語與輔導建議：</label>
                 <textarea id="eval-comment" rows="3" placeholder="請輸入本階段學員表現總結與後續輔導方向..."></textarea>
 
-                <button class="btn" onclick="saveGrowthRecord()">💾 儲存該學員成長紀錄至雲端</button>
+                <div class="grid-2">
+                    <button class="btn" onclick="saveGrowthRecord()">💾 儲存該學員成長紀錄至雲端</button>
+                    <button class="btn btn-warning" onclick="generateParentReport()">📋 產生家長 LINE 專屬日誌報表</button>
+                </div>
+
+                <!-- 產出貼至 LINE 的預覽框 -->
+                <div class="preview-box" id="line-preview-box">
+                    <label style="color:#0369a1;">📱 可直接複製貼到 LINE 給家長的報表內容：</label>
+                    <textarea id="line-report-text" rows="6" readonly></textarea>
+                    <button class="btn" style="background:#38a169; padding:8px;" onclick="copyLineReport()">📋 一鍵複製文字內容</button>
+                </div>
             </div>
         </div>
 
@@ -141,7 +158,7 @@
     <!-- Firebase 邏輯核心 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -193,6 +210,7 @@
             renderStudentDropdown(grade);
             document.getElementById('evaluation-form-wrapper').style.display = 'none';
             document.getElementById('dashboard-card').style.display = 'none';
+            document.getElementById('line-preview-box').style.display = 'none';
         };
 
         window.loadStudentGrowthProfile = function() {
@@ -203,6 +221,7 @@
             if (!id) {
                 formWrapper.style.display = 'none';
                 dashboard.style.display = 'none';
+                document.getElementById('line-preview-box').style.display = 'none';
                 return;
             }
 
@@ -214,7 +233,6 @@
 
             document.getElementById('dashboard-title').innerText = `📊 【${student.name}】學員成長與能力追蹤儀表板`;
 
-            // 讀取該學生的成長紀錄 (存放於 growthRecords 陣列中)
             const records = student.growthRecords || [];
             renderHistoryLogs(records);
             renderRadar(records);
@@ -237,7 +255,6 @@
         }
 
         function renderRadar(records) {
-            // 計算能力維度分數
             let dims = [75, 75, 75, 75, 75];
             if (records.length > 0) {
                 const latest = records[0];
@@ -298,17 +315,52 @@
                     growthRecords: student.growthRecords
                 });
                 alert('✅ 成長紀錄已成功同步至 Firebase 雲端！');
-                loadStudentGrade6Profile();
-                
-                // 清空輸入框
-                document.getElementById('eval-subject-unit').value = '';
-                document.getElementById('eval-score').value = '';
-                document.getElementById('eval-comment').value = '';
-                document.querySelectorAll('input[name="tags"]').forEach(cb => cb.checked = false);
+                loadStudentGrowthProfile();
             } catch (e) {
                 console.error(e);
                 alert('儲存失敗，請確認網路連線。');
             }
+        };
+
+        window.generateParentReport = function() {
+            const id = document.getElementById('student-select').value;
+            const subjectUnit = document.getElementById('eval-subject-unit').value.trim();
+            const score = document.getElementById('eval-score').value;
+            const comment = document.getElementById('eval-comment').value.trim();
+            const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+
+            if (!id || !subjectUnit || !score) {
+                alert('請先填寫上方單元、分數與評語，才能產生報表！');
+                return;
+            }
+
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student) return;
+
+            const today = new Date().toISOString().slice(0, 10);
+            
+            const reportText = 
+`【斗六顧德補習班】學員學習與能力診斷報告
+------------------------
+📅 檢測日期：${today}
+👨‍🎓 學生姓名：${student.name} 同學
+🎯 評量主題：${subjectUnit}
+📈 本次得分：${score} 分
+⚠️ 需加強單元/弱點：${tags.join('、') || '表現穩健，無特別盲點'}
+💬 導師評語與建議：${comment || '學習態度良好，持續保持！'}
+------------------------
+感謝您的支持與配合，顧德補習班關心孩子的每一步成長！`;
+
+            document.getElementById('line-report-text').value = reportText;
+            document.getElementById('line-preview-box').style.display = 'block';
+            document.getElementById('line-preview-box').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.copyLineReport = function() {
+            const textarea = document.getElementById('line-report-text');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ 已成功複製報表內容！可直接貼至 LINE 給家長。');
         };
 
         window.onload = function() {
