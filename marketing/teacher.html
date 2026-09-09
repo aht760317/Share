@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 老師端：學生成長與多科能力追蹤系統 (旗艦優化版)</title>
+    <title>斗六顧德補習班 - 老師端：學生成長與多科能力追蹤系統 (紀錄維護版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -38,19 +38,18 @@
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
         
         label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--primary); font-size: 14.5px; }
-        select, input[type="text"], input[type="number"], textarea {
+        select, input[type="text"], input[type="number"], textarea, input[type="date"] {
             width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff;
         }
         .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; }
         .btn:hover { opacity: 0.9; }
         .btn-warning { background: var(--warning); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
         .btn-purple { background: var(--purple); color: #fff; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 768px) { 
             .grid-2 { grid-template-columns: 1fr 1fr; } 
-            .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
         }
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
@@ -64,6 +63,10 @@
 
         .history-item {
             background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; font-size: 14px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .history-item:hover {
+            background: #e2e8f0; border-color: var(--accent); transform: translateX(2px);
         }
 
         .preview-box {
@@ -81,6 +84,10 @@
         .score-high { background: #def7ec; color: #03543f; }
         .score-mid { background: #fef08a; color: #854d0e; }
         .score-low { background: #fde8e8; color: #9b1c1c; }
+
+        /* 彈窗樣式 (Modal) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(2px); }
+        .modal-box { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -210,11 +217,52 @@
             </div>
 
             <div>
-                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:15px;">歷史檢測與輔導紀錄</h4>
+                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:15px;">歷史檢測與輔導紀錄 (點擊項目可進行修改或刪除)</h4>
                 <div id="history-logs-container" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
             </div>
         </div>
 
+    </div>
+
+    <!-- ✏️ 歷史紀錄編輯彈窗 (Modal) -->
+    <div class="modal-overlay" id="edit-record-modal">
+        <div class="modal-box">
+            <h3 style="margin-top:0; color:var(--primary);">✏️ 編輯或刪除檢測紀錄</h3>
+            <input type="hidden" id="edit-record-index">
+
+            <div class="grid-2">
+                <div>
+                    <label>檢測日期：</label>
+                    <input type="date" id="edit-record-date">
+                </div>
+                <div>
+                    <label>評量分數：</label>
+                    <input type="number" id="edit-record-score" min="0" max="100">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <label>檢測科目：</label>
+                    <input type="text" id="edit-record-subject" readonly style="background:#edf2f7;">
+                </div>
+                <div>
+                    <label>測驗單元：</label>
+                    <input type="text" id="edit-record-unit">
+                </div>
+            </div>
+
+            <label>導師評語與因材施教方案：</label>
+            <textarea id="edit-record-comment" rows="4"></textarea>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; gap: 10px;">
+                <button class="btn btn-danger" style="width: auto; padding: 10px 20px;" onclick="deleteGrowthRecord()">🗑️ 刪除此紀錄</button>
+                <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
+                    <button class="btn" style="width: auto; padding: 10px 20px;" onclick="updateGrowthRecord()">💾 儲存修改</button>
+                    <button class="btn" style="width: auto; padding: 10px 20px; background:#999;" onclick="document.getElementById('edit-record-modal').style.display='none'">取消</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase 邏輯核心 -->
@@ -412,26 +460,94 @@
                 return;
             }
 
-            container.innerHTML = records.map(r => {
-                const sc = Number(r.score);
+            container.innerHTML = records.map((r, index) => {
+                const sc = Number(r.score) || 0;
                 const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
                 const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需加強');
+                const tagsStr = (r.tags && Array.isArray(r.tags)) ? r.tags.join('、') : (r.tags || '無');
 
                 return `
-                    <div class="history-item">
+                    <div class="history-item" onclick="openEditRecordModal(${index})">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <b>📅 ${r.date} ｜ 📚 [${r.subject}] ${r.unit}</b>
+                            <b>📅 ${r.date || '未記錄日期'} ｜ 📚 [${r.subject || '數學'}] ${r.unit || '未指定單元'}</b>
                             <span class="badge-score ${badgeCls}">${r.score} 分 (${badgeText})</span>
                         </div>
-                        <span>⚠️ 弱點：${r.tags.join('、') || '無'}</span><br>
+                        <span>⚠️ 弱點：${tagsStr}</span><br>
                         <span style="color:#4a5568;">💬 方案：${r.comment || '無'}</span>
                     </div>
                 `;
             }).join('');
         }
 
+        // 開啟編輯紀錄彈窗
+        window.openEditRecordModal = function(index) {
+            const id = document.getElementById('student-select').value;
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student || !student.growthRecords || !student.growthRecords[index]) return;
+
+            const record = student.growthRecords[index];
+            document.getElementById('edit-record-index').value = index;
+            document.getElementById('edit-record-date').value = record.date || '';
+            document.getElementById('edit-record-score').value = record.score || '';
+            document.getElementById('edit-record-subject').value = record.subject || '數學';
+            document.getElementById('edit-record-unit').value = record.unit || '';
+            document.getElementById('edit-record-comment').value = record.comment || '';
+
+            document.getElementById('edit-record-modal').style.display = 'flex';
+        };
+
+        // 儲存修改後的紀錄
+        window.updateGrowthRecord = async function() {
+            const id = document.getElementById('student-select').value;
+            const index = Number(document.getElementById('edit-record-index').value);
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student || !student.growthRecords[index]) return;
+
+            student.growthRecords[index].date = document.getElementById('edit-record-date').value;
+            student.growthRecords[index].score = Number(document.getElementById('edit-record-score').value);
+            student.growthRecords[index].unit = document.getElementById('edit-record-unit').value;
+            student.growthRecords[index].comment = document.getElementById('edit-record-comment').value;
+
+            try {
+                await setDoc(doc(db, "classLogStudents", id), {
+                    ...student,
+                    growthRecords: student.growthRecords
+                });
+                document.getElementById('edit-record-modal').style.display = 'none';
+                alert('✅ 紀錄已成功更新！');
+                loadStudentGrowthProfile();
+            } catch (e) {
+                console.error(e);
+                alert('更新失敗，請檢查網路連線。');
+            }
+        };
+
+        // 刪除特定紀錄
+        window.deleteGrowthRecord = async function() {
+            if (!confirm('⚠️ 確定要刪除這筆檢測紀錄嗎？此動作無法復原。')) return;
+
+            const id = document.getElementById('student-select').value;
+            const index = Number(document.getElementById('edit-record-index').value);
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student || !student.growthRecords[index]) return;
+
+            student.growthRecords.splice(index, 1);
+
+            try {
+                await setDoc(doc(db, "classLogStudents", id), {
+                    ...student,
+                    growthRecords: student.growthRecords
+                });
+                document.getElementById('edit-record-modal').style.display = 'none';
+                alert('✅ 該筆檢測紀錄已刪除！');
+                loadStudentGrowthProfile();
+            } catch (e) {
+                console.error(e);
+                alert('刪除失敗，請檢查網路連線。');
+            }
+        };
+
         function renderCharts(records) {
-            // 1. 雷達圖資料計算
             let dims = [75, 75, 75, 75, 75];
             if (records.length > 0) {
                 const latest = records[0];
@@ -458,9 +574,8 @@
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } } }
             });
 
-            // 2. 折線圖資料計算 (歷次成績趨勢)
-            const sortedRecords = [...records].reverse(); // 時間由舊到新
-            const labels = sortedRecords.map(r => r.date.slice(5)); // 取 MM-DD
+            const sortedRecords = [...records].reverse();
+            const labels = sortedRecords.map(r => r.date ? r.date.slice(5) : '未知日期');
             const scores = sortedRecords.map(r => r.score);
 
             const ctxLine = document.getElementById('growthLineChart').getContext('2d');
