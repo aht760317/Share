@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學員學業弱點與成長追蹤報告</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-title: #2d3748;
+            --text-body: #4a5568;
+            --primary: #3182ce;
+            --tag-bg: #edf2f7;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-body);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 480px; /* 專為手機瀏覽最佳化 */
+        }
+        .header-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .student-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-title);
+            margin-bottom: 14px;
+        }
+        .comment-card {
+            background: #ebf8ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px 12px 12px 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .comment-title {
+            font-weight: 600;
+            color: #2b6cb0;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .progress-tag {
+            display: inline-block;
+            background: #e6fffa;
+            color: #234e52;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <!-- 學生簡況 -->
+    <div class="header-card">
+        <div class="student-info">
+            <div>
+                <div class="student-name">陳小宇 同學</div>
+                <div style="font-size: 13px; color: #718096; margin-top: 4px;">國二 數學進階實力班</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: bold; color: var(--primary);">88<span style="font-size: 14px; color: #a0aec0;">分</span></div>
+                <div style="font-size: 12px; color: #718096;">最新段考小考</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弱點雷達分析 -->
+    <div class="chart-card">
+        <div class="card-title">單元核心能力診斷</div>
+        <canvas id="radarChart"></canvas>
+    </div>
+
+    <!-- 歷次成績趨勢 -->
+    <div class="chart-card">
+        <div class="card-title">近五次小考成績趨勢</div>
+        <canvas id="lineChart"></canvas>
+    </div>
+
+    <!-- 導師個別評語與輔導進度 -->
+    <div class="comment-card">
+        <div class="comment-title">導師個別觀察與輔導紀錄</div>
+        <p class="comment-text">
+            小宇近期在「幾何證明」的邏輯架構進步顯著，思路清晰許多。本次扣分主要集中在「繁分數計算」上的粗心。週三晚自習已針對計算流程做專項拆解練習，目前解題速度與準確度皆已回穩！
+        </p>
+        <div class="progress-tag">✔ 晚自習錯題輔導已完成</div>
+    </div>
+</div>
+
+<script>
+    // 單元雷達圖 (弱點一目了然)
+    const ctxRadar = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: ['多項式運算', '因式分解', '幾何圖形', '計算熟練度', '應用題解析'],
+            datasets: [{
+                label: '個人掌握度',
+                data: [90, 85, 95, 65, 80],
+                backgroundColor: 'rgba(49, 130, 206, 0.2)',
+                borderColor: '#3182ce',
+                borderWidth: 2,
+                pointBackgroundColor: '#3182ce'
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    min: 0,
+                    max: 100,
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+
+    // 歷次趨勢折線圖
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: ['第1次', '第2次', '第3次', '第4次', '最新小考'],
+            datasets: [{
+                label: '小宇成績',
+                data: [72, 78, 81, 80, 88],
+                borderColor: '#3182ce',
+                tension: 0.3,
+                fill: false
+            }, {
+                label: '班級平均',
+                data: [75, 76, 77, 76, 79],
+                borderColor: '#cbd5e0',
+                borderDash: [5, 5],
+                tension: 0.3,
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                y: { min: 50, max: 100 }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
