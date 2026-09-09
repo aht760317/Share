@@ -680,7 +680,7 @@
         </button>
     </div>
 
-    <!-- 親師電聯 QA 紀錄彈窗 (已整合升級轉送安心橋功能) -->
+    <!-- 親師電聯 QA 紀錄彈窗 -->
     <div class="modal-overlay" id="call-qa-modal">
         <div class="modal-box">
             <h3 id="call-qa-modal-title" style="margin-top:0; color:var(--primary);">📞 親師電聯 QA 溝通紀錄</h3>
@@ -768,10 +768,10 @@
                     <tr id="card-score-row"><th>📝 測驗表現</th><td id="card-score">-</td></tr>
                     <tr><th>📖 作業範圍</th><td id="card-homework">-</td></tr>
                     <tr><th>✅ 作業狀態</th><td id="card-hwstatus">-</td></tr>
-                    <tr><th>💬 老師評語</th><td id="card-note">-</td></tr>
+                    <tr><th>💬 老師評語與叮嚀</th><td id="card-note">-</td></tr>
                 </table>
             </div>
-            <textarea id="parent-log-text" rows="6" style="font-size:13px; line-height:1.4;"></textarea>
+            <textarea id="parent-log-text" rows="7" style="font-size:13px; line-height:1.4;"></textarea>
             <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
                 <button class="btn btn-warning" onclick="copyParentLog()">📋 複製日誌內容 (貼到 LINE)</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉</button>
@@ -1273,10 +1273,13 @@
 
                 let noteItems = [];
                 classLogs.forEach((l) => {
-                    if (l.detail) {
+                    const noteText = l.detail || l.classNotes;
+                    if (noteText) {
                         const originalLogIndex = (s.attendanceLogs || []).indexOf(l);
                         const courseTag = `<span class="course-tag-badge">${l.course || className}</span>`;
-                        noteItems.push(`<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆備註">${courseTag}📌 <b>${l.date}</b>: ${l.detail}</div>`);
+                        let displayText = l.detail ? `<b>[個人]</b> ${l.detail}` : '';
+                        if (l.classNotes) displayText += (displayText ? ' ｜ ' : '') + `<b>[全班]</b> ${l.classNotes}`;
+                        noteItems.push(`<div class="student-class-note" onclick="openStudentNoteModal('${s.firestoreId}', ${originalLogIndex})" title="點擊修改此筆備註">${courseTag}📌 <b>${l.date}</b>: ${displayText}</div>`);
                     }
                 });
 
@@ -1648,7 +1651,6 @@
             } catch (e) { alert('儲存失敗'); }
         };
 
-        // 一鍵轉送安心橋提報主任核心邏輯
         window.escalateToBridgeAction = async function() {
             const firestoreId = document.getElementById('call-qa-student-id').value;
             const qaIndexVal = document.getElementById('call-qa-log-index').value;
@@ -1677,13 +1679,11 @@
                 const stuCourses = getStudentCoursesArray(student);
                 const assignedClass = window.state.selectedClassForProfile || stuCourses[0] || '一般班級';
 
-                // 判斷分校
                 let branchName = '顧德補習班';
                 if (assignedClass.includes('佳音') || assignedClass.includes('美語') || assignedClass.includes('英語')) {
                     branchName = '佳音英語斗六校';
                 }
 
-                // 1. 寫入招生系統安心橋雲端資料庫
                 const adminDocRef = doc(db, "settings", "admissionSystemData");
                 const adminSnap = await getDoc(adminDocRef);
                 let adminData = adminSnap.exists() ? adminSnap.data() : {};
@@ -1711,7 +1711,6 @@
                 adminData.bridgeIssues.unshift(newBridgeIssue);
                 await setDoc(adminDocRef, adminData);
 
-                // 2. 更新本地學生電聯 QA 狀態並加註已轉送標籤
                 if (!student.callQAs) student.callQAs = [];
                 const logDate = now.toISOString().split('T')[0];
 
@@ -1837,39 +1836,65 @@
 
             const selectedDate = document.getElementById('card-date-input').value;
 
+            // 1. 查找學生專屬紀錄庫
             const targetLog = (student.attendanceLogs || []).find(l => {
                 const matchCourse = (l.course === courseName || (!l.course && getStudentCoursesArray(student).length === 1));
                 return matchCourse && l.date === selectedDate;
             });
 
+            // 2. 查找大總庫歷史日誌
+            const historyMatch = (window.state.historyLogs || []).find(h => h.course === courseName && h.date === selectedDate);
+
+            // 3. 抓取當前畫面上老師正在填寫但尚未存檔的欄位內容
+            let liveProgress = '', liveHomework = '', liveNotes = '';
+            ['junior', 'elementary', 'care'].forEach(dept => {
+                const cSel = document.getElementById(`log-course-select-${dept}`);
+                const dIn = document.getElementById(`log-date-${dept}`);
+                if (cSel && cSel.value === courseName && dIn && dIn.value === selectedDate) {
+                    liveProgress = document.getElementById(`log-content-${dept}`)?.value.trim() || '';
+                    liveHomework = document.getElementById(`log-homework-${dept}`)?.value.trim() || '';
+                    liveNotes = document.getElementById(`log-notes-${dept}`)?.value.trim() || '';
+                }
+            });
+
+            // 授課老師判斷
             const allDeptCourses = [...(window.state.courses.care || []), ...(window.state.courses.elementary || []), ...(window.state.courses.junior || [])];
             const courseObj = allDeptCourses.find(c => (typeof c === 'object' ? c.name : c) === courseName);
             const teacherName = (courseObj && courseObj.teacher) ? courseObj.teacher : '本班老師';
 
-            let att = '✔ 出席正常', score = '無', hwStatus = '✔ 已完成', note = '出席正常';
-            let progress = '指定進度範圍與重點複習';
-            let homework = '無';
+            let att = '✔ 出席正常', score = '無', hwStatus = '✔ 已完成';
+            let progress = liveProgress || targetLog?.progress || historyMatch?.content || '指定進度範圍與重點複習';
+            let homework = liveHomework || targetLog?.homeworkContent || historyMatch?.homework || '無';
+            let classNotes = liveNotes || targetLog?.classNotes || historyMatch?.notes || '';
+            let personalNote = '';
 
-            if(targetLog) {
+            if (targetLog) {
                 att = targetLog.status === '出席' ? '✔ 出席正常' : `✖ ${targetLog.status}`;
-                score = (targetLog.score !== null && targetLog.score !== undefined && targetLog.score !== '') ? targetLog.score : '無';
+                score = (targetLog.score !== null && targetLog.score !== undefined && targetLog.score !== '') ? `${targetLog.score} 分` : '無';
                 hwStatus = targetLog.homework === '完成' ? '✔ 已完成' : (targetLog.homework || '已完成');
-                note = targetLog.detail || '出席正常';
-                progress = targetLog.progress || targetLog.content || '指定進度範圍與重點複習';
-                homework = targetLog.homeworkContent || targetLog.homework || '無';
+                personalNote = targetLog.detail || '';
             } else {
                 const row = document.querySelector(`tr[data-firestore-id="${firestoreId}"]`);
-                if(row && row.querySelector('.log-att-status')) {
-                    const attVal = row.querySelector('.log-att-status').value;
-                    att = attVal === '出席' ? '✔ 出席正常' : `✖ ${attVal}`;
+                if (row) {
+                    const attVal = row.querySelector('.log-att-status')?.value;
+                    if (attVal) att = attVal === '出席' ? '✔ 出席正常' : `✖ ${attVal}`;
+                    
                     const scoreInput = row.querySelector('.log-score');
-                    const scoreVal = scoreInput ? scoreInput.value : '';
-                    score = scoreVal !== '' ? scoreVal : '無';
-                    const hwVal = row.querySelector('.log-homework-status').value;
-                    hwStatus = hwVal === '完成' ? '✔ 已完成' : hwVal;
-                    note = row.querySelector('.log-student-note').value.trim() || '出席正常';
+                    if (scoreInput && scoreInput.value !== '') score = `${scoreInput.value} 分`;
+                    
+                    const hwVal = row.querySelector('.log-homework-status')?.value;
+                    if (hwVal) hwStatus = hwVal === '完成' ? '✔ 已完成' : hwVal;
+                    
+                    personalNote = row.querySelector('.log-student-note')?.value.trim() || '';
                 }
             }
+
+            // 整合評語與注意事項
+            let noteParts = [];
+            if (personalNote) noteParts.push(`【個人表現】${personalNote}`);
+            if (classNotes) noteParts.push(`【班級提醒】${classNotes}`);
+            if (noteParts.length === 0) noteParts.push('課堂學習狀況良好，出席正常。');
+            const finalNote = noteParts.join(' ｜ ');
 
             const hasExam = (score !== '無');
 
@@ -1887,7 +1912,7 @@
 
             document.getElementById('card-homework').innerText = homework;
             document.getElementById('card-hwstatus').innerText = hwStatus;
-            document.getElementById('card-note').innerText = note;
+            document.getElementById('card-note').innerText = finalNote;
 
             let parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
                 `------------------------\n` +
@@ -1896,17 +1921,17 @@
                 `👨‍🏫 授課老師：${teacherName}\n` +
                 `👨‍🎓 學生姓名：${student.name}\n` +
                 `📌 出缺勤狀況：${att}\n` +
-                `📘 教學進度：${progress}\n`;
+                `📘 今日教學進度：${progress}\n`;
             
             if (hasExam) {
                 parentMsg += `📝 測驗表現：${score}\n`;
             }
 
-            parentMsg += `📖 作業內容：${homework}\n` +
-                `✅ 作業完成度：${hwStatus}\n` +
-                `💬 老師評語與叮嚀：${note}\n` +
+            parentMsg += `📖 回家作業：${homework}\n` +
+                `✅ 作業完成狀況：${hwStatus}\n` +
+                `💬 老師評語與叮嚀：${finalNote}\n` +
                 `------------------------\n` +
-                `感謝您的支持與配合，顧德補習班關心您的孩子每一天！`;
+                `感謝您的支持與配合，顧德補習班關心孩子的學習每一天！`;
 
             document.getElementById('parent-log-text').value = parentMsg;
         };
@@ -2318,7 +2343,7 @@
             const examFile = hasExam && examFileInput ? examFileInput.value.trim() : '';
             const answerFile = hasExam && answerFileInput ? answerFileInput.value.trim() : '';
 
-            if(!date || !course || !content) return alert('請填寫完整日誌資訊！');
+            if(!date || !course || !content) return alert('請填寫完整教學進度！');
 
             const newLog = {
                 id: Date.now(), dept, date, course, content, homework, notes, examUnit, passScore, examFile, answerFile, directorApprovalText: ''
@@ -2345,18 +2370,25 @@
                     if (student) {
                         if (!student.attendanceLogs) student.attendanceLogs = [];
                         
+                        const logDataObj = {
+                            date, course, dept, status, score, 
+                            homework: homeworkStatus, 
+                            progress: content, 
+                            homeworkContent: homework, 
+                            classNotes: notes,
+                            detail: studentNote,
+                            passScore,
+                            makeupDone: false, 
+                            retestDone: false
+                        };
+
                         const existingIdx = student.attendanceLogs.findIndex(l => l.date === date && l.course === course);
                         if (existingIdx >= 0) {
-                            student.attendanceLogs[existingIdx] = {
-                                date, course, dept, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
-                                makeupDone: student.attendanceLogs[existingIdx].makeupDone || false,
-                                retestDone: student.attendanceLogs[existingIdx].retestDone || false
-                            };
+                            logDataObj.makeupDone = student.attendanceLogs[existingIdx].makeupDone || false;
+                            logDataObj.retestDone = student.attendanceLogs[existingIdx].retestDone || false;
+                            student.attendanceLogs[existingIdx] = logDataObj;
                         } else {
-                            student.attendanceLogs.unshift({
-                                date, course, dept, status, score, homework: homeworkStatus, progress: content, homeworkContent: homework, passScore, detail: studentNote,
-                                makeupDone: false, retestDone: false
-                            });
+                            student.attendanceLogs.unshift(logDataObj);
                         }
 
                         await setDoc(doc(db, "classLogStudents", firestoreId), {
@@ -2366,7 +2398,7 @@
                     }
                 }
 
-                alert(`✅【${course}】教學日誌已成功儲存與同步！`);
+                alert(`✅【${course}】教學日誌已成功儲存並同步到學生日誌！`);
                 
                 if (dept === 'care') {
                     const queryNavBtn = document.querySelector('nav button:nth-child(5)');
