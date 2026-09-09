@@ -1,3 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>顧德與佳音文教 - 全日行政管理系統</title>
+    <style>
+        :root {
+            --primary-color: #0F172A;
+            --accent-color: #2563EB;
+            --success-color: #10B981;
+            --warning-color: #D97706;
+            --danger-color: #EF4444;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --bg-body: #F1F5F9;
+            --bg-card: #FFFFFF;
+            --border-color: #CBD5E1;
+
+            /* 5 大類別專屬柔和底色與強調邊框 */
+            --bg-elem: #EFF6FF;
+            --border-elem: #3B82F6;
+            --text-elem: #1D4ED8;
+
+            --bg-mid: #F0FDF4;
+            --border-mid: #10B981;
+            --text-mid: #047857;
+
+            --bg-cram: #FAF5FF;
+            --border-cram: #A855F7;
+            --text-cram: #7E22CE;
+
+            --bg-clean: #FEFCE8;
+            --border-clean: #F59E0B;
+            --text-clean: #B45309;
+
+            --bg-urgent: #FFF1F2;
+            --border-urgent: #F43F5E;
+            --text-urgent: #BE123C;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding: 1rem; padding-bottom: 3rem; font-size: 1rem; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        .header-bar { 
+            background: var(--bg-card); padding: 0.9rem 1.2rem; border-radius: 0.5rem; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06); margin-bottom: 0.85rem; border: 1.5px solid var(--border-color);
+        }
+        .header-main-row {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;
+        }
+        .header-title h1 { font-size: 1.35rem; font-weight: 800; color: var(--primary-color); }
+        .header-title p { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.15rem; }
+        .header-right { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; }
+        
+        .date-picker-box { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.92rem; }
+        .date-picker-box input { padding: 0.38rem 0.6rem; border: 1.5px solid var(--border-color); border-radius: 0.35rem; font-size: 0.92rem; font-weight: 600; background: #fff; }
+
+        .quick-nav-bar {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1.5px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .quick-nav-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-right: 0.2rem;
+        }
+        .quick-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 0.4rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .link-rollbook { background-color: #EFF6FF; color: #1D4ED8; border: 1.2px solid #BFDBFE; }
+        .link-rollbook:hover { background-color: #DBEAFE; color: #1E40AF; }
+        .link-gotogood { background-color: #FEF3C7; color: #B45309; border: 1.2px solid #FDE68A; }
+        .link-gotogood:hover { background-color: #FDE68A; color: #92400E; }
+        .link-classlog { background-color: #F0FDF4; color: #047857; border: 1.2px solid #BBF7D0; }
+        .link-classlog:hover { background-color: #DCFCE7; color: #065F46; }
+
+        .tab-nav { 
+            background: #ffffff; display: flex; justify-content: space-around; 
+            padding: 0.45rem; box-shadow: 0 2px 4px rgba(0,0,0,0.06); border-radius: 0.5rem;
+            margin-bottom: 1rem; border: 1.5px solid var(--border-color); gap: 0.5rem;
+        }
+        .tab-btn { 
+            background: #F8FAFC; border: 1.5px solid var(--border-color); padding: 0.65rem 1rem; 
+            border-radius: 0.45rem; font-weight: 800; cursor: pointer; color: var(--text-muted); 
+            transition: all 0.2s; font-size: 0.95rem; display: flex; align-items: center; 
+            justify-content: center; gap: 0.4rem; flex: 1;
+        }
+        .tab-btn:hover { background: #E2E8F0; color: var(--primary-color); }
+        .tab-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--bg-card); border-radius: 0.55rem; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 1.2rem; border: 1.5px solid var(--border-color); margin-bottom: 1rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .card-header h2 { font-size: 1.2rem; color: var(--accent-color); font-weight: 800; display: flex; align-items: center; gap: 0.4rem; }
+        
+        .task-grid-container { display: flex; flex-direction: column; gap: 0.85rem; }
+
+        .task-block {
+            border-radius: 0.55rem;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .task-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+        }
+
+        .block-elem { background-color: var(--bg-elem); border-color: #BFDBFE; border-left: 7px solid var(--border-elem); }
+        .block-mid { background-color: var(--bg-mid); border-color: #BBF7D0; border-left: 7px solid var(--border-mid); }
+        .block-cram { background-color: var(--bg-cram); border-color: #E9D5FF; border-left: 7px solid var(--border-cram); }
+        .block-clean { background-color: var(--bg-clean); border-color: #FDE68A; border-left: 7px solid var(--border-clean); }
+        .block-urgent { background-color: var(--bg-urgent); border-color: #FECDD3; border-left: 7px solid var(--border-urgent); }
+
+        .task-block.is-done {
+            background-color: #F1F5F9 !important;
+            border-color: #E2E8F0 !important;
+            border-left: 7px solid #94A3B8 !important;
+            opacity: 0.65;
+        }
+        .task-block.is-done .task-desc-text {
+            text-decoration: line-through;
+            color: #94A3B8 !important;
+        }
+        .task-block.is-done .task-time-text {
+            color: #94A3B8 !important;
+        }
+
+        .task-block.is-alert {
+            border-color: #FDA4AF !important;
+            border-left: 7px solid var(--danger-color) !important;
+            animation: pulseBlock 2s infinite;
+        }
+        @keyframes pulseBlock {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .task-check-side { flex-shrink: 0; display: flex; align-items: center; }
+        .huge-checkbox { width: 25px; height: 25px; cursor: pointer; accent-color: var(--accent-color); }
+
+        .task-time-side { min-width: 155px; flex-shrink: 0; }
+        .task-time-text { font-size: 1.25rem; font-weight: 900; color: var(--primary-color); letter-spacing: 0.5px; white-space: nowrap; }
+
+        .task-badge-wrap { margin-top: 0.2rem; display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+        .badge { padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; font-weight: 800; display: inline-block; white-space: nowrap; }
+        
+        .badge-elem { background-color: #DBEAFE; color: var(--text-elem); }
+        .badge-mid { background-color: #DCFCE7; color: var(--text-mid); }
+        .badge-cram { background-color: #F3E8FF; color: var(--text-cram); }
+        .badge-clean { background-color: #FDE68A; color: var(--text-clean); }
+        .badge-urgent { background-color: #FEE2E2; color: var(--text-urgent); }
+        .badge-fixed { background-color: #E2E8F0; color: #475569; font-size: 0.72rem; padding: 0.12rem 0.35rem; border-radius: 4px; }
+        
+        .badge-role-counter { background-color: #E0E7FF; color: #3730A3; border: 1px solid #C7D2FE; }
+        .badge-role-teacher { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+        .task-content-side { flex: 1; }
+        .task-desc-text { font-size: 1.05rem; font-weight: 600; line-height: 1.5; color: var(--text-main); }
+
+        .task-status-side { min-width: 160px; text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+        .task-status-text { font-size: 0.88rem; font-weight: 700; color: var(--text-muted); }
+        .time-alert { color: var(--danger-color); font-weight: 800; font-size: 0.95rem; animation: blink 1.2s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .confirm-actions { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.3rem; }
+        .btn-confirm { background-color: var(--success-color); color: #fff; border: none; padding: 0.35rem 0.65rem; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+        .btn-cancel-action { background-color: #94A3B8; color: #fff; border: none; padding: 0.35rem 0.6rem; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; }
+        .form-group { margin-bottom: 0.85rem; }
+        .form-group label { display: block; font-size: 0.88rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--accent-color); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem; border: 1.5px solid var(--border-color); border-radius: 0.35rem; font-size: 0.95rem; background: #fff; }
+        
+        .time-range-row { display: flex; align-items: center; gap: 0.5rem; }
+
+        .btn { border: none; border-radius: 0.35rem; font-weight: 800; cursor: pointer; transition: opacity 0.2s; padding: 0.55rem 1rem; font-size: 0.95rem; }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-secondary { background-color: #64748B; color: white; }
+        .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(3px); z-index: 2000;
+            justify-content: center; align-items: center; padding: 1rem;
+        }
+        .modal-card {
+            background: #fff; border-radius: 0.6rem; width: 100%; max-width: 620px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 1.4rem; border: 1.5px solid var(--border-color);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.65rem; margin-bottom: 1rem;
+        }
+        .modal-header h3 { font-size: 1.15rem; color: var(--accent-color); font-weight: 800; }
+
+        .guideline-content-text {
+            font-size: 0.95rem; color: var(--text-main); line-height: 1.65; font-weight: 600; white-space: pre-wrap;
+        }
+
+        /* ================= 手機專屬微調：單行且字級縮小 ================= */
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; padding-bottom: 5.2rem; font-size: 0.92rem; }
+            .header-bar { padding: 0.7rem 0.8rem; }
+            .header-title h1 { font-size: 1.15rem; }
+            .header-title p { font-size: 0.78rem; }
+            .date-picker-box { font-size: 0.82rem; }
+            .date-picker-box input { font-size: 0.82rem; padding: 0.25rem 0.45rem; }
+            
+            .quick-nav-bar { gap: 0.4rem; }
+            .quick-link-btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
+
+            /* 櫃台卡片標題列手機優化：單行、字體縮小、強制不折行 */
+            .card-header {
+                padding-bottom: 0.5rem;
+                margin-bottom: 0.65rem;
+                gap: 0.25rem;
+            }
+            .card-header h2 {
+                font-size: 0.98rem;
+                letter-spacing: -0.2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100%;
+                gap: 0.3rem;
+            }
+            .card-header span {
+                font-size: 0.76rem !important;
+            }
+
+            .tab-nav {
+                position: fixed; bottom: 0; left: 0; right: 0; width: 100%;
+                z-index: 999; margin-bottom: 0; border-radius: 0;
+                border-top: 1.5px solid var(--border-color); border-left: none; border-right: none; border-bottom: none;
+                padding: 0.35rem 0.25rem; padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+                background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+                box-shadow: 0 -3px 12px rgba(0,0,0,0.08); gap: 0.25rem;
+            }
+            .tab-btn { flex-direction: column; gap: 0.15rem; padding: 0.35rem 0.2rem; font-size: 0.75rem; border-radius: 0.35rem; }
+            .tab-btn span:first-child { font-size: 1.15rem; }
+
+            .task-block { flex-direction: column; align-items: flex-start; padding: 0.85rem; gap: 0.5rem; border-left-width: 5px; }
+            .task-mobile-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+            .task-time-text { font-size: 1.15rem; }
+            .badge { font-size: 0.72rem; padding: 0.15rem 0.45rem; }
+            .badge-fixed { font-size: 0.68rem; }
+            .task-desc-text { font-size: 0.95rem; line-height: 1.45; }
+            
+            .task-status-side { 
+                width: 100%; text-align: left; flex-direction: row; justify-content: space-between; align-items: center;
+                padding-top: 0.4rem; border-top: 1px dashed rgba(0,0,0,0.1); 
+            }
+            .task-status-text { font-size: 0.8rem; }
+            .huge-checkbox { width: 24px; height: 24px; }
+            .btn-confirm { padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+            .btn-cancel-action { padding: 0.3rem 0.5rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-bar">
+        <div class="header-main-row">
+            <div class="header-title">
+                <h1>顧德與佳音文教 - 全日行政管理系統</h1>
+                <p>櫃台執行 ｜ 老師回報 ｜ 主任派工與修改中心</p>
+            </div>
+            <div class="header-right">
+                <div class="date-picker-box">
+                    <span>📅 排程日期：</span>
+                    <input type="date" id="currentDate">
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-nav-bar">
+            <span class="quick-nav-title">🔗 常用管理系統直達：</span>
+            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="quick-link-btn link-rollbook">
+                <span>📋</span> <span>線上點名表</span>
+            </a>
+            <a href="https://aht760317.github.io/Share/gotogood.html" target="_blank" class="quick-link-btn link-gotogood">
+                <span>🌉</span> <span>安心橋親師平台</span>
+            </a>
+            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="quick-link-btn link-classlog">
+                <span>📝</span> <span>教學日誌系統</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="tab-nav">
+        <button id="btnTabCounter" class="tab-btn active" onclick="switchMainTab('tabCounter', this)">
+            <span>🏫</span> <span>櫃台行政區</span>
+        </button>
+        <button id="btnTabTeacher" class="tab-btn" onclick="switchMainTab('tabTeacher', this)">
+            <span>👩‍🏫</span> <span>老師行政區</span>
+        </button>
+        <button id="btnTabDirector" class="tab-btn" onclick="switchMainTab('tabDirector', this)">
+            <span>👨‍⚖️</span> <span>主任設定區</span>
+        </button>
+    </div>
+
+    <!-- ================= 區塊一：櫃台行政區 ================= -->
+    <div id="tabCounter" class="tab-content active">
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 <span id="displayDateTitleCounter"></span> 櫃台標準時段作業看板</h2>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                    專屬櫃台排程 ｜ 勾選後請點擊「確定」登記
+                </span>
+            </div>
+            <div class="task-grid-container" id="counterCardContainer"></div>
+        </div>
+    </div>
+
+    <!-- ================= 區塊二：老師行政區 ================= -->
+    <div id="tabTeacher" class="tab-content">
+        <div class="card" style="border-left: 7px solid var(--accent-color);">
+            <div class="card-header">
+                <h2>👩‍🏫 老師時段排程與行政回報中心</h2>
+                <button class="btn btn-warning" onclick="openEditGuidelinesModal()" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">✏️ 編輯行政準則內容</button>
+            </div>
+            <div class="task-grid-container" id="teacherCardContainer" style="margin-bottom: 1.2rem;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="background: var(--bg-elem); border: 1.5px solid #BFDBFE; padding: 1rem; border-radius: 0.45rem;">
+                    <h3 style="font-size: 1.05rem; color: var(--primary-color); margin-bottom: 0.4rem; font-weight: 800;">📝 教學日誌填寫規則</h3>
+                    <div id="displayLogRules" class="guideline-content-text">載入中...</div>
+                </div>
+                <div style="background: var(--bg-mid); border: 1.5px solid #BBF7D0; padding: 1rem; border-radius: 0.45rem;">
+                    <h3 style="font-size: 1.05rem; color: var(--primary-color); margin-bottom: 0.4rem; font-weight: 800;">🔄 未到補課管理機制</h3>
+                    <div id="displayMakeupRules" class="guideline-content-text">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 區塊三：主任設定區 ================= -->
+    <div id="tabDirector" class="tab-content">
+        <div class="card" style="border: 2px solid var(--accent-color); background: #FAF5FF;">
+            <div class="card-header">
+                <h2 style="color: #6B21A8;">⚙️ 主任專屬 SOP 派工中心 (密碼: 0000)</h2>
+                <button class="btn btn-secondary" id="btnResetDefault" style="font-size: 0.85rem;">恢復預設標準 SOP</button>
+            </div>
+            
+            <form id="directorTaskForm" style="background: #fff; padding: 1rem; border-radius: 0.45rem; border: 1.5px solid var(--border-color); margin-bottom: 1rem;">
+                <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.65rem; color: var(--primary-color);">＋ 發布新時段排程事項</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>執行時段 (開始時間 ～ 結束時間)</label>
+                        <div class="time-range-row">
+                            <input type="time" id="taskTime" required value="12:30">
+                            <span style="font-weight: 800; color: var(--text-muted);">至</span>
+                            <input type="time" id="taskTimeEnd" placeholder="結束時間 (選填)">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 0.2rem;">* 如為特定時間點，結束時間請留白</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskRole">負責對象 (分流至專屬分頁)</label>
+                        <select id="taskRole" required>
+                            <option value="counter">🏫 指派給：櫃台人員</option>
+                            <option value="teacher">👩‍🏫 指派給：授課／帶班老師</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskCategory">任務類別 (5大分類自動配色)</label>
+                        <select id="taskCategory">
+                            <option value="elem">國小部 (水藍色塊)</option>
+                            <option value="mid">國中部 (粉綠色塊)</option>
+                            <option value="cram">補習課程 (雅緻紫塊)</option>
+                            <option value="clean">環境清潔 (琥珀黃色塊)</option>
+                            <option value="urgent">重要交辦 (淡紅警示色塊)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" id="isFixedRoutine" checked style="width: 20px; height: 20px;"> 
+                        設為 <strong>每日固定例行 SOP</strong> (每日自動生成)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="taskDesc">SOP 項目內容與作業指引說明</label>
+                    <textarea id="taskDesc" rows="3" placeholder="請詳細說明該員此時段該做什麼..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem; font-size: 1rem;">＋ 新增排程項目 (即時同步推播)</button>
+            </form>
+
+            <div style="background: #fff; padding: 1rem; border-radius: 0.45rem; border: 1.5px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: var(--primary-color); margin: 0;">📑 生效中排程管理</h3>
+                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">對象篩選：</span>
+                        <select id="filterDirectorRole" onchange="renderDirectorViews()" style="padding: 0.3rem 0.5rem; border-radius: 0.3rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700;">
+                            <option value="all">全部對象</option>
+                            <option value="counter">僅看櫃台</option>
+                            <option value="teacher">僅看老師</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="task-grid-container" id="directorCardContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= 主任修改 SOP Modal ================= -->
+<div id="editSopModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>✏️ 編輯修改 SOP 項目</h3>
+            <button onclick="closeEditModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form id="editSopForm">
+            <input type="hidden" id="editSopId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>執行時段 (開始時間 ～ 結束時間)</label>
+                    <div class="time-range-row">
+                        <input type="time" id="editSopTime" required>
+                        <span style="font-weight: 800; color: var(--text-muted);">至</span>
+                        <input type="time" id="editSopTimeEnd" placeholder="結束時間 (選填)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editSopRole">負責對象</label>
+                    <select id="editSopRole" required>
+                        <option value="counter">🏫 指派給：櫃台人員</option>
+                        <option value="teacher">👩‍🏫 指派給：授課／帶班老師</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editSopCategory">任務類別 (5大分類)</label>
+                    <select id="editSopCategory">
+                        <option value="elem">國小部 (水藍色塊)</option>
+                        <option value="mid">國中部 (粉綠色塊)</option>
+                        <option value="cram">補習課程 (雅緻紫塊)</option>
+                        <option value="clean">環境清潔 (琥珀黃色塊)</option>
+                        <option value="urgent">重要交辦 (淡紅警示色塊)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; cursor: pointer;">
+                    <input type="checkbox" id="editIsFixedRoutine" style="width: 20px; height: 20px;"> 
+                    設為 <strong>每日固定例行 SOP</strong>
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="editSopDesc">SOP 項目內容與說明</label>
+                <textarea id="editSopDesc" rows="3" required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                <button type="submit" class="btn btn-primary">儲存修改並同步</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= 主任修改老師行政準則 Modal ================= -->
+<div id="editGuidelinesModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>✏️ 編輯修改老師行政準則與規則</h3>
+            <button onclick="closeEditGuidelinesModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form id="editGuidelinesForm">
+            <div class="form-group">
+                <label for="editLogRulesInput">📝 教學日誌填寫規則 (每行一條)</label>
+                <textarea id="editLogRulesInput" rows="5" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editMakeupRulesInput">🔄 未到補課管理機制 (每行一條)</label>
+                <textarea id="editMakeupRulesInput" rows="5" required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditGuidelinesModal()">取消</button>
+                <button type="submit" class="btn btn-primary">儲存準則並同步</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Firebase 10.8.0 模組 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -133,7 +648,7 @@
             const fixedTag = task.date === 'fixed' ? '<span class="badge-fixed">固定</span>' : '';
             const displayTime = formatTaskTime(task);
 
-            // 【修改核心】針對固定排程，依據「當前選擇的日期」讀取專屬狀態
+            // 針對固定排程，依據「當前選擇的日期」讀取專屬狀態
             const isFixed = task.date === 'fixed';
             const dayData = (isFixed && task.history && task.history[selectedDate]) ? task.history[selectedDate] : null;
             
@@ -225,7 +740,7 @@
             const selectedDate = currentDateInput.value;
             const newRecord = isDone ? `已完成 (${timeString})` : "未完成";
 
-            // 【修改核心】將固定任務的完成狀態存進專屬的日期紀錄(history)中
+            // 將固定任務的完成狀態存進專屬的日期紀錄(history)中
             if (task.date === 'fixed') {
                 if (!task.history) task.history = {};
                 task.history[selectedDate] = {
@@ -443,7 +958,7 @@
         cachedScheduleTasks.forEach(task => {
             const targetTriggerTime = (task.timeEnd && task.timeEnd.trim() !== '') ? task.timeEnd : task.time;
             
-            // 【修改核心】背景定時檢查時，也需要分日期驗證
+            // 背景定時檢查時，也需要分日期驗證
             const isFixed = task.date === 'fixed';
             const dayData = (isFixed && task.history && task.history[selectedDate]) ? task.history[selectedDate] : null;
             const actualDone = isFixed ? (dayData ? dayData.done : false) : task.done;
@@ -476,3 +991,6 @@
 
     initRealtimeSync();
 </script>
+
+</body>
+</html>
