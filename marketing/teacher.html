@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 學生成長與能力追蹤系統 (手機旗艦優化版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (專業旗艦版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #1e293b;
-            --accent: #0284c7;
-            --danger: #dc2626;
-            --success: #16a34a;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --danger: #e11d48;
+            --success: #059669;
             --warning: #d97706;
             --purple: #7c3aed;
             --bg: #f8fafc;
-            --border: #cbd5e1;
+            --border: #e2e8f0;
         }
         * { box-sizing: border-box; }
         body { 
@@ -23,97 +23,102 @@
             -webkit-text-size-adjust: 100%;
         }
         header { 
-            background: var(--primary); color: white; padding: 14px 16px; 
+            background: var(--primary); color: white; padding: 16px 20px; 
             position: sticky; top: 0; z-index: 100;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        header h2 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
-        .header-btns { display: flex; gap: 6px; align-items: center; }
+        header h2 { margin: 0; font-size: 19px; letter-spacing: 0.5px; }
+        .header-btns { display: flex; gap: 8px; align-items: center; }
         .sync-quick-btn {
             background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);
-            padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            padding: 7px 14px; border-radius: 20px; font-size: 13.5px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .sync-quick-btn:hover { background: rgba(255,255,255,0.3); }
 
-        .container { max-width: 1100px; margin: 15px auto; padding: 0 10px; }
-        .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 12px; }
+        .card { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border); }
         
         label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--primary); font-size: 14px; }
         select, input[type="text"], input[type="number"], textarea, input[type="date"] {
-            width: 100%; padding: 11px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: #fff;
+            width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: #fff;
             -webkit-appearance: none; appearance: none;
         }
         select { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
 
-        .btn { background: var(--accent); color: white; border: none; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; text-align: center; }
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; text-align: center; box-shadow: 0 2px 5px rgba(37,99,235,0.2); }
         .btn:active { transform: scale(0.98); }
-        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning { background: var(--warning); color: #fff; box-shadow: 0 2px 5px rgba(217,119,6,0.2); }
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-purple { background: var(--purple); color: #fff; }
-        .btn-success { background: var(--success); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
 
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
         .tag-label {
-            background: #f1f5f9; padding: 8px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; color: #334155;
+            background: #f1f5f9; padding: 8px 14px; border-radius: 20px; font-size: 13.5px; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; color: #334155;
         }
         .tag-label input { display: none; }
         .tag-label:has(input:checked) {
-            background: #e0f2fe; border-color: #0284c7; color: #0369a1; font-weight: bold;
+            background: #dbeafe; border-color: #2563eb; color: #1e40af; font-weight: bold;
         }
 
         .history-item {
-            background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13.5px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 14px; border-radius: 8px; margin-bottom: 12px; font-size: 14px;
             cursor: pointer; transition: 0.2s;
         }
-        .history-item:active { background: #e2e8f0; }
+        .history-item:hover { background: #f1f5f9; border-color: var(--accent); }
 
-        .preview-box {
-            background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-top: 14px; display: none;
+        /* 精美家長報告預覽卡片 */
+        .report-preview-card {
+            background: #ffffff; border: 2px solid #2563eb; border-radius: 12px; padding: 24px; margin-top: 20px;
+            box-shadow: 0 10px 25px rgba(37,99,235,0.08); display: none; position: relative; overflow: hidden;
         }
-        .preview-box textarea { background: #fff; font-size: 13.5px; line-height: 1.5; margin-bottom: 8px; }
-
-        .settings-panel {
-            background: #fffbeb; border: 2px dashed #f59e0b; padding: 16px; border-radius: 10px; margin-bottom: 16px; display: none;
+        .report-preview-card::before {
+            content: "GOOD EDUCATION"; position: absolute; right: -20px; bottom: -30px; font-size: 90px; font-weight: bold; color: rgba(37,99,235,0.03); z-index: 0; pointer-events: none;
         }
+        .report-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; position: relative; z-index: 1; }
+        .report-header h3 { margin: 0; color: var(--primary); font-size: 20px; }
+        .report-header p { margin: 5px 0 0; color: #64748b; font-size: 13.5px; }
+        .report-body { position: relative; z-index: 1; font-size: 14.5px; line-height: 1.6; }
+        .report-footer { text-align: center; margin-top: 20px; font-size: 12.5px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 10px; }
 
-        .badge-score { display: inline-block; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
+        .badge-score { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12.5px; }
         .score-high { background: #dcfce7; color: #166534; }
         .score-mid { background: #fef9c3; color: #854d0e; }
         .score-low { background: #fee2e2; color: #991b1b; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 12px; backdrop-filter: blur(2px); }
-        .modal-box { background: white; width: 100%; max-width: 550px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 92vh; overflow-y: auto; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(3px); }
+        .modal-box { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>📊 顧德補習班 - 學生成長與能力追蹤</h2>
+        <h2>📊 顧德補習班 - 智慧學力診斷與親師共育中心</h2>
         <div class="header-btns">
             <button class="sync-quick-btn" onclick="toggleSettingsPanel()">⚙️ 設定</button>
-            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步</button>
+            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端</button>
         </div>
     </header>
 
     <div class="container">
         
         <!-- ⚙️ 系統設定面板 -->
-        <div class="settings-panel" id="settings-panel">
+        <div class="settings-panel" id="settings-panel" style="display:none; background:#fffbeb; border:2px dashed #f59e0b; padding:18px; border-radius:12px; margin-bottom:20px;">
             <h3 style="margin-top:0; color:#b45309; font-size:16px;">⚙️ 擴充科目與單元設定</h3>
             <label>新科目名稱：</label>
             <input type="text" id="new-subject-input" placeholder="例如：國文、英文">
             <label>預設單元清單 (用逗號分隔)：</label>
             <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課">
-            <button class="btn btn-purple" onclick="addNewSubjectConfig()">➕ 儲存新科目</button>
+            <button class="btn btn-purple" onclick="addNewSubjectConfig()">➕ 儲存新科目設定</button>
         </div>
 
         <!-- 🎯 核心檢測登錄面板 -->
         <div class="card">
-            <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 8px; font-size: 16px;">學員能力診斷與檢測登錄</h3>
+            <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 8px; font-size: 17px;">學員能力檢測與AI因材施教登錄</h3>
             
             <div class="grid-2">
                 <div>
@@ -139,7 +144,7 @@
                 </div>
             </div>
 
-            <div id="evaluation-form-wrapper" style="display:none; margin-top:12px; border-top:1px dashed var(--border); padding-top:14px;">
+            <div id="evaluation-form-wrapper" style="display:none; margin-top:15px; border-top:1px dashed var(--border); padding-top:16px;">
                 <div class="grid-2">
                     <div>
                         <label>3. 檢測科目：</label>
@@ -162,11 +167,11 @@
                     </div>
                     <div>
                         <label>細項備註：</label>
-                        <input type="text" id="eval-sub-note" placeholder="例如：第一章小考">
+                        <input type="text" id="eval-sub-note" placeholder="例如：第一章綜合小考">
                     </div>
                 </div>
 
-                <label>學生常見盲點與弱點標籤 (可複選)：</label>
+                <label>學生常見盲點與弱點標籤 (可複選 ➔ 自動連動雷達圖與輔導方案)：</label>
                 <div class="tags-container" id="weakness-tags">
                     <label class="tag-label"><input type="checkbox" name="tags" value="計算粗心與正負號/小數點誤判" onchange="autoGenerateComment()">計算粗心與符號誤判</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="基本定義與核心觀念不扎實" onchange="autoGenerateComment()">基本觀念不扎實</label>
@@ -176,45 +181,59 @@
                     <label class="tag-label"><input type="checkbox" name="tags" value="作圖題不精準或比例抓錯" onchange="autoGenerateComment()">作圖與空間概念弱</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="粗心看錯題目條件或單位" onchange="autoGenerateComment()">看錯題目條件/單位</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="解題速度過慢導致寫不完" onchange="autoGenerateComment()">解題速度熟練度不足</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="上課易分心或缺乏驗算習慣" onchange="autoGenerateComment()">缺乏驗算與專注力</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="缺乏驗算習慣與專注力" onchange="autoGenerateComment()">缺乏驗算與專注力</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="作業訂正敷衍觀念未通" onchange="autoGenerateComment()">作業訂正未徹底釐清</label>
                 </div>
 
                 <label>導師綜合評語與因材施教輔導方案：</label>
                 <textarea id="eval-comment" rows="4" placeholder="勾選上方標籤後自動生成，老師亦可直接修改..."></textarea>
 
-                <div class="grid-2" style="margin-top:10px;">
+                <div class="grid-2" style="margin-top:12px;">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長紀錄</button>
-                    <button class="btn btn-warning" onclick="generateParentReport()">📱 產生 LINE 報表</button>
+                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書</button>
                 </div>
 
-                <!-- LINE 報表預覽 -->
-                <div class="preview-box" id="line-preview-box">
-                    <label style="color:#166534; font-size:13.5px;">📱 複製以下文字直接貼給家長：</label>
-                    <textarea id="line-report-text" rows="7" readonly></textarea>
-                    <button class="btn btn-success" style="padding:10px;" onclick="copyLineReport()">📋 一鍵複製文字</button>
+                <!-- 💎 專業家長版診斷書預覽卡片 -->
+                <div class="report-preview-card" id="pro-report-card">
+                    <div class="report-header">
+                        <h3>斗六顧德補習班 ｜ 學員學力追蹤與診斷報告</h3>
+                        <p id="rep-date-student">2026-09-10 ｜ 學生姓名</p>
+                    </div>
+                    <div class="report-body">
+                        <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
+                        <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
+                        <p><b>⚠️ 診斷盲點：</b><span id="rep-tags">無</span></p>
+                        <p style="background:#f1f5f9; padding:12px; border-radius:8px; margin-top:10px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment">-</span></p>
+                    </div>
+                    <div class="report-footer">
+                        顧德補習班關心您的孩子每一天的進步與成長 ｜ 專屬親師共育系統
+                    </div>
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button class="btn btn-success" onclick="copyProReport()">📋 一鍵複製精美診斷書至 LINE</button>
+                        <button class="btn" style="background:#64748b; width:auto;" onclick="document.getElementById('pro-report-card').style.display='none'">收起預覽</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 📊 視覺化儀表板 -->
+        <!-- 📊 視覺化分析儀表板 -->
         <div class="card" id="dashboard-card" style="display:none;">
-            <h3 id="dashboard-title" style="color:var(--primary); margin-top:0; font-size:16px;">學員成長儀表板</h3>
+            <h3 id="dashboard-title" style="color:var(--primary); margin-top:0; font-size:17px;">學員成長儀表板</h3>
             
-            <div class="grid-2" style="margin-bottom: 20px;">
+            <div class="grid-2" style="margin-bottom: 25px;">
                 <div>
-                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">能力雷達分析</h4>
-                    <canvas id="growthRadarChart" style="max-height: 240px;"></canvas>
+                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">多維度學力雷達分析</h4>
+                    <canvas id="growthRadarChart" style="max-height: 250px;"></canvas>
                 </div>
                 <div>
-                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">成績走勢圖</h4>
-                    <canvas id="growthLineChart" style="max-height: 240px;"></canvas>
+                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">歷次小考成績走勢</h4>
+                    <canvas id="growthLineChart" style="max-height: 250px;"></canvas>
                 </div>
             </div>
 
             <div>
-                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:12px; font-size:14px;">歷史檢測與輔導紀錄 (點擊可修改/刪除)</h4>
-                <div id="history-logs-container" style="max-height: 220px; overflow-y: auto; padding-right: 4px;"></div>
+                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊可修改/刪除)</h4>
+                <div id="history-logs-container" style="max-height: 240px; overflow-y: auto; padding-right: 4px;"></div>
             </div>
         </div>
 
@@ -223,7 +242,7 @@
     <!-- ✏️ 歷史紀錄編輯彈窗 -->
     <div class="modal-overlay" id="edit-record-modal">
         <div class="modal-box">
-            <h3 style="margin-top:0; color:var(--primary); font-size:16px;">✏️ 編輯或刪除紀錄</h3>
+            <h3 style="margin-top:0; color:var(--primary); font-size:17px;">✏️ 編輯或刪除紀錄</h3>
             <input type="hidden" id="edit-record-index">
 
             <div class="grid-2">
@@ -532,7 +551,15 @@
             if (records.length > 0) {
                 const latest = records[0];
                 const sc = Number(latest.score) || 75;
-                dims = [sc, Math.max(50, sc - 5), Math.min(100, sc + 5), Math.max(60, sc - 10), sc];
+                const tags = latest.tags || [];
+                let penalty = tags.length * 4;
+                dims = [
+                    Math.max(40, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
+                    Math.max(40, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
+                    Math.max(40, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
+                    Math.max(40, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
+                    Math.max(40, sc - (tags.some(t => t.includes('速度') || t.includes('專注')) ? 15 : 0))
+                ];
             }
 
             const ctxRadar = document.getElementById('growthRadarChart').getContext('2d');
@@ -545,10 +572,10 @@
                     datasets: [{
                         label: '能力掌握度',
                         data: dims,
-                        backgroundColor: 'rgba(2, 132, 199, 0.2)',
-                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: '#2563eb',
                         borderWidth: 2,
-                        pointBackgroundColor: '#0284c7'
+                        pointBackgroundColor: '#2563eb'
                     }]
                 },
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } } }
@@ -568,8 +595,8 @@
                     datasets: [{
                         label: '成績走勢',
                         data: scores.length > 0 ? scores : [75],
-                        borderColor: '#16a34a',
-                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
                         tension: 0.3,
                         fill: true,
                         pointRadius: 4
@@ -616,7 +643,7 @@
             } catch (e) { alert('儲存失敗'); }
         };
 
-        window.generateParentReport = function() {
+        window.generateProfessionalReport = function() {
             const id = document.getElementById('student-select').value;
             const subject = document.getElementById('subject-select').value;
             const unit = document.getElementById('unit-select').value;
@@ -633,30 +660,57 @@
             if (!student) return;
 
             const today = new Date().toISOString().slice(0, 10);
-            
-            const reportText = 
-`【斗六顧德補習班】學員學習報告
-------------------------
-📅 日期：${today}
-👨‍🎓 學生：${student.name} 同學
-📚 科目：${subject}
-🎯 單元：${unit}
-📈 得分：${score} 分
-⚠️ 需加強：${tags.join('、') || '表現穩健'}
-💬 導師評語與輔導方案：${comment || '表現良好！'}
-------------------------
-顧德補習班關心孩子的每一步成長！`;
+            const sc = Number(score) || 0;
+            const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
+            const badgeText = sc >= 85 ? '🌟 表現卓越' : (sc >= 70 ? '👍 表現穩定' : '⚠️ 需加強輔導');
 
-            document.getElementById('line-report-text').value = reportText;
-            document.getElementById('line-preview-box').style.display = 'block';
-            document.getElementById('line-preview-box').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('rep-date-student').innerText = `${today} ｜ ${student.name} 同學`;
+            document.getElementById('rep-subject').innerText = subject;
+            document.getElementById('rep-unit').innerText = unit;
+            
+            const scoreBadge = document.getElementById('rep-score');
+            scoreBadge.className = `badge-score ${badgeCls}`;
+            scoreBadge.innerText = `${score} 分 (${badgeText})`;
+
+            document.getElementById('rep-tags').innerText = tags.join('、') || '表現穩健，無特別盲點';
+            document.getElementById('rep-comment').innerText = comment || '學習態度良好，觀念掌握扎實，請繼續保持！';
+
+            const card = document.getElementById('pro-report-card');
+            card.style.display = 'block';
+            card.scrollIntoView({ behavior: 'smooth' });
         };
 
-        window.copyLineReport = function() {
-            const textarea = document.getElementById('line-report-text');
-            textarea.select();
+        window.copyProReport = function() {
+            const studentName = document.getElementById('student-select').selectedOptions[0].text;
+            const subject = document.getElementById('rep-subject').innerText;
+            const unit = document.getElementById('rep-unit').innerText;
+            const scoreText = document.getElementById('rep-score').innerText;
+            const tags = document.getElementById('rep-tags').innerText;
+            const comment = document.getElementById('rep-comment').innerText;
+            const today = new Date().toISOString().slice(0, 10);
+
+            const reportText = 
+`【斗六顧德補習班】學員學力追蹤與診斷報告
+------------------------
+📅 日期：${today}
+👨‍🎓 學生：${studentName}
+📚 科目：${subject}
+🎯 單元：${unit}
+📈 成績：${scoreText}
+⚠️ 診斷盲點：${tags}
+💬 導師評語與因材施教方案：
+${comment}
+------------------------
+感謝您的支持與配合，顧德補習班關心孩子的每一步成長！`;
+
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = reportText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
             document.execCommand('copy');
-            alert('✅ 已複製！可直接貼至 LINE。');
+            document.body.removeChild(tempTextArea);
+
+            alert('✅ 專業診斷報告已複製！可直接貼至 LINE 給家長。');
         };
 
         window.onload = function() { initCloudData(); };
