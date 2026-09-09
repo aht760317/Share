@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (旗艦視覺完美版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (AI 旗艦摘要版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -71,7 +71,7 @@
         }
         .history-item:hover { background: #f1f5f9; border-color: var(--accent); }
 
-        /* 💎 精美家長報告預覽卡片 (重組順序：盲點與方案移至上方) */
+        /* 💎 精美家長報告預覽卡片 */
         .report-preview-card {
             background: #ffffff; border: 3px solid #2563eb; border-radius: 16px; padding: 25px; margin-top: 20px;
             box-shadow: 0 15px 35px rgba(37,99,235,0.12); display: none; position: relative; overflow: hidden;
@@ -80,6 +80,11 @@
         .report-header h3 { margin: 0; color: var(--primary); font-size: 21px; }
         .report-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
         
+        .ai-summary-box {
+            background: #eff6ff; border-left: 4px solid #2563eb; padding: 14px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 13.5px; line-height: 1.6; color: #1e40af;
+        }
+        .ai-summary-box b { color: #1d4ed8; display: block; margin-bottom: 4px; }
+
         .report-body { font-size: 14.5px; line-height: 1.6; }
         .report-charts-grid {
             display: grid; grid-template-columns: 1fr; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 15px 0;
@@ -197,10 +202,10 @@
 
                 <div class="grid-2" style="margin-top:12px;">
                     <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長紀錄</button>
-                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書 (含圖表)</button>
+                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書 (含圖表與AI摘要)</button>
                 </div>
 
-                <!-- 💎 專業家長版診斷書預覽卡片 (順序調整：盲點與方案在上，圖表在下) -->
+                <!-- 💎 專業家長版診斷書預覽卡片 -->
                 <div class="report-preview-card" id="pro-report-card">
                     <div class="report-header">
                         <h3>斗六顧德補習班 ｜ 學員學力追蹤與診斷報告</h3>
@@ -208,14 +213,20 @@
                     </div>
                     
                     <div class="report-body">
+                        <!-- 💡 AI 智慧學力健檢摘要 -->
+                        <div class="ai-summary-box">
+                            <b>💡 AI 智慧學力健檢摘要 (Learning Health Check)：</b>
+                            學力診斷是用來透視孩子真實學習盲點的關鍵方式。本次評估超越單純的學校分數與班級排名，透過作答細節精準找出學習起點、打破潛在瓶頸，並據此規劃專屬進度與指導方案，幫助孩子穩步超越！
+                        </div>
+
                         <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
                         <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
                         
-                        <!-- 診斷盲點與方案移至上方 -->
+                        <!-- 診斷盲點與方案 -->
                         <p style="margin-top:12px;"><b>⚠️ 診斷盲點：</b><span id="rep-tags" style="color:#e11d48; font-weight:bold;">無</span></p>
                         <p style="background:#f1f5f9; padding:14px; border-radius:8px; margin-top:8px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment" style="color:#334155; line-height:1.6;">-</span></p>
 
-                        <!-- 雙圖表區塊 (附單元能力掌握度說明) -->
+                        <!-- 雙圖表區塊 -->
                         <div class="report-charts-grid">
                             <div>
                                 <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">綜合能力雷達分析</h4>
@@ -329,7 +340,6 @@
         let repRadarInstance = null;
         let repLineInstance = null;
 
-        // 完整涵蓋國小一至六年級與國中數學單元目錄
         window.subjectSyllabus = {
             "數學": [
                 "【小一】10以內的數與加減法", "【小一】比長短、比高矮、比輕重", "【小一】順序與多少、分與合", "【小一】認識形狀(方盒、圓罐、球)", "【小一】20以內的數與加減法", "【小一】認識時鐘(整點與半點)",
@@ -711,7 +721,6 @@
             document.getElementById('rep-tags').innerText = tags.join('、') || '表現穩健，無特別盲點';
             document.getElementById('rep-comment').innerText = comment || '學習態度良好，觀念掌握扎實，請繼續保持！';
 
-            // 更新雷達圖下方說明文字
             document.getElementById('rep-radar-unit-label').innerText = `🎯 ${unit} 能力掌握度`;
             document.getElementById('rep-line-name-label').innerText = `📈 ${student.name} 成績走勢`;
 
@@ -735,6 +744,9 @@
             const reportText = 
 `【斗六顧德補習班】學員學力追蹤與診斷報告
 ------------------------
+💡 AI 智慧學力健檢摘要：
+學力診斷是用來透視孩子真實學習盲點的關鍵方式，透過作答細節精準找出學習起點、打破瓶頸並規劃專屬進度。
+
 📅 日期：${today}
 👨‍🎓 學生：${studentName}
 📚 科目：${subject}
