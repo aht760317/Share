@@ -345,10 +345,8 @@
 
         /* 列印及收據滿版配置 (修正排版：改為區塊靠上對齊，固定高度確保不跑位) */
         .receipt-container-page {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            height: 100%;
+            display: block; 
+            width: 100%;
             box-sizing: border-box;
         }
         
@@ -665,7 +663,7 @@
     <!-- 頁籤 2：未繳費查詢 -->
     <div id="unpaid" class="content-area">
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
-        <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽單筆單據，若要合併多科請打勾使用上方按鈕。</p>
+        <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
         
         <!-- 未繳費查詢分頁頂部的批次勾選列印按鈕 -->
         <div style="background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -675,8 +673,9 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 印勾選通知單</button>
-                <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #059669;" onclick="batchPayCheckedBills()">💰 批次結帳並印收據</button>
+                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選</button>
+                <button class="btn-gray action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="unmergeCheckedUnpaidBills()">✂️ 分開科目</button>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選通知單</button>
             </div>
         </div>
 
@@ -1055,13 +1054,14 @@
     let jQuickSortable = null;
     let oQuickSortable = null;
 
-    // 清除「斗六顧德」字眼的專用工具函式 (只用於列印單據畫面，不影響系統記錄)
-    window.cleanClassName = function(name) {
+    // 定義通用工具函數並直接掛載到 window，避免按鈕呼叫時找不到
+    function cleanClassName(name) {
         if(!name) return '';
         return name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '').trim();
-    };
+    }
+    window.cleanClassName = cleanClassName;
 
-    window.formatDisplayPeriod = function(bill) {
+    function formatDisplayPeriod(bill) {
         if (!bill) return "";
         let p = bill.periodStr || bill.yearMonth;
         if (p && p.includes('~')) {
@@ -1072,32 +1072,32 @@
                 if (sMonth === eMonth && parts[0].endsWith('-01')) {
                     const [y, m, d] = parts[1].split('-').map(Number);
                     const lastDay = new Date(y, m, 0).getDate();
-                    if (d === lastDay) {
-                        return sMonth; 
-                    }
+                    if (d === lastDay) return sMonth; 
                 }
             }
         }
         return p;
-    };
+    }
+    window.formatDisplayPeriod = formatDisplayPeriod;
 
-    window.calculate1MonthRange = function(year, month) {
+    function calculate1MonthRange(year, month) {
         const startD = new Date(year, month - 1, 1);
         const endD = new Date(year, month, 0); 
-        
         const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
         const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
         const yMonth = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}`;
         return { start: sStr, end: eStr, periodStr: yMonth };
-    };
+    }
+    window.calculate1MonthRange = calculate1MonthRange;
 
-    window.calculateNext1MonthRangeFromEnd = function(endDateStr) {
+    function calculateNext1MonthRangeFromEnd(endDateStr) {
         const [eY, eM, eD] = endDateStr.split('-').map(Number);
         const nextStartD = new Date(eY, eM, 1);
-        return window.calculate1MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
-    };
+        return calculate1MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
+    }
+    window.calculateNext1MonthRangeFromEnd = calculateNext1MonthRangeFromEnd;
 
-    window.isBillMatchingMonth = function(bill, targetMonth) {
+    function isBillMatchingMonth(bill, targetMonth) {
         if (!bill || !targetMonth) return false;
         if (bill.yearMonth === targetMonth) return true;
         if (bill.periodStr && bill.periodStr.includes('~')) {
@@ -1106,21 +1106,62 @@
         }
         if (bill.periodStr) return bill.periodStr.includes(targetMonth);
         return false;
-    };
+    }
+    window.isBillMatchingMonth = isBillMatchingMonth;
 
-    window.formatFullClassName = function(className) {
+    function formatFullClassName(className) {
         if (!className) return '斗六顧德';
         if (className.startsWith('斗六顧德') || className.startsWith('顧德')) {
             return className;
         }
         return `斗六顧德 ${className}`;
-    };
+    }
+    window.formatFullClassName = formatFullClassName;
+
+    function getCurrentDateStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    window.getCurrentDateStr = getCurrentDateStr;
+
+    function getCurrentMonthStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+    window.getCurrentMonthStr = getCurrentMonthStr;
+
+    function parseLegacyDateToIso(dateStr) {
+        if(!dateStr) return "";
+        const parts = dateStr.split('/');
+        if(parts.length === 3) {
+            return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+        return dateStr;
+    }
+    window.parseLegacyDateToIso = parseLegacyDateToIso;
+
+    function isOtherItem(name) {
+        return (name.includes('(') && name.includes(')')) || (name.includes('（') && name.includes('）'));
+    }
+    window.isOtherItem = isOtherItem;
+
+    function isJuniorHigh(className) {
+        return className.includes('國中') || className.includes('國一') || className.includes('國二') || className.includes('國三') || className.includes('會考') || className.includes('理化') || className.includes('七年級') || className.includes('八年級') || className.includes('九年級');
+    }
+    window.isJuniorHigh = isJuniorHigh;
+
+    function getClassCategoryStyle(className) {
+        if (isJuniorHigh(className)) return 'class-junior';
+        if (className.includes('數學') || className.includes('奧數') || className.includes('資優')) return 'class-math';
+        if (className.includes('作文') || className.includes('語文') || className.includes('閱讀')) return 'class-writing';
+        return 'class-daycare';
+    }
+    window.getClassCategoryStyle = getClassCategoryStyle;
 
     window.handleReportModeChange = function() {
         const mode = document.getElementById('reportModeSelect').value;
         const container = document.getElementById('reportDateInputContainer');
         if (!container) return;
-
         if (mode === 'daily') {
             container.innerHTML = `<input type="date" id="dailyReportDate" style="padding: 4px 6px; width: auto; font-size:13px;" value="${getCurrentDateStr()}">`;
         } else if (mode === 'monthly') {
@@ -1137,30 +1178,13 @@
 
     window.executeSelectedReport = function() {
         const mode = document.getElementById('reportModeSelect').value;
-        openReportModal(mode);
-    };
-
-    window.isOtherItem = function(name) {
-        return (name.includes('(') && name.includes(')')) || (name.includes('（') && name.includes('）'));
-    };
-
-    window.isJuniorHigh = function(className) {
-        return className.includes('國中') || className.includes('國一') || className.includes('國二') || className.includes('國三') || className.includes('會考') || className.includes('理化') || className.includes('七年級') || className.includes('八年級') || className.includes('九年級');
-    };
-
-    window.getClassCategoryStyle = function(className) {
-        if (window.isJuniorHigh(className)) return 'class-junior';
-        if (className.includes('數學') || className.includes('奧數') || className.includes('資優')) return 'class-math';
-        if (className.includes('作文') || className.includes('語文') || className.includes('閱讀')) return 'class-writing';
-        return 'class-daycare';
+        window.openReportModal(mode);
     };
 
     async function initCloudData() {
         try {
             const handlerDoc = await getDoc(doc(db, "settings", "handler"));
-            if (handlerDoc.exists()) {
-                window.config.handler = handlerDoc.data().name || "";
-            }
+            if (handlerDoc.exists()) window.config.handler = handlerDoc.data().name || "";
             document.getElementById('setHandler').value = window.config.handler;
 
             const quickItemsDoc = await getDoc(doc(db, "settings", "quickItems"));
@@ -1195,12 +1219,12 @@
             document.getElementById('filterMonth').value = getCurrentMonthStr();
             initYearMonthDropdowns();
             
-            handleReportModeChange();
-            renderQuickItemConfigList();
+            window.handleReportModeChange();
+            window.renderQuickItemConfigList();
             updateClassFilterDropdown();
             updateUnpaidClassDropdown();
-            renderClassGrid();
-            renderRecords();
+            window.renderClassGrid();
+            window.renderRecords();
         } catch (e) {
             console.error("載入雲端資料失敗：", e);
         }
@@ -1210,7 +1234,6 @@
         const d = new Date();
         const currYear = d.getFullYear();
         const currMonth = d.getMonth() + 1;
-
         const startYear = 2024;
         const endYear = Math.max(currYear + 3, 2029);
 
@@ -1228,17 +1251,11 @@
 
         const gY = document.getElementById('billingGlobalYearSelect');
         const gM = document.getElementById('billingGlobalMonthSelect');
-        if (gY && gM) {
-            gY.innerHTML = yearOptions;
-            gM.innerHTML = monthOptions;
-        }
+        if (gY && gM) { gY.innerHTML = yearOptions; gM.innerHTML = monthOptions; }
 
         const mY = document.getElementById('modalBillYearSelect');
         const mM = document.getElementById('modalBillMonthSelect');
-        if (mY && mM) {
-            mY.innerHTML = yearOptions;
-            mM.innerHTML = monthOptions;
-        }
+        if (mY && mM) { mY.innerHTML = yearOptions; mM.innerHTML = monthOptions; }
     }
 
     window.getSelectedGlobalYearMonth = function() {
@@ -1248,7 +1265,7 @@
     };
 
     window.onGlobalDateChange = function() {
-        renderBillingStudentsTable();
+        window.renderBillingStudentsTable();
     };
 
     window.syncAllFromRollbook = async function() {
@@ -1326,13 +1343,13 @@
             window.config.classOrder = syncedClassOrder;
             window.studentDetails = syncedDetails;
 
-            renderClassGrid();
+            window.renderClassGrid();
             updateClassFilterDropdown();
             updateUnpaidClassDropdown();
             if (document.getElementById('directory').classList.contains('active')) {
-                renderDirectoryInit();
+                window.renderDirectoryInit();
             }
-            renderUnpaidTabLists();
+            window.renderUnpaidTabLists();
         } catch (e) {
             console.error("同步失敗：", e);
         }
@@ -1357,44 +1374,17 @@
     }
 
     async function saveStudentDetailsToCloud() {
-        try {
-            await setDoc(doc(db, "settings", "studentDetails"), { data: window.studentDetails });
-        } catch (e) { console.error(e); }
+        try { await setDoc(doc(db, "settings", "studentDetails"), { data: window.studentDetails }); } catch (e) {}
     }
 
     async function saveQuickItemsToCloud() {
-        try {
-            await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems });
-        } catch (e) { console.error(e); }
+        try { await setDoc(doc(db, "settings", "quickItems"), { data: window.quickItems }); } catch (e) {}
     }
 
     window.verifyAndDelete = function(actionDescription, callback) {
         const pwd = prompt(`🔒 安全驗證\n您正在執行「${actionDescription}」\n請輸入安全密碼：`);
         if (pwd === null) return;
-        if (pwd === '0618') {
-            callback();
-        } else {
-            alert('❌ 密碼錯誤！動作已取消。');
-        }
-    };
-
-    window.getCurrentMonthStr = function() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    };
-
-    window.getCurrentDateStr = function() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
-
-    window.parseLegacyDateToIso = function(dateStr) {
-        if(!dateStr) return "";
-        const parts = dateStr.split('/');
-        if(parts.length === 3) {
-            return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-        }
-        return dateStr;
+        if (pwd === '0618') { callback(); } else { alert('❌ 密碼錯誤！動作已取消。'); }
     };
 
     window.switchTab = function(tabId) {
@@ -1414,11 +1404,11 @@
         if(tabId === 'settings' && navItems[3]) navItems[3].classList.add('active');
         if(tabId === 'directory' && navItems[4]) navItems[4].classList.add('active');
         
-        if(tabId === 'manage') renderRecords();
-        if(tabId === 'unpaid') renderUnpaidTabLists();
-        if(tabId === 'create') renderClassGrid();
-        if(tabId === 'directory') renderDirectoryInit();
-        if(tabId === 'settings') renderQuickItemConfigList();
+        if(tabId === 'manage') window.renderRecords();
+        if(tabId === 'unpaid') window.renderUnpaidTabLists();
+        if(tabId === 'create') window.renderClassGrid();
+        if(tabId === 'directory') window.renderDirectoryInit();
+        if(tabId === 'settings') window.renderQuickItemConfigList();
     };
 
     window.switchDeptRecord = function(dept) {
@@ -1440,51 +1430,41 @@
         window.billingFilterCategory = category;
         document.querySelectorAll('#billingCategoryFilter .category-filter-btn').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
-        renderClassGrid();
+        window.renderClassGrid();
     };
 
     window.filterDirectoryClasses = function(category, btnEl) {
         window.directoryFilterCategory = category;
         document.querySelectorAll('#directoryCategoryFilter .category-filter-btn').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
-        renderDirectoryInit();
+        window.renderDirectoryInit();
     };
-
-    /* ---------- 頁籤 3：產生繳費單 ---------- */
 
     window.renderClassGrid = function() {
         const grid = document.getElementById('classGrid');
         grid.innerHTML = '';
-
         let filteredOrder = window.config.classOrder;
         const cat = window.billingFilterCategory || 'all';
-        if (cat === 'junior') {
-            filteredOrder = filteredOrder.filter(cls => window.isJuniorHigh(cls));
-        } else if (cat === 'primary') {
-            filteredOrder = filteredOrder.filter(cls => !window.isJuniorHigh(cls));
-        }
+        if (cat === 'junior') { filteredOrder = filteredOrder.filter(cls => isJuniorHigh(cls)); } 
+        else if (cat === 'primary') { filteredOrder = filteredOrder.filter(cls => !isJuniorHigh(cls)); }
 
         filteredOrder.forEach(cls => {
             const btn = document.createElement('button');
-            const classColor = getClassCategoryStyle(cls);
-            btn.className = `btn-select ${classColor} ${cls === window.currentClass ? 'active' : ''}`;
+            btn.className = `btn-select ${getClassCategoryStyle(cls)} ${cls === window.currentClass ? 'active' : ''}`;
             btn.innerText = cls;
-            btn.onclick = () => selectBillingClass(cls);
+            btn.onclick = () => window.selectBillingClass(cls);
             grid.appendChild(btn);
         });
 
-        if (filteredOrder.length === 0) {
-            grid.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無此分類班級</div>';
-        }
+        if (filteredOrder.length === 0) grid.innerHTML = '<div style="color:#94A3B8; padding: 10px;">目前尚無此分類班級</div>';
     };
 
     window.selectBillingClass = function(cls) {
         window.currentClass = cls;
-        renderClassGrid();
-        
+        window.renderClassGrid();
         document.getElementById('billingSelectedClassName').innerText = cls;
         document.getElementById('billingClassStudentTableSection').style.display = 'block';
-        renderBillingStudentsTable();
+        window.renderBillingStudentsTable();
     };
 
     window.renderBillingStudentsTable = function() {
@@ -1496,7 +1476,6 @@
 
         const selectedMonth = window.getSelectedGlobalYearMonth();
         let students = [...(window.config.classes[cls] || [])];
-
         students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
 
         if (students.length === 0) {
@@ -1511,7 +1490,7 @@
             const rowClass = gender === 'female' ? 'row-female' : 'row-male';
             const genderIcon = gender === 'female' ? '<span style="color:#BE185D;">👧</span> ' : '<span style="color:#1E40AF;">👦</span> ';
 
-            const bill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, selectedMonth));
+            const bill = window.bills.find(b => b.studentName === stu && b.className === cls && isBillMatchingMonth(b, selectedMonth));
 
             let displayPeriod = selectedMonth;
             let itemsHtml = '<span style="color:#94A3B8; font-size:12px;">尚未設定費用</span>';
@@ -1519,7 +1498,7 @@
             let statusBadge = '<span class="status-badge" style="background:#F1F5F9; color:#64748B;">尚未開單</span>';
 
             if (bill) {
-                displayPeriod = window.formatDisplayPeriod(bill);
+                displayPeriod = formatDisplayPeriod(bill);
                 if (bill.items && bill.items.length > 0) {
                     itemsHtml = bill.items.map(item => `<span class="fee-item-tag">${item.name} ($${item.amount.toLocaleString()})</span>`).join('');
                 }
@@ -1535,7 +1514,7 @@
                 }
             } else {
                 const [y, m] = selectedMonth.split('-').map(Number);
-                const r = window.calculate1MonthRange(y, m);
+                const r = calculate1MonthRange(y, m);
                 displayPeriod = r.periodStr;
             }
 
@@ -1555,12 +1534,9 @@
         });
     };
 
-    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 ---------- */
-
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
         window.currentStudent = stu;
-
         document.getElementById('modalBillClassName').value = cls;
         document.getElementById('modalBillStudentName').value = stu;
         document.getElementById('modalTargetStudentTitle').innerText = `${stu} (${cls})`;
@@ -1570,8 +1546,7 @@
         document.getElementById('modalBillYearSelect').value = curY;
         document.getElementById('modalBillMonthSelect').value = curM;
 
-        const defaultRange = window.calculate1MonthRange(Number(curY), Number(curM));
-
+        const defaultRange = calculate1MonthRange(Number(curY), Number(curM));
         document.getElementById('modalCustomPeriodToggle').checked = false;
         document.getElementById('modalCustomDateContainer').style.display = 'none';
         document.getElementById('modalMonthSelectContainer').style.display = 'flex';
@@ -1579,10 +1554,8 @@
         document.getElementById('modalEndDate').value = defaultRange.end;
 
         populateQuickDropdownForModal(cls);
-
         const targetYM = `${curY}-${curM}`;
-        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
-        
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && isBillMatchingMonth(b, targetYM));
         const deleteBtn = document.getElementById('modalDeleteBillBtn');
 
         if (existingBill && existingBill.items) {
@@ -1606,31 +1579,27 @@
             if (deleteBtn) deleteBtn.style.display = 'none';
         }
 
-        renderModalItemsList();
+        window.renderModalItemsList();
         document.getElementById('addFeeItemModal').style.display = 'flex';
     };
 
     window.onModalMonthSelectChange = function() {
         const y = Number(document.getElementById('modalBillYearSelect').value);
         const m = Number(document.getElementById('modalBillMonthSelect').value);
-        const r = window.calculate1MonthRange(y, m);
+        const r = calculate1MonthRange(y, m);
         document.getElementById('modalStartDate').value = r.start;
         document.getElementById('modalEndDate').value = r.end;
     };
 
     function populateQuickDropdownForModal(cls) {
-        const isJr = window.isJuniorHigh(cls);
+        const isJr = isJuniorHigh(cls);
         const dropdown = document.getElementById('modalQuickDropdown');
         dropdown.innerHTML = '<option value="">-- 請選擇欲新增項目 --</option>';
 
         window.quickItems.forEach((item, idx) => {
             const isOther = isOtherItem(item.name);
-            const isItemJr = window.isJuniorHigh(item.name);
-
-            if ((isJr && !isItemJr && !isOther) || (!isJr && isItemJr && !isOther)) {
-                return;
-            }
-
+            const isItemJr = isJuniorHigh(item.name);
+            if ((isJr && !isItemJr && !isOther) || (!isJr && isItemJr && !isOther)) return;
             const priceText = item.price !== null ? `$${item.price.toLocaleString()}` : '手動金額';
             dropdown.innerHTML += `<option value="${idx}">【${item.name}】 ${priceText}</option>`;
         });
@@ -1645,20 +1614,11 @@
     window.addSelectedItemToModalList = function() {
         const select = document.getElementById('modalQuickDropdown');
         const selectedIndex = select.value;
-        if (selectedIndex === '') {
-            alert('請先在下拉選單選擇要新增的項目！');
-            return;
-        }
-
+        if (selectedIndex === '') { alert('請先在下拉選單選擇要新增的項目！'); return; }
         const item = window.quickItems[parseInt(selectedIndex)];
         let defaultAmount = item.price !== null ? item.price : 0;
-        
-        window.modalCurrentItems.push({
-            name: item.name,
-            amount: defaultAmount
-        });
-
-        renderModalItemsList();
+        window.modalCurrentItems.push({ name: item.name, amount: defaultAmount });
+        window.renderModalItemsList();
     };
 
     window.renderModalItemsList = function() {
@@ -1679,22 +1639,18 @@
                 `;
             }).join('');
         }
-
         document.getElementById('modalFeeTotalDisplay').innerText = total.toLocaleString();
     };
 
     window.updateModalItem = function(index, field, value) {
-        if (field === 'name') {
-            window.modalCurrentItems[index].name = value.trim();
-        } else if (field === 'amount') {
-            window.modalCurrentItems[index].amount = parseInt(value) || 0;
-        }
-        renderModalItemsList();
+        if (field === 'name') window.modalCurrentItems[index].name = value.trim();
+        else if (field === 'amount') window.modalCurrentItems[index].amount = parseInt(value) || 0;
+        window.renderModalItemsList();
     };
 
     window.removeModalItem = function(index) {
         window.modalCurrentItems.splice(index, 1);
-        renderModalItemsList();
+        window.renderModalItemsList();
     };
 
     window.saveModalFeeBill = async function() {
@@ -1704,10 +1660,7 @@
         const billNote = document.getElementById('modalBillNoteInput').value.trim();
         const noAutoRenew = document.getElementById('modalNoAutoRenew').checked;
 
-        if (window.modalCurrentItems.length === 0) {
-            alert('⚠️ 請至少加入一個費用項目！');
-            return;
-        }
+        if (window.modalCurrentItems.length === 0) { alert('⚠️ 請至少加入一個費用項目！'); return; }
 
         let yMonth = '';
         let displayPeriod = '';
@@ -1715,23 +1668,19 @@
         if (isCustom) {
             const start = document.getElementById('modalStartDate').value;
             const end = document.getElementById('modalEndDate').value;
-            if (!start || !end) {
-                alert('請完整選擇起訖日期！');
-                return;
-            }
+            if (!start || !end) { alert('請完整選擇起訖日期！'); return; }
             yMonth = start.substring(0, 7);
             displayPeriod = `${start} ~ ${end}`;
         } else {
             const y = document.getElementById('modalBillYearSelect').value;
             const m = document.getElementById('modalBillMonthSelect').value;
             yMonth = `${y}-${m}`;
-            const r = window.calculate1MonthRange(Number(y), Number(m));
+            const r = calculate1MonthRange(Number(y), Number(m));
             displayPeriod = r.periodStr;
         }
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
-
-        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && (b.periodStr === displayPeriod || b.yearMonth === yMonth || window.isBillMatchingMonth(b, yMonth)));
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && (b.periodStr === displayPeriod || b.yearMonth === yMonth || isBillMatchingMonth(b, yMonth)));
 
         try {
             if (existingBill) {
@@ -1756,7 +1705,6 @@
                     billNote: existingBill.billNote,
                     noAutoRenew: existingBill.noAutoRenew
                 });
-
                 alert(`✅ 已成功更新【${stu}】(${displayPeriod}) 的繳費單！`);
             } else {
                 const newBill = {
@@ -1773,17 +1721,14 @@
                     billNote: billNote,
                     noAutoRenew: noAutoRenew
                 };
-
                 const docRef = await addDoc(collection(db, "bills"), newBill);
                 newBill.firestoreId = docRef.id;
                 window.bills.unshift(newBill);
-                
                 alert(`✅ 已成功為【${stu}】建立 (${displayPeriod}) 的繳費單！`);
             }
-
-            closeModal('addFeeItemModal');
-            renderBillingStudentsTable();
-            renderRecords();
+            window.closeModal('addFeeItemModal');
+            window.renderBillingStudentsTable();
+            window.renderRecords();
         } catch (e) {
             console.error("儲存失敗：", e);
             alert("❌ 儲存失敗請稍後再試！");
@@ -1797,39 +1742,30 @@
         const curM = document.getElementById('modalBillMonthSelect').value;
         const targetYM = `${curY}-${curM}`;
 
-        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && window.isBillMatchingMonth(b, targetYM));
-        if (!existingBill) {
-            alert('⚠️ 找不到此筆單據紀錄可供刪除。');
-            return;
-        }
+        const existingBill = window.bills.find(b => b.studentName === stu && b.className === cls && isBillMatchingMonth(b, targetYM));
+        if (!existingBill) { alert('⚠️ 找不到此筆單據紀錄可供刪除。'); return; }
 
-        verifyAndDelete(`刪除學生「${stu}」的繳費單`, async () => {
+        window.verifyAndDelete(`刪除學生「${stu}」的繳費單`, async () => {
             try {
                 await deleteDoc(doc(db, "bills", existingBill.firestoreId));
                 window.bills = window.bills.filter(b => b.id !== existingBill.id);
-                closeModal('addFeeItemModal');
-                renderBillingStudentsTable();
-                renderRecords();
+                window.closeModal('addFeeItemModal');
+                window.renderBillingStudentsTable();
+                window.renderRecords();
                 alert('🗑️ 該筆繳費單已成功刪除！');
-            } catch (e) {
-                console.error(e);
-                alert('❌ 刪除失敗');
-            }
+            } catch (e) { console.error(e); alert('❌ 刪除失敗'); }
         });
     };
 
     async function autoCreateNextPeriodBill(currentBill) {
         try {
-            if (currentBill.noAutoRenew) {
-                return;
-            }
-
+            if (currentBill.noAutoRenew) return;
             let nextPeriodStr = '';
             let nextYearMonth = '';
 
             if (currentBill.periodStr && currentBill.periodStr.includes('~')) {
                 const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
-                const nextRange = window.calculateNext1MonthRangeFromEnd(endStr);
+                const nextRange = calculateNext1MonthRangeFromEnd(endStr);
                 nextPeriodStr = nextRange.periodStr;
                 nextYearMonth = nextRange.start.substring(0, 7);
             } else {
@@ -1838,15 +1774,10 @@
                 const [year, month] = baseYM.split('-').map(Number);
                 const nextDate = new Date(year, month, 1);
                 nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-                const nextRange = window.calculate1MonthRange(nextDate.getFullYear(), nextDate.getMonth() + 1);
-                nextPeriodStr = nextRange.periodStr;
+                nextPeriodStr = nextYearMonth;
             }
 
-            const alreadyExists = window.bills.some(b => 
-                b.studentName === currentBill.studentName && 
-                b.className === currentBill.className && 
-                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
-            );
+            const alreadyExists = window.bills.some(b => b.studentName === currentBill.studentName && b.className === currentBill.className && (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth));
 
             if (!alreadyExists) {
                 const autoBill = {
@@ -1863,14 +1794,11 @@
                     billNote: currentBill.billNote || '',
                     noAutoRenew: false
                 };
-
                 const docRef = await addDoc(collection(db, "bills"), autoBill);
                 autoBill.firestoreId = docRef.id;
                 window.bills.unshift(autoBill);
             }
-        } catch (err) {
-            console.error("自動延續下一期失敗：", err);
-        }
+        } catch (err) { console.error("自動延續下一期失敗：", err); }
     }
 
     window.loadStudentProfile = function(cls, stu) {
@@ -1921,37 +1849,28 @@
         };
         await saveStudentDetailsToCloud();
         alert('💾 學生資料與備註已成功同步至雲端！');
-        closeStudentProfile();
-        showDirectoryClass(window.currentDirectoryClass); 
+        window.closeStudentProfile();
+        window.showDirectoryClass(window.currentDirectoryClass); 
     };
 
     window.renderDirectoryInit = function() {
         const select = document.getElementById('directoryClassSelect');
         select.innerHTML = '';
-
         let filteredOrder = window.config.classOrder;
         const cat = window.directoryFilterCategory || 'all';
-        if (cat === 'junior') {
-            filteredOrder = filteredOrder.filter(cls => window.isJuniorHigh(cls));
-        } else if (cat === 'primary') {
-            filteredOrder = filteredOrder.filter(cls => !window.isJuniorHigh(cls));
-        }
+        if (cat === 'junior') filteredOrder = filteredOrder.filter(cls => isJuniorHigh(cls));
+        else if (cat === 'primary') filteredOrder = filteredOrder.filter(cls => !isJuniorHigh(cls));
 
         let html = `<option value="all">全校總覽 (${filteredOrder.length} 個班級)</option>`;
-        filteredOrder.forEach(cls => {
-            html += `<option value="${cls}" ${cls === window.currentDirectoryClass ? 'selected' : ''}>${cls}</option>`;
-        });
+        filteredOrder.forEach(cls => { html += `<option value="${cls}" ${cls === window.currentDirectoryClass ? 'selected' : ''}>${cls}</option>`; });
         select.innerHTML = html;
-
-        showDirectoryClass(window.currentDirectoryClass);
+        window.showDirectoryClass(window.currentDirectoryClass);
     };
 
     window.showDirectoryClass = function(cls) {
         window.currentDirectoryClass = cls;
         const select = document.getElementById('directoryClassSelect');
-        if (select && select.value !== cls) {
-            select.value = cls;
-        }
+        if (select && select.value !== cls) select.value = cls;
 
         const container = document.getElementById('directoryContent');
         let html = '';
@@ -1959,22 +1878,17 @@
         let classesToRender = [];
         const cat = window.directoryFilterCategory || 'all';
         let availableClasses = window.config.classOrder;
-        if (cat === 'junior') availableClasses = availableClasses.filter(c => window.isJuniorHigh(c));
-        else if (cat === 'primary') availableClasses = availableClasses.filter(c => !window.isJuniorHigh(c));
+        if (cat === 'junior') availableClasses = availableClasses.filter(c => isJuniorHigh(c));
+        else if (cat === 'primary') availableClasses = availableClasses.filter(c => !isJuniorHigh(c));
 
-        if (cls === 'all') {
-            classesToRender = availableClasses;
-        } else {
-            classesToRender = [cls];
-        }
+        if (cls === 'all') classesToRender = availableClasses;
+        else classesToRender = [cls];
 
         classesToRender.forEach(className => {
             let students = [...(window.config.classes[className] || [])];
             if(students.length === 0) return;
-            
             students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
-
-            const titleColor = window.isJuniorHigh(className) ? '#7E22CE' : '#EA580C';
+            const titleColor = isJuniorHigh(className) ? '#7E22CE' : '#EA580C';
             
             html += `<h4 style="margin-top:14px; margin-bottom:6px; color:${titleColor}; font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:4px;">🏫 ${className}</h4>`;
             html += `<table class="data-table">
@@ -2004,7 +1918,6 @@
                 const c3p = d.contact3Phone || '';
                 const schoolInfo = (d.school || '') + (d.gradeClass ? ' ' + d.gradeClass : '');
                 const noteText = d.note || '';
-                
                 const noteHtml = noteText ? `<div class="note-toggle" title="點擊展開/收合" onclick="this.classList.toggle('expanded')">📄 ${noteText}</div>` : '<span style="color:#CBD5E1; font-size:12px;">無</span>';
 
                 html += `<tr class="${rowClass}">
@@ -2048,34 +1961,24 @@
         try {
             await setDoc(doc(db, "settings", "handler"), { name: handler });
             alert('經手人名稱已成功同步至雲端！');
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
     };
 
     window.renderQuickItemConfigList = function() {
         const pList = document.getElementById('primaryQuickItemConfigList');
         const jList = document.getElementById('juniorQuickItemConfigList');
         const oList = document.getElementById('otherQuickItemConfigList');
-
-        let pHtml = '';
-        let jHtml = '';
-        let oHtml = '';
+        let pHtml = ''; let jHtml = ''; let oHtml = '';
 
         window.quickItems.forEach((item, index) => {
             const priceText = item.price !== null ? `$ ${item.price.toLocaleString()}` : '無預設金額';
             let itemStyle = '';
-            
             const isOther = isOtherItem(item.name);
-            const isJr = window.isJuniorHigh(item.name);
+            const isJr = isJuniorHigh(item.name);
             
-            if (item.price !== null && item.price < 0) {
-                itemStyle = 'background:#FEF3C7; border-color:#FDE68A; color:#B45309;';
-            } else if (isOther) {
-                itemStyle = 'background:#FFFBEB; border-color:#FCD34D; color:#B45309;';
-            } else if (isJr) {
-                itemStyle = 'background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;';
-            }
+            if (item.price !== null && item.price < 0) itemStyle = 'background:#FEF3C7; border-color:#FDE68A; color:#B45309;';
+            else if (isOther) itemStyle = 'background:#FFFBEB; border-color:#FCD34D; color:#B45309;';
+            else if (isJr) itemStyle = 'background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;';
 
             const btnHtml = `
                 <button class="quick-btn quick-drag-item ${item.price !== null && item.price < 0 ? 'discount' : (isOther ? 'other' : (isJr ? 'junior' : ''))}" data-index="${index}" style="${itemStyle}" onclick="openQuickItemModal(${index})">
@@ -2084,13 +1987,9 @@
                 </button>
             `;
 
-            if (isOther) {
-                oHtml += btnHtml;
-            } else if (isJr) {
-                jHtml += btnHtml;
-            } else {
-                pHtml += btnHtml;
-            }
+            if (isOther) oHtml += btnHtml;
+            else if (isJr) jHtml += btnHtml;
+            else pHtml += btnHtml;
         });
 
         pList.innerHTML = pHtml || '<div style="color:#94A3B8; padding: 5px;">尚無國小項目</div>';
@@ -2104,7 +2003,7 @@
             });
             window.quickItems = newOrderedIndices.map(i => window.quickItems[i]);
             await saveQuickItemsToCloud();
-            renderQuickItemConfigList();
+            window.renderQuickItemConfigList();
         };
 
         if (pQuickSortable) pQuickSortable.destroy();
@@ -2126,7 +2025,7 @@
         await saveQuickItemsToCloud();
         document.getElementById('newConfigName').value = '';
         document.getElementById('newConfigPrice').value = '';
-        renderQuickItemConfigList();
+        window.renderQuickItemConfigList();
     };
 
     window.openQuickItemModal = function(index) {
@@ -2142,14 +2041,13 @@
         const name = document.getElementById('modalQuickItemNameInput').value.trim();
         const priceVal = document.getElementById('modalQuickItemPriceInput').value;
         const price = priceVal === '' ? null : parseInt(priceVal);
-
         if (!name) { alert('項目名稱不能為空！'); return; }
 
-        verifyAndDelete(`修改快捷項目「${window.quickItems[index].name}」`, async () => {
+        window.verifyAndDelete(`修改快捷項目「${window.quickItems[index].name}」`, async () => {
             window.quickItems[index] = { name, price };
             await saveQuickItemsToCloud();
-            renderQuickItemConfigList();
-            closeModal('quickItemModal');
+            window.renderQuickItemConfigList();
+            window.closeModal('quickItemModal');
             alert('✏️ 快捷項目修改成功！');
         });
     };
@@ -2157,11 +2055,11 @@
     window.deleteQuickItemFromModal = async function() {
         const index = parseInt(document.getElementById('modalQuickItemIndex').value);
         const itemName = window.quickItems[index].name;
-        verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
+        window.verifyAndDelete(`刪除快捷項目「${itemName}」`, async () => {
             window.quickItems.splice(index, 1);
             await saveQuickItemsToCloud();
-            renderQuickItemConfigList();
-            closeModal('quickItemModal');
+            window.renderQuickItemConfigList();
+            window.closeModal('quickItemModal');
         });
     };
 
@@ -2169,7 +2067,7 @@
         document.getElementById('filterMonth').value = '';
         const classFilter = document.getElementById('filterClassSelect');
         if (classFilter) classFilter.value = '';
-        renderRecords();
+        window.renderRecords();
     };
 
     window.toggleSelectAll = function(dept, masterCheckbox) {
@@ -2188,15 +2086,8 @@
         juniorTbody.innerHTML = '';
         
         let filteredBills = [...window.bills];
-
-        if (filterMonth) {
-            filteredBills = filteredBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
-        }
-
-        if (filterClass) {
-            filteredBills = filteredBills.filter(b => b.className === filterClass);
-        }
-        
+        if (filterMonth) filteredBills = filteredBills.filter(b => isBillMatchingMonth(b, filterMonth));
+        if (filterClass) filteredBills = filteredBills.filter(b => b.className === filterClass);
         filteredBills.sort((a, b) => Number(a.isPaid) - Number(b.isPaid));
         
         let primaryCount = 0;
@@ -2211,22 +2102,24 @@
                 statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
             }
 
-            const displayMonth = window.formatDisplayPeriod(bill);
-            const isJr = window.isJuniorHigh(bill.className);
+            const displayMonth = formatDisplayPeriod(bill);
+            const isJr = isJuniorHigh(bill.className);
             const deptKey = isJr ? 'junior' : 'primary';
+            const bid = String(bill.id);
+            const fid = String(bill.firestoreId);
 
-            let checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bill.id}" style="width:18px; height:18px; margin:0;">`;
+            let checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bid}" style="width:18px; height:18px; margin:0;">`;
 
             let actionHtml = '';
             if(!bill.isPaid) {
-                actionHtml += `<button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id}, 'notice')">🖨️通知</button>`;
-                actionHtml += `<button class="action-btn btn-purple" onclick="openEditBillModal('${bill.firestoreId}', ${bill.id})">✏️修改</button>`;
-                actionHtml += `<button class="action-btn btn-green" onclick="openPaymentConfirmModal('${bill.firestoreId}', ${bill.id})">💰收款</button>`;
+                actionHtml += `<button class="action-btn btn-blue" onclick="openBillPreviewModal('${bid}', 'notice')">🖨️通知</button>`;
+                actionHtml += `<button class="action-btn btn-purple" onclick="openEditBillModal('${fid}', '${bid}')">✏️修改</button>`;
+                actionHtml += `<button class="action-btn btn-green" onclick="openPaymentConfirmModal('${fid}', '${bid}')">💰收款</button>`;
             } else {
-                actionHtml += `<button class="action-btn btn-warning" onclick="openBillPreviewModal(${bill.id}, 'receipt')">🖨️收據</button>`;
-                actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment('${bill.firestoreId}', ${bill.id})">↩️取消</button>`;
+                actionHtml += `<button class="action-btn btn-warning" onclick="openBillPreviewModal('${bid}', 'receipt')">🖨️收據</button>`;
+                actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment('${fid}', '${bid}')">↩️取消</button>`;
             }
-            actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill('${bill.firestoreId}', ${bill.id}, '${bill.studentName}')">刪除</button>`;
+            actionHtml += `<button class="action-btn btn-red" onclick="promptDeleteBill('${fid}', '${bid}', '${bill.studentName}')">刪除</button>`;
 
             const trHtml = `
                 <tr>
@@ -2238,23 +2131,14 @@
                     <td><div class="action-cell">${actionHtml}</div></td>
                 </tr>`;
                 
-            if (isJr) {
-                juniorTbody.innerHTML += trHtml;
-                juniorCount++;
-            } else {
-                primaryTbody.innerHTML += trHtml;
-                primaryCount++;
-            }
+            if (isJr) { juniorTbody.innerHTML += trHtml; juniorCount++; } 
+            else { primaryTbody.innerHTML += trHtml; primaryCount++; }
         });
 
-        if (primaryCount === 0) {
-            primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國小部繳費紀錄。</td></tr>`;
-        }
-        if (juniorCount === 0) {
-            juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國中部繳費紀錄。</td></tr>`;
-        }
+        if (primaryCount === 0) primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國小部繳費紀錄。</td></tr>`;
+        if (juniorCount === 0) juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國中部繳費紀錄。</td></tr>`;
         
-        renderUnpaidTabLists();
+        window.renderUnpaidTabLists();
     };
 
     window.renderUnpaidTabLists = function() {
@@ -2271,47 +2155,37 @@
 
         let unpaidBills = window.bills.filter(b => {
             if (b.isPaid) return false;
-
             let billStartMonth = b.yearMonth || '';
-            if (b.periodStr && b.periodStr.includes('~')) {
-                billStartMonth = b.periodStr.split('~')[0].trim().substring(0, 7);
-            } else if (b.periodStr && b.periodStr.length >= 7) {
-                billStartMonth = b.periodStr.substring(0, 7);
-            }
-
-            if (billStartMonth && billStartMonth > currentMonth) {
-                return false;
-            }
-
+            if (b.periodStr && b.periodStr.includes('~')) billStartMonth = b.periodStr.split('~')[0].trim().substring(0, 7);
+            else if (b.periodStr && b.periodStr.length >= 7) billStartMonth = b.periodStr.substring(0, 7);
+            if (billStartMonth && billStartMonth > currentMonth) return false;
             return true;
         });
 
-        if (keyword) {
-            unpaidBills = unpaidBills.filter(b => b.studentName.toLowerCase().includes(keyword) || b.className.toLowerCase().includes(keyword));
-        }
-        if (selectedClass) {
-            unpaidBills = unpaidBills.filter(b => b.className === selectedClass);
-        }
+        if (keyword) unpaidBills = unpaidBills.filter(b => b.studentName.toLowerCase().includes(keyword) || b.className.toLowerCase().includes(keyword));
+        if (selectedClass) unpaidBills = unpaidBills.filter(b => b.className === selectedClass);
 
-        const primaryUnpaid = unpaidBills.filter(b => !window.isJuniorHigh(b.className));
-        const juniorUnpaid = unpaidBills.filter(b => window.isJuniorHigh(b.className));
+        const primaryUnpaid = unpaidBills.filter(b => !isJuniorHigh(b.className));
+        const juniorUnpaid = unpaidBills.filter(b => isJuniorHigh(b.className));
 
         const buildHtml = (list) => {
             if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:18px 0; font-size:14px; text-align:center;">🎉 目前無任何未繳費名單</div>';
             return list.map(bill => {
-                const periodText = window.formatDisplayPeriod(bill);
+                const periodText = formatDisplayPeriod(bill);
                 const noteBadge = bill.billNote ? `<span style="font-size:11.5px; color:#B45309; background:#FEF3C7; padding:1px 5px; border-radius:3px; margin-left:6px; border:1px solid #FCD34D;">📝 ${bill.billNote}</span>` : '';
+                const bid = String(bill.id);
+                const fid = String(bill.firestoreId);
                 return `
                     <div class="unpaid-card">
                         <div class="unpaid-card-info">
-                            <input type="checkbox" class="unpaid-row-checkbox" value="${bill.id}" style="width:18px; height:18px; margin-right:4px;">
+                            <input type="checkbox" class="unpaid-row-checkbox" value="${bid}" style="width:18px; height:18px; margin-right:4px;">
                             <span style="font-size: 13px; color: #64748B; font-weight: 600;">${periodText}</span>
                             <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong> ${noteBadge}</span>
                             <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
                         </div>
                         <div class="unpaid-card-actions">
-                            <button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id}, 'notice')">🖨️ 印單據</button>
-                            <button class="action-btn btn-purple" onclick="openPaymentConfirmModal('${bill.firestoreId}', ${bill.id})">💰 收款</button>
+                            <button class="action-btn btn-blue" onclick="openBillPreviewModal('${bid}', 'notice')">🖨️ 印單據</button>
+                            <button class="action-btn btn-purple" onclick="openPaymentConfirmModal('${fid}', '${bid}')">💰 收款</button>
                         </div>
                     </div>`;
             }).join('');
@@ -2325,20 +2199,150 @@
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
+    window.mergeCheckedUnpaidBills = async function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length < 2) { alert('⚠️ 請至少勾選兩筆單據進行合併！'); return; }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+
+        const studentName = targetBills[0].studentName;
+        const allSameStudent = targetBills.every(b => b.studentName === studentName);
+        if (!allSameStudent) { alert('⚠️ 合併失敗：只能勾選「同一位學生」的單據進行合併喔！'); return; }
+
+        if(!confirm(`確定要將 ${studentName} 的 ${targetBills.length} 筆單據合併成一張嗎？`)) return;
+
+        let combinedItems = [];
+        let combinedTotal = 0;
+        let classNames = new Set();
+        let combinedNotes = [];
+
+        targetBills.forEach(bill => {
+            const cleanCls = cleanClassName(bill.className);
+            bill.items.forEach(item => {
+                let cleanItemName = item.name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '');
+                combinedItems.push({ name: `[${cleanCls}] ${cleanItemName}`, amount: item.amount });
+            });
+            combinedTotal += bill.total;
+            classNames.add(cleanCls);
+            if(bill.billNote) combinedNotes.push(bill.billNote);
+        });
+
+        const newClassName = '斗六顧德 ' + Array.from(classNames).join(' + ');
+        const newBill = {
+            id: Date.now(),
+            date: getCurrentDateStr(),
+            yearMonth: targetBills[0].yearMonth,
+            periodStr: targetBills[0].periodStr, 
+            className: newClassName.length > 30 ? "斗六顧德 多科綜合班" : newClassName,
+            studentName: studentName,
+            items: combinedItems,
+            total: combinedTotal,
+            isPaid: false,
+            paidDate: null,
+            billNote: combinedNotes.join(' / '),
+            noAutoRenew: false
+        };
+
+        try {
+            const docRef = await addDoc(collection(db, "bills"), newBill);
+            newBill.firestoreId = docRef.id;
+            window.bills.unshift(newBill);
+
+            for (let bill of targetBills) {
+                await deleteDoc(doc(db, "bills", bill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== bill.id);
+            }
+
+            window.renderBillingStudentsTable();
+            window.renderRecords();
+            alert('✅ 成功合併單據！');
+        } catch (e) {
+            console.error("合併失敗：", e);
+            alert("❌ 合併失敗請稍後再試！");
+        }
+    };
+
+    window.unmergeCheckedUnpaidBills = async function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的合併單據！'); return; }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+
+        let hasMerged = false;
+        for (let bill of targetBills) {
+            if (bill.className.includes('+') || bill.className.includes('多科綜合班')) { hasMerged = true; break; }
+        }
+
+        if (!hasMerged) { alert('⚠️ 勾選的單據中似乎沒有合併單據喔！'); return; }
+        if (!confirm('確定要將勾選的合併單據拆分成原本的獨立科目嗎？')) return;
+
+        try {
+            for (let bill of targetBills) {
+                if (!(bill.className.includes('+') || bill.className.includes('多科綜合班'))) continue;
+
+                const classGroups = {};
+                let defaultClass = bill.className.split('+')[0].trim(); 
+
+                bill.items.forEach(item => {
+                    let clsName = defaultClass;
+                    let itemName = item.name;
+                    const match = item.name.match(/^\[(.*?)\]\s*(.*)$/);
+                    if (match) {
+                        clsName = match[1].trim();
+                        itemName = match[2].trim();
+                    }
+                    if (!clsName.startsWith('斗六顧德') && !clsName.startsWith('顧德')) {
+                        clsName = '斗六顧德 ' + clsName;
+                    }
+                    if (!classGroups[clsName]) classGroups[clsName] = { items: [], total: 0 };
+                    classGroups[clsName].items.push({ name: itemName, amount: item.amount });
+                    classGroups[clsName].total += item.amount;
+                });
+
+                for (const [clsName, data] of Object.entries(classGroups)) {
+                    const newBill = {
+                        id: Date.now() + Math.floor(Math.random() * 1000),
+                        date: getCurrentDateStr(),
+                        yearMonth: bill.yearMonth,
+                        periodStr: bill.periodStr, 
+                        className: clsName,
+                        studentName: bill.studentName,
+                        items: data.items,
+                        total: data.total,
+                        isPaid: false,
+                        paidDate: null,
+                        billNote: bill.billNote || '',
+                        noAutoRenew: bill.noAutoRenew || false
+                    };
+                    const docRef = await addDoc(collection(db, "bills"), newBill);
+                    newBill.firestoreId = docRef.id;
+                    window.bills.unshift(newBill);
+                    await new Promise(r => setTimeout(r, 10));
+                }
+
+                await deleteDoc(doc(db, "bills", bill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== bill.id);
+            }
+
+            window.renderBillingStudentsTable();
+            window.renderRecords();
+            alert('✅ 單據已成功拆分為獨立科目！');
+        } catch (e) {
+            console.error("拆分失敗：", e);
+            alert("❌ 拆分失敗請稍後再試！");
+        }
+    };
+
     window.printCheckedUnpaidNotices = function() {
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
-        if (checkedBoxesArray.length === 0) {
-            alert('⚠️ 請先勾選至少一筆單據！');
-            return;
-        }
+        if (checkedBoxesArray.length === 0) { alert('⚠️ 請先勾選至少一筆單據！'); return; }
 
-        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+        const selectedIds = checkedBoxesArray.map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
 
-        if (targetBills.length === 0) {
-            alert('⚠️ 找不到所選的未繳費單據！');
-            return;
-        }
+        if (targetBills.length === 0) { alert('⚠️ 找不到所選的未繳費單據！'); return; }
 
         const grouped = {};
         targetBills.forEach(b => {
@@ -2349,19 +2353,14 @@
         const noticeHtmls = [];
         for (const student in grouped) {
             const bills = grouped[student];
-            if (bills.length === 1) {
-                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
-            } else {
-                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
-            }
+            if (bills.length === 1) noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            else noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
         }
 
         let allHtml = '';
         for (let i = 0; i < noticeHtmls.length; i++) {
             if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
-            
             allHtml += noticeHtmls[i];
-            
             if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
                 allHtml += '</div>';
                 if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
@@ -2369,24 +2368,23 @@
                 allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
             }
         }
-
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
-    window.openPaymentConfirmModal = function(firestoreId, id) {
+    window.openPaymentConfirmModal = function(firestoreId, idStr) {
+        const id = Number(idStr);
         const bill = window.bills.find(b => b.id === id);
         if (!bill) return;
 
         let itemsDetail = bill.items.map(i => `<tr><td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td><td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
-
         let noteInfoHtml = bill.billNote ? `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:6px 8px; border-radius:6px; margin-bottom:10px; font-size:13px; color:#B45309;"><strong>📝 備註說明：</strong>${bill.billNote}</div>` : '';
 
         const modalHtml = `
             <div>
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:8px; margin-bottom:10px;">
                     <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${bill.studentName} (${formatFullClassName(bill.className)})</div>
-                    <div style="font-size:12px; color:#475569;">📅 期間：${window.formatDisplayPeriod(bill)}</div>
+                    <div style="font-size:12px; color:#475569;">📅 期間：${formatDisplayPeriod(bill)}</div>
                 </div>
                 ${noteInfoHtml}
                 <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
@@ -2398,7 +2396,7 @@
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
                     <button class="btn-select" style="padding:6px 12px;" onclick="closeModal('billPreviewModal')">取消</button>
-                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAsPaid('${firestoreId}', ${id})">✅ 確認收款</button>
+                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAsPaid('${firestoreId}', '${id}')">✅ 確認收款</button>
                 </div>
             </div>
         `;
@@ -2407,16 +2405,16 @@
         document.getElementById('billPreviewContent').innerHTML = modalHtml;
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
         if (footerBtn) footerBtn.style.display = 'none';
-
         document.getElementById('billPreviewModal').style.display = 'flex';
     };
 
-    window.executeMarkAsPaid = function(firestoreId, id) {
-        closeModal('billPreviewModal');
-        markAsPaid(firestoreId, id);
+    window.executeMarkAsPaid = function(firestoreId, idStr) {
+        window.closeModal('billPreviewModal');
+        window.markAsPaid(firestoreId, idStr);
     };
 
-    window.openBillPreviewModal = function(id, type) {
+    window.openBillPreviewModal = function(idStr, type) {
+        const id = Number(idStr);
         const bill = window.bills.find(b => b.id === id);
         if (!bill) return;
 
@@ -2439,14 +2437,13 @@
 
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
         if (footerBtn) footerBtn.style.display = 'flex';
-
         document.getElementById('billPreviewModal').style.display = 'flex';
     };
 
     window.printFromPreview = function() {
         const idStr = document.getElementById('billPreviewId').value;
         const type = document.getElementById('billPreviewType').value || 'notice';
-        closeModal('billPreviewModal');
+        window.closeModal('billPreviewModal');
         
         const ids = idStr.split(',').map(Number);
         if (ids.length > 1) {
@@ -2464,7 +2461,7 @@
             document.getElementById('printArea').innerHTML = allHtml;
             window.print();
         } else {
-            printDocument(ids[0], type);
+            window.printDocument(idStr, type);
         }
     };
 
@@ -2476,24 +2473,18 @@
         let targetBills = window.bills.filter(b => !b.isPaid);
 
         if (filterMonth) {
-            targetBills = targetBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
+            targetBills = targetBills.filter(b => isBillMatchingMonth(b, filterMonth));
         }
 
         if (targetClass) {
             targetBills = targetBills.filter(b => b.className === targetClass);
         } else {
             const isJuniorActive = document.getElementById('tabJunior') && document.getElementById('tabJunior').classList.contains('active');
-            if (isJuniorActive) {
-                targetBills = targetBills.filter(b => window.isJuniorHigh(b.className));
-            } else {
-                targetBills = targetBills.filter(b => !window.isJuniorHigh(b.className));
-            }
+            if (isJuniorActive) targetBills = targetBills.filter(b => isJuniorHigh(b.className));
+            else targetBills = targetBills.filter(b => !isJuniorHigh(b.className));
         }
 
-        if(targetBills.length === 0) { 
-            alert(`目前畫面中沒有符合條件的未繳費單據可供列印！`); 
-            return; 
-        }
+        if(targetBills.length === 0) { alert(`目前畫面中沒有符合條件的未繳費單據可供列印！`); return; }
 
         const grouped = {};
         targetBills.forEach(b => {
@@ -2504,19 +2495,14 @@
         const noticeHtmls = [];
         for (const student in grouped) {
             const bills = grouped[student];
-            if (bills.length === 1) {
-                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
-            } else {
-                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
-            }
+            if (bills.length === 1) noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            else noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
         }
 
         let allHtml = '';
         for (let i = 0; i < noticeHtmls.length; i++) {
             if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
-            
             allHtml += noticeHtmls[i];
-            
             if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
                 allHtml += '</div>';
                 if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
@@ -2524,25 +2510,18 @@
                 allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
             }
         }
-
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
     window.printSelectedCheckedNotices = function() {
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
-        if (checkedBoxesArray.length === 0) {
-            alert('⚠️ 請先勾選至少一位學生！');
-            return;
-        }
+        if (checkedBoxesArray.length === 0) { alert('⚠️ 請先勾選至少一位學生！'); return; }
 
-        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+        const selectedIds = checkedBoxesArray.map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
 
-        if (targetBills.length === 0) {
-            alert('⚠️ 找不到所選的未繳費單據！');
-            return;
-        }
+        if (targetBills.length === 0) { alert('⚠️ 找不到所選的未繳費單據！'); return; }
 
         const grouped = {};
         targetBills.forEach(b => {
@@ -2553,19 +2532,14 @@
         const noticeHtmls = [];
         for (const student in grouped) {
             const bills = grouped[student];
-            if (bills.length === 1) {
-                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
-            } else {
-                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
-            }
+            if (bills.length === 1) noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            else noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
         }
 
         let allHtml = '';
         for (let i = 0; i < noticeHtmls.length; i++) {
             if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
-            
             allHtml += noticeHtmls[i];
-            
             if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
                 allHtml += '</div>';
                 if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
@@ -2573,25 +2547,18 @@
                 allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
             }
         }
-
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
     window.printCombinedSelectedReceipts = function() {
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
-        if (checkedBoxesArray.length < 2) {
-            alert('⚠️ 請至少勾選兩筆單據以進行合併列印！');
-            return;
-        }
+        if (checkedBoxesArray.length < 2) { alert('⚠️ 請至少勾選兩筆單據以進行合併列印！'); return; }
 
-        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(b.id));
+        const selectedIds = checkedBoxesArray.map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)));
 
-        if (targetBills.length === 0) {
-            alert('⚠️ 找不到所選單據！');
-            return;
-        }
+        if (targetBills.length === 0) { alert('⚠️ 找不到所選單據！'); return; }
 
         const grouped = {};
         targetBills.forEach(b => {
@@ -2621,31 +2588,27 @@
         window.print();
     };
 
-    window.openEditBillModal = function(firestoreId, id) {
-        verifyAndDelete(`修改未繳費單據`, () => {
+    window.openEditBillModal = function(firestoreId, idStr) {
+        window.verifyAndDelete(`修改未繳費單據`, () => {
+            const id = Number(idStr);
             const bill = window.bills.find(b => b.id === id);
             if (!bill) return;
 
             document.getElementById('editBillFirestoreId').value = firestoreId;
             document.getElementById('editBillId').value = id;
-            document.getElementById('editBillStudentInfo').value = `${window.formatFullClassName(bill.className)} - ${bill.studentName}`;
-            document.getElementById('editBillPeriod').value = window.formatDisplayPeriod(bill);
+            document.getElementById('editBillStudentInfo').value = `${formatFullClassName(bill.className)} - ${bill.studentName}`;
+            document.getElementById('editBillPeriod').value = formatDisplayPeriod(bill);
             document.getElementById('editBillNoteInput').value = bill.billNote || '';
 
             const container = document.getElementById('editBillItemsContainer');
             container.innerHTML = '';
             
-            bill.items.forEach((item) => {
-                window.addEditBillItemRowWithData(item.name, item.amount);
-            });
-
+            bill.items.forEach((item) => { window.addEditBillItemRowWithData(item.name, item.amount); });
             document.getElementById('editBillModal').style.display = 'flex';
         });
     };
 
-    window.addEditBillItemRow = function() {
-        window.addEditBillItemRowWithData('', '');
-    };
+    window.addEditBillItemRow = function() { window.addEditBillItemRowWithData('', ''); };
 
     window.addEditBillItemRowWithData = function(name, amount) {
         const container = document.getElementById('editBillItemsContainer');
@@ -2667,23 +2630,16 @@
 
         const nameInputs = document.querySelectorAll('.edit-item-name');
         const amtInputs = document.querySelectorAll('.edit-item-amt');
-        
         let newItems = [];
         let newTotal = 0;
 
         for (let i = 0; i < nameInputs.length; i++) {
             const n = nameInputs[i].value.trim();
             const a = parseInt(amtInputs[i].value);
-            if (n && !isNaN(a)) {
-                newItems.push({ name: n, amount: a });
-                newTotal += a;
-            }
+            if (n && !isNaN(a)) { newItems.push({ name: n, amount: a }); newTotal += a; }
         }
 
-        if (newItems.length === 0) {
-            alert('⚠️ 至少需保留一項收費項目！');
-            return;
-        }
+        if (newItems.length === 0) { alert('⚠️ 至少需保留一項收費項目！'); return; }
 
         const bill = window.bills.find(b => b.id === id);
         if (bill) {
@@ -2691,11 +2647,8 @@
             bill.total = newTotal;
             bill.periodStr = periodStr;
             bill.billNote = billNote;
-            if (periodStr.includes('~')) {
-                bill.yearMonth = periodStr.split('~')[0].trim().substring(0, 7);
-            } else if (periodStr.length === 7) {
-                bill.yearMonth = periodStr;
-            }
+            if (periodStr.includes('~')) bill.yearMonth = periodStr.split('~')[0].trim().substring(0, 7);
+            else if (periodStr.length === 7) bill.yearMonth = periodStr;
 
             try {
                 await setDoc(doc(db, "bills", firestoreId), {
@@ -2713,18 +2666,16 @@
                     noAutoRenew: !!bill.noAutoRenew
                 });
 
-                closeModal('editBillModal');
-                renderBillingStudentsTable();
-                renderRecords();
+                window.closeModal('editBillModal');
+                window.renderBillingStudentsTable();
+                window.renderRecords();
                 alert('✅ 繳費單已成功更新！');
-            } catch (e) {
-                console.error(e);
-                alert('❌ 儲存失敗');
-            }
+            } catch (e) { console.error(e); alert('❌ 儲存失敗'); }
         }
     };
 
-    window.markAsPaid = async function(firestoreId, id) {
+    window.markAsPaid = async function(firestoreId, idStr) {
+        const id = Number(idStr);
         const bill = window.bills.find(b => b.id === id);
         if(bill) {
             bill.isPaid = true;
@@ -2747,19 +2698,18 @@
 
                 await autoCreateNextPeriodBill(bill);
 
-                renderBillingStudentsTable();
-                renderRecords();
+                window.renderBillingStudentsTable();
+                window.renderRecords();
                 if(confirm('結帳成功！\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
-                    printDocument(id, 'receipt');
+                    window.printDocument(idStr, 'receipt');
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
     };
 
-    window.cancelPayment = async function(firestoreId, id) {
-        verifyAndDelete(`取消繳費紀錄`, async () => {
+    window.cancelPayment = async function(firestoreId, idStr) {
+        window.verifyAndDelete(`取消繳費紀錄`, async () => {
+            const id = Number(idStr);
             const bill = window.bills.find(b => b.id === id);
             if(bill) {
                 bill.isPaid = false;
@@ -2779,26 +2729,23 @@
                         billNote: bill.billNote || '',
                         noAutoRenew: !!bill.noAutoRenew
                     });
-                    renderBillingStudentsTable();
-                    renderRecords();
+                    window.renderBillingStudentsTable();
+                    window.renderRecords();
                     alert('已恢復為「未繳費」狀態！');
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) { console.error(e); }
             }
         });
     };
 
-    window.promptDeleteBill = async function(firestoreId, id, studentName) {
-        verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
+    window.promptDeleteBill = async function(firestoreId, idStr, studentName) {
+        window.verifyAndDelete(`刪除學生「${studentName}」的繳費紀錄`, async () => {
+            const id = Number(idStr);
             try {
                 await deleteDoc(doc(db, "bills", firestoreId));
                 window.bills = window.bills.filter(b => b.id !== id);
-                renderBillingStudentsTable();
-                renderRecords();
-            } catch (e) {
-                console.error(e);
-            }
+                window.renderBillingStudentsTable();
+                window.renderRecords();
+            } catch (e) { console.error(e); }
         });
     };
 
@@ -2821,10 +2768,8 @@
             let tableRows = targetBills.map((bill, idx) => {
                 totalRevenue += bill.total;
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-                if (bill.billNote) {
-                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
-                }
-                const displayMonth = window.formatDisplayPeriod(bill);
+                if (bill.billNote) itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                const displayMonth = formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -2885,10 +2830,8 @@
                 totalRevenue += bill.total;
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-                if (bill.billNote) {
-                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
-                }
-                const displayMonth = window.formatDisplayPeriod(bill);
+                if (bill.billNote) itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                const displayMonth = formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -2953,10 +2896,8 @@
                 totalRevenue += bill.total;
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date);
                 let itemDetails = bill.items.map(item => `${item.name}: $${item.amount.toLocaleString()}`).join('<br>');
-                if (bill.billNote) {
-                    itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
-                }
-                const displayMonth = window.formatDisplayPeriod(bill);
+                if (bill.billNote) itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
+                const displayMonth = formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -3004,6 +2945,187 @@
     window.printReportModal = function() {
         const content = document.getElementById('reportPreviewContent').innerHTML;
         document.getElementById('printArea').innerHTML = content;
+        window.print();
+    };
+
+    window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
+        const displayMonth = formatDisplayPeriod(bill);
+        const fullClassName = formatFullClassName(bill.className);
+        const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
+        const issueDate = getCurrentDateStr();
+        
+        let tableRows = bill.items.map((item, idx) => `
+            <tr>
+                <td style="text-align:center; font-weight: bold; padding: 3px;">${idx + 1}</td>
+                <td style="font-size: 13.5px; font-weight: 600; padding: 3px 6px;">${item.name}</td>
+                <td style="text-align:right; font-size: 14px; font-weight: bold; padding: 3px 6px;">$ ${item.amount.toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
+            <div style="margin-top: 3px; font-size: 8.5px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
+                <strong>【退費規定】</strong>
+                補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還。
+            </div>
+        ` : '';
+
+        const modeClass = isReceipt ? 'receipt-mode' : 'notice-mode';
+        let noteDisplayHtml = bill.billNote ? `<div style="font-size: 10.5px; color: #333; margin-top: 2px;">備註說明：<strong>${bill.billNote}</strong></div>` : '';
+
+        let html = `
+            <div class="receipt-box ${modeClass}">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                        <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="flex: 1; text-align: center;">
+                            <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
+                            <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
+                        </div>
+                        ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10.5px; border: 1.5px solid #000; padding: 1px 4px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
+                    </div>
+                    <div style="text-align:center; font-size:15px; font-weight:900; margin-bottom:3px; letter-spacing: 1px;">${isReceipt ? '繳 費 收 據 明 細 單' : '繳 費 通 知 單'}</div>
+                    <div class="receipt-header">
+                        <div>班級：<strong>${fullClassName}</strong></div>
+                        <div>姓名：<strong>${bill.studentName}</strong></div>
+                        <div>期間：<strong>${displayMonth}</strong></div>
+                    </div>
+                    <table class="report-table" style="border: 1.5px solid #000; border-collapse: collapse; width: 100%;">
+                        <thead>
+                            <tr style="background: #f0f0f0;">
+                                <th style="border: 1.5px solid #000; padding: 3px; width:10%;">項次</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:62%;">項目名稱</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:28%;">金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div class="receipt-total">總計實收：$ ${bill.total.toLocaleString()} 元</div>
+                    ${noteDisplayHtml}
+                </div>
+        `;
+
+        if(isReceipt) {
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
+            html += refundPolicyHtml;
+            html += `</div>`;
+        } else {
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:11.5px; white-space:nowrap; margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    };
+
+    window.getCombinedReceiptHtml = function(bills, isReceipt, copyLabel) {
+        let combinedItemsHtml = '';
+        let grandTotal = 0;
+        let studentNamesArr = [];
+        let classNamesArr = [];
+        let periodStrsArr = [];
+        let issueDate = getCurrentDateStr();
+        let globalIdx = 1;
+
+        bills.forEach(bill => {
+            studentNamesArr.push(bill.studentName);
+            const fullCls = formatFullClassName(bill.className);
+            const pureClassName = cleanClassName(fullCls);
+            if (!classNamesArr.includes(pureClassName)) classNamesArr.push(pureClassName);
+            
+            const dPeriod = formatDisplayPeriod(bill);
+            if (dPeriod && !periodStrsArr.includes(dPeriod)) periodStrsArr.push(dPeriod);
+
+            grandTotal += bill.total;
+
+            const noteTag = bill.billNote ? ` <span style="font-size:10.5px; font-weight:normal; color:#666;">(${bill.billNote})</span>` : '';
+            combinedItemsHtml += `<tr><td colspan="3" style="background:#f1f5f9; font-weight:900; font-size:12.5px; padding:2px 5px;">【${pureClassName}】${noteTag}</td></tr>`;
+            bill.items.forEach(item => {
+                let displayItemName = item.name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '');
+                combinedItemsHtml += `
+                    <tr>
+                        <td style="text-align:center; font-weight:bold; padding:2px;">${globalIdx++}</td>
+                        <td style="font-size: 13px; font-weight: 600; padding:2px 5px;">${displayItemName}</td>
+                        <td style="text-align:right; font-weight:bold; padding:2px 5px;">$ ${item.amount.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        });
+
+        const displayClass = '斗六顧德 ' + classNamesArr.join(' + ');
+        const displayNames = [...new Set(studentNamesArr)].join('、');
+        const displayPeriod = periodStrsArr.join(' / ');
+        const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
+
+        const refundPolicyHtml = (copyLabel === '家長收執聯') ? `
+            <div style="margin-top: 3px; font-size: 8.5px; line-height: 1.1; border-top: 1px solid #000; padding-top: 2px; color: #222;">
+                <strong>【退費規定】</strong>
+                補習班學生繳納費用後，因故離班者，依規辦理退費：一、實際上課日前離班者，預繳費用在全期10%以下得不退還(逾一千元者應退)；超過10%部份應全退。二、開課未逾1/3者，退還全期半數。三、逾1/2者得不予退還。四、代辦費應全額退還。
+            </div>
+        ` : '';
+
+        const modeClass = isReceipt ? 'receipt-mode' : 'notice-mode';
+
+        let html = `
+            <div class="receipt-box ${modeClass}">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                        <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
+                        <div style="flex: 1; text-align: center;">
+                            <div class="receipt-title">雲林縣私立文聖文理短期補習班</div>
+                            <div class="receipt-subtitle">班址:雲林縣斗六市長春路1號 ｜ 立案字號：府教社字第1015404581號</div>
+                        </div>
+                        ${copyLabel ? `<div style="width: 60px; text-align: right;"><span style="font-size: 10.5px; border: 1.5px solid #000; padding: 1px 4px; border-radius: 4px; font-weight: 900; white-space: nowrap; background: #fafafa;">${copyLabel}</span></div>` : '<div style="width: 60px; display:none;"></div>'}
+                    </div>
+                    <div style="text-align:center; font-size:15px; font-weight:900; margin-bottom:3px; letter-spacing: 1px;">${isReceipt ? '合 併 繳 費 收 據 明 細 單' : '合 併 繳 費 通 知 單'}</div>
+                    <div class="receipt-header">
+                        <div style="flex:1;">班級：<strong style="font-size:11px;">${displayClass}</strong></div>
+                        <div style="flex:1; text-align:center;">姓名：<strong>${displayNames}</strong></div>
+                        <div style="flex:1; text-align:right;">期間：<strong style="font-size:11px;">${displayPeriod}</strong></div>
+                    </div>
+                    <table class="report-table" style="border: 1.5px solid #000; border-collapse: collapse; width: 100%;">
+                        <thead>
+                            <tr style="background: #f0f0f0;">
+                                <th style="border: 1.5px solid #000; padding: 3px; width:10%;">項次</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:62%;">項目名稱</th>
+                                <th style="border: 1.5px solid #000; padding: 3px 6px; width:28%;">金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${combinedItemsHtml}</tbody>
+                    </table>
+                    <div class="receipt-total">總計實收：$ ${grandTotal.toLocaleString()} 元</div>
+                </div>
+        `;
+
+        if(isReceipt) {
+            html += `<div><div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11.5px; font-weight: bold; align-items: flex-end;"><div>家長簽名：___________</div><div style="margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
+            html += refundPolicyHtml;
+            html += `</div>`;
+        } else {
+            html += `<div style="display: flex; justify-content: space-between; margin-top: 3px; font-size: 11px; color: #222; font-weight: 500; align-items: flex-end;"><div>備註：請家長確認明細無誤後，交由學生帶回補習班，謝謝您的配合！</div><div style="font-size:11.5px; white-space:nowrap; margin-right: 10px;">${dateLabel}:${issueDate} 收款經手人：___________</div></div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    };
+
+    window.printDocument = function(idStr, type) {
+        const id = Number(idStr);
+        const bill = window.bills.find(b => b.id === id);
+        if(!bill) return;
+        
+        const isReceipt = type === 'receipt';
+        let allHtml = '';
+
+        if (isReceipt) {
+            allHtml = '<div class="receipt-container-page">' +
+                getSingleReceiptHtml(bill, true, '家長收執聯') +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(bill, true, '補習班存根聯') +
+                '</div>';
+        } else {
+            allHtml = '<div class="receipt-container-page">' + getSingleReceiptHtml(bill, false, '', true) + '</div>';
+        }
+
+        document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
