@@ -200,6 +200,7 @@
         .btn-purple { background: var(--purple); color: white; }
         .btn-outline { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
         .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .text-download-btn {
             background: none;
@@ -419,9 +420,35 @@
         body.print-timetable-only .timetable-item .c-title { color: #000 !important; font-size: 10.5pt !important; }
         body.print-timetable-only .timetable-item .c-teacher { color: #333 !important; font-size: 9pt !important; }
         .print-header { display: none; }
+        
+        /* 浮動通知 Toast */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast-message {
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
+
+<div id="toastContainer"></div>
 
 <header>
     <div class="header-title">
@@ -430,6 +457,7 @@
     </div>
     
     <div class="sync-controls no-print">
+        <span id="syncStatusIndicator" style="font-size:12px; background:rgba(46,204,113,0.2); color:#2ecc71; padding:4px 10px; border-radius:12px; font-weight:bold; transition:all 0.3s;">☁️ 雲端同步就緒</span>
         <a href="https://aht760317.github.io/Share/gogogood.html" class="nav-link">🔙 返回行政系統</a>
     </div>
 </header>
@@ -497,7 +525,7 @@
                 </div>
                 <div class="no-print" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <span id="holidayNotice" style="font-weight:bold; color:var(--warning); display:none; font-size:13px;">⚠️ 本日為放假日</span>
-                    <button class="btn btn-primary" onclick="quickMarkAll()" style="padding:7px 12px; font-size:13px;">⚡ 全員到齊 (✔)</button>
+                    <button class="btn btn-primary" onclick="quickMarkAll()" style="padding:7px 12px; font-size:13px;" id="btnQuickMarkAll">⚡ 全員到齊 (✔)</button>
                     <button class="btn btn-purple" onclick="confirmRollCallAndSync()" style="padding:7px 12px; font-size:13px;">🔒 確認點名</button>
                     <button class="btn btn-danger" onclick="resetRollCall()" style="padding:7px 12px; font-size:13px;">🔄 重新點名 (需密碼)</button>
                 </div>
@@ -616,7 +644,7 @@
             <div id="courseConfigList" style="margin-top:12px; overflow-x:auto;"></div>
 
             <div style="margin-top:16px; text-align:right; border-top:1px solid #e2e8f0; padding-top:12px;">
-                <button class="btn btn-success" style="padding:9px 20px; font-size:14px;" onclick="saveAllCourseConfigs()">💾 儲存全部課程設定 (需密碼)</button>
+                <button class="btn btn-success" style="padding:9px 20px; font-size:14px;" id="btnSaveAllConfigs" onclick="saveAllCourseConfigs()">💾 儲存全部課程設定 (需密碼)</button>
             </div>
         </div>
 
@@ -625,7 +653,7 @@
             <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
                 <input type="date" id="newHolidayDate" style="padding:8px; border-radius:6px; border:1px solid #ccc; width:auto; margin:0;">
                 <input type="text" id="newHolidayName" placeholder="放假名稱 (例：中秋節放假)" style="padding:8px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:160px; margin:0;">
-                <button class="btn btn-warning" onclick="verifyAndAddHoliday()" style="padding:8px 14px;">➕ 新增放假日</button>
+                <button class="btn btn-warning" onclick="verifyAndAddHoliday()" id="btnAddHoliday" style="padding:8px 14px;">➕ 新增放假日</button>
             </div>
 
             <h4 style="margin-top:18px; color:var(--primary); font-size:15px;">目前已設定的放假清單：</h4>
@@ -767,7 +795,7 @@
         <textarea id="modalReasonText" rows="4" style="resize:vertical; line-height:1.4;" placeholder="請輸入家長電話聯繫結果、請假原因（例：感冒請假、家長已告知搭車中...）"></textarea>
 
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
-            <button class="btn btn-success" onclick="saveAbsentReasonModal()" style="padding:8px 16px; font-size:13px;">💾 儲存原因與連絡結果</button>
+            <button class="btn btn-success" id="btnSaveAbsent" onclick="saveAbsentReasonModal()" style="padding:8px 16px; font-size:13px;">💾 儲存原因與連絡結果</button>
             <button class="btn btn-outline" onclick="document.getElementById('absentReasonModal').style.display='none'" style="padding:8px 16px; font-size:13px;">取消</button>
         </div>
     </div>
@@ -782,7 +810,7 @@
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
             <div id="quickRollStats" style="font-weight:bold; color:var(--primary); font-size:13.5px;"></div>
-            <button class="btn btn-primary" onclick="quickMarkAllModal()" style="padding:5px 12px; font-size:12.5px;">⚡ 此班全體到齊 (✔)</button>
+            <button class="btn btn-primary" onclick="quickMarkAllModal()" id="btnQuickMarkModal" style="padding:5px 12px; font-size:12.5px;">⚡ 此班全體到齊 (✔)</button>
         </div>
         <div id="quickRollStudentList" style="display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto; padding-right:4px;"></div>
         <div style="text-align:right; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
@@ -968,7 +996,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
             <button type="button" class="btn btn-danger" id="btnDeleteStudent" onclick="deleteMasterStudent()" style="display:none; padding:7px 12px; font-size:13px;">🗑️ 刪除學生 (需密碼)</button>
             <div style="display:flex; gap:8px; margin-left:auto;">
-                <button type="button" class="btn btn-success" onclick="saveStudentMasterData()" style="padding:7px 14px; font-size:13px;">💾 儲存檔案</button>
+                <button type="button" class="btn btn-success" id="btnSaveStudentMaster" onclick="saveStudentMasterData()" style="padding:7px 14px; font-size:13px;">💾 儲存檔案</button>
                 <button type="button" class="btn btn-outline" onclick="closeStudentModal()" style="padding:7px 14px; font-size:13px;">取消</button>
             </div>
         </div>
@@ -986,7 +1014,7 @@
         </div>
         <div id="quickAssignWrapper" style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; max-height:280px; overflow-y:auto;"></div>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-            <button class="btn btn-success" onclick="saveQuickAssign()" style="padding:7px 14px; font-size:13px;">💾 確認加選並儲存</button>
+            <button class="btn btn-success" id="btnSaveQuickAssign" onclick="saveQuickAssign()" style="padding:7px 14px; font-size:13px;">💾 確認加選並儲存</button>
             <button class="btn btn-outline" onclick="document.getElementById('quickAssignModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
         </div>
     </div>
@@ -1016,7 +1044,7 @@
         <input type="text" id="m_new_class_teacher" placeholder="例如：陳老師">
 
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-            <button class="btn btn-success" onclick="saveNewClass()" style="padding:7px 14px; font-size:13px;">確認新增</button>
+            <button class="btn btn-success" id="btnSaveNewClass" onclick="saveNewClass()" style="padding:7px 14px; font-size:13px;">確認新增</button>
             <button class="btn btn-outline" onclick="document.getElementById('addClassModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
         </div>
     </div>
@@ -1051,7 +1079,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px; flex-wrap:wrap; gap:8px;">
             <button class="btn btn-danger" onclick="deleteClassCourseFromModal()" style="padding:7px 12px; font-size:13px;">🗑️ 刪除班級 (需密碼)</button>
             <div style="display:flex; gap:8px;">
-                <button class="btn btn-success" onclick="saveEditedClass()" style="padding:7px 14px; font-size:13px;">💾 儲存修改</button>
+                <button class="btn btn-success" id="btnSaveEditClass" onclick="saveEditedClass()" style="padding:7px 14px; font-size:13px;">💾 儲存修改</button>
                 <button class="btn btn-outline" onclick="document.getElementById('editClassModal').style.display='none'" style="padding:7px 14px; font-size:13px;">取消</button>
             </div>
         </div>
@@ -1094,6 +1122,7 @@
     ];
 
     let searchDebounceTimer = null;
+    let cloudSyncTimer = null;
 
     window.state = {
         courses: { care: [], elementary: [], junior: [] },
@@ -1113,6 +1142,46 @@
         currentFilteredStudents: []
     };
 
+    // --- 🔔 Toast 通知系統 ---
+    window.showToast = function(msg, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        const bg = type === 'success' ? '#2ecc71' : (type === 'error' ? '#e74c3c' : '#f39c12');
+        toast.style.background = bg;
+        toast.innerHTML = msg;
+        
+        container.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
+    // --- 🛠️ 輔助工具 ---
+    function disableButton(btnId, loadingText = '處理中...') {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.dataset.origText = btn.innerHTML;
+            btn.innerHTML = `<span style="opacity:0.8">⏳ ${loadingText}</span>`;
+            btn.disabled = true;
+        }
+    }
+    function enableButton(btnId) {
+        const btn = document.getElementById(btnId);
+        if (btn && btn.dataset.origText) {
+            btn.innerHTML = btn.dataset.origText;
+            btn.disabled = false;
+        }
+    }
+
     function getTaiwanDateString(dateObj = new Date()) {
         const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
         const taiwanTime = new Date(utc + (3600000 * 8));
@@ -1122,27 +1191,19 @@
         return `${y}-${m}-${d}`;
     }
 
-    // 核心判斷：學生在特定日期與星期是否應該出席該課程
     function isStudentScheduledOnDate(student, courseName, dayName) {
         if (!student) return false;
-        
-        // 1. 若該生針對該班級有客製到班星期設定
         if (student.courseScheduleDays && student.courseScheduleDays[courseName]) {
             const customDays = student.courseScheduleDays[courseName];
             if (customDays && customDays.trim() !== '') {
                 return customDays.includes(dayName) || customDays.includes(dayName.replace('星期', '週'));
             }
         }
-        
-        // 2. 預設模式（所有原有學生）：依照課程原本的上課日全勤到班
         const allCourses = getAllCoursesList();
         const courseObj = allCourses.find(c => c.name === courseName);
-        
         if (!courseObj) return true;
-        // 如果課程上課星期為空（完全未勾選），代表無限期保留/停課中，不排入點名
         if (courseObj.day === '') return false;
         if (courseObj.day === undefined || courseObj.day === null) return true;
-        
         return courseObj.day.includes(dayName) || courseObj.day.includes(dayName.replace('星期', '週'));
     }
 
@@ -1176,7 +1237,7 @@
     function checkPassword(promptText = "🔒 系統安全驗證，請輸入管理密碼：") {
         const input = prompt(promptText);
         if (input === SECURITY_CODE) return true;
-        alert("❌ 密碼不正確！操作已取消。");
+        showToast("❌ 密碼不正確！操作已取消。", "error");
         return false;
     }
 
@@ -1210,9 +1271,10 @@
         return list.join('、');
     }
 
+    // 🔄 優化：雙重保險載入雲端與本機備份
     async function initCloudData() {
         try {
-            // 載入課程資料
+            updateSyncIndicator('syncing', '🔄 正在載入雲端資料...');
             const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
             if (coursesDoc.exists()) {
                 const data = coursesDoc.data().data || {};
@@ -1226,7 +1288,6 @@
                 };
             }
 
-            // 載入全體學生名冊
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
             window.state.students = [];
             studentsSnapshot.forEach(d => {
@@ -1242,15 +1303,19 @@
                 });
             });
 
-            // 載入點名記錄
+            // 優先讀取雲端點名紀錄，若雲端無資料則自動回補本機 localStorage 備份
             const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
-            if (attendanceDoc.exists()) {
-                window.state.attendanceData = attendanceDoc.data().data || {};
+            if (attendanceDoc.exists() && attendanceDoc.data().data && Object.keys(attendanceDoc.data().data).length > 0) {
+                window.state.attendanceData = attendanceDoc.data().data;
+                localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
             } else {
-                window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+                const localBackup = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+                window.state.attendanceData = localBackup;
+                if (Object.keys(localBackup).length > 0) {
+                    await setDoc(doc(db, "classLogSettings", "attendance"), { data: localBackup });
+                }
             }
 
-            // 載入國定放假清單
             const holidaysDoc = await getDoc(doc(db, "classLogSettings", "holidays"));
             if (holidaysDoc.exists()) {
                 window.state.holidays = holidaysDoc.data().data || [];
@@ -1268,18 +1333,50 @@
             renderHolidayList();
             renderCourseConfigList();
             updateHomeAlertBanner();
+            updateSyncIndicator('success', '☁️ 雲端同步完成');
         } catch (e) {
-            console.error("載入資料失敗：", e);
+            console.error("載入資料失敗，啟動本機備份模式：", e);
+            window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+            updateSyncIndicator('error', '⚠️ 離線備份模式');
         }
     }
 
-    async function saveAttendanceToCloud() {
-        try {
-            await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
-        } catch (e) {
-            console.error("同步點名資料至雲端失敗：", e);
-            localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+    function updateSyncIndicator(status, text) {
+        const indicator = document.getElementById('syncStatusIndicator');
+        if (!indicator) return;
+        indicator.innerText = text;
+        if (status === 'success') {
+            indicator.style.background = 'rgba(46,204,113,0.2)';
+            indicator.style.color = '#2ecc71';
+        } else if (status === 'syncing') {
+            indicator.style.background = 'rgba(241,196,15,0.2)';
+            indicator.style.color = '#f39c12';
+        } else {
+            indicator.style.background = 'rgba(231,76,60,0.2)';
+            indicator.style.color = '#e74c3c';
         }
+    }
+
+    // 🚀 深度優化：加入防抖 (Debounce) 機制的雲端同步
+    // 當連續點擊時，只寫入本機 localStorage，等停止操作 1 秒後才打上雲端，防卡頓防覆蓋。
+    async function saveAttendanceToCloud() {
+        updateSyncIndicator('syncing', '🔄 準備同步...');
+        // 極速先存入本機，防止網頁突然關閉
+        localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        
+        if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+        
+        cloudSyncTimer = setTimeout(async () => {
+            try {
+                updateSyncIndicator('syncing', '🔄 正在寫入雲端...');
+                await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
+                updateSyncIndicator('success', '☁️ 雲端同步完成');
+            } catch (e) {
+                console.error("同步點名資料至雲端失敗：", e);
+                updateSyncIndicator('error', '⚠️ 雲端同步失敗(已備份本機)');
+                showToast("⚠️ 網路不穩，資料已備份於本機裝置", "warning");
+            }
+        }, 1000);
     }
 
     async function saveHolidaysToCloud() {
@@ -1288,8 +1385,16 @@
             await setDoc(doc(db, "classLogSettings", "holidays"), { data: window.state.holidays });
         } catch (e) {
             console.error("放假資料同步至雲端失敗：", e);
+            showToast("放假資料同步失敗", "error");
         }
     }
+
+    // 如果使用者在計時器還沒結束前就關閉視窗，這段可以盡量嘗試發送殘留請求
+    window.addEventListener('beforeunload', () => {
+        if (cloudSyncTimer) {
+            localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
+        }
+    });
 
     window.switchTab = function(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1410,7 +1515,7 @@
             const deptBadge = deptKey === 'care' ? '#0369a1' : (deptKey === 'elementary' ? '#15803d' : '#b45309');
             const list = window.state.courses[deptKey] || [];
 
-            list.forEach((c, cIndex) => {
+            list.forEach((c) => {
                 totalCards++;
                 const cName = typeof c === 'object' ? c.name : c;
                 const cDay = typeof c === 'object' ? (c.day || '未設時間') : '';
@@ -1598,7 +1703,9 @@
         const newTime = document.getElementById('edit_class_time').value.trim() || '未設定';
         const newTeacher = document.getElementById('edit_class_teacher').value.trim() || '任課老師';
 
-        if (!newName) return alert('請輸入班級課程名稱！');
+        if (!newName) return showToast('請輸入班級課程名稱！', 'error');
+
+        disableButton('btnSaveEditClass');
 
         try {
             let origStartDate = getTaiwanDateString().slice(0, 8) + '01';
@@ -1637,9 +1744,14 @@
             }
 
             document.getElementById('editClassModal').style.display = 'none';
-            alert(`✅ 班級【${newName}】已更新！`);
+            showToast(`✅ 班級【${newName}】已更新！`, 'success');
             initCloudData();
-        } catch (e) { console.error(e); alert('修改失敗！'); }
+        } catch (e) { 
+            console.error(e); 
+            showToast('修改失敗！', 'error'); 
+        } finally {
+            enableButton('btnSaveEditClass');
+        }
     };
 
     window.deleteClassCourseFromModal = async function() {
@@ -1660,10 +1772,10 @@
                 window.state.courses[dept] = window.state.courses[dept].filter(c => (typeof c === 'object' ? c.name : c) !== className);
                 await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
                 document.getElementById('editClassModal').style.display = 'none';
-                alert(`✅ 班級【${className}】已刪除！`);
+                showToast(`✅ 班級【${className}】已刪除！`, 'success');
                 if (window.state.currentFilterClass === className) window.state.currentFilterClass = null;
                 initCloudData();
-            } catch (e) { console.error(e); alert('刪除失敗！'); }
+            } catch (e) { console.error(e); showToast('刪除失敗！', 'error'); }
         }
     };
 
@@ -1903,7 +2015,7 @@
     window.exportCurrentStudentsToCSV = function() {
         const list = window.state.currentFilteredStudents || [];
         if (list.length === 0) {
-            return alert('目前沒有可供下載的學生資料！');
+            return showToast('目前沒有可供下載的學生資料！', 'error');
         }
 
         const headers = [
@@ -2003,7 +2115,6 @@
         return html;
     }
 
-    // 取得指定課程原本在系統中設定的上課星期陣列
     function getCourseDefaultDays(courseName) {
         if (!courseName) return [];
         const allCourses = getAllCoursesList();
@@ -2012,7 +2123,6 @@
         return WEEK_DAYS.filter(d => course.day.includes(d) || course.day.includes(d.replace('星期', '週')));
     }
 
-    // 動態新增修課列（預設依班級課表，按鈕點擊後才展開自訂到班日）
     window.addCourseSelectRow = function(wrapperId, selectedValue = "", customDaysStr = "") {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
@@ -2104,7 +2214,7 @@
 
         customBtn.onclick = () => {
             if (daysContainer.style.display === "none") {
-                if (!select.value.trim()) return alert('請先選擇班級課程！');
+                if (!select.value.trim()) return showToast('請先選擇班級課程！', 'error');
                 daysContainer.style.display = "block";
                 customBtn.className = "btn btn-warning";
                 customBtn.innerText = "收合到班日設定";
@@ -2304,8 +2414,10 @@
         const name = document.getElementById('m_stu_name').value.trim();
         const { courses: selectedCourses, scheduleDays: courseScheduleDays } = getSelectedCoursesWithDays('studentCoursesWrapper');
 
-        if (!name) return alert('⚠️ 學生姓名不能為空白！');
-        if (selectedCourses.length === 0) return alert('⚠️ 請至少為學生選擇一門修習的班級課程！');
+        if (!name) return showToast('⚠️ 學生姓名不能為空白！', 'error');
+        if (selectedCourses.length === 0) return showToast('⚠️ 請至少為學生選擇一門修習的班級課程！', 'warning');
+
+        disableButton('btnSaveStudentMaster');
 
         const schoolSelVal = document.getElementById('m_stu_school').value;
         const schoolCustomVal = document.getElementById('m_stu_school_custom').value.trim();
@@ -2347,9 +2459,14 @@
                 await setDoc(docRef, { ...studentData, attendanceLogs: [] });
             }
             closeStudentModal();
-            alert(`✅ 學生【${name}】資料已成功儲存！`);
+            showToast(`✅ 學生【${name}】資料已成功儲存！`, 'success');
             initCloudData();
-        } catch (e) { console.error(e); alert('儲存失敗！'); }
+        } catch (e) { 
+            console.error(e); 
+            showToast('儲存失敗！請檢查網路。', 'error'); 
+        } finally {
+            enableButton('btnSaveStudentMaster');
+        }
     };
 
     window.openQuickAssignModal = function(firestoreId) {
@@ -2366,7 +2483,9 @@
         const stu = window.state.students.find(s => s.firestoreId === firestoreId);
         if (!stu) return;
         const { courses: selectedCourses, scheduleDays: courseScheduleDays } = getSelectedCoursesWithDays('quickAssignWrapper');
-        if (selectedCourses.length === 0) return alert('⚠️ 請至少選擇一個修習班級！');
+        if (selectedCourses.length === 0) return showToast('⚠️ 請至少選擇一個修習班級！', 'warning');
+
+        disableButton('btnSaveQuickAssign');
 
         try {
             stu.courses = selectedCourses;
@@ -2374,9 +2493,14 @@
             stu.course = selectedCourses.join('、');
             await setDoc(doc(db, "classLogStudents", firestoreId), { ...stu, courses: selectedCourses, courseScheduleDays: courseScheduleDays, course: stu.course });
             document.getElementById('quickAssignModal').style.display = 'none';
-            alert(`✅ 已成功更新【${stu.name}】修課名冊！`);
+            showToast(`✅ 已成功更新【${stu.name}】修課名冊！`, 'success');
             initCloudData();
-        } catch (e) { console.error(e); alert('加選失敗'); }
+        } catch (e) { 
+            console.error(e); 
+            showToast('加選失敗！', 'error'); 
+        } finally {
+            enableButton('btnSaveQuickAssign');
+        }
     };
 
     window.deleteMasterStudent = async function() {
@@ -2389,9 +2513,9 @@
             try {
                 await deleteDoc(doc(db, "classLogStudents", firestoreId));
                 closeStudentModal();
-                alert(`✅ 學生【${name}】資料已刪除！`);
+                showToast(`✅ 學生【${name}】資料已刪除！`, 'success');
                 initCloudData();
-            } catch (e) { console.error(e); alert('刪除失敗！'); }
+            } catch (e) { console.error(e); showToast('刪除失敗！', 'error'); }
         }
     };
 
@@ -2409,7 +2533,9 @@
         const day = getSelectedDaysFromWrapper('m_new_class_days_wrapper');
         const time = document.getElementById('m_new_class_time').value.trim() || '未設定';
         const teacher = document.getElementById('m_new_class_teacher').value.trim() || '任課老師';
-        if (!name) return alert('請輸入班級課程名稱！');
+        if (!name) return showToast('請輸入班級課程名稱！', 'error');
+
+        disableButton('btnSaveNewClass');
 
         if (!window.state.courses[dept]) window.state.courses[dept] = [];
         window.state.courses[dept].push({ name, day, time, teacher, startDate: getTaiwanDateString().slice(0, 8) + '01', endDate: '' });
@@ -2417,9 +2543,13 @@
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
             document.getElementById('addClassModal').style.display = 'none';
-            alert(`✅ 已成功新增【${name}】班級！`);
+            showToast(`✅ 已成功新增【${name}】班級！`, 'success');
             initCloudData();
-        } catch (e) { alert('新增失敗'); }
+        } catch (e) { 
+            showToast('新增失敗！', 'error'); 
+        } finally {
+            enableButton('btnSaveNewClass');
+        }
     };
 
     function getParentPhone(stu) {
@@ -2462,7 +2592,7 @@
         if (!container) return;
         container.innerHTML = '';
 
-        window.state.filterOrder.forEach((item, index) => {
+        window.state.filterOrder.forEach((item) => {
             const btn = document.createElement('div');
             btn.className = `filter-pill ${window.state.courseFilterMode === item.key ? 'active' : ''}`;
             btn.innerText = item.label;
@@ -2563,7 +2693,6 @@
         const curDayName = WEEK_NAMES[curDate.getDay()];
         const c = window.state.currentCourse;
         
-        // 核心排課判斷：過濾今天需要到班的學生
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
             const isEnrolled = arr.includes(c.name) && s.status !== 'graduated';
@@ -2639,7 +2768,8 @@
         updateHomeAlertBanner();
     }
 
-    window.setAttendance = function(key, status) {
+    // 🚀 觸發防抖機制儲存
+    window.setAttendance = async function(key, status) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = {};
         window.state.attendanceData[key].status = (window.state.attendanceData[key].status === status) ? '未到' : status;
         
@@ -2647,7 +2777,7 @@
         const taiwanTime = new Date(utc + (3600000 * 8));
         window.state.attendanceData[key].time = taiwanTime.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
         
-        saveAttendanceToCloud();
+        saveAttendanceToCloud(); // 觸發防抖
         renderStudentList();
         updateHomeAlertBanner();
         if (document.getElementById('quickRollModal').style.display === 'flex') {
@@ -2655,21 +2785,23 @@
         }
     };
 
-    window.saveReason = function(key, val) {
+    window.saveReason = async function(key, val) {
         if (!window.state.attendanceData[key]) window.state.attendanceData[key] = { status: '請假' };
         window.state.attendanceData[key].reason = val.trim();
-        saveAttendanceToCloud();
+        saveAttendanceToCloud(); // 觸發防抖
         renderStudentList();
         if (document.getElementById('quickRollModal').style.display === 'flex') {
             renderQuickRollModal(window.state.quickRollContext.courseName, window.state.quickRollContext.dateStr);
         }
     };
 
-    window.quickMarkAll = function() {
+    window.quickMarkAll = async function() {
         const dateStr = document.getElementById('rollDateInput').value;
         const curDate = new Date(dateStr);
         const curDayName = WEEK_NAMES[curDate.getDay()];
         const c = window.state.currentCourse;
+
+        disableButton('btnQuickMarkAll');
 
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
@@ -2681,29 +2813,40 @@
             const key = `${dateStr}_${c.name}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
-        saveAttendanceToCloud();
+        
+        await saveAttendanceToCloud();
         renderStudentList();
         updateHomeAlertBanner();
+        enableButton('btnQuickMarkAll');
+        showToast('✅ 全員到齊已記錄！', 'success');
     };
 
-    window.confirmRollCallAndSync = function() {
-        if (!window.state.currentCourse) return alert("請先選擇要確認點名的課程！");
+    window.confirmRollCallAndSync = async function() {
+        if (!window.state.currentCourse) return showToast("請先選擇要確認點名的課程！", "warning");
         const input = prompt("🔒 請輸入確認點名密碼：");
-        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼錯誤！");
+        if (input !== CONFIRM_ROLLCALL_CODE) return showToast("❌ 密碼錯誤！", "error");
 
         const courseName = window.state.currentCourse.name;
-        saveAttendanceToCloud();
-
-        alert(`✅ 點名確認成功！即將跳轉至【${courseName}】點名表生成總表。`);
-        switchTab('sheet');
-        selectSheetCourse(courseName);
-        updateHomeAlertBanner();
+        
+        // 強制立即同步
+        if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+        try {
+            updateSyncIndicator('syncing', '🔄 正在寫入雲端...');
+            await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
+            updateSyncIndicator('success', '☁️ 雲端同步完成');
+            showToast(`✅ 點名確認成功！即將跳轉至點名總表。`, 'success');
+            switchTab('sheet');
+            selectSheetCourse(courseName);
+            updateHomeAlertBanner();
+        } catch(e) {
+            showToast('同步失敗，請檢查網路。', 'error');
+        }
     };
 
-    window.resetRollCall = function() {
-        if (!window.state.currentCourse) return alert("請先選擇要重新點名的課程！");
+    window.resetRollCall = async function() {
+        if (!window.state.currentCourse) return showToast("請先選擇要重新點名的課程！", "warning");
         const input = prompt("🔒 重新點名需要輸入管理密碼：");
-        if (input !== CONFIRM_ROLLCALL_CODE) return alert("❌ 密碼不正確！操作已取消。");
+        if (input !== CONFIRM_ROLLCALL_CODE) return showToast("❌ 密碼不正確！操作已取消。", "error");
 
         const dateStr = document.getElementById('rollDateInput').value;
         const curDate = new Date(dateStr);
@@ -2721,17 +2864,22 @@
             delete window.state.attendanceData[key];
         });
 
-        saveAttendanceToCloud();
+        // 強制立即同步
+        if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+        await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
+        
         renderStudentList();
         updateHomeAlertBanner();
-        alert(`✅ 已成功重置【${c.name}】於 ${dateStr} 的點名紀錄！`);
+        showToast(`✅ 已成功重置【${c.name}】於 ${dateStr} 的點名紀錄！`, "success");
     };
 
-    window.quickMarkAllModal = function() {
+    window.quickMarkAllModal = async function() {
         const dateStr = window.state.quickRollContext.dateStr;
         const curDate = new Date(dateStr);
         const curDayName = WEEK_NAMES[curDate.getDay()];
         const courseName = window.state.quickRollContext.courseName;
+
+        disableButton('btnQuickMarkModal');
 
         const courseStudents = window.state.students.filter(s => {
             const arr = getStudentCoursesArray(s);
@@ -2743,10 +2891,13 @@
             const key = `${dateStr}_${courseName}_${stu.name}`;
             window.state.attendanceData[key] = { status: '出席', time: '全員到齊', reason: (window.state.attendanceData[key] ? window.state.attendanceData[key].reason : '') };
         });
+        
         saveAttendanceToCloud();
         renderQuickRollModal(courseName, dateStr);
         renderAbsentAlertTab();
         updateHomeAlertBanner();
+        enableButton('btnQuickMarkModal');
+        showToast('✅ 全班出席已記錄！', 'success');
     };
 
     function getAbsentAndUncheckedSummary(dateStr) {
@@ -2976,7 +3127,9 @@
         document.getElementById('absentReasonModal').style.display = 'flex';
     };
 
-    window.saveAbsentReasonModal = function() {
+    window.saveAbsentReasonModal = async function() {
+        disableButton('btnSaveAbsent');
+        
         const dateStr = document.getElementById('modalDateStr').value;
         const courseName = document.getElementById('modalCourseName').value;
         const studentName = document.getElementById('modalStudentName').value;
@@ -2994,12 +3147,19 @@
             window.state.attendanceData[key].time = taiwanTime.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
-        saveAttendanceToCloud();
-
-        document.getElementById('absentReasonModal').style.display = 'none';
-        alert(`✅ 已成功儲存【${studentName}】的請假原因與連絡結果！`);
-        renderAbsentAlertTab();
-        updateHomeAlertBanner();
+        // 強制立即同步
+        if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+        try {
+            await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
+            document.getElementById('absentReasonModal').style.display = 'none';
+            showToast(`✅ 已成功儲存【${studentName}】的請假原因與連絡結果！`, 'success');
+            renderAbsentAlertTab();
+            updateHomeAlertBanner();
+        } catch (e) {
+            showToast('儲存失敗！', 'error');
+        } finally {
+            enableButton('btnSaveAbsent');
+        }
     };
 
     window.onSheetCourseChanged = function() {
@@ -3085,7 +3245,7 @@
                     <th style="width:85px;">學校年級</th>
                     <th style="width:110px;">主要電話</th>`;
 
-        dateList.forEach((d, i) => {
+        dateList.forEach((d) => {
             html += `<th style="width:48px;" class="${d.holiday ? 'holiday-col' : ''}">
                 ${d.shortDate}<br><span style="font-size:7pt;">${d.dayName}</span>
                 ${d.holiday ? `<div style="font-size:6.5pt; color:#856404;">${d.holiday}</div>` : ''}
@@ -3142,7 +3302,7 @@
         if (!container) return;
         container.innerHTML = '';
 
-        window.state.configFilterOrder.forEach((item, index) => {
+        window.state.configFilterOrder.forEach((item) => {
             const btn = document.createElement('div');
             btn.className = `filter-pill ${window.state.configDeptFilter === item.key ? 'active' : ''}`;
             btn.innerText = item.label;
@@ -3211,27 +3371,37 @@
     window.saveAllCourseConfigs = async function() {
         if (!checkPassword("🔒 修改課程起訖日，請輸入管理密碼：")) return;
 
+        disableButton('btnSaveAllConfigs');
         try {
             await setDoc(doc(db, "classLogSettings", "courses"), { data: window.state.courses });
-            alert("✅ 所有課程起訖日設定已儲存並同步！");
+            showToast("✅ 所有課程起訖日設定已儲存並同步！", "success");
             renderCourseCards();
             renderCourseConfigList();
         } catch (e) {
             console.error(e);
-            alert("❌ 儲存失敗！");
+            showToast("❌ 儲存失敗！", "error");
+        } finally {
+            enableButton('btnSaveAllConfigs');
         }
     };
 
     window.verifyAndAddHoliday = async function() {
         const date = document.getElementById('newHolidayDate').value;
         const name = document.getElementById('newHolidayName').value.trim();
-        if (!date || !name) return alert('請輸入完整日期與事由！');
+        if (!date || !name) return showToast('請輸入完整日期與事由！', 'error');
 
-        window.state.holidays.push({ date, name });
-        await saveHolidaysToCloud();
-        document.getElementById('newHolidayName').value = '';
-        renderHolidayList();
-        alert(`✅ 已成功設定放假：${date} 【${name}】並同步至全校雲端！`);
+        disableButton('btnAddHoliday', '新增中');
+        try {
+            window.state.holidays.push({ date, name });
+            await saveHolidaysToCloud();
+            document.getElementById('newHolidayName').value = '';
+            renderHolidayList();
+            showToast(`✅ 已成功設定放假：${date} 【${name}】`, "success");
+        } catch (e) {
+            showToast('新增放假失敗！', 'error');
+        } finally {
+            enableButton('btnAddHoliday');
+        }
     };
 
     function renderHolidayList() {
@@ -3258,6 +3428,7 @@
         window.state.holidays.splice(idx, 1);
         await saveHolidaysToCloud();
         renderHolidayList();
+        showToast('✅ 已刪除放假設定', 'success');
     };
 </script>
 </body>
