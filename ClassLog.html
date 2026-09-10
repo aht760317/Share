@@ -767,7 +767,7 @@
                     <tr><th>📘 今日進度</th><td id="card-progress">-</td></tr>
                     <tr id="card-score-row"><th>📝 測驗表現</th><td id="card-score">-</td></tr>
                     <tr><th>📖 作業範圍</th><td id="card-homework">-</td></tr>
-                    <tr><th>✅ 作業狀態</th><td id="card-hwstatus">-</td></tr>
+                    <tr id="card-hwstatus-row"><th>✅ 作業狀態</th><td id="card-hwstatus">-</td></tr>
                     <tr><th>💬 老師評語與叮嚀</th><td id="card-note">-</td></tr>
                 </table>
             </div>
@@ -1933,11 +1933,13 @@
             document.getElementById('card-progress').innerText = progress;
             
             const scoreRow = document.getElementById('card-score-row');
+            const hwStatusRow = document.getElementById('card-hwstatus-row');
             if (isCareCourse) {
                 document.querySelector('#parent-log-modal h3').innerText = '📋 本週學習與生活週報';
-                document.querySelector('#card-progress').parentElement.querySelector('th').innerHTML = '📘 本週重點';
+                document.querySelector('#card-progress').parentElement.querySelector('th').innerHTML = '📘 安親重點';
                 document.querySelector('#card-score').parentElement.querySelector('th').innerHTML = '🌟 綜合表現';
-                document.querySelector('#card-homework').parentElement.querySelector('th').innerHTML = '📝 作業狀況';
+                document.querySelector('#card-homework').parentElement.querySelector('th').innerHTML = '📝 課輔進度';
+                if(hwStatusRow) hwStatusRow.style.display = 'none';
                 
                 scoreRow.style.display = '';
                 document.getElementById('card-score').innerText = score;
@@ -1946,6 +1948,7 @@
                 document.querySelector('#card-progress').parentElement.querySelector('th').innerHTML = '📘 今日進度';
                 document.querySelector('#card-score').parentElement.querySelector('th').innerHTML = '📝 測驗表現';
                 document.querySelector('#card-homework').parentElement.querySelector('th').innerHTML = '📖 作業範圍';
+                if(hwStatusRow) hwStatusRow.style.display = '';
                 
                 if (hasExam) {
                     scoreRow.style.display = '';
@@ -1966,7 +1969,7 @@
             else if (courseName.includes('國') || courseName.includes('作文')) subjectHomeworkLabel = '國文作業';
             else if (courseName.includes('理化') || courseName.includes('自')) subjectHomeworkLabel = '自然理化作業';
 
-            // --- 組裝家長 Line 訊息文字 (加入空白換行排版與簡潔化標題) ---
+            // --- 組裝家長 Line 訊息文字 ---
             let parentMsg = '';
             if (isCareCourse) {
                 parentMsg = `🌟 本週紀錄 (${selectedDate})【${courseName}】學習與生活週報\n` +
@@ -1976,8 +1979,8 @@
                     `📌 出席狀況：${att}\n` +
                     `🌟 綜合表現評量：${score}\n` +
                     `------------------------\n` +
-                    `📘 本週課輔班進度與重點：\n${progress}\n\n` +
-                    `📝 本週作業完成與訂正狀況：\n[${hwStatus}] ${homework !== '無' ? homework : '本週作業皆已按時完成'}\n\n` +
+                    `📘 本週課輔生活與安親重點總結：\n${progress}\n\n` +
+                    `📝 本週課輔班進度：\n${homework !== '無' ? homework : '本週進度皆已按時完成'}\n\n` +
                     `💬 老師愛的叮嚀：\n${finalNote}\n` +
                     `------------------------\n` +
                     `孩子的成長需要我們共同陪伴，祝您週末愉快！💕`;
