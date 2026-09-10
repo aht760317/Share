@@ -1554,7 +1554,7 @@
         });
     };
 
-    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 (支援不要自動續費及刪除) ---------- */
+    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 ---------- */
 
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
@@ -1816,61 +1816,6 @@
             }
         });
     };
-
-    async function autoCreateNextPeriodBill(currentBill) {
-        try {
-            if (currentBill.noAutoRenew) {
-                return;
-            }
-
-            let nextPeriodStr = '';
-            let nextYearMonth = '';
-
-            if (currentBill.periodStr && currentBill.periodStr.includes('~')) {
-                const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
-                const nextRange = window.calculateNext1MonthRangeFromEnd(endStr);
-                nextPeriodStr = nextRange.periodStr;
-                nextYearMonth = nextRange.start.substring(0, 7);
-            } else {
-                let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
-                if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
-                const [year, month] = baseYM.split('-').map(Number);
-                const nextDate = new Date(year, month, 1);
-                nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-                const nextRange = window.calculate1MonthRange(nextDate.getFullYear(), nextDate.getMonth() + 1);
-                nextPeriodStr = nextRange.periodStr;
-            }
-
-            const alreadyExists = window.bills.some(b => 
-                b.studentName === currentBill.studentName && 
-                b.className === currentBill.className && 
-                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
-            );
-
-            if (!alreadyExists) {
-                const autoBill = {
-                    id: Date.now() + Math.floor(Math.random() * 100),
-                    date: getCurrentDateStr(),
-                    yearMonth: nextYearMonth,
-                    periodStr: nextPeriodStr,
-                    className: currentBill.className,
-                    studentName: currentBill.studentName,
-                    items: JSON.parse(JSON.stringify(currentBill.items || [])),
-                    total: currentBill.total || 0,
-                    isPaid: false,
-                    paidDate: null,
-                    billNote: currentBill.billNote || '',
-                    noAutoRenew: false
-                };
-
-                const docRef = await addDoc(collection(db, "bills"), autoBill);
-                autoBill.firestoreId = docRef.id;
-                window.bills.unshift(autoBill);
-            }
-        } catch (err) {
-            console.error("自動延續下一期失敗：", err);
-        }
-    }
 
     window.loadStudentProfile = function(cls, stu) {
         window.editingProfileClass = cls;
@@ -2398,14 +2343,16 @@
         }
     };
 
+    // 處理手動勾選印通知單 (已改為呼叫 printNoticesBatchList)
     window.printCheckedUnpaidNotices = function() {
-        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
-        if (checkedBoxes.length === 0) {
-            alert('⚠️ 請先在未繳費名單中勾選至少一位學生！');
+        // 從兩個分頁中抓取有打勾的
+        const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
+        if (checkedBoxesArray.length === 0) {
+            alert('⚠️ 請先勾選至少一位學生！');
             return;
         }
 
-        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
         const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
 
         if (targetBills.length === 0) {
@@ -2465,13 +2412,13 @@
         let fullHtml = '';
         if (type === 'receipt') {
             fullHtml = '<div class="receipt-container-page">' +
-                getSingleReceiptHtml(bill, true, '家長收執聯') +
+                window.getSingleReceiptHtml(bill, true, '家長收執聯') +
                 '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(bill, true, '補習班存根聯') +
+                window.getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            fullHtml = '<div class="receipt-container-page">' + getSingleReceiptHtml(bill, false, '', true) + '</div>';
+            fullHtml = '<div class="receipt-container-page">' + window.getSingleReceiptHtml(bill, false, '', true) + '</div>';
             document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
         }
 
@@ -2501,7 +2448,7 @@
                 allHtml += '<div class="receipt-container-page">';
             }
 
-            allHtml += getSingleReceiptHtml(bill, false, '', true);
+            allHtml += window.getSingleReceiptHtml(bill, false, '', true);
 
             if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
                 allHtml += '</div>';
@@ -2517,7 +2464,7 @@
         window.print();
     };
 
-    // 修正：依據當前畫面(選定班級、月份或分頁)進行列印，未選班級也能印整個畫面的名單
+    // 讓「印該班未繳」變得聰明
     window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const classFilterEl = document.getElementById('filterClassSelect');
@@ -2532,6 +2479,7 @@
         if (targetClass) {
             targetBills = targetBills.filter(b => b.className === targetClass);
         } else {
+            // 如果沒選上方班級，就抓目前這個分頁(國小/國中)的所有未繳！
             const isJuniorActive = document.getElementById('tabJunior') && document.getElementById('tabJunior').classList.contains('active');
             if (isJuniorActive) {
                 targetBills = targetBills.filter(b => window.isJuniorHigh(b.className));
@@ -2549,13 +2497,13 @@
     };
 
     window.printSelectedCheckedNotices = function() {
-        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
-        if (checkedBoxes.length === 0) {
+        const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
+        if (checkedBoxesArray.length === 0) {
             alert('⚠️ 請先勾選至少一位學生！');
             return;
         }
 
-        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
         const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
 
         if (targetBills.length === 0) {
@@ -2567,13 +2515,13 @@
     };
 
     window.printCombinedSelectedReceipts = function() {
-        const checkedBoxes = document.querySelectorAll('input[class^="row-checkbox-"]:checked');
-        if (checkedBoxes.length < 2) {
-            alert('⚠️ 請至少勾選兩位學生以進行合併列印！');
+        const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
+        if (checkedBoxesArray.length < 2) {
+            alert('⚠️ 請至少勾選兩筆單據以進行合併列印！');
             return;
         }
 
-        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const selectedIds = checkedBoxesArray.map(cb => parseInt(cb.value));
         const targetBills = window.bills.filter(b => selectedIds.includes(b.id));
 
         if (targetBills.length === 0) {
@@ -2582,9 +2530,9 @@
         }
 
         const combinedHtml = '<div class="receipt-container-page">' +
-            getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
+            window.getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
             '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-            getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
+            window.getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
             '</div>';
 
         document.getElementById('printArea').innerHTML = combinedHtml;
@@ -2598,7 +2546,7 @@
 
             document.getElementById('editBillFirestoreId').value = firestoreId;
             document.getElementById('editBillId').value = id;
-            document.getElementById('editBillStudentInfo').value = `${formatFullClassName(bill.className)} - ${bill.studentName}`;
+            document.getElementById('editBillStudentInfo').value = `${window.formatFullClassName(bill.className)} - ${bill.studentName}`;
             document.getElementById('editBillPeriod').value = window.formatDisplayPeriod(bill);
             document.getElementById('editBillNoteInput').value = bill.billNote || '';
 
@@ -2606,7 +2554,7 @@
             container.innerHTML = '';
             
             bill.items.forEach((item) => {
-                appendEditBillItemRow(item.name, item.amount);
+                window.addEditBillItemRowWithData(item.name, item.amount);
             });
 
             document.getElementById('editBillModal').style.display = 'flex';
@@ -2614,10 +2562,10 @@
     };
 
     window.addEditBillItemRow = function() {
-        appendEditBillItemRow('', '');
+        window.addEditBillItemRowWithData('', '');
     };
 
-    function appendEditBillItemRow(name, amount) {
+    window.addEditBillItemRowWithData = function(name, amount) {
         const container = document.getElementById('editBillItemsContainer');
         const row = document.createElement('div');
         row.style.cssText = "display: flex; gap: 6px; margin-bottom: 6px; align-items: center;";
