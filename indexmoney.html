@@ -343,11 +343,11 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據滿版配置 */
+        /* 列印及收據配置 */
         .receipt-container-page {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start; 
             height: 100%;
             box-sizing: border-box;
         }
@@ -368,14 +368,6 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        
-        .receipt-container-page.page-two-items .receipt-box {
-            flex: 0 0 48.5%;
-        }
-
-        .receipt-box.single-notice {
-            flex: 0 0 32%;
-        }
 
         .receipt-title { text-align: center; font-size: 17px; font-weight: 900; line-height: 1.1; letter-spacing: 0.5px; }
         .receipt-subtitle { text-align: center; font-size: 11px; margin-bottom: 2px; color: #222; font-weight: 500; }
@@ -386,7 +378,7 @@
             font-size: 10.5px; 
             font-weight: bold;
             color: #333; 
-            margin: 1px 0; 
+            margin: 6px 0; 
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
             flex-shrink: 0;
@@ -680,7 +672,8 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(true)">全選</button>
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
-            <div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選單據為一張</button>
                 <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選的繳費通知單</button>
             </div>
         </div>
@@ -879,7 +872,6 @@
         <input type="hidden" id="modalBillStudentName">
         <input type="hidden" id="modalBillClassName">
 
-        <!-- 收費期間設定 (下拉月份與自定義切換) -->
         <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label style="margin: 0; color: #1E40AF; font-size: 13px;">📅 收費期間：</label>
@@ -900,7 +892,6 @@
             </div>
         </div>
 
-        <!-- 下拉式快速新增項目 -->
         <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
             <label style="color: #334155;">➕ 選擇收費項目 (自動帶出金額)：</label>
             <div style="display: flex; gap: 6px;">
@@ -912,12 +903,10 @@
         <label style="color: #334155; margin-bottom: 4px;">📋 目前收費清單明細：</label>
         <div id="modalFeeItemsList" style="background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 10px;"></div>
 
-        <!-- 單據自訂備註說明 (供櫃台查閱/優惠原因) -->
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
             <label style="color: #475569; font-size: 13px; margin-bottom: 4px;">📝 單據備註說明 (優惠原因/特殊計費備查)：</label>
             <textarea id="modalBillNoteInput" placeholder="例：兄弟姊妹同行優惠、中途插班按天計費、教材費已折抵..." rows="2" style="font-size: 13px;"></textarea>
             
-            <!-- 新增：不要自動續費勾選框 -->
             <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
                 <input type="checkbox" id="modalNoAutoRenew" style="width: 16px; height: 16px; accent-color: var(--accent);">
                 <label for="modalNoAutoRenew" style="margin: 0; color: #B45309; font-weight: bold; font-size: 12.5px; cursor: pointer;">
@@ -932,7 +921,6 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <!-- 新增：開錯單可直接刪除按鈕 (密碼 0618) -->
             <button class="btn-delete-item" id="modalDeleteBillBtn" style="padding: 8px 14px; font-size: 13px; display: none;" onclick="deleteModalCurrentBill()">🗑️ 刪除此單據</button>
             <div style="display: flex; gap: 8px; margin-left: auto;">
                 <button class="btn-select" onclick="closeModal('addFeeItemModal')">取消</button>
@@ -1065,34 +1053,44 @@
     let jQuickSortable = null;
     let oQuickSortable = null;
 
-    // 計算 1 個月的單月區間：某年某月1日 ～ 該月最後一日
+    // 將舊有 2026-09-01 ~ 2026-09-30 這種全月格式自動轉換為單純月份的顯示助手
+    window.formatDisplayPeriod = function(bill) {
+        if (!bill) return "";
+        let p = bill.periodStr || bill.yearMonth;
+        if (p && p.includes('~')) {
+            const parts = p.split('~').map(x => x.trim());
+            if (parts.length === 2 && parts[0].length === 10 && parts[1].length === 10) {
+                const sMonth = parts[0].substring(0, 7);
+                const eMonth = parts[1].substring(0, 7);
+                if (sMonth === eMonth && parts[0].endsWith('-01')) {
+                    const [y, m, d] = parts[1].split('-').map(Number);
+                    const lastDay = new Date(y, m, 0).getDate();
+                    if (d === lastDay) {
+                        return sMonth; // 自動轉為 "YYYY-MM"
+                    }
+                }
+            }
+        }
+        return p;
+    };
+
+    // 計算 1 個月的單月區間 (新建立的帳單會直接採用 YYYY-MM 格式)
     window.calculate1MonthRange = function(year, month) {
         const startD = new Date(year, month - 1, 1);
-        const endD = new Date(year, month, 0); // 該月最後一天
+        const endD = new Date(year, month, 0); 
         
         const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
         const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
-        return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
+        const yMonth = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}`;
+        return { start: sStr, end: eStr, periodStr: yMonth };
     };
 
-    // 計算 3 個月的自然月區間（保留給需要三個月的特殊情況）
-    window.calculate3MonthRange = function(year, month) {
-        const startD = new Date(year, month - 1, 1);
-        const endD = new Date(year, month - 1 + 3, 0);
-        
-        const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
-        const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
-        return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
-    };
-
-    // 計算下一期 1 個月自然月週期
     window.calculateNext1MonthRangeFromEnd = function(endDateStr) {
         const [eY, eM, eD] = endDateStr.split('-').map(Number);
         const nextStartD = new Date(eY, eM, 1);
         return window.calculate1MonthRange(nextStartD.getFullYear(), nextStartD.getMonth() + 1);
     };
 
-    // 檢查某月份是否落入單據所屬期間
     window.isBillMatchingMonth = function(bill, targetMonth) {
         if (!bill || !targetMonth) return false;
         if (bill.yearMonth === targetMonth) return true;
@@ -1202,7 +1200,6 @@
         }
     }
 
-    // 初始化年份與月份雙下拉選單
     function initYearMonthDropdowns() {
         const d = new Date();
         const currYear = d.getFullYear();
@@ -1484,7 +1481,6 @@
         renderBillingStudentsTable();
     };
 
-    // 依姓氏繁體筆劃排序並渲染學生開單列表
     window.renderBillingStudentsTable = function() {
         const cls = window.currentClass;
         if (!cls) return;
@@ -1517,7 +1513,7 @@
             let statusBadge = '<span class="status-badge" style="background:#F1F5F9; color:#64748B;">尚未開單</span>';
 
             if (bill) {
-                displayPeriod = bill.periodStr || bill.yearMonth;
+                displayPeriod = window.formatDisplayPeriod(bill);
                 if (bill.items && bill.items.length > 0) {
                     itemsHtml = bill.items.map(item => `<span class="fee-item-tag">${item.name} ($${item.amount.toLocaleString()})</span>`).join('');
                 }
@@ -1532,10 +1528,7 @@
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
             } else {
-                // 預設採用單月 (1個月) 區間，不再預設強制三個月
-                const [y, m] = selectedMonth.split('-').map(Number);
-                const r = window.calculate1MonthRange(y, m);
-                displayPeriod = r.periodStr;
+                displayPeriod = selectedMonth;
             }
 
             const trHtml = `
@@ -1554,8 +1547,6 @@
         });
     };
 
-    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 (支援不要自動續費及刪除) ---------- */
-
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
         window.currentStudent = stu;
@@ -1569,7 +1560,6 @@
         document.getElementById('modalBillYearSelect').value = curY;
         document.getElementById('modalBillMonthSelect').value = curM;
 
-        // 預設採用單月日期區間
         const defaultRange = window.calculate1MonthRange(Number(curY), Number(curM));
 
         document.getElementById('modalCustomPeriodToggle').checked = false;
@@ -1725,9 +1715,7 @@
             const y = document.getElementById('modalBillYearSelect').value;
             const m = document.getElementById('modalBillMonthSelect').value;
             yMonth = `${y}-${m}`;
-            // 預設帶出該月的完整起訖日期 (若需要單純顯示月份，也可直接用 yMonth，這裡用 calculate1MonthRange 的 periodStr 讓印出來有精確期限)
-            const r = window.calculate1MonthRange(Number(y), Number(m));
-            displayPeriod = r.periodStr;
+            displayPeriod = yMonth;
         }
 
         const total = window.modalCurrentItems.reduce((sum, item) => sum + item.amount, 0);
@@ -1791,7 +1779,6 @@
         }
     };
 
-    // 於開單視窗中直接刪除該筆單據（需密碼 0618）
     window.deleteModalCurrentBill = async function() {
         const stu = document.getElementById('modalBillStudentName').value;
         const cls = document.getElementById('modalBillClassName').value;
@@ -1820,8 +1807,6 @@
         });
     };
 
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
-
     async function autoCreateNextPeriodBill(currentBill) {
         try {
             if (currentBill.noAutoRenew) {
@@ -1842,8 +1827,7 @@
                 const [year, month] = baseYM.split('-').map(Number);
                 const nextDate = new Date(year, month, 1);
                 nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-                const nextRange = window.calculate1MonthRange(nextDate.getFullYear(), nextDate.getMonth() + 1);
-                nextPeriodStr = nextRange.periodStr;
+                nextPeriodStr = nextYearMonth;
             }
 
             const alreadyExists = window.bills.some(b => 
@@ -1876,8 +1860,6 @@
             console.error("自動延續下一期失敗：", err);
         }
     }
-
-    /* ---------- 其他通用功能 ---------- */
 
     window.loadStudentProfile = function(cls, stu) {
         window.editingProfileClass = cls;
@@ -2217,7 +2199,7 @@
                 statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
             }
 
-            const displayMonth = bill.periodStr || bill.yearMonth;
+            const displayMonth = window.formatDisplayPeriod(bill);
             const isJr = window.isJuniorHigh(bill.className);
             const deptKey = isJr ? 'junior' : 'primary';
 
@@ -2225,12 +2207,10 @@
 
             let actionHtml = '';
             if(!bill.isPaid) {
-                // 變更：當按下「通知」或「收款」，系統自動抓取所有未繳單據
                 actionHtml += `<button class="action-btn btn-blue" onclick="openBillPreviewModal(${bill.id}, 'notice')">🖨️通知</button>`;
                 actionHtml += `<button class="action-btn btn-purple" onclick="openEditBillModal('${bill.firestoreId}', ${bill.id})">✏️修改</button>`;
                 actionHtml += `<button class="action-btn btn-green" onclick="openPaymentConfirmModal('${bill.firestoreId}', ${bill.id})">💰收款</button>`;
             } else {
-                // 變更：當按下「收據」，系統自動抓取同日繳費的其他單據合併
                 actionHtml += `<button class="action-btn btn-warning" onclick="openBillPreviewModal(${bill.id}, 'receipt')">🖨️收據</button>`;
                 actionHtml += `<button class="action-btn btn-gray" onclick="cancelPayment('${bill.firestoreId}', ${bill.id})">↩️取消</button>`;
             }
@@ -2307,7 +2287,7 @@
         const buildHtml = (list) => {
             if(list.length === 0) return '<div style="color:#047857; font-weight:bold; padding:18px 0; font-size:14px; text-align:center;">🎉 目前無任何未繳費名單</div>';
             return list.map(bill => {
-                const periodText = bill.periodStr || bill.yearMonth || '';
+                const periodText = window.formatDisplayPeriod(bill);
                 const noteBadge = bill.billNote ? `<span style="font-size:11.5px; color:#B45309; background:#FEF3C7; padding:1px 5px; border-radius:3px; margin-left:6px; border:1px solid #FCD34D;">📝 ${bill.billNote}</span>` : '';
                 return `
                     <div class="unpaid-card">
@@ -2333,6 +2313,78 @@
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
+    window.mergeCheckedUnpaidBills = async function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length < 2) {
+            alert('⚠️ 請至少勾選兩筆單據進行合併！');
+            return;
+        }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
+
+        const studentName = targetBills[0].studentName;
+        const allSameStudent = targetBills.every(b => b.studentName === studentName);
+        if (!allSameStudent) {
+            alert('⚠️ 合併失敗：只能勾選「同一位學生」的單據進行合併喔！');
+            return;
+        }
+
+        if(!confirm(`確定要將 ${studentName} 的 ${targetBills.length} 筆單據合併成一張嗎？`)) return;
+
+        let combinedItems = [];
+        let combinedTotal = 0;
+        let classNames = new Set();
+        let combinedNotes = [];
+
+        targetBills.forEach(bill => {
+            bill.items.forEach(item => {
+                combinedItems.push({ 
+                    name: `[${bill.className.replace('斗六顧德 ', '')}] ${item.name}`, 
+                    amount: item.amount 
+                });
+            });
+            combinedTotal += bill.total;
+            classNames.add(bill.className.replace('斗六顧德 ', ''));
+            if(bill.billNote) combinedNotes.push(bill.billNote);
+        });
+
+        const newClassName = Array.from(classNames).join(' + ');
+
+        const newBill = {
+            id: Date.now(),
+            date: getCurrentDateStr(),
+            yearMonth: targetBills[0].yearMonth,
+            periodStr: targetBills[0].periodStr, 
+            className: newClassName.length > 20 ? "多科綜合班" : newClassName,
+            studentName: studentName,
+            items: combinedItems,
+            total: combinedTotal,
+            isPaid: false,
+            paidDate: null,
+            billNote: combinedNotes.join(' / '),
+            noAutoRenew: false
+        };
+
+        try {
+            const docRef = await addDoc(collection(db, "bills"), newBill);
+            newBill.firestoreId = docRef.id;
+            window.bills.unshift(newBill);
+
+            for (let bill of targetBills) {
+                await deleteDoc(doc(db, "bills", bill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== bill.id);
+            }
+
+            renderBillingStudentsTable();
+            renderRecords();
+            alert('✅ 成功合併單據！');
+        } catch (e) {
+            console.error("合併失敗：", e);
+            alert("❌ 合併失敗請稍後再試！");
+        }
+    };
+
     window.printCheckedUnpaidNotices = function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -2351,60 +2403,36 @@
         printNoticesBatchList(targetBills);
     };
 
-    // 【新增/變更】：自動合併同學生所有欠款的收款視窗
     window.openPaymentConfirmModal = function(firestoreId, id) {
-        const clickedBill = window.bills.find(b => b.id === id);
-        if (!clickedBill) return;
+        const bill = window.bills.find(b => b.id === id);
+        if (!bill) return;
 
-        const studentName = clickedBill.studentName;
-        // 找出該生所有未繳費單據
-        const studentUnpaidBills = window.bills.filter(b => b.studentName === studentName && !b.isPaid);
+        let itemsDetail = bill.items.map(i => `<tr><td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td><td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
 
-        let itemsDetail = '';
-        let totalAmount = 0;
-        let noteInfoHtml = '';
-
-        studentUnpaidBills.forEach(bill => {
-            totalAmount += bill.total;
-            const fullCls = window.formatFullClassName(bill.className).replace('斗六顧德 ', '');
-            if (bill.billNote) {
-                noteInfoHtml += `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:4px 6px; border-radius:4px; margin-bottom:4px; font-size:12.5px; color:#B45309;"><strong>📝 ${fullCls} 備註：</strong>${bill.billNote}</div>`;
-            }
-            itemsDetail += `<tr><td colspan="2" style="background:#F1F5F9; font-weight:bold; font-size:12px; padding:4px 6px; color:#1E40AF;">🏫 ${fullCls} (${bill.periodStr || bill.yearMonth})</td></tr>`;
-            bill.items.forEach(i => {
-                itemsDetail += `<tr>
-                    <td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td>
-                    <td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td>
-                </tr>`;
-            });
-        });
-
-        const billIdsStr = studentUnpaidBills.map(b => b.id).join(',');
+        let noteInfoHtml = bill.billNote ? `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:6px 8px; border-radius:6px; margin-bottom:10px; font-size:13px; color:#B45309;"><strong>📝 備註說明：</strong>${bill.billNote}</div>` : '';
 
         const modalHtml = `
             <div>
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:8px; margin-bottom:10px;">
-                    <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${studentName}</div>
-                    <div style="font-size:12px; color:#475569;">💡 系統已自動抓取該生 <strong>共 ${studentUnpaidBills.length} 筆</strong> 相關單據，將為您一次合併處理！</div>
+                    <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${bill.studentName} (${formatFullClassName(bill.className)})</div>
+                    <div style="font-size:12px; color:#475569;">📅 期間：${window.formatDisplayPeriod(bill)}</div>
                 </div>
                 ${noteInfoHtml}
-                <div style="max-height: 200px; overflow-y: auto; margin-bottom:10px;">
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                        <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">收費項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
-                        <tbody>${itemsDetail}</tbody>
-                    </table>
-                </div>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
+                    <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
+                    <tbody>${itemsDetail}</tbody>
+                </table>
                 <div style="text-align:right; font-size:16px; font-weight:bold; color:#B91C1C; margin-bottom:12px;">
-                    應收總金額：$ ${totalAmount.toLocaleString()} 元
+                    應收總金額：$ ${bill.total.toLocaleString()} 元
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
                     <button class="btn-select" style="padding:6px 12px;" onclick="closeModal('billPreviewModal')">取消</button>
-                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAllAsPaid('${billIdsStr}')">✅ 全部確認收款</button>
+                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAsPaid('${firestoreId}', ${id})">✅ 確認收款</button>
                 </div>
             </div>
         `;
 
-        document.getElementById('previewModalTitle').innerText = '💰 合併收款確認';
+        document.getElementById('previewModalTitle').innerText = '💰 收款確認';
         document.getElementById('billPreviewContent').innerHTML = modalHtml;
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
         if (footerBtn) footerBtn.style.display = 'none';
@@ -2412,100 +2440,30 @@
         document.getElementById('billPreviewModal').style.display = 'flex';
     };
 
-    // 【新增/變更】：執行全部結帳，並自動產生各自科目的下一期
-    window.executeMarkAllAsPaid = async function(idsStr) {
+    window.executeMarkAsPaid = function(firestoreId, id) {
         closeModal('billPreviewModal');
-        
-        const ids = idsStr.split(',').map(id => parseInt(id));
-        const targetBills = window.bills.filter(b => ids.includes(b.id));
-        
-        try {
-            for (let bill of targetBills) {
-                bill.isPaid = true;
-                bill.paidDate = getCurrentDateStr();
-                
-                await setDoc(doc(db, "bills", bill.firestoreId), {
-                    id: bill.id,
-                    date: bill.date,
-                    yearMonth: bill.yearMonth,
-                    periodStr: bill.periodStr,
-                    className: bill.className,
-                    studentName: bill.studentName,
-                    items: bill.items,
-                    total: bill.total,
-                    isPaid: true,
-                    paidDate: bill.paidDate,
-                    billNote: bill.billNote || '',
-                    noAutoRenew: !!bill.noAutoRenew
-                });
-
-                await autoCreateNextPeriodBill(bill);
-            }
-
-            renderBillingStudentsTable();
-            renderRecords();
-
-            if(confirm('✅ 結帳成功！該學生的【所有相關紀錄】已結清並產生下期帳單。\n\n需要立刻列印「正式收據 (1頁2聯)」嗎？')) {
-                if (targetBills.length === 1) {
-                    printDocument(targetBills[0].id, 'receipt');
-                } else {
-                    const combinedHtml = '<div class="receipt-container-page page-two-items">' +
-                        getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
-                        '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                        getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
-                        '</div>';
-                    document.getElementById('printArea').innerHTML = combinedHtml;
-                    window.print();
-                }
-            }
-        } catch (e) {
-            console.error("結帳失敗：", e);
-            alert("❌ 結帳發生錯誤，請稍後再試！");
-        }
+        markAsPaid(firestoreId, id);
     };
 
-    // 【變更】：開單預覽時，自動抓取該學生其他可合併的單據
     window.openBillPreviewModal = function(id, type) {
         const bill = window.bills.find(b => b.id === id);
         if (!bill) return;
 
-        let relatedBills = [bill];
-        if (type === 'notice') {
-            relatedBills = window.bills.filter(b => b.studentName === bill.studentName && !b.isPaid);
-        } else if (type === 'receipt') {
-            relatedBills = window.bills.filter(b => b.studentName === bill.studentName && b.isPaid && b.paidDate === bill.paidDate);
-        }
-
         let fullHtml = '';
-        if (relatedBills.length > 1) {
-            if (type === 'receipt') {
-                fullHtml = '<div class="receipt-container-page page-two-items">' +
-                    getCombinedReceiptHtml(relatedBills, true, '家長收執聯') +
-                    '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                    getCombinedReceiptHtml(relatedBills, true, '補習班存根聯') +
-                    '</div>';
-                document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】合併收據預覽 (1頁2聯)`;
-            } else {
-                fullHtml = getCombinedReceiptHtml(relatedBills, false, '', true);
-                document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】合併繳費通知單預覽`;
-            }
-            document.getElementById('billPreviewId').value = relatedBills.map(b => b.id).join(',');
+        if (type === 'receipt') {
+            fullHtml = '<div class="receipt-container-page">' +
+                getSingleReceiptHtml(bill, true, '家長收執聯') +
+                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                getSingleReceiptHtml(bill, true, '補習班存根聯') +
+                '</div>';
+            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
         } else {
-            if (type === 'receipt') {
-                fullHtml = '<div class="receipt-container-page page-two-items">' +
-                    getSingleReceiptHtml(bill, true, '家長收執聯') +
-                    '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                    getSingleReceiptHtml(bill, true, '補習班存根聯') +
-                    '</div>';
-                document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】收據預覽 (1頁2聯)`;
-            } else {
-                fullHtml = getSingleReceiptHtml(bill, false, '', true);
-                document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
-            }
-            document.getElementById('billPreviewId').value = bill.id;
+            fullHtml = '<div class="receipt-container-page">' + getSingleReceiptHtml(bill, false, '', true) + '</div>';
+            document.getElementById('previewModalTitle').innerText = `📄 【${bill.studentName}】繳費通知單預覽`;
         }
 
         document.getElementById('billPreviewContent').innerHTML = fullHtml;
+        document.getElementById('billPreviewId').value = bill.id;
         document.getElementById('billPreviewType').value = type;
 
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
@@ -2514,64 +2472,33 @@
         document.getElementById('billPreviewModal').style.display = 'flex';
     };
 
-    // 【變更】：列印按鈕支援單張或多張合併列印
     window.printFromPreview = function() {
-        const idStr = document.getElementById('billPreviewId').value;
+        const id = parseInt(document.getElementById('billPreviewId').value);
         const type = document.getElementById('billPreviewType').value || 'notice';
         closeModal('billPreviewModal');
-        
-        const ids = idStr.split(',').map(Number);
-        if (ids.length > 1) {
-            const targetBills = window.bills.filter(b => ids.includes(b.id));
-            let allHtml = '';
-            if (type === 'receipt') {
-                allHtml = '<div class="receipt-container-page page-two-items">' +
-                    getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
-                    '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                    getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
-                    '</div>';
-            } else {
-                allHtml = getCombinedReceiptHtml(targetBills, false, '', true);
-            }
-            document.getElementById('printArea').innerHTML = allHtml;
-            window.print();
-        } else {
-            printDocument(ids[0], type);
-        }
+        printDocument(id, type);
     };
 
     window.printNoticesBatchList = function(targetBills) {
         if (!targetBills || targetBills.length === 0) return;
 
         let allHtml = '';
-        const count = targetBills.length;
+        targetBills.forEach((bill, index) => {
+            if (index % 3 === 0) {
+                allHtml += '<div class="receipt-container-page">';
+            }
 
-        if (count === 1) {
-            allHtml = getSingleReceiptHtml(targetBills[0], false, '', true);
-        } else if (count === 2) {
-            allHtml = '<div class="receipt-container-page page-two-items">' +
-                getSingleReceiptHtml(targetBills[0], false, '', true) +
-                '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-                getSingleReceiptHtml(targetBills[1], false, '', true) +
-                '</div>';
-        } else {
-            targetBills.forEach((bill, index) => {
-                if (index % 3 === 0) {
-                    allHtml += '<div class="receipt-container-page">';
+            allHtml += getSingleReceiptHtml(bill, false, '', true);
+
+            if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
+                allHtml += '</div>';
+                if (index !== targetBills.length - 1) {
+                    allHtml += '<div class="page-break"></div>';
                 }
-
-                allHtml += getSingleReceiptHtml(bill, false, '', true);
-
-                if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
-                    allHtml += '</div>';
-                    if (index !== targetBills.length - 1) {
-                        allHtml += '<div class="page-break"></div>';
-                    }
-                } else {
-                    allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
-                }
-            });
-        }
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        });
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
@@ -2610,7 +2537,7 @@
             return;
         }
 
-        const combinedHtml = '<div class="receipt-container-page page-two-items">' +
+        const combinedHtml = '<div class="receipt-container-page">' +
             getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
             '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
             getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
@@ -2628,7 +2555,7 @@
             document.getElementById('editBillFirestoreId').value = firestoreId;
             document.getElementById('editBillId').value = id;
             document.getElementById('editBillStudentInfo').value = `${formatFullClassName(bill.className)} - ${bill.studentName}`;
-            document.getElementById('editBillPeriod').value = bill.periodStr || bill.yearMonth || '';
+            document.getElementById('editBillPeriod').value = window.formatDisplayPeriod(bill);
             document.getElementById('editBillNoteInput').value = bill.billNote || '';
 
             const container = document.getElementById('editBillItemsContainer');
@@ -2723,6 +2650,40 @@
         }
     };
 
+    window.markAsPaid = async function(firestoreId, id) {
+        const bill = window.bills.find(b => b.id === id);
+        if(bill) {
+            bill.isPaid = true;
+            bill.paidDate = getCurrentDateStr();
+            try {
+                await setDoc(doc(db, "bills", firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: true,
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew
+                });
+
+                await autoCreateNextPeriodBill(bill);
+
+                renderBillingStudentsTable();
+                renderRecords();
+                if(confirm('結帳成功！\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
+                    printDocument(id, 'receipt');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
+
     window.cancelPayment = async function(firestoreId, id) {
         verifyAndDelete(`取消繳費紀錄`, async () => {
             const bill = window.bills.find(b => b.id === id);
@@ -2789,7 +2750,7 @@
                 if (bill.billNote) {
                     itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
                 }
-                const displayMonth = bill.periodStr || bill.yearMonth;
+                const displayMonth = window.formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -2853,7 +2814,7 @@
                 if (bill.billNote) {
                     itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
                 }
-                const displayMonth = bill.periodStr || bill.yearMonth;
+                const displayMonth = window.formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -2921,7 +2882,7 @@
                 if (bill.billNote) {
                     itemDetails += `<br><span style="color:#B45309; font-size:11px;">(註: ${bill.billNote})</span>`;
                 }
-                const displayMonth = bill.periodStr || bill.yearMonth;
+                const displayMonth = window.formatDisplayPeriod(bill);
                 return `
                     <tr>
                         <td style="text-align:center;">${idx + 1}</td>
@@ -2973,7 +2934,7 @@
     };
 
     window.getSingleReceiptHtml = function(bill, isReceipt, copyLabel, isSingleNotice = false) {
-        const displayMonth = bill.periodStr || bill.yearMonth;
+        const displayMonth = window.formatDisplayPeriod(bill);
         const fullClassName = formatFullClassName(bill.className);
         
         const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
@@ -3056,8 +3017,9 @@
             studentNamesArr.push(bill.studentName);
             const fullCls = formatFullClassName(bill.className);
             if (!classNamesArr.includes(fullCls)) classNamesArr.push(fullCls);
-            if (bill.periodStr && !periodStrsArr.includes(bill.periodStr)) periodStrsArr.push(bill.periodStr);
-            else if (bill.yearMonth && !periodStrsArr.includes(bill.yearMonth)) periodStrsArr.push(bill.yearMonth);
+            
+            const dPeriod = window.formatDisplayPeriod(bill);
+            if (dPeriod && !periodStrsArr.includes(dPeriod)) periodStrsArr.push(dPeriod);
 
             grandTotal += bill.total;
 
@@ -3075,7 +3037,6 @@
         });
 
         const displayClass = classNamesArr.join('、');
-        // 變更：過濾掉重複的學生姓名，讓單據表頭更簡潔
         const displayNames = [...new Set(studentNamesArr)].join('、');
         const displayPeriod = periodStrsArr.join(' / ');
         const dateLabel = isReceipt ? '繳費日期' : '通知單日期';
@@ -3138,39 +3099,42 @@
         let allHtml = '';
 
         if (isReceipt) {
-            allHtml = '<div class="receipt-container-page page-two-items">' +
+            allHtml = '<div class="receipt-container-page">' +
                 getSingleReceiptHtml(bill, true, '家長收執聯') +
                 '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
         } else {
-            allHtml = getSingleReceiptHtml(bill, false, '', true);
+            allHtml = '<div class="receipt-container-page">' + getSingleReceiptHtml(bill, false, '', true) + '</div>';
         }
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
     };
 
-    window.batchPrintNotices = function() {
-        const filterMonth = document.getElementById('filterMonth').value;
-        const targetClass = document.getElementById('filterClassSelect').value;
+    window.printNoticesBatchList = function(targetBills) {
+        if (!targetBills || targetBills.length === 0) return;
 
-        if(!targetClass) { 
-            alert('請先在上方 "🏫 班級" 選取要列印的班級！'); 
-            return; 
-        }
+        let allHtml = '';
+        targetBills.forEach((bill, index) => {
+            if (index % 3 === 0) {
+                allHtml += '<div class="receipt-container-page">';
+            }
 
-        let targetBills = window.bills.filter(b => b.className === targetClass && !b.isPaid);
-        if (filterMonth) {
-            targetBills = targetBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
-        }
+            allHtml += getSingleReceiptHtml(bill, false, '', true);
 
-        if(targetBills.length === 0) { 
-            alert(`【${targetClass}】目前沒有未繳費單據可供列印！`); 
-            return; 
-        }
+            if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
+                allHtml += '</div>';
+                if (index !== targetBills.length - 1) {
+                    allHtml += '<div class="page-break"></div>';
+                }
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        });
 
-        printNoticesBatchList(targetBills);
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
     };
 
     initCloudData();
