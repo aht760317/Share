@@ -345,8 +345,10 @@
 
         /* 列印及收據滿版配置 (修正排版：改為區塊靠上對齊，固定高度確保不跑位) */
         .receipt-container-page {
-            display: block; 
-            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 100%;
             box-sizing: border-box;
         }
         
@@ -663,7 +665,7 @@
     <!-- 頁籤 2：未繳費查詢 -->
     <div id="unpaid" class="content-area">
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
-        <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
+        <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽單筆單據，若要合併多科請打勾使用上方按鈕。</p>
         
         <!-- 未繳費查詢分頁頂部的批次勾選列印按鈕 -->
         <div style="background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -673,8 +675,8 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選單據為一張</button>
-                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選的繳費通知單</button>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 印勾選通知單</button>
+                <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #059669;" onclick="batchPayCheckedBills()">💰 批次結帳並印收據</button>
             </div>
         </div>
 
@@ -1059,7 +1061,6 @@
         return name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '').trim();
     };
 
-    // 將舊有 2026-09-01 ~ 2026-09-30 這種全月格式自動轉換為單純月份的顯示助手
     window.formatDisplayPeriod = function(bill) {
         if (!bill) return "";
         let p = bill.periodStr || bill.yearMonth;
@@ -1817,6 +1818,61 @@
         });
     };
 
+    async function autoCreateNextPeriodBill(currentBill) {
+        try {
+            if (currentBill.noAutoRenew) {
+                return;
+            }
+
+            let nextPeriodStr = '';
+            let nextYearMonth = '';
+
+            if (currentBill.periodStr && currentBill.periodStr.includes('~')) {
+                const [startStr, endStr] = currentBill.periodStr.split('~').map(s => s.trim());
+                const nextRange = window.calculateNext1MonthRangeFromEnd(endStr);
+                nextPeriodStr = nextRange.periodStr;
+                nextYearMonth = nextRange.start.substring(0, 7);
+            } else {
+                let baseYM = currentBill.yearMonth || currentBill.periodStr || getCurrentMonthStr();
+                if (baseYM.length > 7) baseYM = baseYM.substring(0, 7);
+                const [year, month] = baseYM.split('-').map(Number);
+                const nextDate = new Date(year, month, 1);
+                nextYearMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+                const nextRange = window.calculate1MonthRange(nextDate.getFullYear(), nextDate.getMonth() + 1);
+                nextPeriodStr = nextRange.periodStr;
+            }
+
+            const alreadyExists = window.bills.some(b => 
+                b.studentName === currentBill.studentName && 
+                b.className === currentBill.className && 
+                (b.periodStr === nextPeriodStr || b.yearMonth === nextYearMonth)
+            );
+
+            if (!alreadyExists) {
+                const autoBill = {
+                    id: Date.now() + Math.floor(Math.random() * 100),
+                    date: getCurrentDateStr(),
+                    yearMonth: nextYearMonth,
+                    periodStr: nextPeriodStr,
+                    className: currentBill.className,
+                    studentName: currentBill.studentName,
+                    items: JSON.parse(JSON.stringify(currentBill.items || [])),
+                    total: currentBill.total || 0,
+                    isPaid: false,
+                    paidDate: null,
+                    billNote: currentBill.billNote || '',
+                    noAutoRenew: false
+                };
+
+                const docRef = await addDoc(collection(db, "bills"), autoBill);
+                autoBill.firestoreId = docRef.id;
+                window.bills.unshift(autoBill);
+            }
+        } catch (err) {
+            console.error("自動延續下一期失敗：", err);
+        }
+    }
+
     window.loadStudentProfile = function(cls, stu) {
         window.editingProfileClass = cls;
         window.editingProfileStudent = stu;
@@ -2269,86 +2325,10 @@
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
-    window.mergeCheckedUnpaidBills = async function() {
-        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
-        if (checkedBoxes.length < 2) {
-            alert('⚠️ 請至少勾選兩筆單據進行合併！');
-            return;
-        }
-
-        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(b.id) && !b.isPaid);
-
-        const studentName = targetBills[0].studentName;
-        const allSameStudent = targetBills.every(b => b.studentName === studentName);
-        if (!allSameStudent) {
-            alert('⚠️ 合併失敗：只能勾選「同一位學生」的單據進行合併喔！');
-            return;
-        }
-
-        if(!confirm(`確定要將 ${studentName} 的 ${targetBills.length} 筆單據合併成一張嗎？`)) return;
-
-        let combinedItems = [];
-        let combinedTotal = 0;
-        let classNames = new Set();
-        let combinedNotes = [];
-
-        targetBills.forEach(bill => {
-            const cleanCls = window.cleanClassName(bill.className);
-            bill.items.forEach(item => {
-                let cleanItemName = item.name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '');
-                combinedItems.push({ 
-                    name: `[${cleanCls}] ${cleanItemName}`, 
-                    amount: item.amount 
-                });
-            });
-            combinedTotal += bill.total;
-            classNames.add(cleanCls);
-            if(bill.billNote) combinedNotes.push(bill.billNote);
-        });
-
-        const newClassName = '斗六顧德 ' + Array.from(classNames).join(' + ');
-
-        const newBill = {
-            id: Date.now(),
-            date: getCurrentDateStr(),
-            yearMonth: targetBills[0].yearMonth,
-            periodStr: targetBills[0].periodStr, 
-            className: newClassName.length > 30 ? "斗六顧德 多科綜合班" : newClassName,
-            studentName: studentName,
-            items: combinedItems,
-            total: combinedTotal,
-            isPaid: false,
-            paidDate: null,
-            billNote: combinedNotes.join(' / '),
-            noAutoRenew: false
-        };
-
-        try {
-            const docRef = await addDoc(collection(db, "bills"), newBill);
-            newBill.firestoreId = docRef.id;
-            window.bills.unshift(newBill);
-
-            for (let bill of targetBills) {
-                await deleteDoc(doc(db, "bills", bill.firestoreId));
-                window.bills = window.bills.filter(b => b.id !== bill.id);
-            }
-
-            renderBillingStudentsTable();
-            renderRecords();
-            alert('✅ 成功合併單據！');
-        } catch (e) {
-            console.error("合併失敗：", e);
-            alert("❌ 合併失敗請稍後再試！");
-        }
-    };
-
-    // 處理手動勾選印通知單 (已改為呼叫 printNoticesBatchList)
     window.printCheckedUnpaidNotices = function() {
-        // 從兩個分頁中抓取有打勾的
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
         if (checkedBoxesArray.length === 0) {
-            alert('⚠️ 請先勾選至少一位學生！');
+            alert('⚠️ 請先勾選至少一筆單據！');
             return;
         }
 
@@ -2360,7 +2340,38 @@
             return;
         }
 
-        printNoticesBatchList(targetBills);
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
+
+        const noticeHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            if (bills.length === 1) {
+                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            } else {
+                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
+            }
+        }
+
+        let allHtml = '';
+        for (let i = 0; i < noticeHtmls.length; i++) {
+            if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
+            
+            allHtml += noticeHtmls[i];
+            
+            if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
+                allHtml += '</div>';
+                if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        }
+
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
     };
 
     window.openPaymentConfirmModal = function(firestoreId, id) {
@@ -2433,38 +2444,30 @@
     };
 
     window.printFromPreview = function() {
-        const id = parseInt(document.getElementById('billPreviewId').value);
+        const idStr = document.getElementById('billPreviewId').value;
         const type = document.getElementById('billPreviewType').value || 'notice';
         closeModal('billPreviewModal');
-        printDocument(id, type);
-    };
-
-    window.printNoticesBatchList = function(targetBills) {
-        if (!targetBills || targetBills.length === 0) return;
-
-        let allHtml = '';
-        targetBills.forEach((bill, index) => {
-            if (index % 3 === 0) {
-                allHtml += '<div class="receipt-container-page">';
-            }
-
-            allHtml += window.getSingleReceiptHtml(bill, false, '', true);
-
-            if ((index + 1) % 3 === 0 || index === targetBills.length - 1) {
-                allHtml += '</div>';
-                if (index !== targetBills.length - 1) {
-                    allHtml += '<div class="page-break"></div>';
-                }
+        
+        const ids = idStr.split(',').map(Number);
+        if (ids.length > 1) {
+            const targetBills = window.bills.filter(b => ids.includes(b.id));
+            let allHtml = '';
+            if (type === 'receipt') {
+                allHtml = '<div class="receipt-container-page">' +
+                    window.getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
+                    '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                    window.getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
+                    '</div>';
             } else {
-                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                allHtml = window.getCombinedReceiptHtml(targetBills, false, '', true);
             }
-        });
-
-        document.getElementById('printArea').innerHTML = allHtml;
-        window.print();
+            document.getElementById('printArea').innerHTML = allHtml;
+            window.print();
+        } else {
+            printDocument(ids[0], type);
+        }
     };
 
-    // 讓「印該班未繳」變得聰明
     window.batchPrintNotices = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const classFilterEl = document.getElementById('filterClassSelect');
@@ -2479,7 +2482,6 @@
         if (targetClass) {
             targetBills = targetBills.filter(b => b.className === targetClass);
         } else {
-            // 如果沒選上方班級，就抓目前這個分頁(國小/國中)的所有未繳！
             const isJuniorActive = document.getElementById('tabJunior') && document.getElementById('tabJunior').classList.contains('active');
             if (isJuniorActive) {
                 targetBills = targetBills.filter(b => window.isJuniorHigh(b.className));
@@ -2493,7 +2495,38 @@
             return; 
         }
 
-        printNoticesBatchList(targetBills);
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
+
+        const noticeHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            if (bills.length === 1) {
+                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            } else {
+                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
+            }
+        }
+
+        let allHtml = '';
+        for (let i = 0; i < noticeHtmls.length; i++) {
+            if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
+            
+            allHtml += noticeHtmls[i];
+            
+            if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
+                allHtml += '</div>';
+                if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        }
+
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
     };
 
     window.printSelectedCheckedNotices = function() {
@@ -2511,7 +2544,38 @@
             return;
         }
 
-        printNoticesBatchList(targetBills);
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
+
+        const noticeHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            if (bills.length === 1) {
+                noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            } else {
+                noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
+            }
+        }
+
+        let allHtml = '';
+        for (let i = 0; i < noticeHtmls.length; i++) {
+            if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
+            
+            allHtml += noticeHtmls[i];
+            
+            if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
+                allHtml += '</div>';
+                if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        }
+
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
     };
 
     window.printCombinedSelectedReceipts = function() {
@@ -2529,12 +2593,30 @@
             return;
         }
 
-        const combinedHtml = '<div class="receipt-container-page">' +
-            window.getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
-            '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
-            window.getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
-            '</div>';
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
 
+        const receiptHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            let rHtml = '<div class="receipt-container-page">';
+            if (bills.length === 1) {
+                rHtml += window.getSingleReceiptHtml(bills[0], true, '家長收執聯');
+                rHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                rHtml += window.getSingleReceiptHtml(bills[0], true, '補習班存根聯');
+            } else {
+                rHtml += window.getCombinedReceiptHtml(bills, true, '家長收執聯');
+                rHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                rHtml += window.getCombinedReceiptHtml(bills, true, '補習班存根聯');
+            }
+            rHtml += '</div>';
+            receiptHtmls.push(rHtml);
+        }
+
+        const combinedHtml = receiptHtmls.join('<div class="page-break"></div>');
         document.getElementById('printArea').innerHTML = combinedHtml;
         window.print();
     };
