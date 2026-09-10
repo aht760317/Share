@@ -1271,7 +1271,7 @@
         return list.join('、');
     }
 
-    // 🔄 優化：雙重保險載入雲端與本機備份
+    // 🔄 優化：雙重保險載入雲端與本機備份，確保自動合併找回失蹤的點名紀錄
     async function initCloudData() {
         try {
             updateSyncIndicator('syncing', '🔄 正在載入雲端資料...');
@@ -1303,18 +1303,21 @@
                 });
             });
 
-            // 優先讀取雲端點名紀錄，若雲端無資料則自動回補本機 localStorage 備份
+            // 【自動救援合併機制】讀取雲端與本機，若本機有資料則安全合併至雲端資料內
             const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
-            if (attendanceDoc.exists() && attendanceDoc.data().data && Object.keys(attendanceDoc.data().data).length > 0) {
-                window.state.attendanceData = attendanceDoc.data().data;
-                localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
-            } else {
-                const localBackup = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
-                window.state.attendanceData = localBackup;
-                if (Object.keys(localBackup).length > 0) {
-                    await setDoc(doc(db, "classLogSettings", "attendance"), { data: localBackup });
-                }
+            let cloudAttendance = attendanceDoc.exists() ? (attendanceDoc.data().data || {}) : {};
+            let localAttendance = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
+            
+            // 安全合併：以雲端為底，本機資料補上，確保昨日本機未上傳成功的資料會被保留
+            window.state.attendanceData = { ...cloudAttendance, ...localAttendance };
+            
+            // 如果本機有紀錄，為了安全起見，立刻把合併好的結果再傳回雲端
+            if (Object.keys(localAttendance).length > 0) {
+                await setDoc(doc(db, "classLogSettings", "attendance"), { data: window.state.attendanceData });
             }
+            
+            // 更新本機最新備份
+            localStorage.setItem('gude_attendance_records', JSON.stringify(window.state.attendanceData));
 
             const holidaysDoc = await getDoc(doc(db, "classLogSettings", "holidays"));
             if (holidaysDoc.exists()) {
@@ -1334,6 +1337,11 @@
             renderCourseConfigList();
             updateHomeAlertBanner();
             updateSyncIndicator('success', '☁️ 雲端同步完成');
+            
+            if (Object.keys(localAttendance).length > 0) {
+                showToast("✅ 已成功合併本機暫存資料至雲端！", "success");
+            }
+            
         } catch (e) {
             console.error("載入資料失敗，啟動本機備份模式：", e);
             window.state.attendanceData = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
