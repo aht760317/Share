@@ -771,7 +771,7 @@
                     <tr><th>💬 老師評語與叮嚀</th><td id="card-note">-</td></tr>
                 </table>
             </div>
-            <textarea id="parent-log-text" rows="7" style="font-size:13px; line-height:1.4;"></textarea>
+            <textarea id="parent-log-text" rows="10" style="font-size:13px; line-height:1.4;"></textarea>
             <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
                 <button class="btn btn-warning" onclick="copyParentLog()">📋 複製日誌內容 (貼到 LINE)</button>
                 <button class="btn" style="background:#999;" onclick="document.getElementById('parent-log-modal').style.display='none'">關閉</button>
@@ -1905,7 +1905,6 @@
             if (personalNote) noteParts.push(`【個人表現】${personalNote}`);
             if (classNotes) noteParts.push(`【班級提醒】${classNotes}`);
             
-            // 當老師沒有輸入任何備註時，自動提供隨機或固定的關懷語
             if (noteParts.length === 0) {
                 if (isCareCourse) {
                     const careFallbackNotes = [
@@ -1917,7 +1916,6 @@
                         "這週在班上都有確實完成任務，非常值得鼓勵！",
                         "週末可以讓寶貝多放鬆休息，儲備下週的學習活力。"
                     ];
-                    // 根據日期產生一個固定的隨機 index，讓同一天的預設語相同，不同天不同
                     const dateHash = selectedDate.split('-').join('');
                     const fallbackIndex = parseInt(dateHash) % careFallbackNotes.length;
                     noteParts.push(careFallbackNotes[fallbackIndex]);
@@ -1961,7 +1959,14 @@
             document.getElementById('card-hwstatus').innerText = hwStatus;
             document.getElementById('card-note').innerText = finalNote;
 
-            // --- 組裝家長 Line 訊息文字 ---
+            // --- 自動判斷單科班的作業名稱 ---
+            let subjectHomeworkLabel = '今日作業';
+            if (courseName.includes('數')) subjectHomeworkLabel = '數學作業';
+            else if (courseName.includes('英') || courseName.includes('佳音') || courseName.includes('美語')) subjectHomeworkLabel = '英文作業';
+            else if (courseName.includes('國') || courseName.includes('作文')) subjectHomeworkLabel = '國文作業';
+            else if (courseName.includes('理化') || courseName.includes('自')) subjectHomeworkLabel = '自然理化作業';
+
+            // --- 組裝家長 Line 訊息文字 (加入空白換行排版) ---
             let parentMsg = '';
             if (isCareCourse) {
                 parentMsg = `【斗六顧德補習班】安親課輔班 學習與生活週報 🌟\n` +
@@ -1972,8 +1977,8 @@
                     `📌 出席狀況：${att}\n` +
                     `🌟 綜合表現評量：${score}\n` +
                     `------------------------\n` +
-                    `📘 本週生活與學習重點：\n${progress}\n\n` +
-                    `📝 學校作業完成與訂正狀況：\n[${hwStatus}] ${homework !== '無' ? homework : '本週作業皆已按時完成'}\n\n` +
+                    `📘 本週課輔班進度與重點：\n${progress}\n\n` +
+                    `📝 本週作業完成與訂正狀況：\n[${hwStatus}] ${homework !== '無' ? homework : '本週作業皆已按時完成'}\n\n` +
                     `💬 老師愛的叮嚀：\n${finalNote}\n` +
                     `------------------------\n` +
                     `孩子的成長需要我們共同陪伴，祝您週末愉快！💕`;
@@ -1984,16 +1989,16 @@
                     `📚 課程名稱：${courseName}\n` +
                     `👨‍🏫 授課老師：${teacherName}\n` +
                     `👨‍🎓 學生姓名：${student.name}\n` +
-                    `📌 出缺勤狀況：${att}\n` +
-                    `📘 今日教學進度：${progress}\n`;
+                    `📌 出缺勤狀況：${att}\n\n` +
+                    `📘 今日教學進度：\n${progress}\n\n`;
                 
                 if (hasExam) {
-                    parentMsg += `📝 測驗表現：${score}\n`;
+                    parentMsg += `📝 測驗表現：\n${score}\n\n`;
                 }
 
-                parentMsg += `📖 回家作業：${homework}\n` +
-                    `✅ 作業完成狀況：${hwStatus}\n` +
-                    `💬 老師評語與叮嚀：${finalNote}\n` +
+                parentMsg += `📖 ${subjectHomeworkLabel}：\n${homework}\n\n` +
+                    `✅ 作業完成狀況：\n[${hwStatus}]\n\n` +
+                    `💬 老師評語與叮嚀：\n${finalNote}\n` +
                     `------------------------\n` +
                     `感謝您的支持與配合，顧德補習班關心孩子的學習每一天！`;
             }
