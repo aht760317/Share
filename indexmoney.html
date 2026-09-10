@@ -343,12 +343,10 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據配置 */
+        /* 列印及收據滿版配置 (移除彈性拉伸，改為固定尺寸靠上對齊) */
         .receipt-container-page {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start; 
-            height: 100%;
+            display: block; 
+            width: 100%;
             box-sizing: border-box;
         }
         
@@ -363,11 +361,14 @@
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
             margin: 0 auto;
-            flex: 0 0 32%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
+        
+        /* 固定高度：通知單 3 張一頁，收據 2 張一頁 */
+        .receipt-box.notice-mode { height: 9.2cm; }
+        .receipt-box.receipt-mode { height: 13.5cm; }
 
         .receipt-title { text-align: center; font-size: 17px; font-weight: 900; line-height: 1.1; letter-spacing: 0.5px; }
         .receipt-subtitle { text-align: center; font-size: 11px; margin-bottom: 2px; color: #222; font-weight: 500; }
@@ -378,10 +379,9 @@
             font-size: 10.5px; 
             font-weight: bold;
             color: #333; 
-            margin: 6px 0; 
+            margin: 3mm 0; 
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
-            flex-shrink: 0;
         }
         .page-break { 
             page-break-after: always !important; 
@@ -673,7 +673,6 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選單據為一張</button>
                 <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選的繳費通知單</button>
             </div>
         </div>
@@ -1066,7 +1065,7 @@
                     const [y, m, d] = parts[1].split('-').map(Number);
                     const lastDay = new Date(y, m, 0).getDate();
                     if (d === lastDay) {
-                        return sMonth; // 自動轉為 "YYYY-MM"
+                        return sMonth; 
                     }
                 }
             }
@@ -1074,7 +1073,6 @@
         return p;
     };
 
-    // 計算 1 個月的單月區間 (新建立的帳單會直接採用 YYYY-MM 格式)
     window.calculate1MonthRange = function(year, month) {
         const startD = new Date(year, month - 1, 1);
         const endD = new Date(year, month, 0); 
@@ -1528,7 +1526,9 @@
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
             } else {
-                displayPeriod = selectedMonth;
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const r = window.calculate1MonthRange(y, m);
+                displayPeriod = r.periodStr;
             }
 
             const trHtml = `
@@ -1546,6 +1546,8 @@
             tbody.innerHTML += trHtml;
         });
     };
+
+    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 (支援不要自動續費及刪除) ---------- */
 
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
@@ -2955,12 +2957,13 @@
             </div>
         ` : '';
 
-        const singleNoticeClass = isSingleNotice ? 'single-notice' : '';
+        // 決定這張單的高度（通知單 9.2cm，收據 13.5cm）
+        const modeClass = isReceipt ? 'receipt-mode' : 'notice-mode';
 
         let noteDisplayHtml = bill.billNote ? `<div style="font-size: 10.5px; color: #333; margin-top: 2px;">備註說明：<strong>${bill.billNote}</strong></div>` : '';
 
         let html = `
-            <div class="receipt-box ${singleNoticeClass}">
+            <div class="receipt-box ${modeClass}">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
                         <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
@@ -3048,8 +3051,11 @@
             </div>
         ` : '';
 
+        // 決定這張單的高度（通知單 9.2cm，收據 13.5cm）
+        const modeClass = isReceipt ? 'receipt-mode' : 'notice-mode';
+
         let html = `
-            <div class="receipt-box">
+            <div class="receipt-box ${modeClass}">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
                         <div style="width: 60px; ${!copyLabel ? 'display:none;' : 'visibility: hidden;'}"></div>
@@ -3110,6 +3116,37 @@
 
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
+    };
+
+    // 【修改】將「印該班未繳」邏輯變聰明
+    window.batchPrintNotices = function() {
+        const filterMonth = document.getElementById('filterMonth').value;
+        const targetClass = document.getElementById('filterClassSelect').value;
+
+        let targetBills = window.bills.filter(b => !b.isPaid);
+
+        if (filterMonth) {
+            targetBills = targetBills.filter(b => window.isBillMatchingMonth(b, filterMonth));
+        }
+
+        if (targetClass) {
+            targetBills = targetBills.filter(b => b.className === targetClass);
+        } else {
+            // 如果沒選上方班級，就抓目前這個分頁(國小/國中)的所有未繳！
+            const isJunior = document.getElementById('tabJunior').classList.contains('active');
+            if (isJunior) {
+                targetBills = targetBills.filter(b => window.isJuniorHigh(b.className));
+            } else {
+                targetBills = targetBills.filter(b => !window.isJuniorHigh(b.className));
+            }
+        }
+
+        if(targetBills.length === 0) { 
+            alert(`目前列表沒有未繳費單據可供列印！`); 
+            return; 
+        }
+
+        printNoticesBatchList(targetBills);
     };
 
     window.printNoticesBatchList = function(targetBills) {
