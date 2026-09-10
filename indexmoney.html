@@ -343,7 +343,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據滿版配置 (調整為 A4 三等分格式，單張通知單維持精巧高度不佔滿全頁) */
+        /* 列印及收據滿版配置 */
         .receipt-container-page {
             display: flex;
             flex-direction: column;
@@ -870,7 +870,7 @@
     </div>
 </div>
 
-<!-- 彈出視窗：增加/修改學費項目 Modal (已新增「不要自動續費」勾選框與「刪除此單據」按鈕) -->
+<!-- 彈出視窗：增加/修改學費項目 Modal -->
 <div id="addFeeItemModal" class="modal-overlay" style="display: none;">
     <div class="modal-box" style="max-width: 580px;">
         <h3 style="margin-top:0; color: var(--primary); font-size: 17px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">
@@ -879,7 +879,7 @@
         <input type="hidden" id="modalBillStudentName">
         <input type="hidden" id="modalBillClassName">
 
-        <!-- 收費期間設定 (下拉月份與自定義切換) -->
+        <!-- 收費期間設定 -->
         <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label style="margin: 0; color: #1E40AF; font-size: 13px;">📅 收費期間：</label>
@@ -912,12 +912,11 @@
         <label style="color: #334155; margin-bottom: 4px;">📋 目前收費清單明細：</label>
         <div id="modalFeeItemsList" style="background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 10px;"></div>
 
-        <!-- 單據自訂備註說明 (供櫃台查閱/優惠原因) -->
+        <!-- 單據自訂備註說明 -->
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
             <label style="color: #475569; font-size: 13px; margin-bottom: 4px;">📝 單據備註說明 (優惠原因/特殊計費備查)：</label>
             <textarea id="modalBillNoteInput" placeholder="例：兄弟姊妹同行優惠、中途插班按天計費、教材費已折抵..." rows="2" style="font-size: 13px;"></textarea>
             
-            <!-- 新增：不要自動續費勾選框 -->
             <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
                 <input type="checkbox" id="modalNoAutoRenew" style="width: 16px; height: 16px; accent-color: var(--accent);">
                 <label for="modalNoAutoRenew" style="margin: 0; color: #B45309; font-weight: bold; font-size: 12.5px; cursor: pointer;">
@@ -932,7 +931,6 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <!-- 新增：開錯單可直接刪除按鈕 (密碼 0618) -->
             <button class="btn-delete-item" id="modalDeleteBillBtn" style="padding: 8px 14px; font-size: 13px; display: none;" onclick="deleteModalCurrentBill()">🗑️ 刪除此單據</button>
             <div style="display: flex; gap: 8px; margin-left: auto;">
                 <button class="btn-select" onclick="closeModal('addFeeItemModal')">取消</button>
@@ -976,7 +974,7 @@
     </div>
 </div>
 
-<!-- 彈出視窗：單據預覽確認 -->
+<!-- 彈出視窗：單據預覽確認/收款確認 -->
 <div id="billPreviewModal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
         <h3 style="margin-top:0; color: var(--primary); font-size: 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:8px;">
@@ -1069,16 +1067,6 @@
     window.calculate1MonthRange = function(year, month) {
         const startD = new Date(year, month - 1, 1);
         const endD = new Date(year, month, 0); // 該月最後一天
-        
-        const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
-        const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
-        return { start: sStr, end: eStr, periodStr: `${sStr} ~ ${eStr}` };
-    };
-
-    // 計算 3 個月的自然月區間（保留給需要三個月的特殊情況）
-    window.calculate3MonthRange = function(year, month) {
-        const startD = new Date(year, month - 1, 1);
-        const endD = new Date(year, month - 1 + 3, 0);
         
         const sStr = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-01`;
         const eStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
@@ -1202,7 +1190,6 @@
         }
     }
 
-    // 初始化年份與月份雙下拉選單
     function initYearMonthDropdowns() {
         const d = new Date();
         const currYear = d.getFullYear();
@@ -1484,7 +1471,6 @@
         renderBillingStudentsTable();
     };
 
-    // 依姓氏繁體筆劃排序並渲染學生開單列表
     window.renderBillingStudentsTable = function() {
         const cls = window.currentClass;
         if (!cls) return;
@@ -1532,7 +1518,6 @@
                     statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
                 }
             } else {
-                // 預設採用單月 (1個月) 區間，不再預設強制三個月
                 const [y, m] = selectedMonth.split('-').map(Number);
                 const r = window.calculate1MonthRange(y, m);
                 displayPeriod = r.periodStr;
@@ -1554,8 +1539,6 @@
         });
     };
 
-    /* ---------- 「✏️ 增加/修改學費」Modal 邏輯 (支援不要自動續費及刪除) ---------- */
-
     window.openAddFeeItemModal = function(cls, stu) {
         window.currentClass = cls;
         window.currentStudent = stu;
@@ -1569,7 +1552,6 @@
         document.getElementById('modalBillYearSelect').value = curY;
         document.getElementById('modalBillMonthSelect').value = curM;
 
-        // 預設採用單月日期區間
         const defaultRange = window.calculate1MonthRange(Number(curY), Number(curM));
 
         document.getElementById('modalCustomPeriodToggle').checked = false;
@@ -1725,7 +1707,6 @@
             const y = document.getElementById('modalBillYearSelect').value;
             const m = document.getElementById('modalBillMonthSelect').value;
             yMonth = `${y}-${m}`;
-            // 預設帶出該月的完整起訖日期 (若需要單純顯示月份，也可直接用 yMonth，這裡用 calculate1MonthRange 的 periodStr 讓印出來有精確期限)
             const r = window.calculate1MonthRange(Number(y), Number(m));
             displayPeriod = r.periodStr;
         }
@@ -1791,7 +1772,6 @@
         }
     };
 
-    // 於開單視窗中直接刪除該筆單據（需密碼 0618）
     window.deleteModalCurrentBill = async function() {
         const stu = document.getElementById('modalBillStudentName').value;
         const cls = document.getElementById('modalBillClassName').value;
@@ -1819,8 +1799,6 @@
             }
         });
     };
-
-    /* ---------- 自動延續下一期 / 下一趟單據核心邏輯 ---------- */
 
     async function autoCreateNextPeriodBill(currentBill) {
         try {
@@ -1876,8 +1854,6 @@
             console.error("自動延續下一期失敗：", err);
         }
     }
-
-    /* ---------- 其他通用功能 ---------- */
 
     window.loadStudentProfile = function(cls, stu) {
         window.editingProfileClass = cls;
@@ -2328,12 +2304,10 @@
         juniorContainer.innerHTML = buildHtml(juniorUnpaid);
     };
 
-    // 未繳費查詢頁面全選/取消全選
     window.toggleSelectAllUnpaid = function(selectAll) {
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
-    // 列印未繳費查詢頁面中所勾選學生的通知單
     window.printCheckedUnpaidNotices = function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -2352,36 +2326,62 @@
         printNoticesBatchList(targetBills);
     };
 
+    // 升級版：點擊收款時，自動抓取該學生「所有」未繳單據合併結帳
     window.openPaymentConfirmModal = function(firestoreId, id) {
-        const bill = window.bills.find(b => b.id === id);
-        if (!bill) return;
+        const clickedBill = window.bills.find(b => b.id === id);
+        if (!clickedBill) return;
 
-        let itemsDetail = bill.items.map(i => `<tr><td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td><td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td></tr>`).join('');
+        const studentName = clickedBill.studentName;
+        const studentUnpaidBills = window.bills.filter(b => b.studentName === studentName && !b.isPaid);
 
-        let noteInfoHtml = bill.billNote ? `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:6px 8px; border-radius:6px; margin-bottom:10px; font-size:13px; color:#B45309;"><strong>📝 備註說明：</strong>${bill.billNote}</div>` : '';
+        let itemsDetail = '';
+        let totalAmount = 0;
+        let noteInfoHtml = '';
+
+        studentUnpaidBills.forEach(bill => {
+            totalAmount += bill.total;
+            const fullCls = window.formatFullClassName(bill.className).replace('斗六顧德 ', '');
+            
+            if (bill.billNote) {
+                noteInfoHtml += `<div style="background:#FFFBEB; border:1px dashed #FCD34D; padding:4px 6px; border-radius:4px; margin-bottom:4px; font-size:12.5px; color:#B45309;"><strong>📝 ${fullCls} 備註：</strong>${bill.billNote}</div>`;
+            }
+
+            itemsDetail += `<tr><td colspan="2" style="background:#F1F5F9; font-weight:bold; font-size:12px; padding:4px 6px; color:#1E40AF;">🏫 ${fullCls} (${bill.periodStr || bill.yearMonth})</td></tr>`;
+            
+            bill.items.forEach(i => {
+                itemsDetail += `<tr>
+                    <td style="padding:4px 6px; border:1px solid #CBD5E1; font-size:13px;">${i.name}</td>
+                    <td style="padding:4px 6px; text-align:right; border:1px solid #CBD5E1; font-weight:bold; font-size:13px;">$${i.amount.toLocaleString()}</td>
+                </tr>`;
+            });
+        });
+
+        const billIdsStr = studentUnpaidBills.map(b => b.id).join(',');
 
         const modalHtml = `
             <div>
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:8px; margin-bottom:10px;">
-                    <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${bill.studentName} (${formatFullClassName(bill.className)})</div>
-                    <div style="font-size:12px; color:#475569;">📅 期間：${bill.periodStr || bill.yearMonth}</div>
+                    <div style="font-size:15px; font-weight:bold; color:#1E40AF; margin-bottom:2px;">👤 學生：${studentName}</div>
+                    <div style="font-size:12px; color:#475569;">💡 系統已自動抓取該生 <strong>共 ${studentUnpaidBills.length} 筆</strong> 未繳費單據，將為您一次結清！</div>
                 </div>
                 ${noteInfoHtml}
-                <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
-                    <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
-                    <tbody>${itemsDetail}</tbody>
-                </table>
+                <div style="max-height: 200px; overflow-y: auto; margin-bottom:10px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead><tr style="background:#F8FAFC;"><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:left;">收費項目</th><th style="padding:4px 6px; border:1px solid #CBD5E1; text-align:right;">金額</th></tr></thead>
+                        <tbody>${itemsDetail}</tbody>
+                    </table>
+                </div>
                 <div style="text-align:right; font-size:16px; font-weight:bold; color:#B91C1C; margin-bottom:12px;">
-                    應收總金額：$ ${bill.total.toLocaleString()} 元
+                    應收總金額：$ ${totalAmount.toLocaleString()} 元
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
                     <button class="btn-select" style="padding:6px 12px;" onclick="closeModal('billPreviewModal')">取消</button>
-                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAsPaid('${firestoreId}', ${id})">✅ 確認收款</button>
+                    <button class="btn-add" style="width:auto; padding:6px 16px; background:#10B981; font-size:14px;" onclick="executeMarkAllAsPaid('${billIdsStr}')">✅ 全部確認收款</button>
                 </div>
             </div>
         `;
 
-        document.getElementById('previewModalTitle').innerText = '💰 收款確認';
+        document.getElementById('previewModalTitle').innerText = '💰 跨科合併收款確認';
         document.getElementById('billPreviewContent').innerHTML = modalHtml;
         const footerBtn = document.querySelector('#billPreviewModal .modal-box > div:last-child');
         if (footerBtn) footerBtn.style.display = 'none';
@@ -2389,9 +2389,55 @@
         document.getElementById('billPreviewModal').style.display = 'flex';
     };
 
-    window.executeMarkAsPaid = function(firestoreId, id) {
+    window.executeMarkAllAsPaid = async function(idsStr) {
         closeModal('billPreviewModal');
-        markAsPaid(firestoreId, id);
+        
+        const ids = idsStr.split(',').map(id => parseInt(id));
+        const targetBills = window.bills.filter(b => ids.includes(b.id));
+        
+        try {
+            for (let bill of targetBills) {
+                bill.isPaid = true;
+                bill.paidDate = getCurrentDateStr();
+                
+                await setDoc(doc(db, "bills", bill.firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: true,
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew
+                });
+
+                await autoCreateNextPeriodBill(bill);
+            }
+
+            renderBillingStudentsTable();
+            renderRecords();
+
+            if(confirm('✅ 結帳成功！該學生的【所有未繳紀錄】已清除並產生下期帳單。\n\n需要立刻列印「正式收據 (1頁2聯)」嗎？')) {
+                if (targetBills.length === 1) {
+                    printDocument(targetBills[0].id, 'receipt');
+                } else {
+                    const combinedHtml = '<div class="receipt-container-page page-two-items">' +
+                        getCombinedReceiptHtml(targetBills, true, '家長收執聯') +
+                        '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
+                        getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
+                        '</div>';
+                    document.getElementById('printArea').innerHTML = combinedHtml;
+                    window.print();
+                }
+            }
+        } catch (e) {
+            console.error("結帳失敗：", e);
+            alert("❌ 結帳發生錯誤，請稍後再試！");
+        }
     };
 
     window.openBillPreviewModal = function(id, type) {
@@ -2607,40 +2653,6 @@
             } catch (e) {
                 console.error(e);
                 alert('❌ 儲存失敗');
-            }
-        }
-    };
-
-    window.markAsPaid = async function(firestoreId, id) {
-        const bill = window.bills.find(b => b.id === id);
-        if(bill) {
-            bill.isPaid = true;
-            bill.paidDate = getCurrentDateStr();
-            try {
-                await setDoc(doc(db, "bills", firestoreId), {
-                    id: bill.id,
-                    date: bill.date,
-                    yearMonth: bill.yearMonth,
-                    periodStr: bill.periodStr,
-                    className: bill.className,
-                    studentName: bill.studentName,
-                    items: bill.items,
-                    total: bill.total,
-                    isPaid: true,
-                    paidDate: bill.paidDate,
-                    billNote: bill.billNote || '',
-                    noAutoRenew: !!bill.noAutoRenew
-                });
-
-                await autoCreateNextPeriodBill(bill);
-
-                renderBillingStudentsTable();
-                renderRecords();
-                if(confirm('結帳成功！\n需要立刻列印本期「正式收據 (1頁2聯)」嗎？')) {
-                    printDocument(id, 'receipt');
-                }
-            } catch (e) {
-                console.error(e);
             }
         }
     };
