@@ -1203,6 +1203,10 @@
                     firstPhone = s.phone;
                 }
                 
+                const isCareClass = (window.state.courses.care || []).some(c => (typeof c === 'object' ? c.name : c) === className);
+                const logBtnText = isCareClass ? '📋 產生週報' : '📋 家長日誌';
+                const logBtnClass = isCareClass ? 'btn-success' : 'btn-warning';
+
                 if (!window.state.expandedStudents[s.firestoreId]) {
                     window.state.expandedStudents[s.firestoreId] = { att: false, score: false, note: false };
                 }
@@ -1314,7 +1318,7 @@
                             </div>
                             <div style="font-size:13px; color:#555; margin-top:3px;">${s.school || '-'} ｜ ${s.studentClass || ''}</div>
                             <div class="student-actions-inline">
-                                <button class="btn btn-warning" onclick="generateParentLogForStudent('${s.firestoreId}', '${className}')">📋 家長日誌</button>
+                                <button class="btn ${logBtnClass}" onclick="generateParentLogForStudent('${s.firestoreId}', '${className}')">${logBtnText}</button>
                                 <button class="btn btn-primary" onclick="openCallQAModal('${s.firestoreId}')">➕ 新增電聯QA</button>
                             </div>
                         </td>
@@ -1482,7 +1486,7 @@
                     <td data-label="學生姓名">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <b style="font-size:16px;">${s.name}</b>
-                            ${dept !== 'care' ? `<button class="btn btn-small btn-warning" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 家長日誌</button>` : ''}
+                            ${dept === 'care' ? `<button class="btn btn-small btn-success" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 產生週報</button>` : `<button class="btn btn-small btn-warning" onclick="generateParentLog('${s.firestoreId}', '${dept}')">📋 家長日誌</button>`}
                         </div>
                     </td>
                     <td data-label="出席狀況">
@@ -1835,6 +1839,8 @@
             if(!student) return;
 
             const selectedDate = document.getElementById('card-date-input').value;
+            // 判斷是否為安親課輔班
+            const isCareCourse = (window.state.courses.care || []).some(c => (typeof c === 'object' ? c.name : c) === courseName);
 
             // 1. 查找學生專屬紀錄庫
             const targetLog = (student.attendanceLogs || []).find(l => {
@@ -1857,20 +1863,23 @@
                 }
             });
 
-            // 授課老師判斷
             const allDeptCourses = [...(window.state.courses.care || []), ...(window.state.courses.elementary || []), ...(window.state.courses.junior || [])];
             const courseObj = allDeptCourses.find(c => (typeof c === 'object' ? c.name : c) === courseName);
             const teacherName = (courseObj && courseObj.teacher) ? courseObj.teacher : '本班老師';
 
-            let att = '✔ 出席正常', score = '無', hwStatus = '✔ 已完成';
-            let progress = liveProgress || targetLog?.progress || historyMatch?.content || '指定進度範圍與重點複習';
+            let att = '✔ 出席正常', score = isCareCourse ? '表現優良' : '無', hwStatus = '✔ 已完成';
+            let progress = liveProgress || targetLog?.progress || historyMatch?.content || (isCareCourse ? '本週課業進度與生活常規指導' : '指定進度範圍與重點複習');
             let homework = liveHomework || targetLog?.homeworkContent || historyMatch?.homework || '無';
             let classNotes = liveNotes || targetLog?.classNotes || historyMatch?.notes || '';
             let personalNote = '';
 
             if (targetLog) {
                 att = targetLog.status === '出席' ? '✔ 出席正常' : `✖ ${targetLog.status}`;
-                score = (targetLog.score !== null && targetLog.score !== undefined && targetLog.score !== '') ? `${targetLog.score} 分` : '無';
+                if (isCareCourse) {
+                    score = targetLog.score || '表現平穩，持續進步中';
+                } else {
+                    score = (targetLog.score !== null && targetLog.score !== undefined && targetLog.score !== '') ? `${targetLog.score} 分` : '無';
+                }
                 hwStatus = targetLog.homework === '完成' ? '✔ 已完成' : (targetLog.homework || '已完成');
                 personalNote = targetLog.detail || '';
             } else {
@@ -1880,7 +1889,9 @@
                     if (attVal) att = attVal === '出席' ? '✔ 出席正常' : `✖ ${attVal}`;
                     
                     const scoreInput = row.querySelector('.log-score');
-                    if (scoreInput && scoreInput.value !== '') score = `${scoreInput.value} 分`;
+                    if (scoreInput && scoreInput.value !== '') {
+                        score = isCareCourse ? scoreInput.value : `${scoreInput.value} 分`;
+                    }
                     
                     const hwVal = row.querySelector('.log-homework-status')?.value;
                     if (hwVal) hwStatus = hwVal === '完成' ? '✔ 已完成' : hwVal;
@@ -1893,52 +1904,106 @@
             let noteParts = [];
             if (personalNote) noteParts.push(`【個人表現】${personalNote}`);
             if (classNotes) noteParts.push(`【班級提醒】${classNotes}`);
-            if (noteParts.length === 0) noteParts.push('課堂學習狀況良好，出席正常。');
+            
+            // 當老師沒有輸入任何備註時，自動提供隨機或固定的關懷語
+            if (noteParts.length === 0) {
+                if (isCareCourse) {
+                    const careFallbackNotes = [
+                        "本週在班生活與學習狀況穩定，請家長放心！",
+                        "寶貝這週表現得很棒，繼續保持喔！",
+                        "最近天氣變化大，週末出遊請記得幫寶貝留意穿著喔。",
+                        "本週常規與作業表現都有進步，是個體貼懂事的好孩子。",
+                        "學習態度認真，與同學相處也很融洽喔！",
+                        "這週在班上都有確實完成任務，非常值得鼓勵！",
+                        "週末可以讓寶貝多放鬆休息，儲備下週的學習活力。"
+                    ];
+                    // 根據日期產生一個固定的隨機 index，讓同一天的預設語相同，不同天不同
+                    const dateHash = selectedDate.split('-').join('');
+                    const fallbackIndex = parseInt(dateHash) % careFallbackNotes.length;
+                    noteParts.push(careFallbackNotes[fallbackIndex]);
+                } else {
+                    noteParts.push('課堂學習狀況良好，出席正常。');
+                }
+            }
             const finalNote = noteParts.join(' ｜ ');
 
             const hasExam = (score !== '無');
 
+            // --- 介面卡片內容切換 ---
             document.getElementById('card-teacher').innerText = teacherName;
             document.getElementById('card-att').innerText = att;
             document.getElementById('card-progress').innerText = progress;
             
             const scoreRow = document.getElementById('card-score-row');
-            if (hasExam) {
+            if (isCareCourse) {
+                document.querySelector('#parent-log-modal h3').innerText = '📋 本週學習與生活週報';
+                document.querySelector('#card-progress').parentElement.querySelector('th').innerHTML = '📘 本週重點';
+                document.querySelector('#card-score').parentElement.querySelector('th').innerHTML = '🌟 綜合表現';
+                document.querySelector('#card-homework').parentElement.querySelector('th').innerHTML = '📝 作業狀況';
+                
                 scoreRow.style.display = '';
                 document.getElementById('card-score').innerText = score;
             } else {
-                scoreRow.style.display = 'none';
+                document.querySelector('#parent-log-modal h3').innerText = '📋 今日家長學習日誌';
+                document.querySelector('#card-progress').parentElement.querySelector('th').innerHTML = '📘 今日進度';
+                document.querySelector('#card-score').parentElement.querySelector('th').innerHTML = '📝 測驗表現';
+                document.querySelector('#card-homework').parentElement.querySelector('th').innerHTML = '📖 作業範圍';
+                
+                if (hasExam) {
+                    scoreRow.style.display = '';
+                    document.getElementById('card-score').innerText = score;
+                } else {
+                    scoreRow.style.display = 'none';
+                }
             }
 
             document.getElementById('card-homework').innerText = homework;
             document.getElementById('card-hwstatus').innerText = hwStatus;
             document.getElementById('card-note').innerText = finalNote;
 
-            let parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
-                `------------------------\n` +
-                `📅 日期：${selectedDate}\n` +
-                `📚 課程名稱：${courseName}\n` +
-                `👨‍🏫 授課老師：${teacherName}\n` +
-                `👨‍🎓 學生姓名：${student.name}\n` +
-                `📌 出缺勤狀況：${att}\n` +
-                `📘 今日教學進度：${progress}\n`;
-            
-            if (hasExam) {
-                parentMsg += `📝 測驗表現：${score}\n`;
-            }
+            // --- 組裝家長 Line 訊息文字 ---
+            let parentMsg = '';
+            if (isCareCourse) {
+                parentMsg = `【斗六顧德補習班】安親課輔班 學習與生活週報 🌟\n` +
+                    `------------------------\n` +
+                    `📅 本週紀錄：${selectedDate}\n` +
+                    `👦/👧 寶貝姓名：${student.name}\n` +
+                    `👩‍🏫 帶班老師：${teacherName}\n` +
+                    `📌 出席狀況：${att}\n` +
+                    `🌟 綜合表現評量：${score}\n` +
+                    `------------------------\n` +
+                    `📘 本週生活與學習重點：\n${progress}\n\n` +
+                    `📝 學校作業完成與訂正狀況：\n[${hwStatus}] ${homework !== '無' ? homework : '本週作業皆已按時完成'}\n\n` +
+                    `💬 老師愛的叮嚀：\n${finalNote}\n` +
+                    `------------------------\n` +
+                    `孩子的成長需要我們共同陪伴，祝您週末愉快！💕`;
+            } else {
+                parentMsg = `【斗六顧德補習班】學員學習日誌報告\n` +
+                    `------------------------\n` +
+                    `📅 日期：${selectedDate}\n` +
+                    `📚 課程名稱：${courseName}\n` +
+                    `👨‍🏫 授課老師：${teacherName}\n` +
+                    `👨‍🎓 學生姓名：${student.name}\n` +
+                    `📌 出缺勤狀況：${att}\n` +
+                    `📘 今日教學進度：${progress}\n`;
+                
+                if (hasExam) {
+                    parentMsg += `📝 測驗表現：${score}\n`;
+                }
 
-            parentMsg += `📖 回家作業：${homework}\n` +
-                `✅ 作業完成狀況：${hwStatus}\n` +
-                `💬 老師評語與叮嚀：${finalNote}\n` +
-                `------------------------\n` +
-                `感謝您的支持與配合，顧德補習班關心孩子的學習每一天！`;
+                parentMsg += `📖 回家作業：${homework}\n` +
+                    `✅ 作業完成狀況：${hwStatus}\n` +
+                    `💬 老師評語與叮嚀：${finalNote}\n` +
+                    `------------------------\n` +
+                    `感謝您的支持與配合，顧德補習班關心孩子的學習每一天！`;
+            }
 
             document.getElementById('parent-log-text').value = parentMsg;
         };
 
         window.generateParentLog = function(firestoreId, dept) {
-            const dateInput = document.getElementById(dept === 'junior' ? 'log-date-junior' : 'log-date-elementary');
-            const courseSelect = document.getElementById(dept === 'junior' ? 'log-course-select-junior' : 'log-course-select-elementary');
+            const dateInput = document.getElementById(`log-date-${dept}`);
+            const courseSelect = document.getElementById(`log-course-select-${dept}`);
             const date = dateInput ? dateInput.value : new Date().toISOString().slice(0, 10);
             const course = courseSelect ? courseSelect.value : '';
             openParentLogModal(firestoreId, course, date);
