@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 雲端題庫資料中心 (questionbank.html)</title>
+    <title>斗六顧德補習班 - 雲端題庫與系統糾錯中心</title>
     <style>
         :root {
             --primary: #0f172a;
             --accent: #2563eb;
             --success: #059669;
             --warning: #d97706;
+            --danger: #e11d48;
             --bg: #f8fafc;
             --border: #e2e8f0;
         }
@@ -18,7 +19,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             margin: 0; background: var(--bg); color: var(--primary); font-size: 15px; padding: 20px;
         }
-        .container { max-width: 950px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         header { 
             background: linear-gradient(135deg, #020617 0%, #1e293b 100%); color: white; padding: 20px; 
             border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -27,48 +28,108 @@
         header h2 { margin: 0; font-size: 20px; }
         .card { background: white; padding: 25px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border); }
         label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--primary); font-size: 14px; }
-        select {
+        select, input[type="text"], textarea {
             width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: #fff; outline: none;
         }
-        select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
         .btn { background: var(--accent); color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; transition: 0.2s; text-align: center; }
         .btn:active { transform: scale(0.98); }
         .btn-success { background: var(--success); box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
-        .bank-preview-box { background: #f1f5f9; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; max-height: 250px; overflow-y: auto; margin-top: 15px; border: 1px solid #cbd5e1; }
+        .btn-warning { background: var(--warning); color: white; }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+        .option-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h2>📚 斗六顧德補習班 ｜ 雲端題庫資料中心</h2>
+            <h2>📚 斗六顧德補習班 ｜ 雲端題庫與系統糾錯中心</h2>
             <a href="teacher.html" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px;">⬅️ 返回學生測驗主系統 (teacher.html)</a>
         </header>
 
+        <!-- 區塊一：整包題庫初始化同步 -->
         <div class="card">
             <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">
-                ☁️ 一鍵同步題庫至 Firebase 雲端 (國小一、二年級完整 160 題)
+                ☁️ 第一步：雲端題庫總初始化（若雲端尚無資料請點此）
             </h3>
             <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
-                這裡集中管理國小一、二年級上下學期的完整題庫。點擊下方按鈕即可將指定學期的 40 題（含自適應加強題）同步寫入 Firebase 雲端，讓 <code>teacher.html</code> 學生測驗端即時調用！
+                初次建置或需要將 160 題全數推播至雲端時使用。
+            </p>
+            <div class="grid-2">
+                <div>
+                    <label>選擇要初始化的學期：</label>
+                    <select id="init-target-select">
+                        <option value="g1_math_a">【國小一年級上學期】數學 (40題)</option>
+                        <option value="g1_math_b">【國小一年級下學期】數學 (40題)</option>
+                        <option value="g2_math_a">【國小二年級上學期】數學 (40題)</option>
+                        <option value="g2_math_b">【國小二年級下學期】數學 (40題)</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-success" onclick="initBankToCloud()">🚀 一鍵初始化該學期至雲端</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 區塊二：線上逐題即時糾錯與修改系統 -->
+        <div class="card" style="border-top: 4px solid var(--warning);">
+            <h3 style="margin-top:0; color:var(--warning); border-left: 4px solid var(--warning); padding-left: 10px;">
+                ✏️ 第二步：線上逐題即時糾錯與修改（老師修題專區）
+            </h3>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
+                老師若發現題目有錯、選項需修正或要幫忙「修正錯誤題型解析」，可直接在此選取該題進行線上修改並同步雲端！
             </p>
 
-            <div style="margin: 20px 0;">
-                <label>選擇要上傳的學期題庫：</label>
-                <select id="bank-target-select">
-                    <option value="g1_math_a">【國小一年級上學期】數學核心鑑測 (40題)</option>
-                    <option value="g1_math_b">【國小一年級下學期】數學進階鑑測 (40題)</option>
-                    <option value="g2_math_a">【國小二年級上學期】數學核心鑑測 (40題)</option>
-                    <option value="g2_math_b">【國小二年級下學期】數學進階鑑測 (40題)</option>
-                </select>
+            <div class="grid-2">
+                <div>
+                    <label>1. 選擇檢索學期：</label>
+                    <select id="edit-semester-select" onchange="loadQuestionsForEditing()">
+                        <option value="g1_math_a">【國小一年級上學期】數學</option>
+                        <option value="g1_math_b">【國小一年級下學期】數學</option>
+                        <option value="g2_math_a">【國小二年級上學期】數學</option>
+                        <option value="g2_math_b">【國小二年級下學期】數學</option>
+                    </select>
+                </div>
+                <div>
+                    <label>2. 選擇欲修改的題號：</label>
+                    <select id="edit-question-index" onchange="populateQuestionForm()"></select>
+                </div>
             </div>
 
-            <button class="btn btn-success" onclick="uploadSelectedBankToCloud()">
-                🚀 立即將此學期題庫寫入 Firebase 雲端
-            </button>
+            <div id="question-edit-form" style="display:none; margin-top:15px; border-top:1px dashed var(--border); padding-top:20px;">
+                <label>題目敘述：</label>
+                <textarea id="eq-text" rows="2"></textarea>
 
-            <div class="bank-preview-box" id="preview-box">
-                👉 正在載入題庫預覽結構...
+                <label>選項 (A, B, C, D)：</label>
+                <div class="option-row"><span style="font-weight:bold; width:30px;">A:</span><input type="text" id="eq-opt-0"></div>
+                <div class="option-row"><span style="font-weight:bold; width:30px;">B:</span><input type="text" id="eq-opt-1"></div>
+                <div class="option-row"><span style="font-weight:bold; width:30px;">C:</span><input type="text" id="eq-opt-2"></div>
+                <div class="option-row"><span style="font-weight:bold; width:30px;">D:</span><input type="text" id="eq-opt-3"></div>
+
+                <div class="grid-2">
+                    <div>
+                        <label>正確答案選項：</label>
+                        <select id="eq-ans">
+                            <option value="0">選項 A</option>
+                            <option value="1">選項 B</option>
+                            <option value="2">選項 C</option>
+                            <option value="3">選項 D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>錯誤題型 / 盲點標籤 (Tag)：</label>
+                        <input type="text" id="eq-tag" placeholder="例如：基礎數數與大小、計算粗心">
+                    </div>
+                </div>
+
+                <label>主任/老師觀念詳解與建議 (Advice)：</label>
+                <textarea id="eq-advice" rows="2" placeholder="學生答錯時會顯示的詳解..."></textarea>
+
+                <button class="btn btn-warning" style="margin-top: 10px;" onclick="saveSingleQuestionChanges()">
+                    💾 儲存並即時更新此題至 Firebase 雲端
+                </button>
             </div>
         </div>
     </div>
@@ -76,7 +137,7 @@
     <!-- Firebase 邏輯與完整 160 題庫模組 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -137,9 +198,7 @@
                     { q: "39. 28 的個位數字是多少？", options: ["2", "8", "20", "10"], ans: 1, tag: "基礎數數與大小", advice: "28 中，2 是十位，8 是個位。" },
                     { q: "40. 算式「10 - 3 = 7」中，數字「10」叫做什麼？", options: ["被減數", "減數", "差", "和"], ans: 0, tag: "加減法觀念", advice: "減法算式中被減的數叫做「被減數」。" }
                 ],
-                practicePool: {
-                    "基礎數數與大小": [{ q: "【加強題】比 7 大且比 10 小的數有幾個？", options: ["1 個", "2 個", "3 個", "4 個"], ans: 1, exp: "有 8、9 兩個數。" }]
-                }
+                practicePool: { "基礎數數與大小": [{ q: "【加強題】比 7 大且比 10 小的數有幾個？", options: ["1 個", "2 個", "3 個", "4 個"], ans: 1, exp: "有 8、9 兩個數。" }] }
             },
             "g1_math_b": {
                 name: "國小一年級下學期數學綜合學力鑑測 (40題)",
@@ -186,9 +245,7 @@
                     { q: "39. 花園裡有 18 朵紅花和 12 朵黃花，紅花比黃花多幾朵？", options: ["30 朵", "6 朵", "8 朵", "4 朵"], ans: 1, tag: "應用題-比較量", advice: "18 - 12 = 6 朵。" },
                     { q: "40. 計算算式：60 - 24 = ？", options: ["46", "36", "44", "34"], ans: 1, tag: "二位數加減", advice: "60 - 24 = 36。" }
                 ],
-                practicePool: {
-                    "進階二位數": [{ q: "【加強題】92 裡面有幾個十？", options: ["2", "9", "90", "10"], ans: 1, exp: "十位數字是 9，代表 9 個十。" }]
-                }
+                practicePool: { "進階二位數": [{ q: "【加強題】92 裡面有幾個十？", options: ["2", "9", "90", "10"], ans: 1, exp: "十位數字是 9，代表 9 個十。" }] }
             },
             "g2_math_a": {
                 name: "國小二年級上學期數學綜合學力鑑測 (40題)",
@@ -235,9 +292,7 @@
                     { q: "39. 計算：18 + 18 + 18 換成乘法算式是？", options: ["18 × 2", "18 × 3", "18 + 3", "3 × 3"], ans: 1, tag: "乘法意義", advice: "三個 18 相加就是 18 × 3。" },
                     { q: "40. 算式「8 × 8」的答案是多少？", options: ["56", "64", "72", "48"], ans: 1, tag: "九九乘法", advice: "八八六十四。" }
                 ],
-                practicePool: {
-                    "九九乘法": [{ q: "【加強題】7 × 7 = ？", options: ["42", "49", "56", "64"], ans: 1, exp: "七七四十九。" }]
-                }
+                practicePool: { "九九乘法": [{ q: "【加強題】7 × 7 = ？", options: ["42", "49", "56", "64"], ans: 1, exp: "七七四十九。" }] }
             },
             "g2_math_b": {
                 name: "國小二年級下學期數學綜合學力鑑測 (40題)",
@@ -271,7 +326,7 @@
                     { q: "26. 長方體總共有幾個面？", options: ["4 個面", "6 個面", "8 個面", "12 個面"], ans: 1, tag: "立體形體", advice: "長方體和正方體都有 6 個面。" },
                     { q: "27. 正方體總共有幾個頂點（角）？", options: ["6 個", "8 個", "12 個", "4 個"], ans: 0, tag: "立體形體", advice: "正方體有 8 個頂點、12 條邊。" },
                     { q: "28. 按照規律填填看：「2、4、6、8、( )」，括號中應該填入多少？", options: ["9", "10", "12", "14"], ans: 1, tag: "數列規律", advice: "每次多 2，8 的後面是 10。" },
-                    { q: "29. 球體有沒有平平的面？", options: ["有 1 個面", "有 6 個面", "沒有平平的面", "有 2 個面"], ans: 2, tag: "立體形體", advice: "球體表面完全是圓曲面，沒有平平的面。" },
+                    { q: "29. 球體有沒有平平的面？", options: ["1 個面", "6 個面", "沒有平平的面", "2 個面"], ans: 2, tag: "立體形體", advice: "球體表面完全是圓曲面，沒有平平的面。" },
                     { q: "30. 按照規律填填看：「5、10、15、20、( )」，括號中是？", options: ["22", "25", "30", "35"], ans: 1, tag: "數列規律", advice: "每次多 5，20 的後面是 25。" },
                     { q: "31. 有一個面是圓形，側面也是曲面，且只有一個頂點的是哪種形體？", options: ["圓柱", "圓錐", "球體", "長方體"], ans: 1, tag: "立體形體", advice: "像生日帽或錐子一樣的是圓錐。" },
                     { q: "32. 計算算式：48 ÷ 6 + 15 = ？", options: ["21", "23", "25", "28"], ans: 1, tag: "兩步驟計算", advice: "先算除法 48 ÷ 6 = 8，再算 8 + 15 = 23。" },
@@ -284,36 +339,107 @@
                     { q: "39. 教室長度大約是 8 什麼單位？", options: ["公分", "公尺", "毫米", "公克"], ans: 1, tag: "長度單位選擇", advice: "教室長度較大，使用「公尺」。" },
                     { q: "40. 有 27 顆糖果，每 9 顆裝一盒，可以裝成幾盒？", options: ["2 盒", "3 盒", "4 盒", "不夠裝"], ans: 1, tag: "除法應用", advice: "27 ÷ 9 = 3 盒。" }
                 ],
-                practicePool: {
-                    "除法概念": [{ q: "【加強題】15 朵花平分插在 3 個花瓶裡，每瓶幾朵？", options: ["3 朵", "4 朵", "5 朵", "6 朵"], ans: 2, exp: "15 ÷ 3 = 5 朵。" }]
-                }
+                practicePool: { "除法概念": [{ q: "【加強題】15 朵花平分插在 3 個花瓶裡，每瓶幾朵？", options: ["3 朵", "4 朵", "5 朵", "6 朵"], ans: 2, exp: "15 ÷ 3 = 5 朵。" }] }
             }
         };
 
-        function updatePreview() {
-            const key = document.getElementById('bank-target-select').value;
-            const data = MASTER_QUESTION_BANKS[key];
-            document.getElementById('preview-box').innerText = JSON.stringify(data, null, 2);
-        }
-        document.getElementById('bank-target-select').onchange = updatePreview;
+        let currentEditingBank = null;
 
-        window.uploadSelectedBankToCloud = async function() {
-            const key = document.getElementById('bank-target-select').value;
+        // 1. 初始化整包題庫上傳
+        window.initBankToCloud = async function() {
+            const key = document.getElementById('init-target-select').value;
             const bankData = MASTER_QUESTION_BANKS[key];
-
-            if (!confirm(`☁️ 確定要將【${bankData.name}】上傳同步至 Firebase 雲端嗎？`)) return;
-
+            if (!confirm(`☁️ 確定要將【${bankData.name}】初始化並覆蓋寫入雲端嗎？`)) return;
             try {
                 await setDoc(doc(db, "question_banks", key), bankData);
-                alert(`✅ 成功！【${bankData.name}】已寫入雲端資料庫！`);
+                alert(`✅ 成功！【${bankData.name}】已成功初始化至雲端。`);
+                loadQuestionsForEditing();
             } catch (e) {
                 console.error(e);
-                alert("❌ 上傳失敗，請檢查網路連線。");
+                alert("❌ 初始化失敗。");
+            }
+        };
+
+        // 2. 載入題目供老師在線上修改
+        window.loadQuestionsForEditing = async function() {
+            const semesterKey = document.getElementById('edit-semester-select').value;
+            const selectEl = document.getElementById('edit-question-index');
+            selectEl.innerHTML = '<option value="">-- 正在從雲端載入題目清單 --</option>';
+            document.getElementById('question-edit-form').style.display = 'none';
+
+            try {
+                const docRef = doc(db, "question_banks", semesterKey);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    currentEditingBank = docSnap.data();
+                } else {
+                    // 如果雲端沒有，先用本地預設
+                    currentEditingBank = MASTER_QUESTION_BANKS[semesterKey];
+                }
+
+                selectEl.innerHTML = '<option value="">-- 請選擇欲修改的題號 (第 1~40 題) --</option>';
+                currentEditingBank.questions.forEach((q, idx) => {
+                    selectEl.innerHTML += `<option value="${idx}">第 ${idx + 1} 題：${q.q.slice(0, 20)}...</option>`;
+                });
+            } catch (e) {
+                console.error(e);
+                alert("❌ 無法從雲端讀取題目，請確認網路或先點擊上方初始化。");
+            }
+        };
+
+        // 3. 填入單題編輯表單
+        window.populateQuestionForm = function() {
+            const idx = document.getElementById('edit-question-index').value;
+            if (idx === "") {
+                document.getElementById('question-edit-form').style.display = 'none';
+                return;
+            }
+
+            const q = currentEditingBank.questions[Number(idx)];
+            document.getElementById('eq-text').value = q.q;
+            document.getElementById('eq-opt-0').value = q.options[0] || '';
+            document.getElementById('eq-opt-1').value = q.options[1] || '';
+            document.getElementById('eq-opt-2').value = q.options[2] || '';
+            document.getElementById('eq-opt-3').value = q.options[3] || '';
+            document.getElementById('eq-ans').value = q.ans;
+            document.getElementById('eq-tag').value = q.tag || '';
+            document.getElementById('eq-advice').value = q.advice || '';
+
+            document.getElementById('question-edit-form').style.display = 'block';
+        };
+
+        // 4. 儲存單題修改並即時同步雲端
+        window.saveSingleQuestionChanges = async function() {
+            const idx = Number(document.getElementById('edit-question-index').value);
+            const semesterKey = document.getElementById('edit-semester-select').value;
+
+            // 更新暫存資料
+            currentEditingBank.questions[idx] = {
+                q: document.getElementById('eq-text').value.trim(),
+                options: [
+                    document.getElementById('eq-opt-0').value.trim(),
+                    document.getElementById('eq-opt-1').value.trim(),
+                    document.getElementById('eq-opt-2').value.trim(),
+                    document.getElementById('eq-opt-3').value.trim()
+                ],
+                ans: Number(document.getElementById('eq-ans').value),
+                tag: document.getElementById('eq-tag').value.trim(),
+                advice: document.getElementById('eq-advice').value.trim()
+            };
+
+            try {
+                // 將整份學期題庫（包含修正後的題目）寫回雲端
+                await setDoc(doc(db, "question_banks", semesterKey), currentEditingBank);
+                alert(`✅ 第 ${idx + 1} 題已成功修正並即時同步至雲端！學生在測驗端立刻生效。`);
+            } catch (e) {
+                console.error(e);
+                alert("❌ 儲存失敗。");
             }
         };
 
         window.onload = function() {
-            updatePreview();
+            loadQuestionsForEditing();
         };
     </script>
 </body>
