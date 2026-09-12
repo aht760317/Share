@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (大圖表展示版)</title>
+    <title>斗六顧德補習班 - 智慧學力診斷與親師共育中心 (旗艦尊榮版)</title>
+    <!-- Chart.js 圖表庫 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas 截圖轉圖檔支援 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #0f172a;
@@ -13,6 +16,7 @@
             --success: #059669;
             --warning: #d97706;
             --purple: #7c3aed;
+            --gold: #b45309;
             --bg: #f8fafc;
             --border: #e2e8f0;
         }
@@ -23,12 +27,12 @@
             -webkit-text-size-adjust: 100%;
         }
         header { 
-            background: var(--primary); color: white; padding: 16px 20px; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 16px 20px; 
             position: sticky; top: 0; z-index: 100;
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        header h2 { margin: 0; font-size: 19px; letter-spacing: 0.5px; }
+        header h2 { margin: 0; font-size: 18px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
         .header-btns { display: flex; gap: 8px; align-items: center; }
         .sync-quick-btn {
             background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);
@@ -49,7 +53,7 @@
 
         .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; text-align: center; box-shadow: 0 2px 5px rgba(37,99,235,0.2); }
         .btn:active { transform: scale(0.98); }
-        .btn-warning { background: var(--warning); color: #fff; box-shadow: 0 2px 5px rgba(217,119,6,0.2); }
+        .btn-warning { background: var(--warning); color: #fff; }
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-purple { background: var(--purple); color: #fff; }
         .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
@@ -60,63 +64,74 @@
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
         .tag-label {
-            background: #f1f5f9; padding: 8px 14px; border-radius: 20px; font-size: 13.5px; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; color: #334155;
+            background: #f1f5f9; padding: 7px 13px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; color: #334155; user-select: none;
         }
         .tag-label input { display: none; }
         .tag-label:has(input:checked) {
-            background: #dbeafe; border-color: #2563eb; color: #1e40af; font-weight: bold;
+            background: #fee2e2; border-color: #ef4444; color: #b91c1c; font-weight: bold;
+        }
+        .tag-strength:has(input:checked) {
+            background: #dcfce7 !important; border-color: #10b981 !important; color: #047857 !important; font-weight: bold;
         }
 
         .history-item {
             background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px;
             cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative;
         }
-        .history-item:hover { background: #f8fafc; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .history-item:hover { background: #f8fafc; border-color: var(--accent); transform: translateY(-1px); }
 
         .status-badge { position: absolute; top: 16px; right: 16px; font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 12px; }
         .status-pending { background: #fef08a; color: #854d0e; border: 1px solid #fde047; }
         .status-done { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 
+        /* 💎 頂級診斷報告書視覺設計 (適合截圖發送) */
         .report-preview-card {
-            background: #ffffff; border: 3px solid #2563eb; border-radius: 16px; padding: 25px; margin-top: 20px;
-            box-shadow: 0 15px 35px rgba(37,99,235,0.12); display: none; position: relative; overflow: hidden;
+            background: #ffffff; border: 2px solid #2563eb; border-radius: 16px; padding: 26px; margin-top: 25px;
+            box-shadow: 0 15px 35px rgba(37,99,235,0.08); display: none; position: relative; overflow: hidden;
         }
-        .report-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
-        .report-header h3 { margin: 0; color: var(--primary); font-size: 21px; }
-        .report-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
-        
-        .ai-summary-box {
-            background: #eff6ff; border-left: 4px solid #2563eb; padding: 14px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 13.5px; line-height: 1.6; color: #1e40af;
+        .report-header-banner {
+            text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 18px;
         }
-        .ai-summary-box b { color: #1d4ed8; display: block; margin-bottom: 4px; }
+        .report-header-banner h2 { margin: 0; color: #0f172a; font-size: 22px; letter-spacing: 1px; }
+        .report-header-banner p { margin: 6px 0 0; color: #64748b; font-size: 13.5px; }
 
-        .report-body { font-size: 14.5px; line-height: 1.6; }
+        .info-pill-bar {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; background: #f1f5f9; padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; font-size: 14px;
+        }
+
+        .ai-summary-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 0 10px 10px 0; margin-bottom: 18px; font-size: 14px; line-height: 1.6; color: #1e3a8a;
+        }
+        .ai-summary-box b { color: #1d4ed8; display: block; margin-bottom: 4px; font-size: 14.5px; }
+
+        .section-box {
+            border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 14px; background: #fff;
+        }
+        .section-title { font-weight: bold; color: #0f172a; font-size: 14.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
         .report-charts-grid {
-            display: grid; grid-template-columns: 1fr; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 15px 0;
+            display: grid; grid-template-columns: 1fr; gap: 15px; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 15px 0;
         }
         @media (min-width: 768px) { .report-charts-grid { grid-template-columns: 1fr 1fr; } }
-        
-        /* 讓畫布支援點擊放大的游標 */
         canvas { cursor: zoom-in; }
 
-        .unit-indicator {
-            text-align: center; font-size: 13px; font-weight: bold; color: #2563eb; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; margin-top: 6px;
-        }
-
-        .report-footer { text-align: center; margin-top: 20px; font-size: 12.5px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
-
-        .badge-score { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; }
+        .badge-score { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 13.5px; }
         .score-high { background: #dcfce7; color: #166534; }
         .score-mid { background: #fef9c3; color: #854d0e; }
         .score-low { background: #fee2e2; color: #991b1b; }
 
+        .signature-block {
+            display: flex; justify-content: space-between; align-items: flex-end; margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1; font-size: 13px; color: #64748b;
+        }
+        .official-seal {
+            border: 2px solid #dc2626; color: #dc2626; padding: 4px 12px; font-weight: bold; border-radius: 6px; font-size: 13px; transform: rotate(-3deg);
+        }
+
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(3px); }
         .modal-box { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; }
-
         .retest-block { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-top: 10px; }
         .retest-item { display:flex; gap:8px; margin-bottom:8px; align-items:center; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
 
-        /* 大圖表展示專屬樣式 */
         #large-chart-modal .modal-box { max-width: 900px; width: 95%; height: 80vh; display: flex; flex-direction: column; }
         .large-chart-container { flex: 1; position: relative; width: 100%; min-height: 0; }
     </style>
@@ -124,35 +139,37 @@
 <body>
 
     <header>
-        <h2>📊 顧德補習班 - 智慧學力診斷與親師共育中心</h2>
+        <h2>🏛️ 斗六顧德補習班 ｜ 智慧學力診斷與親師共育中心</h2>
         <div class="header-btns">
-            <button class="sync-quick-btn" onclick="document.getElementById('settings-panel').style.display='block'">⚙️ 設定</button>
-            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端</button>
+            <button class="sync-quick-btn" onclick="document.getElementById('settings-panel').style.display='block'">⚙️ 科目庫設定</button>
+            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端名冊</button>
         </div>
     </header>
 
     <div class="container">
         
-        <!-- ⚙️ 系統設定面板 -->
+        <!-- ⚙️ 擴充科目與單元面板 -->
         <div class="settings-panel" id="settings-panel" style="display:none; background:#fffbeb; border:2px dashed #f59e0b; padding:18px; border-radius:12px; margin-bottom:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                <h3 style="margin:0; color:#b45309; font-size:16px;">⚙️ 擴充科目與單元設定</h3>
+                <h3 style="margin:0; color:#b45309; font-size:16px;">⚙️ 擴充科目與單元進度庫</h3>
                 <button class="btn-small" style="background:transparent; border:none; font-size:16px; cursor:pointer;" onclick="this.parentElement.parentElement.style.display='none'">❌</button>
             </div>
             <label>新科目名稱：</label>
-            <input type="text" id="new-subject-input" placeholder="例如：國文、英文">
+            <input type="text" id="new-subject-input" placeholder="例如：理化、國文、英文">
             <label>預設單元清單 (用逗號分隔)：</label>
-            <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課">
+            <input type="text" id="new-units-input" placeholder="例如：第一課, 第二課, 綜合複習">
             <button class="btn btn-purple" onclick="addNewSubjectConfig()">➕ 儲存新科目設定</button>
         </div>
 
-        <!-- 🎯 核心檢測登錄面板 -->
+        <!-- 🎯 核心診斷登錄面板 -->
         <div class="card">
-            <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 8px; font-size: 17px;">學員能力檢測與AI因材施教登錄</h3>
+            <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px;">
+                學員多維度學力診斷與專屬因材處方登錄
+            </h3>
             
             <div class="grid-2">
                 <div>
-                    <label>1. 選擇年級：</label>
+                    <label>1. 選擇年級班別：</label>
                     <select id="filter-grade" onchange="onGradeChange()">
                         <option value="">-- 請選擇年級 --</option>
                         <option value="小一">國小一年級</option>
@@ -167,9 +184,9 @@
                     </select>
                 </div>
                 <div>
-                    <label>2. 選擇學生姓名：</label>
+                    <label>2. 選擇學員姓名：</label>
                     <select id="student-select" disabled onchange="loadStudentGrowthProfile()">
-                        <option value="">-- 請先選年級 --</option>
+                        <option value="">-- 請先選擇年級 --</option>
                     </select>
                 </div>
             </div>
@@ -177,92 +194,124 @@
             <div id="evaluation-form-wrapper" style="display:none; margin-top:15px; border-top:1px dashed var(--border); padding-top:16px;">
                 <div class="grid-2">
                     <div>
-                        <label>3. 檢測科目：</label>
+                        <label>3. 評量科目：</label>
                         <select id="subject-select" onchange="updateUnitDropdown()">
                             <option value="數學">數學</option>
                         </select>
                     </div>
                     <div>
-                        <label>4. 測驗單元：</label>
+                        <label>4. 評量核心單元：</label>
                         <select id="unit-select">
-                            <option value="">-- 請選單元 --</option>
+                            <option value="">-- 請選擇單元 --</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid-2">
                     <div>
-                        <label>本次評量分數：</label>
+                        <label>本次評量成績：</label>
                         <input type="number" id="eval-score" min="0" max="100" placeholder="例如：85" oninput="autoGenerateComment()">
                     </div>
                     <div>
-                        <label>細項備註：</label>
-                        <input type="text" id="eval-sub-note" placeholder="例如：第一章綜合小考">
+                        <label>題型性質 / 備註：</label>
+                        <input type="text" id="eval-sub-note" placeholder="例如：月考前週考、核心觀念隨堂測">
                     </div>
                 </div>
 
-                <label>學生常見盲點與弱點標籤 (可複選 ➔ 自動生成輔導方案)：</label>
+                <!-- 課堂亮點標籤 -->
+                <label style="color:#047857;">🌟 課堂表現與優勢亮點 (提升學生自信與學習動力)：</label>
+                <div class="tags-container" id="strength-tags">
+                    <label class="tag-label tag-strength"><input type="checkbox" name="stags" value="邏輯思維敏捷" onchange="autoGenerateComment()">邏輯思維敏捷</label>
+                    <label class="tag-label tag-strength"><input type="checkbox" name="stags" value="課堂專注度高" onchange="autoGenerateComment()">課堂專注度高</label>
+                    <label class="tag-label tag-strength"><input type="checkbox" name="stags" value="主動提問求甚解" onchange="autoGenerateComment()">主動提問求甚解</label>
+                    <label class="tag-label tag-strength"><input type="checkbox" name="stags" value="計算過程條理清楚" onchange="autoGenerateComment()">計算過程條理清楚</label>
+                    <label class="tag-label tag-strength"><input type="checkbox" name="stags" value="具備自我檢查意識" onchange="autoGenerateComment()">具備自我檢查意識</label>
+                </div>
+
+                <!-- 弱點盲點標籤 -->
+                <label style="color:#b91c1c;">⚠️ 待突破盲點與學習障礙 (複選 ➔ 自動精算個別化輔導處方)：</label>
                 <div class="tags-container" id="weakness-tags">
                     <label class="tag-label"><input type="checkbox" name="tags" value="計算粗心與正負號/小數點誤判" onchange="autoGenerateComment()">計算粗心與符號誤判</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="基本定義與核心觀念不扎實" onchange="autoGenerateComment()">基本觀念不扎實</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="看不懂題目文字敘述與陷阱" onchange="autoGenerateComment()">文字題意理解困難</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="文字題意理解困難" onchange="autoGenerateComment()">文字題意理解困難</label>
                     <label class="tag-label"><input type="checkbox" name="tags" value="應用題列式邏輯打結" onchange="autoGenerateComment()">應用題列式邏輯打結</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="公式記錯或變形運用不熟" onchange="autoGenerateComment()">公式套用錯誤</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="作圖題不精準或比例抓錯" onchange="autoGenerateComment()">作圖與空間概念弱</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="粗心看錯題目條件或單位" onchange="autoGenerateComment()">看錯題目條件/單位</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="解題速度過慢導致寫不完" onchange="autoGenerateComment()">解題速度熟練度不足</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="缺乏驗算習慣與專注力" onchange="autoGenerateComment()">缺乏驗算與專注力</label>
-                    <label class="tag-label"><input type="checkbox" name="tags" value="作業訂正敷衍觀念未通" onchange="autoGenerateComment()">作業訂正未徹底釐清</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="公式套用生硬或變形不熟" onchange="autoGenerateComment()">公式套用生硬</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="作圖與空間概念弱" onchange="autoGenerateComment()">作圖與空間概念弱</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="看錯題目條件或單位陷阱" onchange="autoGenerateComment()">看錯條件/單位陷阱</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="解題節奏慢導致作答匆忙" onchange="autoGenerateComment()">解題速度熟練度不足</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="缺乏驗算習慣" onchange="autoGenerateComment()">缺乏驗算習慣</label>
+                    <label class="tag-label"><input type="checkbox" name="tags" value="錯題訂正未徹底融會" onchange="autoGenerateComment()">作業訂正未徹底釐清</label>
                 </div>
 
-                <label>導師綜合評語與因材施教輔導方案：</label>
-                <textarea id="eval-comment" rows="4" placeholder="勾選上方標籤後自動生成，老師亦可直接修改..."></textarea>
+                <label>導師深度評語與個別化輔導處方 (發送給家長)：</label>
+                <textarea id="eval-comment" rows="4" placeholder="勾選上方標籤後系統自動生成，老師可根據孩子特質彈性潤飾..."></textarea>
 
                 <div class="grid-2" style="margin-top:12px;">
-                    <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長紀錄</button>
-                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出專業家長版診斷書 (含圖表與AI摘要)</button>
+                    <button class="btn" onclick="saveGrowthRecord()">💾 儲存成長數據庫</button>
+                    <button class="btn btn-success" onclick="generateProfessionalReport()">💎 產出家長專屬診斷書 (含雙圖表與核章)</button>
                 </div>
 
-                <!-- 💎 專業家長版診斷書預覽卡片 -->
+                <!-- 💎 專業家長版診斷書預覽卡片 (可轉圖) -->
                 <div class="report-preview-card" id="pro-report-card">
-                    <div class="report-header">
-                        <h3>斗六顧德補習班 ｜ 學員學力追蹤與診斷報告</h3>
-                        <p id="rep-date-student">2026-09-10 ｜ 學生姓名</p>
-                    </div>
-                    
-                    <div class="report-body">
-                        <div class="ai-summary-box">
-                            <b>💡 AI 智慧學力健檢摘要 (Learning Health Check)：</b>
-                            學力診斷是用來透視孩子真實學習盲點的關鍵方式。本次評估超越單純的學校分數與班級排名，透過作答細節精準找出學習起點、打破潛在瓶頸，並據此規劃專屬進度與指導方案，幫助孩子穩步超越！
+                    <div id="capture-zone" style="background:#fff; padding:10px;">
+                        <div class="report-header-banner">
+                            <h2>🏛️ 斗六顧德補習班 ｜ 學員學力診斷與成長報告</h2>
+                            <p id="rep-date-student">2026-09-12 ｜ 學生姓名 同學</p>
                         </div>
 
-                        <p><b>📚 檢測科目：</b><span id="rep-subject">數學</span> ｜ <b>🎯 評量單元：</b><span id="rep-unit">-</span></p>
-                        <p><b>📈 本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></p>
-                        
-                        <p style="margin-top:12px;"><b>⚠️ 診斷盲點：</b><span id="rep-tags" style="color:#e11d48; font-weight:bold;">無</span></p>
-                        <p style="background:#f1f5f9; padding:14px; border-radius:8px; margin-top:8px;"><b>💬 導師專業評語與因材施教方案：</b><br><span id="rep-comment" style="color:#334155; line-height:1.6;">-</span></p>
+                        <div class="info-pill-bar">
+                            <div>📚 <b>評量科目：</b><span id="rep-subject">數學</span></div>
+                            <div>🎯 <b>核心單元：</b><span id="rep-unit">-</span></div>
+                            <div>📈 <b>本次表現：</b><span id="rep-score" class="badge-score score-high">- 分</span></div>
+                        </div>
 
-                        <!-- 雙圖表區塊 (加入點擊放大提示) -->
+                        <div class="ai-summary-box">
+                            <b>💡 智慧學力健檢核心理念 (Learning Health Check)：</b>
+                            本次診斷不僅關注分數高低，更深入解析孩子的思維路徑與運算習慣。透過精準定位學習盲點，補習班為孩子擬定客製化「固本與超越處方」，陪伴孩子在扎實的成就感中持續進步！
+                        </div>
+
+                        <div class="section-box" style="background: #f0fdf4; border-color: #bbf7d0;">
+                            <div class="section-title" style="color:#166534;">🌟 導師觀察到的優勢亮點</div>
+                            <div id="rep-strengths" style="color:#15803d; line-height: 1.6;">課堂態度認真專注，主動性佳。</div>
+                        </div>
+
+                        <div class="section-box" style="background: #fef2f2; border-color: #fecaca;">
+                            <div class="section-title" style="color:#991b1b;">⚠️ 本次作答核心盲點</div>
+                            <div id="rep-tags" style="color:#b91c1c; font-weight:bold; line-height: 1.6;">無特別盲點</div>
+                        </div>
+
+                        <div class="section-box">
+                            <div class="section-title" style="color:#2563eb;">💬 導師因材施教方案與輔導處方</div>
+                            <div id="rep-comment" style="color:#334155; line-height:1.7;">-</div>
+                        </div>
+
+                        <!-- 雙圖表區塊 -->
                         <div class="report-charts-grid">
                             <div>
-                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">多維度學力雷達分析</h4>
-                                <canvas id="reportRadarChart" style="max-height: 160px;" onclick="openLargeChart('radar')"></canvas>
-                                <div class="unit-indicator" id="rep-radar-unit-label" style="cursor:pointer;" onclick="openLargeChart('radar')">單元能力掌握度 (點擊放大)</div>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 6px 0;">多維度思維能力分析</h4>
+                                <canvas id="reportRadarChart" style="max-height: 170px;" onclick="openLargeChart('radar')"></canvas>
+                                <div style="text-align:center; font-size:12px; color:#2563eb; margin-top:5px;">5大核心維度診斷</div>
                             </div>
                             <div>
-                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 5px 0;">學生個人成績走勢圖</h4>
-                                <canvas id="reportLineChart" style="max-height: 160px;" onclick="openLargeChart('line')"></canvas>
-                                <div class="unit-indicator" id="rep-line-name-label" style="background:#dcfce7; color:#166534; cursor:pointer;" onclick="openLargeChart('line')">學生走勢 (點擊放大)</div>
+                                <h4 style="text-align:center; color:#555; font-size:13px; margin:0 0 6px 0;">歷次小考成績成長走勢</h4>
+                                <canvas id="reportLineChart" style="max-height: 170px;" onclick="openLargeChart('line')"></canvas>
+                                <div style="text-align:center; font-size:12px; color:#059669; margin-top:5px;">穩健進步軌跡</div>
                             </div>
+                        </div>
+
+                        <div class="signature-block">
+                            <div>
+                                <div><b>指導班主任：</b> 吳雅鴻 主任</div>
+                                <div><b>顧德教學研發團隊 敬製</b></div>
+                            </div>
+                            <div class="official-seal">斗六顧德教學認證</div>
                         </div>
                     </div>
 
-                    <div class="report-footer">
-                        顧德補習班關心您的孩子每一天的進步與成長 ｜ 專屬親師共育系統
-                    </div>
-                    
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button class="btn btn-success" onclick="copyProReport()">📋 一鍵複製精美診斷書至 LINE</button>
+                    <!-- 操作按鈕列 -->
+                    <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-success" style="flex:1;" onclick="copyProReport()">📋 複製專業訊息至 LINE</button>
+                        <button class="btn btn-purple" style="flex:1;" onclick="downloadReportCardImage()">📷 下載高質感家長圖片卡</button>
                         <button class="btn" style="background:#64748b; width:auto;" onclick="document.getElementById('pro-report-card').style.display='none'">收起預覽</button>
                     </div>
                 </div>
@@ -275,27 +324,27 @@
             
             <div class="grid-2" style="margin-bottom: 25px;">
                 <div>
-                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">多維度學力雷達分析 (點擊放大)</h4>
+                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">多維度學力分析 (點擊放大)</h4>
                     <canvas id="growthRadarChart" style="max-height: 250px;" onclick="openLargeChart('radar')"></canvas>
                 </div>
                 <div>
-                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">歷次小考成績走勢 (點擊放大)</h4>
+                    <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">歷次小考走勢 (點擊放大)</h4>
                     <canvas id="growthLineChart" style="max-height: 250px;" onclick="openLargeChart('line')"></canvas>
                 </div>
             </div>
 
             <div>
-                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊卡片可修改/刪除/登錄重考)</h4>
+                <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊卡片可維護輔導進度與重測追蹤)</h4>
                 <div id="history-logs-container" style="max-height: 350px; overflow-y: auto; padding-right: 6px;"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- ✏️ 歷史紀錄編輯與多重重測彈窗 (極致優化版) -->
+    <!-- ✏️ 紀錄編輯與重測維護彈窗 -->
     <div class="modal-overlay" id="edit-record-modal">
         <div class="modal-box">
-            <h3 style="margin-top:0; color:var(--primary); font-size:18px; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">✏️ 紀錄維護與後續輔導追蹤</h3>
+            <h3 style="margin-top:0; color:var(--primary); font-size:18px; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">✏️ 輔導與重測追蹤維護</h3>
             <input type="hidden" id="edit-record-index">
 
             <div class="grid-2">
@@ -304,7 +353,7 @@
                     <input type="date" id="edit-record-date">
                 </div>
                 <div>
-                    <label>原始分數：</label>
+                    <label>初測分數：</label>
                     <input type="number" id="edit-record-score" min="0" max="100">
                 </div>
             </div>
@@ -320,50 +369,46 @@
                 </div>
             </div>
 
-            <!-- 輔導狀態追蹤 -->
             <div style="background: #f0fdf4; border: 1px dashed #4ade80; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <div class="grid-2">
                     <div>
-                        <label style="color:#166534;">👨‍🏫 內部輔導備忘錄 (不顯示於報告)：</label>
-                        <textarea id="edit-record-teacher-note" rows="2" placeholder="例如：已完成錯題重新講解..."></textarea>
+                        <label style="color:#166534;">👨‍🏫 輔導備忘錄 (內部追蹤)：</label>
+                        <textarea id="edit-record-teacher-note" rows="2" placeholder="例如：已安排晚自習錯題重新講解..."></textarea>
                     </div>
                     <div>
-                        <label style="color:#166534;">✅ 輔導完成日期：</label>
+                        <label style="color:#166534;">✅ 輔導完成結案日期：</label>
                         <input type="date" id="edit-record-done-date" style="border-color:#86efac;">
-                        <span style="font-size:12px; color:#166534;">(填寫日期後，紀錄將標記為已結案)</span>
                     </div>
                 </div>
             </div>
 
-            <label>評語與因材施教輔導方案 (發給家長)：</label>
+            <label>評語與輔導方案：</label>
             <textarea id="edit-record-comment" rows="4"></textarea>
 
-            <!-- 🔄 重測與補考紀錄專區 -->
             <div class="retest-block">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label style="margin:0; color:#b45309; font-size:15px;">🔄 補考與重測紀錄 (可無限次新增)：</label>
+                    <label style="margin:0; color:#b45309; font-size:15px;">🔄 補考與重測歷程 (見證進步幅度)：</label>
                     <button class="btn btn-purple btn-small" onclick="addRetestField()">➕ 新增重測</button>
                 </div>
                 <div id="retest-list-container"></div>
             </div>
 
-            <!-- 底部極簡操作列 -->
             <div style="display: flex; justify-content: space-between; align-items:center; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                <button class="btn btn-danger btn-small" onclick="deleteGrowthRecord()">🗑️ 刪除此紀錄</button>
+                <button class="btn btn-danger btn-small" onclick="deleteGrowthRecord()">🗑️ 刪除紀錄</button>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-small" style="background:#94a3b8;" onclick="document.getElementById('edit-record-modal').style.display='none'">取消返回</button>
-                    <button class="btn btn-success btn-small" onclick="updateGrowthRecord()">💾 儲存所有修改</button>
+                    <button class="btn btn-small" style="background:#94a3b8;" onclick="document.getElementById('edit-record-modal').style.display='none'">取消</button>
+                    <button class="btn btn-success btn-small" onclick="updateGrowthRecord()">💾 儲存修改</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 🔍 圖表放大展示彈窗 (Zoom-in Modal) -->
+    <!-- 🔍 圖表放大視窗 -->
     <div class="modal-overlay" id="large-chart-modal">
         <div class="modal-box" style="padding:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:15px;">
                 <h3 id="large-chart-title" style="margin:0; color:var(--primary); font-size:19px;">學力分析圖表</h3>
-                <button class="btn-small" style="background:#e2e8f0; color:#334155;" onclick="document.getElementById('large-chart-modal').style.display='none'">❌ 關閉視窗</button>
+                <button class="btn-small" style="background:#e2e8f0; color:#334155;" onclick="document.getElementById('large-chart-modal').style.display='none'">❌ 關閉</button>
             </div>
             <div class="large-chart-container">
                 <canvas id="largeChartCanvas"></canvas>
@@ -371,7 +416,7 @@
         </div>
     </div>
 
-    <!-- Firebase 邏輯核心 -->
+    <!-- Firebase 邏輯模組 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -425,18 +470,13 @@
                 });
 
                 updateSubjectDropdown();
-                if (showToast) alert(`✅ 成功同步！共有 ${window.state.students.length} 位學生。`);
+                if (showToast) alert(`✅ 成功同步！共有 ${window.state.students.length} 位學員資料。`);
             } catch (e) {
                 console.error(e);
-                if (showToast) alert('❌ 同步失敗，請檢查網路。');
+                if (showToast) alert('❌ 同步失敗，請檢查網路連線。');
             }
         }
         window.initCloudData = initCloudData;
-
-        window.toggleSettingsPanel = function() {
-            const panel = document.getElementById('settings-panel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        };
 
         window.onGradeChange = function() {
             const grade = document.getElementById('filter-grade').value;
@@ -485,7 +525,7 @@
             const student = window.state.students.find(s => s.firestoreId === id);
             if (!student) return;
 
-            document.getElementById('dashboard-title').innerText = `📊 【${student.name}】學員成長儀表板`;
+            document.getElementById('dashboard-title').innerText = `📊 【${student.name}】學力成長全景儀表板`;
 
             const records = student.growthRecords || [];
             renderHistoryLogs(records);
@@ -513,29 +553,33 @@
             }
         };
 
+        // 智慧評語生成器 (雙向激勵 + 因材處方)
         window.autoGenerateComment = function() {
-            const checkedTags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+            const checkedWeaknesses = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+            const checkedStrengths = Array.from(document.querySelectorAll('input[name="stags"]:checked')).map(el => el.value);
             const commentBox = document.getElementById('eval-comment');
-            const score = document.getElementById('eval-score').value || '80';
+            const score = document.getElementById('eval-score').value || '85';
+
+            let strengthText = checkedStrengths.length > 0 ? `孩子本次在課堂展現出【${checkedStrengths.join('、')}】的極佳特質，學習態度積極投入。` : `孩子學習態度認真踏實，表現值得肯定！`;
 
             let solutions = [];
-            checkedTags.forEach(tag => {
-                if (tag.includes('粗心')) solutions.push("啟動「驗算步驟雙軌制」，每次計算強制回算一次。");
-                if (tag.includes('觀念')) solutions.push("安排於晚自習「觀念重組與定義釐清」，透過圖解重建邏輯。");
-                if (tag.includes('文字')) solutions.push("進行「關鍵字圈選與題意拆解訓練」，培養文意轉化算式能力。");
-                if (tag.includes('應用題')) solutions.push("採用「逐步引導式提問」，陪同孩子拆解已知與未知。");
-                if (tag.includes('公式')) solutions.push("發放「公式推導手冊」，加強公式由來與變形運用。");
-                if (tag.includes('作圖')) solutions.push("加強「幾何作圖精準度訓練」，落實直尺與圓規標準步驟。");
-                if (tag.includes('條件')) solutions.push("實施「圈出題目前提條件」習慣養成，避免漏看陷阱。");
-                if (tag.includes('速度')) solutions.push("實施「計時限時小考演練」，提升考場專注力與答題節奏。");
-                if (tag.includes('驗算')) solutions.push("落實「自主檢查機制」，培育獨立思考與細心檢查好習慣。");
-                if (tag.includes('訂正')) solutions.push("執行「錯題重練三步驟」，確保觀念徹底搞懂不留盲點。");
+            checkedWeaknesses.forEach(tag => {
+                if (tag.includes('粗心')) solutions.push("已啟動「驗算步驟雙軌制」，引導孩子養成回推檢查的好習慣。");
+                if (tag.includes('觀念')) solutions.push("安排於晚自習進行「觀念重構」，透過圖解化引導重新建立定義。");
+                if (tag.includes('文字')) solutions.push("實施「關鍵題意拆解法」，帶著孩子圈劃條件，精準轉化成算式。");
+                if (tag.includes('應用題')) solutions.push("採用「逐步分解引導」，陪伴孩子建立題型建模能力。");
+                if (tag.includes('公式')) solutions.push("加強「公式推導本質理解」，減少死記硬背，提升靈活變形能力。");
+                if (tag.includes('作圖')) solutions.push("落實「尺規作圖標準步驟」，建立精確的幾何與空間立體感。");
+                if (tag.includes('條件')) solutions.push("培訓「題目陷阱標註習慣」，有效避免因看漏條件而失分。");
+                if (tag.includes('速度')) solutions.push("實施「計時分段演練」，優化考場答題節奏與專注力。");
+                if (tag.includes('驗算')) solutions.push("建立「自檢核對清單」，培養獨立檢查與解題自信。");
+                if (tag.includes('訂正')) solutions.push("貫徹「錯題二度重練機制」，確保每一個盲點皆徹底融會貫通。");
             });
 
-            if (checkedTags.length === 0) {
-                commentBox.value = `本次測驗表現得分 ${score} 分。學習狀態穩定，觀念掌握度高，請繼續保持！`;
+            if (checkedWeaknesses.length === 0) {
+                commentBox.value = `${strengthText} 本次評量取得 ${score} 分的優異表現，各項核心觀念穩固扎實，請家長給予孩子大大的鼓勵，我們將持續陪伴孩子挑戰進階題型！`;
             } else {
-                commentBox.value = `本次測驗得分 ${score} 分。針對盲點（${checkedTags.join('、')}），導師已擬定因材施教方案：${solutions.join(' ')} 老師會持續陪同孩子穩步前進！`;
+                commentBox.value = `${strengthText} 本次評量得分 ${score} 分。針對目前遇到的盲點（${checkedWeaknesses.join('、')}），導師已制定專屬因材施教方案：${solutions.join(' ')} 補習班將陪伴孩子穩步突破瓶頸，請家長放心！`;
             }
         };
 
@@ -544,7 +588,7 @@
             const unitsStr = document.getElementById('new-units-input').value.trim();
 
             if (!subName || !unitsStr) {
-                alert('請完整填寫！');
+                alert('請完整填寫科目名稱與單元清單！');
                 return;
             }
 
@@ -571,15 +615,16 @@
             container.innerHTML = records.map((r, index) => {
                 const sc = Number(r.score) || 0;
                 const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
-                const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需加強');
+                const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需輔導');
                 const tagsStr = (r.tags && Array.isArray(r.tags)) ? r.tags.join('、') : (r.tags || '無');
+                const sTagsStr = (r.strengths && Array.isArray(r.strengths)) ? r.strengths.join('、') : (r.strengths || '');
                 
                 const statusBadge = r.doneDate 
-                    ? `<span class="status-badge status-done">✅ 已結案 (${r.doneDate})</span>`
-                    : `<span class="status-badge status-pending">⏳ 待輔導</span>`;
+                    ? `<span class="status-badge status-done">✅ 輔導結案 (${r.doneDate})</span>`
+                    : `<span class="status-badge status-pending">⏳ 持續輔導中</span>`;
                 
                 const retestStr = (r.retests && r.retests.length > 0) 
-                    ? `<br><span style="color:#b45309; font-weight:bold; font-size:13px; display:inline-block; margin-top:4px;">🔄 重測軌跡: ${sc}分 ➔ ${r.retests.map(rt => rt.score + '分').join(' ➔ ')}</span>`
+                    ? `<br><span style="color:#b45309; font-weight:bold; font-size:13px; display:inline-block; margin-top:4px;">🔄 重測成長軌跡: ${sc}分 ➔ ${r.retests.map(rt => rt.score + '分').join(' ➔ ')}</span>`
                     : '';
 
                 return `
@@ -592,9 +637,10 @@
                             <span class="badge-score ${badgeCls}">初測: ${r.score} 分 (${badgeText})</span>
                             ${retestStr}
                         </div>
+                        ${sTagsStr ? `<div style="color:#059669; margin-bottom:3px; font-size:13px;">🌟 優勢：${sTagsStr}</div>` : ''}
                         <div style="color:#64748b; margin-bottom:4px; font-size:13.5px;">⚠️ 盲點：${tagsStr}</div>
                         <div style="color:#334155; font-size:13.5px;">💬 方案：${r.comment || '無'}</div>
-                        ${r.teacherNote ? `<div style="color:#059669; font-size:13px; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px; display:inline-block;">👨‍🏫 輔導備註：${r.teacherNote}</div>` : ''}
+                        ${r.teacherNote ? `<div style="color:#059669; font-size:13px; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px; display:inline-block;">👨‍🏫 輔導筆記：${r.teacherNote}</div>` : ''}
                     </div>
                 `;
             }).join('');
@@ -622,7 +668,7 @@
         function renderRetestList(retests) {
             const container = document.getElementById('retest-list-container');
             if (retests.length === 0) {
-                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄 (若成績不合格可點擊上方按鈕新增)</span>`;
+                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄 (若初測未達標可點擊上方按鈕追蹤進步)</span>`;
                 return;
             }
 
@@ -657,7 +703,7 @@
             btn.parentElement.remove();
             const container = document.getElementById('retest-list-container');
             if (container.children.length === 0) {
-                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄 (若成績不合格可點擊上方按鈕新增)</span>`;
+                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄</span>`;
             } else {
                 Array.from(container.children).forEach((child, idx) => {
                     child.querySelector('span').innerText = `第 ${idx + 1} 次：`;
@@ -691,13 +737,13 @@
             try {
                 await setDoc(doc(db, "classLogStudents", id), { ...student, growthRecords: student.growthRecords });
                 document.getElementById('edit-record-modal').style.display = 'none';
-                alert('✅ 紀錄與重測追蹤已成功更新！');
+                alert('✅ 紀錄與重測進度更新成功！');
                 loadStudentGrowthProfile();
             } catch (e) { alert('更新失敗'); }
         };
 
         window.deleteGrowthRecord = async function() {
-            if (!confirm('⚠️ 確定要刪除這筆檢測紀錄嗎？無法復原。')) return;
+            if (!confirm('⚠️ 確定要刪除這筆檢測紀錄嗎？')) return;
 
             const id = document.getElementById('student-select').value;
             const index = Number(document.getElementById('edit-record-index').value);
@@ -715,17 +761,17 @@
         };
 
         function renderCharts(records, radarCanvasId, lineCanvasId, radarType, lineType, studentName) {
-            let dims = [75, 75, 75, 75, 75];
+            let dims = [80, 80, 80, 80, 80];
             if (records.length > 0) {
                 const latest = records[0];
-                const sc = Number(latest.score) || 75;
+                const sc = Number(latest.score) || 80;
                 const tags = latest.tags || [];
                 dims = [
-                    Math.max(40, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
-                    Math.max(40, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
-                    Math.max(40, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
-                    Math.max(40, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
-                    Math.max(40, sc - (tags.some(t => t.includes('速度') || t.includes('專注') || t.includes('驗算')) ? 15 : 0))
+                    Math.max(45, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('速度') || t.includes('驗算')) ? 15 : 0))
                 ];
             }
 
@@ -736,10 +782,10 @@
             const newRadar = new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
-                    labels: ['基礎觀念扎實', '計算精準度', '文字題邏輯', '應用靈活性', '學習穩定度'],
+                    labels: ['觀念理解力', '運算精確度', '文意轉化力', '解題靈活性', '自主驗算度'],
                     datasets: [{
                         data: dims,
-                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.25)',
                         borderColor: '#2563eb',
                         borderWidth: 2,
                         pointBackgroundColor: '#2563eb'
@@ -757,12 +803,10 @@
             const sortedRecords = [...records].reverse();
             const labels = sortedRecords.map(r => r.date ? r.date.slice(5) : '未知');
             const fullDates = sortedRecords.map(r => r.date ? r.date : '未知');
-            const unitNames = sortedRecords.map(r => r.unit || '未指定單元');
+            const unitNames = sortedRecords.map(r => r.unit || '隨堂測驗');
             
             const scores = sortedRecords.map(r => {
-                if (r.retests && r.retests.length > 0) {
-                    return r.retests[r.retests.length - 1].score;
-                }
+                if (r.retests && r.retests.length > 0) return r.retests[r.retests.length - 1].score;
                 return r.score;
             });
 
@@ -776,10 +820,10 @@
                     labels: labels.length > 0 ? labels : ['初始'],
                     datasets: [{
                         label: `成績`,
-                        data: scores.length > 0 ? scores : [75],
+                        data: scores.length > 0 ? scores : [80],
                         borderColor: '#059669',
-                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                        tension: 0.3,
+                        backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                        tension: 0.35,
                         fill: true,
                         pointRadius: 4
                     }]
@@ -791,13 +835,12 @@
                         tooltip: {
                             callbacks: {
                                 title: function(context) {
-                                    if(fullDates.length > 0) return fullDates[context[0].dataIndex];
-                                    return context[0].label;
+                                    return fullDates.length > 0 ? fullDates[context[0].dataIndex] : context[0].label;
                                 },
                                 label: function(context) {
                                     let score = context.raw;
                                     let unit = unitNames.length > 0 ? unitNames[context.dataIndex] : '';
-                                    return ` 得分: ${score} 分 | 🎯 ${unit}`;
+                                    return ` 分數: ${score} 分 ｜ 🎯 ${unit}`;
                                 }
                             }
                         }
@@ -809,14 +852,13 @@
             if (lineType === 'repLine') repLineInstance = newLine;
         }
 
-        // 開啟放大圖表彈窗
         window.openLargeChart = function(type) {
             const id = document.getElementById('student-select').value;
             const student = window.state.students.find(s => s.firestoreId === id);
             if (!student) return;
             const records = student.growthRecords || [];
 
-            document.getElementById('large-chart-title').innerText = type === 'radar' ? `🎯 ${student.name} - 多維度學力分析圖` : `📈 ${student.name} - 歷次成績走勢圖`;
+            document.getElementById('large-chart-title').innerText = type === 'radar' ? `🎯 ${student.name} - 多維度學力分析大圖` : `📈 ${student.name} - 歷次成績走勢全景`;
             document.getElementById('large-chart-modal').style.display = 'flex';
             
             if (largeChartInstance) {
@@ -827,24 +869,24 @@
             const ctx = document.getElementById('largeChartCanvas').getContext('2d');
 
             if (type === 'radar') {
-                let dims = [75, 75, 75, 75, 75];
+                let dims = [80, 80, 80, 80, 80];
                 if (records.length > 0) {
                     const latest = records[0];
-                    const sc = Number(latest.score) || 75;
+                    const sc = Number(latest.score) || 80;
                     const tags = latest.tags || [];
                     dims = [
-                        Math.max(40, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
-                        Math.max(40, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
-                        Math.max(40, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
-                        Math.max(40, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
-                        Math.max(40, sc - (tags.some(t => t.includes('速度') || t.includes('專注') || t.includes('驗算')) ? 15 : 0))
+                        Math.max(45, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
+                        Math.max(45, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
+                        Math.max(45, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
+                        Math.max(45, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
+                        Math.max(45, sc - (tags.some(t => t.includes('速度') || t.includes('驗算')) ? 15 : 0))
                     ];
                 }
 
                 largeChartInstance = new Chart(ctx, {
                     type: 'radar',
                     data: {
-                        labels: ['基礎觀念扎實', '計算精準度', '文字題邏輯', '應用靈活性', '學習穩定度'],
+                        labels: ['觀念理解力', '運算精確度', '文意轉化力', '解題靈活性', '自主驗算度'],
                         datasets: [{
                             data: dims,
                             backgroundColor: 'rgba(37, 99, 235, 0.25)',
@@ -865,7 +907,7 @@
                 const sortedRecords = [...records].reverse();
                 const labels = sortedRecords.map(r => r.date ? r.date.slice(5) : '未知');
                 const fullDates = sortedRecords.map(r => r.date ? r.date : '未知');
-                const unitNames = sortedRecords.map(r => r.unit || '未指定單元');
+                const unitNames = sortedRecords.map(r => r.unit || '隨堂測驗');
                 const scores = sortedRecords.map(r => {
                     if (r.retests && r.retests.length > 0) return r.retests[r.retests.length - 1].score;
                     return r.score;
@@ -876,10 +918,10 @@
                     data: {
                         labels: labels.length > 0 ? labels : ['初始'],
                         datasets: [{
-                            data: scores.length > 0 ? scores : [75],
+                            data: scores.length > 0 ? scores : [80],
                             borderColor: '#059669',
-                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                            tension: 0.3,
+                            backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                            tension: 0.35,
                             fill: true,
                             pointRadius: 6,
                             borderWidth: 3
@@ -900,13 +942,12 @@
                                 padding: 12,
                                 callbacks: {
                                     title: function(context) {
-                                        if(fullDates.length > 0) return fullDates[context[0].dataIndex];
-                                        return context[0].label;
+                                        return fullDates.length > 0 ? fullDates[context[0].dataIndex] : context[0].label;
                                     },
                                     label: function(context) {
                                         let score = context.raw;
                                         let unit = unitNames.length > 0 ? unitNames[context.dataIndex] : '';
-                                        return ` 得分: ${score} 分 | 🎯 ${unit}`;
+                                        return ` 得分: ${score} 分 ｜ 🎯 ${unit}`;
                                     }
                                 }
                             }
@@ -924,15 +965,15 @@
             const subNote = document.getElementById('eval-sub-note').value.trim();
             const comment = document.getElementById('eval-comment').value.trim();
             const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+            const strengths = Array.from(document.querySelectorAll('input[name="stags"]:checked')).map(el => el.value);
 
             if (!id || !unit || !score) {
-                alert('請完整選擇學生、單元與分數！');
+                alert('請完整選擇學生、單元並填寫評量分數！');
                 return;
             }
 
             const student = window.state.students.find(s => s.firestoreId === id);
             if (!student) return;
-
             if (!student.growthRecords) student.growthRecords = [];
 
             const newRecord = {
@@ -941,6 +982,7 @@
                 unit: subNote ? `${unit} (${subNote})` : unit,
                 score: Number(score),
                 tags,
+                strengths,
                 comment,
                 teacherNote: '',
                 doneDate: '',
@@ -951,7 +993,7 @@
 
             try {
                 await setDoc(doc(db, "classLogStudents", id), { ...student, growthRecords: student.growthRecords });
-                alert('✅ 儲存成功！');
+                alert('✅ 診斷紀錄成功存檔！');
                 loadStudentGrowthProfile();
             } catch (e) { alert('儲存失敗'); }
         };
@@ -963,9 +1005,10 @@
             const score = document.getElementById('eval-score').value;
             const comment = document.getElementById('eval-comment').value.trim();
             const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(el => el.value);
+            const strengths = Array.from(document.querySelectorAll('input[name="stags"]:checked')).map(el => el.value);
 
             if (!id || !unit || !score) {
-                alert('請先填寫單元與分數！');
+                alert('請先填寫評量單元與分數！');
                 return;
             }
 
@@ -975,9 +1018,9 @@
             const today = new Date().toISOString().slice(0, 10);
             const sc = Number(score) || 0;
             const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
-            const badgeText = sc >= 85 ? '🌟 表現卓越' : (sc >= 70 ? '👍 表現穩定' : '⚠️ 需加強輔導');
+            const badgeText = sc >= 85 ? '🌟 表現卓越' : (sc >= 70 ? '👍 穩健進步' : '⚠️ 深度輔導');
 
-            document.getElementById('rep-date-student').innerText = `${today} ｜ ${student.name} 同學`;
+            document.getElementById('rep-date-student').innerText = `${today} ｜ ${student.name} 同學 (專屬成長診斷)`;
             document.getElementById('rep-subject').innerText = subject;
             document.getElementById('rep-unit').innerText = unit;
             
@@ -985,11 +1028,9 @@
             scoreBadge.className = `badge-score ${badgeCls}`;
             scoreBadge.innerText = `${score} 分 (${badgeText})`;
 
-            document.getElementById('rep-tags').innerText = tags.join('、') || '表現穩健，無特別盲點';
+            document.getElementById('rep-strengths').innerText = strengths.join('、') || '課堂專注穩定，主動積極。';
+            document.getElementById('rep-tags').innerText = tags.join('、') || '各維度發揮良好，無特別盲點。';
             document.getElementById('rep-comment').innerText = comment || '學習態度良好，觀念掌握扎實，請繼續保持！';
-
-            document.getElementById('rep-radar-unit-label').innerText = `🎯 ${unit} 能力掌握度 (點擊放大)`;
-            document.getElementById('rep-line-name-label').innerText = `📈 ${student.name} 學生成績成長圖 (點擊放大)`;
 
             const card = document.getElementById('pro-report-card');
             card.style.display = 'block';
@@ -999,31 +1040,50 @@
             renderCharts(records, 'reportRadarChart', 'reportLineChart', 'repRadar', 'repLine', student.name);
         };
 
+        // 📷 下載高質感圖片報告卡 (家長超有感)
+        window.downloadReportCardImage = function() {
+            const captureZone = document.getElementById('capture-zone');
+            const studentName = document.getElementById('student-select').selectedOptions[0].text.split(' ')[0];
+            const today = new Date().toISOString().slice(0, 10);
+
+            html2canvas(captureZone, { scale: 2, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${studentName}_顧德學力診斷報告_${today}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        };
+
         window.copyProReport = function() {
             const studentName = document.getElementById('student-select').selectedOptions[0].text;
             const subject = document.getElementById('rep-subject').innerText;
             const unit = document.getElementById('rep-unit').innerText;
             const scoreText = document.getElementById('rep-score').innerText;
+            const strengths = document.getElementById('rep-strengths').innerText;
             const tags = document.getElementById('rep-tags').innerText;
             const comment = document.getElementById('rep-comment').innerText;
             const today = new Date().toISOString().slice(0, 10);
 
             const reportText = 
-`【斗六顧德補習班】學員學力追蹤與診斷報告
-------------------------
-💡 AI 智慧學力健檢摘要：
-學力診斷是用來透視孩子真實學習盲點的關鍵方式，透過作答細節精準找出學習起點、打破瓶頸並規劃專屬進度。
+`🏛️【斗六顧德補習班 ｜ 學員學力診斷與成長報告】
+-----------------------------------
+親愛的家長您好，這是今日為孩子進行的深度學力健檢報告：
 
 📅 日期：${today}
-👨‍🎓 學生：${studentName}
-📚 科目：${subject}
-🎯 單元：${unit}
-📈 成績：${scoreText}
-⚠️ 診斷盲點：${tags}
-💬 導師評語與因材施教方案：
+👨‍🎓 學員：${studentName}
+📚 科目：${subject} ｜ 🎯 核心單元：${unit}
+📈 評量表現：${scoreText}
+
+🌟 課堂優勢亮點：
+${strengths}
+
+⚠️ 本次核心盲點透視：
+${tags}
+
+💬 導師因材施教專屬處方：
 ${comment}
-------------------------
-感謝您的支持與配合，顧德補習班關心孩子的每一步成長！`;
+-----------------------------------
+💡 顧德教學堅持超越傳統只看分數的教學法，以精準處方陪同孩子跨越盲點、建立恆毅力！若對進度有任何想了解，歡迎隨時與主任交流。`;
 
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = reportText;
@@ -1032,7 +1092,7 @@ ${comment}
             document.execCommand('copy');
             document.body.removeChild(tempTextArea);
 
-            alert('✅ 專業診斷報告文字已複製！可直接貼至 LINE 給家長。');
+            alert('✅ 專業親師共育診斷報告已複製！可直接傳送給家長。');
         };
 
         window.onload = function() { initCloudData(); };
