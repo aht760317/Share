@@ -672,10 +672,10 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(true)">全選</button>
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
+            <!-- 修改處：將破壞性的合併改為前端視覺合併與收款 -->
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選</button>
-                <button class="btn-gray action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="unmergeCheckedUnpaidBills()">✂️ 分開科目</button>
-                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="printCheckedUnpaidNotices()">🖨️ 列印勾選通知單</button>
+                <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #10B981; color: white; border: none; font-weight: bold; border-radius: 6px;" onclick="batchPayCheckedUnpaid()">💰 勾選合併收款</button>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印勾選合併通知單</button>
             </div>
         </div>
 
@@ -864,7 +864,7 @@
     </div>
 </div>
 
-<!-- 彈出視窗：增加/修改學費項目 Modal (已新增「不要自動續費」勾選框與「刪除此單據」按鈕) -->
+<!-- 彈出視窗：增加/修改學費項目 Modal -->
 <div id="addFeeItemModal" class="modal-overlay" style="display: none;">
     <div class="modal-box" style="max-width: 580px;">
         <h3 style="margin-top:0; color: var(--primary); font-size: 17px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">
@@ -1054,7 +1054,6 @@
     let jQuickSortable = null;
     let oQuickSortable = null;
 
-    // 定義通用工具函數並直接掛載到 window，避免按鈕呼叫時找不到
     function cleanClassName(name) {
         if(!name) return '';
         return name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '').trim();
@@ -2199,140 +2198,88 @@
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
-    window.mergeCheckedUnpaidBills = async function() {
+    // 【新增功能】前端視覺合併列印 + 批次直接銷帳 (不破壞後台班級資料庫結構)
+    window.batchPayCheckedUnpaid = async function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
-        if (checkedBoxes.length < 2) { alert('⚠️ 請至少勾選兩筆單據進行合併！'); return; }
-
-        const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
-        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
-
-        const studentName = targetBills[0].studentName;
-        const allSameStudent = targetBills.every(b => b.studentName === studentName);
-        if (!allSameStudent) { alert('⚠️ 合併失敗：只能勾選「同一位學生」的單據進行合併喔！'); return; }
-
-        if(!confirm(`確定要將 ${studentName} 的 ${targetBills.length} 筆單據合併成一張嗎？`)) return;
-
-        let combinedItems = [];
-        let combinedTotal = 0;
-        let classNames = new Set();
-        let combinedNotes = [];
-
-        targetBills.forEach(bill => {
-            const cleanCls = cleanClassName(bill.className);
-            bill.items.forEach(item => {
-                let cleanItemName = item.name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '');
-                combinedItems.push({ name: `[${cleanCls}] ${cleanItemName}`, amount: item.amount });
-            });
-            combinedTotal += bill.total;
-            classNames.add(cleanCls);
-            if(bill.billNote) combinedNotes.push(bill.billNote);
-        });
-
-        const newClassName = '斗六顧德 ' + Array.from(classNames).join(' + ');
-        const newBill = {
-            id: Date.now(),
-            date: getCurrentDateStr(),
-            yearMonth: targetBills[0].yearMonth,
-            periodStr: targetBills[0].periodStr, 
-            className: newClassName.length > 30 ? "斗六顧德 多科綜合班" : newClassName,
-            studentName: studentName,
-            items: combinedItems,
-            total: combinedTotal,
-            isPaid: false,
-            paidDate: null,
-            billNote: combinedNotes.join(' / '),
-            noAutoRenew: false
-        };
-
-        try {
-            const docRef = await addDoc(collection(db, "bills"), newBill);
-            newBill.firestoreId = docRef.id;
-            window.bills.unshift(newBill);
-
-            for (let bill of targetBills) {
-                await deleteDoc(doc(db, "bills", bill.firestoreId));
-                window.bills = window.bills.filter(b => b.id !== bill.id);
-            }
-
-            window.renderBillingStudentsTable();
-            window.renderRecords();
-            alert('✅ 成功合併單據！');
-        } catch (e) {
-            console.error("合併失敗：", e);
-            alert("❌ 合併失敗請稍後再試！");
-        }
-    };
-
-    window.unmergeCheckedUnpaidBills = async function() {
-        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
-        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的合併單據！'); return; }
+        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要合併收款的單據！'); return; }
 
         const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.value));
         const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
 
-        let hasMerged = false;
-        for (let bill of targetBills) {
-            if (bill.className.includes('+') || bill.className.includes('多科綜合班')) { hasMerged = true; break; }
+        if (targetBills.length === 0) { alert('⚠️ 找不到所選的未繳費單據！'); return; }
+
+        const studentNames = [...new Set(targetBills.map(b => b.studentName))];
+        let confirmMsg = `確定要將這 ${targetBills.length} 筆單據一併轉為「已繳費」嗎？\n(系統將自動分別銷帳，維持原本各班級獨立紀錄)`;
+        if (studentNames.length > 1) {
+            confirmMsg = `您勾選了多位不同的學生，共 ${targetBills.length} 筆單據。\n確定要一併轉為「已繳費」嗎？\n(系統將自動分別銷帳，維持原本紀錄)`;
         }
 
-        if (!hasMerged) { alert('⚠️ 勾選的單據中似乎沒有合併單據喔！'); return; }
-        if (!confirm('確定要將勾選的合併單據拆分成原本的獨立科目嗎？')) return;
+        if (!confirm(confirmMsg)) return;
+
+        let successCount = 0;
+        const payDate = getCurrentDateStr();
 
         try {
             for (let bill of targetBills) {
-                if (!(bill.className.includes('+') || bill.className.includes('多科綜合班'))) continue;
-
-                const classGroups = {};
-                let defaultClass = bill.className.split('+')[0].trim(); 
-
-                bill.items.forEach(item => {
-                    let clsName = defaultClass;
-                    let itemName = item.name;
-                    const match = item.name.match(/^\[(.*?)\]\s*(.*)$/);
-                    if (match) {
-                        clsName = match[1].trim();
-                        itemName = match[2].trim();
-                    }
-                    if (!clsName.startsWith('斗六顧德') && !clsName.startsWith('顧德')) {
-                        clsName = '斗六顧德 ' + clsName;
-                    }
-                    if (!classGroups[clsName]) classGroups[clsName] = { items: [], total: 0 };
-                    classGroups[clsName].items.push({ name: itemName, amount: item.amount });
-                    classGroups[clsName].total += item.amount;
+                bill.isPaid = true;
+                bill.paidDate = payDate;
+                await setDoc(doc(db, "bills", bill.firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: true,
+                    paidDate: payDate,
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew
                 });
-
-                for (const [clsName, data] of Object.entries(classGroups)) {
-                    const newBill = {
-                        id: Date.now() + Math.floor(Math.random() * 1000),
-                        date: getCurrentDateStr(),
-                        yearMonth: bill.yearMonth,
-                        periodStr: bill.periodStr, 
-                        className: clsName,
-                        studentName: bill.studentName,
-                        items: data.items,
-                        total: data.total,
-                        isPaid: false,
-                        paidDate: null,
-                        billNote: bill.billNote || '',
-                        noAutoRenew: bill.noAutoRenew || false
-                    };
-                    const docRef = await addDoc(collection(db, "bills"), newBill);
-                    newBill.firestoreId = docRef.id;
-                    window.bills.unshift(newBill);
-                    await new Promise(r => setTimeout(r, 10));
-                }
-
-                await deleteDoc(doc(db, "bills", bill.firestoreId));
-                window.bills = window.bills.filter(b => b.id !== bill.id);
+                await autoCreateNextPeriodBill(bill);
+                successCount++;
             }
 
             window.renderBillingStudentsTable();
             window.renderRecords();
-            alert('✅ 單據已成功拆分為獨立科目！');
+            
+            if (confirm(`✅ 成功銷帳 ${successCount} 筆單據！\n\n需要立刻印出這些勾選單據的「合併正式收據(1頁2聯)」給家長嗎？`)) {
+                window.printCombinedReceiptsFromBills(targetBills);
+            }
         } catch (e) {
-            console.error("拆分失敗：", e);
-            alert("❌ 拆分失敗請稍後再試！");
+            console.error("批次收款失敗：", e);
+            alert("❌ 收款過程中發生錯誤，請重新整理頁面後確認！");
         }
+    };
+
+    window.printCombinedReceiptsFromBills = function(targetBills) {
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
+
+        const receiptHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            let rHtml = '<div class="receipt-container-page">';
+            if (bills.length === 1) {
+                rHtml += window.getSingleReceiptHtml(bills[0], true, '家長收執聯');
+                rHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                rHtml += window.getSingleReceiptHtml(bills[0], true, '補習班存根聯');
+            } else {
+                rHtml += window.getCombinedReceiptHtml(bills, true, '家長收執聯');
+                rHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+                rHtml += window.getCombinedReceiptHtml(bills, true, '補習班存根聯');
+            }
+            rHtml += '</div>';
+            receiptHtmls.push(rHtml);
+        }
+
+        const combinedHtml = receiptHtmls.join('<div class="page-break"></div>');
+        document.getElementById('printArea').innerHTML = combinedHtml;
+        window.print();
     };
 
     window.printCheckedUnpaidNotices = function() {
