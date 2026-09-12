@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力戰力診斷與雲端題庫中心</title>
+    <title>斗六顧德補習班 - 智慧學力戰力診斷與雲端題庫測驗中心</title>
     <!-- Chart.js 圖表庫 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- html2canvas 截圖轉圖檔支援 -->
@@ -137,6 +137,7 @@
     <header>
         <h2>🏛️ 斗六顧德補習班 ｜ 智慧學力戰力診斷中心</h2>
         <div class="header-btns">
+            <a href="questionbank.html" target="_blank" class="sync-quick-btn" style="text-decoration: none;">⚙️ 前往題庫後台 (questionbank.html)</a>
             <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端題庫與名冊</button>
         </div>
     </header>
@@ -144,8 +145,8 @@
     <div class="container">
         
         <div class="sync-status-bar">
-            <div><span class="status-dot"></span>題庫架構：<strong>Firebase 雲端集中式題庫 (同步連動中)</strong></div>
-            <div id="bank-sync-info" style="font-size:12.5px; color:#475569;">支援隨時遠端更新考卷與自動派題</div>
+            <div><span class="status-dot"></span>題庫架構：<strong>Firebase 雲端集中式題庫 (與 questionbank.html 連動中)</strong></div>
+            <div id="bank-sync-info" style="font-size:12.5px; color:#475569;">自動讀取雲端 question_banks 集合</div>
         </div>
 
         <div class="tab-container">
@@ -175,9 +176,9 @@
                 </div>
 
                 <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-bottom:15px;">
-                    <label>選擇戰鬥地圖 (雲端測驗考卷)：</label>
+                    <label>選擇戰鬥地圖 (從 Firebase 雲端讀取的考卷)：</label>
                     <select id="exam-paper-select">
-                        <!-- 動態從 Firebase 抓取 -->
+                        <option value="">-- 正在從 Firebase 載入雲端考卷 --</option>
                     </select>
                 </div>
                 <button class="btn btn-purple" style="font-size:16px; padding:14px;" onclick="startOnlineExam()">🚀 開始測驗 (進入作答)</button>
@@ -222,6 +223,10 @@
                     <div>
                         <label>就讀年級：</label>
                         <select id="ns-grade">
+                            <option value="小一">國小一年級</option>
+                            <option value="小二">國小二年級</option>
+                            <option value="小三">國小三年級</option>
+                            <option value="小四">國小四年級</option>
                             <option value="小五">國小五年級</option>
                             <option value="小六">國小六年級</option>
                             <option value="國一">國中一年級</option>
@@ -259,8 +264,11 @@
                         <select id="filter-grade" onchange="onGradeChange()">
                             <option value="">-- 請選擇年級 --</option>
                             <option value="新生班">🆕 新生班 (尚未轉正式)</option>
+                            <option value="小一">國小一年級</option>
+                            <option value="小二">國小二年級</option>
                             <option value="小五">國小五年級</option>
-                            <option value="國中">國中部</option>
+                            <option value="國六">國小六年級</option>
+                            <option value="國一">國中一年級</option>
                         </select>
                     </div>
                     <div>
@@ -337,24 +345,7 @@
         window.state = { students: [], exams: {} };
         let radarInstance = null, lineInstance = null;
 
-        // 內建標準 40 題備援庫存
-        const defaultExams = {
-            "math_g5_comprehensive": {
-                name: "【國小五年級】數學綜合學力鑑測 (40題)",
-                subject: "數學",
-                questions: Array.from({length: 40}, (_, i) => ({
-                    q: `${i+1}. 正方形邊長為 6 公分，其周長與面積分別為多少？`,
-                    options: ["周長24, 面積36", "周長36, 面積24", "周長12, 面積36", "周長24, 面積24"],
-                    ans: 0,
-                    tag: "周長與面積定義混淆",
-                    advice: "加強正方形周長(邊長×4)與面積(邊長×邊長)公式區分。"
-                })),
-                practicePool: {
-                    "周長與面積定義混淆": [{ q: "【加強題】 邊長 5 公分的正方形面積？", options: ["20", "25", "10", "15"], ans: 1, exp: "面積 = 5 × 5 = 25 平方公分" }]
-                }
-            }
-        };
-
+        // 從 Firebase 雲端讀取 question_banks 集合 (與 questionbank.html 完全連動)
         async function initCloudData(showToast = false) {
             try {
                 // 1. 同步學生名冊
@@ -362,13 +353,14 @@
                 window.state.students = [];
                 snapshot.forEach(docSnap => window.state.students.push({ firestoreId: docSnap.id, ...docSnap.data() }));
                 
-                // 2. 同步雲端題庫 (從 classLogExams 抓取)
-                window.state.exams = { ...defaultExams };
-                const examSnap = await getDocs(collection(db, "classLogExams"));
+                // 2. 從 question_banks 雲端題庫同步所有學期考卷
+                window.state.exams = {};
+                const examSnap = await getDocs(collection(db, "question_banks"));
                 examSnap.forEach(docSnap => {
                     const eData = docSnap.data();
-                    if (eData.id && eData.questions) {
-                        window.state.exams[eData.id] = eData;
+                    const docId = docSnap.id;
+                    if (eData && eData.questions) {
+                        window.state.exams[docId] = eData;
                     }
                 });
 
@@ -376,9 +368,7 @@
                 if (showToast) alert(`✅ 成功同步！共有 ${window.state.students.length} 位學員與最新雲端題庫。`);
             } catch (e) {
                 console.error(e);
-                window.state.exams = { ...defaultExams };
-                renderExamDropdown();
-                if (showToast) alert('❌ 雲端同步失敗，已載入本機備用題庫。');
+                if (showToast) alert('❌ 雲端同步失敗，請確認網路。');
             }
         }
         window.initCloudData = initCloudData;
@@ -387,10 +377,17 @@
             const select = document.getElementById('exam-paper-select');
             if (!select) return;
             select.innerHTML = '';
-            for (let key in window.state.exams) {
+            
+            const keys = Object.keys(window.state.exams);
+            if (keys.length === 0) {
+                select.innerHTML = '<option value="">-- 雲端尚無題庫，請先至 questionbank.html 初始化 --</option>';
+                return;
+            }
+
+            keys.forEach(key => {
                 const ex = window.state.exams[key];
                 select.innerHTML += `<option value="${key}">${ex.name} (${ex.questions.length}題)</option>`;
-            }
+            });
         }
 
         window.switchTab = function(tabId) {
@@ -407,7 +404,9 @@
             if (!name) { alert('⚠️ 請先輸入挑戰學員姓名！'); return; }
 
             const paperId = document.getElementById('exam-paper-select').value;
-            const paper = window.state.exams[paperId] || defaultExams["math_g5_comprehensive"];
+            if (!paperId) { alert('⚠️ 請先選擇測驗考卷！'); return; }
+            
+            const paper = window.state.exams[paperId];
 
             document.getElementById('display-exam-name').innerText = paper.name;
             document.getElementById('display-student-name').innerText = name;
@@ -434,7 +433,7 @@
 
         window.gradeExamAndShowResult = function() {
             const paperId = document.getElementById('exam-paper-select').value;
-            const paper = window.state.exams[paperId] || defaultExams["math_g5_comprehensive"];
+            const paper = window.state.exams[paperId];
             
             let correctCount = 0;
             let wrongTags = [];
@@ -601,7 +600,6 @@
                 </div>
             `).join('');
 
-            // 簡易雷達與折線圖
             if (radarInstance) radarInstance.destroy();
             radarInstance = new Chart(document.getElementById('growthRadarChart'), {
                 type: 'radar',
@@ -620,8 +618,8 @@
             document.getElementById('pro-report-card').style.display = 'block';
             document.getElementById('pro-report-card').scrollIntoView({ behavior: 'smooth' });
 
-            if (lineInstance) lineInstance.destroy();
-            lineInstance = new Chart(document.getElementById('reportRadarChart'), {
+            if (radarInstance) radarInstance.destroy();
+            radarInstance = new Chart(document.getElementById('reportRadarChart'), {
                 type: 'radar',
                 data: { labels: ['觀念', '計算', '應用', '邏輯', '驗算'], datasets: [{ data: [score, score, score-5, score, score-5], backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb' }] },
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
