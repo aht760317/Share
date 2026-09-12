@@ -672,10 +672,15 @@
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(true)">全選</button>
                 <button class="btn-select" style="padding: 4px 10px; font-size: 12px;" onclick="toggleSelectAllUnpaid(false)">取消全選</button>
             </div>
-            <!-- 修改處：將破壞性的合併改為前端視覺合併與收款 -->
+            
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #10B981; color: white; border: none; font-weight: bold; border-radius: 6px;" onclick="batchPayCheckedUnpaid()">💰 勾選合併收款</button>
-                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印勾選合併通知單</button>
+                <!-- 這裡把被我移除的舊版同步按鈕全數加回來！ -->
+                <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選(改資料庫)</button>
+                <button class="btn-gray action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="unmergeCheckedUnpaidBills()">✂️ 分開科目</button>
+                
+                <!-- 以及這是我最新幫你加的強大功能 -->
+                <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #10B981; color: white; border: none; font-weight: bold; border-radius: 6px;" onclick="batchPayCheckedUnpaid()">💰 勾選合併收款(不跑位)</button>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印合併通知單</button>
             </div>
         </div>
 
@@ -2281,6 +2286,145 @@
         document.getElementById('printArea').innerHTML = combinedHtml;
         window.print();
     };
+
+    // 把舊版的合併勾選功能補回來！
+    window.mergeCheckedUnpaidBills = async function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length < 2) { alert('⚠️ 請至少勾選兩筆單據進行合併！'); return; }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+
+        const studentName = targetBills[0].studentName;
+        const allSameStudent = targetBills.every(b => b.studentName === studentName);
+        if (!allSameStudent) { alert('⚠️ 合併失敗：只能勾選「同一位學生」的單據進行合併喔！'); return; }
+
+        if(!confirm(`確定要將 ${studentName} 的 ${targetBills.length} 筆單據合併成一張嗎？\n(注意：此操作會將資料庫中分開的班級資料合併起來)`)) return;
+
+        let combinedItems = [];
+        let combinedTotal = 0;
+        let classNames = new Set();
+        let combinedNotes = [];
+
+        targetBills.forEach(bill => {
+            const cleanCls = cleanClassName(bill.className);
+            bill.items.forEach(item => {
+                let cleanItemName = item.name.replace(/斗六顧德\s*/g, '').replace(/顧德\s*/g, '');
+                combinedItems.push({ name: `[${cleanCls}] ${cleanItemName}`, amount: item.amount });
+            });
+            combinedTotal += bill.total;
+            classNames.add(cleanCls);
+            if(bill.billNote) combinedNotes.push(bill.billNote);
+        });
+
+        const newClassName = '斗六顧德 ' + Array.from(classNames).join(' + ');
+        const newBill = {
+            id: Date.now(),
+            date: getCurrentDateStr(),
+            yearMonth: targetBills[0].yearMonth,
+            periodStr: targetBills[0].periodStr, 
+            className: newClassName.length > 30 ? "斗六顧德 多科綜合班" : newClassName,
+            studentName: studentName,
+            items: combinedItems,
+            total: combinedTotal,
+            isPaid: false,
+            paidDate: null,
+            billNote: combinedNotes.join(' / '),
+            noAutoRenew: false
+        };
+
+        try {
+            const docRef = await addDoc(collection(db, "bills"), newBill);
+            newBill.firestoreId = docRef.id;
+            window.bills.unshift(newBill);
+
+            for (let bill of targetBills) {
+                await deleteDoc(doc(db, "bills", bill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== bill.id);
+            }
+
+            window.renderBillingStudentsTable();
+            window.renderRecords();
+            alert('✅ 成功合併單據！');
+        } catch (e) {
+            console.error("合併失敗：", e);
+            alert("❌ 合併失敗請稍後再試！");
+        }
+    };
+
+    // 把舊版的分開科目功能補回來！
+    window.unmergeCheckedUnpaidBills = async function() {
+        const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
+        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的合併單據！'); return; }
+
+        const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+
+        let hasMerged = false;
+        for (let bill of targetBills) {
+            if (bill.className.includes('+') || bill.className.includes('多科綜合班')) { hasMerged = true; break; }
+        }
+
+        if (!hasMerged) { alert('⚠️ 勾選的單據中似乎沒有合併單據喔！'); return; }
+        if (!confirm('確定要將勾選的合併單據拆分成原本的獨立科目嗎？')) return;
+
+        try {
+            for (let bill of targetBills) {
+                if (!(bill.className.includes('+') || bill.className.includes('多科綜合班'))) continue;
+
+                const classGroups = {};
+                let defaultClass = bill.className.split('+')[0].trim(); 
+
+                bill.items.forEach(item => {
+                    let clsName = defaultClass;
+                    let itemName = item.name;
+                    const match = item.name.match(/^\[(.*?)\]\s*(.*)$/);
+                    if (match) {
+                        clsName = match[1].trim();
+                        itemName = match[2].trim();
+                    }
+                    if (!clsName.startsWith('斗六顧德') && !clsName.startsWith('顧德')) {
+                        clsName = '斗六顧德 ' + clsName;
+                    }
+                    if (!classGroups[clsName]) classGroups[clsName] = { items: [], total: 0 };
+                    classGroups[clsName].items.push({ name: itemName, amount: item.amount });
+                    classGroups[clsName].total += item.amount;
+                });
+
+                for (const [clsName, data] of Object.entries(classGroups)) {
+                    const newBill = {
+                        id: Date.now() + Math.floor(Math.random() * 1000),
+                        date: getCurrentDateStr(),
+                        yearMonth: bill.yearMonth,
+                        periodStr: bill.periodStr, 
+                        className: clsName,
+                        studentName: bill.studentName,
+                        items: data.items,
+                        total: data.total,
+                        isPaid: false,
+                        paidDate: null,
+                        billNote: bill.billNote || '',
+                        noAutoRenew: bill.noAutoRenew || false
+                    };
+                    const docRef = await addDoc(collection(db, "bills"), newBill);
+                    newBill.firestoreId = docRef.id;
+                    window.bills.unshift(newBill);
+                    await new Promise(r => setTimeout(r, 10));
+                }
+
+                await deleteDoc(doc(db, "bills", bill.firestoreId));
+                window.bills = window.bills.filter(b => b.id !== bill.id);
+            }
+
+            window.renderBillingStudentsTable();
+            window.renderRecords();
+            alert('✅ 單據已成功拆分為獨立科目！');
+        } catch (e) {
+            console.error("拆分失敗：", e);
+            alert("❌ 拆分失敗請稍後再試！");
+        }
+    };
+
 
     window.printCheckedUnpaidNotices = function() {
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
