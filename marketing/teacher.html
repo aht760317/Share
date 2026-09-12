@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 智慧學力戰力診斷與雲端題庫中心</title>
+    <title>斗六顧德補習班 - 智慧學力戰力診斷與雲端題庫中心 (旗艦完整版)</title>
     <!-- Chart.js 圖表庫 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- html2canvas 截圖轉圖檔支援 -->
@@ -107,7 +107,6 @@
         .tag-label:has(input:checked) { background: #fee2e2; border-color: #ef4444; color: #b91c1c; font-weight: bold; }
         .tag-strength:has(input:checked) { background: #dcfce7 !important; border-color: #10b981 !important; color: #047857 !important; font-weight: bold; }
 
-        /* 歷史紀錄卡片樣式 */
         .history-item { background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; cursor: pointer; transition: 0.2s; position: relative; }
         .history-item:hover { background: #f8fafc; border-color: var(--accent); transform: translateY(-1px); }
         .status-badge { position: absolute; top: 16px; right: 16px; font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 12px; }
@@ -119,6 +118,7 @@
         .score-mid { background: #fef9c3; color: #854d0e; }
         .score-low { background: #fee2e2; color: #991b1b; }
 
+        /* 💎 頂級戰力報告書 */
         .report-preview-card { background: #ffffff; border: 2px solid #2563eb; border-radius: 16px; margin-top: 25px; box-shadow: 0 15px 35px rgba(37,99,235,0.1); display: none; overflow: hidden; }
         .rep-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; padding: 25px; text-align: center; border-bottom: 4px solid var(--warning); }
         .rep-header h2 { margin: 0 0 6px 0; font-size: 24px; letter-spacing: 1.5px; }
@@ -159,7 +159,7 @@
         
         <div class="sync-status-bar">
             <div><span class="status-dot"></span>題庫架構：<strong>Firebase 雲端集中式題庫 (與 questionbank.html 連動中)</strong></div>
-            <div id="bank-sync-info" style="font-size:12.5px; color:#475569;">支援逐題闖關作答模式與成長儀表板</div>
+            <div id="bank-sync-info" style="font-size:12.5px; color:#475569;">支援逐題闖關作答與多維度雷達分析</div>
         </div>
 
         <div class="tab-container">
@@ -316,8 +316,14 @@
                 <div id="dashboard-card" style="display:none; margin-top:20px; border-top:1px dashed var(--border); padding-top:20px;">
                     <h3 id="dashboard-title" style="color:var(--primary); font-size:17px;">學員成長儀表板</h3>
                     <div class="grid-2" style="margin-bottom: 25px;">
-                        <div><canvas id="growthRadarChart" style="max-height: 250px;"></canvas></div>
-                        <div><canvas id="growthLineChart" style="max-height: 250px;"></canvas></div>
+                        <div>
+                            <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">多維度能力雷達 (點擊放大)</h4>
+                            <canvas id="growthRadarChart" style="max-height: 250px; cursor:zoom-in;" onclick="openLargeChart('radar')"></canvas>
+                        </div>
+                        <div>
+                            <h4 style="text-align:center; color:#555; font-size:14px; margin:5px 0;">歷次小考成績走勢 (點擊放大)</h4>
+                            <canvas id="growthLineChart" style="max-height: 250px; cursor:zoom-in;" onclick="openLargeChart('line')"></canvas>
+                        </div>
                     </div>
                     <h4 style="color:#555; border-top:1px solid #e2e8f0; padding-top:14px; font-size:14.5px;">歷史檢測與輔導紀錄 (點擊卡片維護結案/補考重測)</h4>
                     <div id="history-logs-container" style="max-height: 350px; overflow-y: auto; padding-right: 6px;"></div>
@@ -340,7 +346,7 @@
                 </div>
                 <div class="rep-body">
                     <div class="chart-dashboard">
-                        <div class="chart-box"><div class="chart-box-title">多維度能力指標</div><div style="height:200px; position:relative;"><canvas id="reportRadarChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-box-title">多維度能力指標 (雷達圖)</div><div style="height:200px; position:relative;"><canvas id="reportRadarChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-box-title">歷次學習穩定度追蹤</div><div style="height:200px; position:relative;"><canvas id="reportLineChart"></canvas></div></div>
                     </div>
                     <div style="margin-bottom:15px;"><div style="color:#166534; font-weight:bold; margin-bottom:5px;">🌟 課堂優勢亮點：</div><div id="rep-strengths" style="color:#15803d; font-size:14px;">-</div></div>
@@ -397,6 +403,17 @@
         </div>
     </div>
 
+    <!-- 彈跳視窗：圖表放大檢視 -->
+    <div class="modal-overlay" id="large-chart-modal">
+        <div class="modal-box" style="padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:15px;">
+                <h3 id="large-chart-title" style="margin:0; color:var(--primary); font-size:19px;">學力分析大圖</h3>
+                <button class="btn-small" style="background:#e2e8f0; color:#334155;" onclick="document.getElementById('large-chart-modal').style.display='none'">❌ 關閉</button>
+            </div>
+            <div class="large-chart-container"><canvas id="largeChartCanvas"></canvas></div>
+        </div>
+    </div>
+
     <!-- Firebase 邏輯核心與雲端題庫驅動 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -415,7 +432,7 @@
         const db = getFirestore(app);
 
         window.state = { students: [], exams: {}, currentExam: null, currentQIndex: 0, studentAnswers: {} };
-        let radarInstance = null, lineInstance = null;
+        let radarInstance = null, lineInstance = null, repRadarInstance = null, repLineInstance = null, largeChartInstance = null;
 
         // 內建備用 40 題
         const defaultExams = {
@@ -493,7 +510,7 @@
             
             window.state.currentExam = window.state.exams[paperId] || defaultExams["math_g5_comprehensive"];
             window.state.currentQIndex = 0;
-            window.state.studentAnswers = {}; // 清空作答紀錄
+            window.state.studentAnswers = {};
 
             document.getElementById('display-exam-name').innerText = window.state.currentExam.name;
             document.getElementById('display-student-name').innerText = name;
@@ -713,39 +730,153 @@
             initCloudData();
         };
 
-        // 在班生追蹤
+        // 在班生追蹤與儀表板渲染
         window.onGradeChange = function() {
             const grade = document.getElementById('filter-grade').value;
             const select = document.getElementById('student-select');
-            select.innerHTML = '<option value="">-- 選擇學員 --</option>'; select.disabled = false;
+            if (!grade) {
+                select.innerHTML = '<option value="">-- 請先選擇年級 --</option>';
+                select.disabled = true;
+                document.getElementById('dashboard-card').style.display = 'none';
+                return;
+            }
+            select.disabled = false;
+            select.innerHTML = '<option value="">-- 選擇學員 --</option>';
             window.state.students.forEach(s => {
                 const c = s.course || s.studentClass || '';
                 if (grade === '新生班' && c === '新生班') select.innerHTML += `<option value="${s.firestoreId}">${s.name} (新生)</option>`;
-                else if (grade !== '新生班' && c !== '新生班') select.innerHTML += `<option value="${s.firestoreId}">${s.name} (${c})</option>`;
+                else if (grade !== '新生班' && c !== '新生班' && (c.includes(grade) || c.includes(grade.replace('小','').replace('國','')))) select.innerHTML += `<option value="${s.firestoreId}">${s.name} (${c})</option>`;
             });
         };
 
         window.loadStudentGrowthProfile = function() {
             const id = document.getElementById('student-select').value;
-            if (!id) return;
-            document.getElementById('dashboard-card').style.display = 'block';
+            const dashboard = document.getElementById('dashboard-card');
+            if (!id) { dashboard.style.display = 'none'; return; }
+
+            dashboard.style.display = 'block';
             const student = window.state.students.find(s => s.firestoreId === id);
             const records = student.growthRecords || [];
             
-            document.getElementById('history-logs-container').innerHTML = records.map(r => `
-                <div class="history-item">
-                    <div style="font-weight:bold; color:var(--primary);">${r.date} ｜ ${r.unit}</div>
-                    <div style="color:var(--success); font-weight:bold;">分數：${r.score} 分</div>
-                    <div style="font-size:13px; color:#64748b;">${r.comment || ''}</div>
+            document.getElementById('dashboard-title').innerText = `📊 【${student.name}】學員成長儀表板`;
+            renderHistoryLogs(records);
+            renderCharts(records, 'growthRadarChart', 'growthLineChart', 'radar', 'line', student.name);
+        };
+
+        function renderHistoryLogs(records) {
+            const container = document.getElementById('history-logs-container');
+            if (records.length === 0) { container.innerHTML = `<p style="color:#777; text-align:center;">尚無檢測紀錄。</p>`; return; }
+
+            container.innerHTML = records.map((r, index) => {
+                const sc = Number(r.score) || 0;
+                const badgeCls = sc >= 85 ? 'score-high' : (sc >= 70 ? 'score-mid' : 'score-low');
+                const badgeText = sc >= 85 ? '🌟 卓越' : (sc >= 70 ? '👍 穩定' : '⚠️ 需輔導');
+                const tagsStr = (r.tags && Array.isArray(r.tags)) ? r.tags.join('、') : (r.tags || '無');
+                const sTagsStr = (r.strengths && Array.isArray(r.strengths)) ? r.strengths.join('、') : (r.strengths || '');
+                const statusBadge = r.doneDate ? `<span class="status-badge status-done">✅ 輔導結案 (${r.doneDate})</span>` : `<span class="status-badge status-pending">⏳ 持續輔導中</span>`;
+                const retestStr = (r.retests && r.retests.length > 0) ? `<br><span style="color:#b45309; font-weight:bold; font-size:13px; display:inline-block; margin-top:4px;">🔄 重測成長軌跡: ${sc}分 ➔ ${r.retests.map(rt => rt.score + '分').join(' ➔ ')}</span>` : '';
+
+                return `
+                    <div class="history-item" onclick="openEditRecordModal(${index})">
+                        ${statusBadge}
+                        <div style="margin-bottom:6px; padding-right: 80px;"><b>📅 ${r.date || '未記錄'} ｜ [${r.subject || '數學'}] ${r.unit || ''}</b></div>
+                        <div style="margin-bottom:6px;"><span class="badge-score ${badgeCls}">初測: ${r.score} 分 (${badgeText})</span>${retestStr}</div>
+                        ${sTagsStr ? `<div style="color:#059669; margin-bottom:3px; font-size:13px;">🌟 優勢：${sTagsStr}</div>` : ''}
+                        <div style="color:#64748b; margin-bottom:4px; font-size:13.5px;">⚠️ 盲點：${tagsStr}</div>
+                        <div style="color:#334155; font-size:13.5px;">💬 方案：${r.comment || '無'}</div>
+                        ${r.teacherNote ? `<div style="color:#059669; font-size:13px; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px; display:inline-block;">👨‍🏫 輔導筆記：${r.teacherNote}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.openEditRecordModal = function(index) {
+            const id = document.getElementById('student-select').value;
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student || !student.growthRecords || !student.growthRecords[index]) return;
+
+            const record = student.growthRecords[index];
+            document.getElementById('edit-record-index').value = index;
+            document.getElementById('edit-record-date').value = record.date || '';
+            document.getElementById('edit-record-score').value = record.score || '';
+            document.getElementById('edit-record-subject').value = record.subject || '數學';
+            document.getElementById('edit-record-unit').value = record.unit || '';
+            document.getElementById('edit-record-teacher-note').value = record.teacherNote || '';
+            document.getElementById('edit-record-done-date').value = record.doneDate || '';
+            document.getElementById('edit-record-comment').value = record.comment || '';
+
+            renderRetestList(record.retests || []);
+            document.getElementById('edit-record-modal').style.display = 'flex';
+        };
+
+        function renderRetestList(retests) {
+            const container = document.getElementById('retest-list-container');
+            if (retests.length === 0) {
+                container.innerHTML = `<span style="font-size:13px; color:#64748b;">尚無重測紀錄</span>`; return;
+            }
+            container.innerHTML = retests.map((rt, rIdx) => `
+                <div class="retest-item">
+                    <span style="font-size:13.5px; font-weight:bold; color:#b45309; width:60px;">第 ${rIdx + 1} 次：</span>
+                    <input type="date" class="retest-date" value="${rt.date || ''}" style="margin:0; padding:8px; font-size:14px; flex:1;">
+                    <input type="number" class="retest-score" value="${rt.score || ''}" placeholder="分數" style="margin:0; padding:8px; font-size:14px; width:70px;">
+                    <button class="btn btn-danger btn-small" style="padding:8px;" onclick="removeRetestField(this)">🗑️</button>
                 </div>
             `).join('');
+        }
 
-            if (radarInstance) radarInstance.destroy();
-            radarInstance = new Chart(document.getElementById('growthRadarChart'), {
-                type: 'radar',
-                data: { labels: ['理解力', '精確度', '轉換力', '靈活性', '驗算度'], datasets: [{ data: [80,80,80,80,80], backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb' }] },
-                options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+        window.addRetestField = function() {
+            const container = document.getElementById('retest-list-container');
+            if (container.innerHTML.includes('尚無重測紀錄')) container.innerHTML = '';
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'retest-item';
+            div.innerHTML = `<span style="font-size:13.5px; font-weight:bold; color:#b45309; width:60px;">第 ${count} 次：</span><input type="date" class="retest-date" value="${new Date().toISOString().slice(0, 10)}" style="margin:0; padding:8px; font-size:14px; flex:1;"><input type="number" class="retest-score" placeholder="分數" style="margin:0; padding:8px; font-size:14px; width:70px;"><button class="btn btn-danger btn-small" style="padding:8px;" onclick="removeRetestField(this)">🗑️</button>`;
+            container.appendChild(div);
+        };
+
+        window.removeRetestField = function(btn) { btn.parentElement.remove(); };
+
+        window.updateGrowthRecord = async function() {
+            const id = document.getElementById('student-select').value;
+            const index = Number(document.getElementById('edit-record-index').value);
+            const student = window.state.students.find(s => s.firestoreId === id);
+            if (!student || !student.growthRecords[index]) return;
+
+            const retests = [];
+            document.querySelectorAll('#retest-list-container > .retest-item').forEach(div => {
+                const d = div.querySelector('.retest-date').value;
+                const s = div.querySelector('.retest-score').value;
+                if (d && s) retests.push({ date: d, score: Number(s) });
             });
+
+            student.growthRecords[index].date = document.getElementById('edit-record-date').value;
+            student.growthRecords[index].score = Number(document.getElementById('edit-record-score').value);
+            student.growthRecords[index].unit = document.getElementById('edit-record-unit').value;
+            student.growthRecords[index].teacherNote = document.getElementById('edit-record-teacher-note').value.trim();
+            student.growthRecords[index].doneDate = document.getElementById('edit-record-done-date').value;
+            student.growthRecords[index].comment = document.getElementById('edit-record-comment').value;
+            student.growthRecords[index].retests = retests;
+
+            try {
+                await setDoc(doc(db, "classLogStudents", id), { ...student, growthRecords: student.growthRecords });
+                document.getElementById('edit-record-modal').style.display = 'none';
+                alert('✅ 紀錄與重測進度更新成功！');
+                loadStudentGrowthProfile();
+            } catch (e) { alert('更新失敗'); }
+        };
+
+        window.deleteGrowthRecord = async function() {
+            if (!confirm('⚠️ 確定要刪除這筆檢測紀錄嗎？')) return;
+            const id = document.getElementById('student-select').value;
+            const index = Number(document.getElementById('edit-record-index').value);
+            const student = window.state.students.find(s => s.firestoreId === id);
+            student.growthRecords.splice(index, 1);
+            try {
+                await setDoc(doc(db, "classLogStudents", id), { ...student, growthRecords: student.growthRecords });
+                document.getElementById('edit-record-modal').style.display = 'none';
+                alert('✅ 紀錄已刪除！');
+                loadStudentGrowthProfile();
+            } catch (e) { alert('刪除失敗'); }
         };
 
         function populateAndShowReportCard(name, subject, unit, score, strengths, tags, comment, records) {
@@ -758,13 +889,73 @@
             document.getElementById('pro-report-card').style.display = 'block';
             document.getElementById('pro-report-card').scrollIntoView({ behavior: 'smooth' });
 
-            if (radarInstance) radarInstance.destroy();
-            radarInstance = new Chart(document.getElementById('reportRadarChart'), {
+            renderCharts(records, 'reportRadarChart', 'reportLineChart', 'repRadar', 'repLine', name);
+        }
+
+        function renderCharts(records, rId, lId, rt, lt, name) {
+            let dims = [80, 80, 80, 80, 80];
+            if (records.length > 0) {
+                const sc = Number(records[0].score) || 80;
+                const tags = records[0].tags || [];
+                dims = [
+                    Math.max(45, sc - (tags.some(t => t.includes('觀念')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('粗心')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('文字') || t.includes('應用')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('公式') || t.includes('作圖')) ? 15 : 0)),
+                    Math.max(45, sc - (tags.some(t => t.includes('速度') || t.includes('驗算')) ? 15 : 0))
+                ];
+            }
+
+            const ctxR = document.getElementById(rId).getContext('2d');
+            if (rt === 'radar' && radarInstance) radarInstance.destroy();
+            if (rt === 'repRadar' && repRadarInstance) repRadarInstance.destroy();
+
+            const nR = new Chart(ctxR, {
                 type: 'radar',
-                data: { labels: ['觀念', '計算', '應用', '邏輯', '驗算'], datasets: [{ data: [score, score, score-5, score, score-5], backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb' }] },
+                data: { labels: ['觀念理解', '計算精準', '文意轉換', '解題靈活', '自主驗算'], datasets: [{ data: dims, backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb', borderWidth: 2 }] },
                 options: { scales: { r: { min: 0, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
             });
+            if (rt === 'radar') radarInstance = nR;
+            if (rt === 'repRadar') repRadarInstance = nR;
+
+            const sorted = [...records].reverse();
+            const scores = sorted.map(r => (r.retests && r.retests.length > 0) ? r.retests[r.retests.length - 1].score : r.score);
+            const labels = sorted.map(r => r.date ? r.date.slice(5) : '初始');
+
+            const ctxL = document.getElementById(lId).getContext('2d');
+            if (lt === 'line' && lineInstance) lineInstance.destroy();
+            if (lt === 'repLine' && repLineInstance) repLineInstance.destroy();
+
+            const nL = new Chart(ctxL, {
+                type: 'line',
+                data: { labels: labels.length ? labels : ['初始'], datasets: [{ data: scores.length ? scores : [80], borderColor: '#059669', backgroundColor: 'rgba(5, 150, 105, 0.12)', tension: 0.35, fill: true, pointRadius: 4 }] },
+                options: { scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } }
+            });
+            if (lt === 'line') lineInstance = nL;
+            if (lt === 'repLine') repLineInstance = nL;
         }
+
+        window.openLargeChart = function(type) {
+            let id = document.getElementById('student-select').value;
+            if (!id) return;
+            const student = window.state.students.find(s => s.firestoreId === id);
+            const records = student.growthRecords || [];
+            document.getElementById('large-chart-title').innerText = type === 'radar' ? `🎯 ${student.name} - 多維度能力分析` : `📈 ${student.name} - 成績走勢`;
+            document.getElementById('large-chart-modal').style.display = 'flex';
+            if (largeChartInstance) largeChartInstance.destroy();
+
+            const ctx = document.getElementById('largeChartCanvas').getContext('2d');
+            if (type === 'radar') {
+                let dims = [80, 80, 80, 80, 80];
+                if (records.length > 0) { const sc = Number(records[0].score) || 80; const tags = records[0].tags || []; dims = [Math.max(45, sc-(tags.some(t=>t.includes('觀念'))?15:0)), Math.max(45, sc-(tags.some(t=>t.includes('粗心'))?15:0)), Math.max(45, sc-(tags.some(t=>t.includes('文字'))?15:0)), Math.max(45, sc-(tags.some(t=>t.includes('公式'))?15:0)), Math.max(45, sc-(tags.some(t=>t.includes('驗算'))?15:0))]; }
+                largeChartInstance = new Chart(ctx, { type: 'radar', data: { labels: ['觀念理解', '計算精準', '文意轉換', '解題靈活', '自主驗算'], datasets: [{ data: dims, backgroundColor: 'rgba(37,99,235,0.25)', borderColor: '#2563eb', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } } });
+            } else {
+                const sorted = [...records].reverse();
+                const scores = sorted.map(r => (r.retests && r.retests.length > 0) ? r.retests[r.retests.length - 1].score : r.score);
+                const labels = sorted.map(r => r.date ? r.date.slice(5) : '初始');
+                largeChartInstance = new Chart(ctx, { type: 'line', data: { labels: labels.length ? labels : ['初始'], datasets: [{ data: scores.length ? scores : [80], borderColor: '#059669', backgroundColor: 'rgba(5, 150, 105, 0.12)', tension: 0.35, fill: true, borderWidth: 3, pointRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } } });
+            }
+        };
 
         window.downloadReportCardImage = function() {
             html2canvas(document.getElementById('capture-zone'), { scale: 2, useCORS: true }).then(canvas => {
