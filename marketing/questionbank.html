@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 雲端題庫與系統糾錯中心</title>
+    <title>斗六顧德補習班 - 雲端題庫與系統糾錯中心 (questionbank.html)</title>
     <style>
         :root {
             --primary: #0f172a;
@@ -46,16 +46,16 @@
     <div class="container">
         <header>
             <h2>📚 斗六顧德補習班 ｜ 雲端題庫與系統糾錯中心</h2>
-            <a href="teacher.html" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px;">⬅️ 返回學生測驗主系統 (teacher.html)</a>
+            <a href="teacher.html" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px;">⬅️ 返回學生測驗系統 (teacher.html)</a>
         </header>
 
         <!-- 區塊一：整包題庫初始化同步 -->
         <div class="card">
             <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">
-                ☁️ 第一步：雲端題庫總初始化（若雲端尚無資料請點此）
+                ☁️ 第一步：題庫總初始化（若雲端尚無資料或需重置請點此）
             </h3>
             <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
-                初次建置或需要將 160 題全數推播至雲端時使用。
+                初次建置或需要將完整 160 題（一、二年級上下學期）全數推播至 Firebase 雲端時使用。
             </p>
             <div class="grid-2">
                 <div>
@@ -79,7 +79,7 @@
                 ✏️ 第二步：線上逐題即時糾錯與修改（老師修題專區）
             </h3>
             <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
-                老師若發現題目有錯、選項需修正或要幫忙「修正錯誤題型解析」，可直接在此選取該題進行線上修改並同步雲端！
+                老師若發現題目有錯、選項需修正或要幫忙「修正錯誤題型解析」，可直接在此選取該題進行線上修改，修改後即時同步雲端！
             </p>
 
             <div class="grid-2">
@@ -134,7 +134,7 @@
         </div>
     </div>
 
-    <!-- Firebase 邏輯與完整 160 題庫模組 -->
+    <!-- Firebase 邏輯與完整題庫模組 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -345,14 +345,14 @@
 
         let currentEditingBank = null;
 
-        // 1. 初始化整包題庫上傳
+        // 初始化把所有題庫寫入 Firebase
         window.initBankToCloud = async function() {
-            const key = document.getElementById('init-target-select').value;
-            const bankData = MASTER_QUESTION_BANKS[key];
-            if (!confirm(`☁️ 確定要將【${bankData.name}】初始化並覆蓋寫入雲端嗎？`)) return;
+            if (!confirm("☁️ 確定要將國小一、二年級共 160 題完整題庫初始化並寫入雲端嗎？")) return;
             try {
-                await setDoc(doc(db, "question_banks", key), bankData);
-                alert(`✅ 成功！【${bankData.name}】已成功初始化至雲端。`);
+                for (let key in MASTER_QUESTION_BANKS) {
+                    await setDoc(doc(db, "question_banks", key), MASTER_QUESTION_BANKS[key]);
+                }
+                alert("✅ 成功！全數 160 題已寫入 Firebase 雲端資料庫！");
                 loadQuestionsForEditing();
             } catch (e) {
                 console.error(e);
@@ -360,11 +360,10 @@
             }
         };
 
-        // 2. 載入題目供老師在線上修改
         window.loadQuestionsForEditing = async function() {
             const semesterKey = document.getElementById('edit-semester-select').value;
             const selectEl = document.getElementById('edit-question-index');
-            selectEl.innerHTML = '<option value="">-- 正在從雲端載入題目清單 --</option>';
+            selectEl.innerHTML = '<option value="">-- 載入中 --</option>';
             document.getElementById('question-edit-form').style.display = 'none';
 
             try {
@@ -374,7 +373,6 @@
                 if (docSnap.exists()) {
                     currentEditingBank = docSnap.data();
                 } else {
-                    // 如果雲端沒有，先用本地預設
                     currentEditingBank = MASTER_QUESTION_BANKS[semesterKey];
                 }
 
@@ -384,11 +382,10 @@
                 });
             } catch (e) {
                 console.error(e);
-                alert("❌ 無法從雲端讀取題目，請確認網路或先點擊上方初始化。");
+                alert("❌ 讀取失敗，請先點擊上方初始化雲端。");
             }
         };
 
-        // 3. 填入單題編輯表單
         window.populateQuestionForm = function() {
             const idx = document.getElementById('edit-question-index').value;
             if (idx === "") {
@@ -409,12 +406,10 @@
             document.getElementById('question-edit-form').style.display = 'block';
         };
 
-        // 4. 儲存單題修改並即時同步雲端
         window.saveSingleQuestionChanges = async function() {
             const idx = Number(document.getElementById('edit-question-index').value);
             const semesterKey = document.getElementById('edit-semester-select').value;
 
-            // 更新暫存資料
             currentEditingBank.questions[idx] = {
                 q: document.getElementById('eq-text').value.trim(),
                 options: [
@@ -429,9 +424,8 @@
             };
 
             try {
-                // 將整份學期題庫（包含修正後的題目）寫回雲端
                 await setDoc(doc(db, "question_banks", semesterKey), currentEditingBank);
-                alert(`✅ 第 ${idx + 1} 題已成功修正並即時同步至雲端！學生在測驗端立刻生效。`);
+                alert(`✅ 第 ${idx + 1} 題已成功更新！teacher.html 學生端即刻同步生效！`);
             } catch (e) {
                 console.error(e);
                 alert("❌ 儲存失敗。");
