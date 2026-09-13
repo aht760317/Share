@@ -978,17 +978,23 @@
             grantMoneySystemAuth();
         };
 
-        // 登入處理 (支援最高管理員與所有教師)
+        // 登入處理 (支援最高管理員與所有教師，並同步跨頁面班級權限)
         window.handleLogin = function(e) {
             e.preventDefault();
             let u = document.getElementById('loginUser').value.trim();
             let p = document.getElementById('loginPass').value.trim();
             let errEl = document.getElementById('loginError');
 
-            // 1. 檢查是否為最高管理者 (支援帳號 aht0317 或 雅鴻)
+            // 1. 檢查是否為最高管理者
             if ((u === ADMIN_USER || u === "雅鴻") && p === ADMIN_PASS) {
                 errEl.style.display = 'none';
                 sessionStorage.setItem('good_current_user', '雅鴻 (管理者)');
+                
+                // 跨頁面同步管理者狀態
+                localStorage.setItem('current_active_teacher', '最高管理者');
+                localStorage.removeItem('current_teacher_classes'); // 清除班級限制（代表全看）
+                localStorage.setItem('current_teacher_perms', JSON.stringify(["ALL"]));
+
                 document.getElementById('loginModal').style.display = 'none';
                 grantMoneySystemAuth();
                 applyUserPermissions('雅鴻 (管理者)');
@@ -1003,9 +1009,15 @@
             if (matchedTeacher) {
                 errEl.style.display = 'none';
                 sessionStorage.setItem('good_current_user', matchedTeacher.name);
+                
+                // 跨頁面同步給 rollbook.html、ClassLog.html 進行班級限制過濾
+                localStorage.setItem('current_active_teacher', matchedTeacher.name);
+                localStorage.setItem('current_teacher_classes', JSON.stringify(matchedTeacher.classes || []));
+                localStorage.setItem('current_teacher_perms', JSON.stringify(matchedTeacher.perms || []));
+
                 document.getElementById('loginModal').style.display = 'none';
                 
-                // 若老師擁有繳費管理權限，則寫入驗證憑據
+                // 若老師擁有繳費管理權限，寫入憑據
                 if (matchedTeacher.perms && matchedTeacher.perms.includes('indexmoney')) {
                     grantMoneySystemAuth();
                 }
@@ -1026,6 +1038,9 @@
             sessionStorage.removeItem('good_current_user');
             localStorage.removeItem('good_auth_status');
             localStorage.removeItem('good_auth_time');
+            localStorage.removeItem('current_active_teacher');
+            localStorage.removeItem('current_teacher_classes');
+            localStorage.removeItem('current_teacher_perms');
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
             document.getElementById('loginError').style.display = 'none';
@@ -1144,6 +1159,10 @@
                 if (welcomeText) welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${currentAcc} (最高權限管理者)</span>`;
                 if (banner) banner.style.display = 'none';
                 allowedPerms = ["sop", "rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"];
+                
+                // 清除限制
+                localStorage.setItem('current_active_teacher', '最高管理者');
+                localStorage.removeItem('current_teacher_classes');
             } else {
                 if (welcomeText) welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
                 
@@ -1151,6 +1170,11 @@
                 let tData = teachers.find(t => t.name === user);
                 allowedPerms = tData ? (tData.perms || []) : [];
                 assignedClasses = tData ? (tData.classes || []) : [];
+
+                // 同步至全域快取
+                localStorage.setItem('current_active_teacher', user);
+                localStorage.setItem('current_teacher_classes', JSON.stringify(assignedClasses));
+                localStorage.setItem('current_teacher_perms', JSON.stringify(allowedPerms));
 
                 if (assignedClasses.length > 0) {
                     if (classText) classText.innerText = assignedClasses.join('、');
@@ -1415,6 +1439,14 @@
             } else {
                 teachers[editIndex] = { name, pass, birth, hireDate, education, school, phone, note, perms, classes };
                 if(typeof logUserAction === 'function') logUserAction('人事管理', `修改老師資料與權限：${name}`);
+                
+                // 若當前登入者剛好是正在被修改的老師，即時更新當前 Session
+                let currentUser = sessionStorage.getItem('good_current_user');
+                if (currentUser === name) {
+                    localStorage.setItem('current_teacher_classes', JSON.stringify(classes));
+                    localStorage.setItem('current_teacher_perms', JSON.stringify(perms));
+                    applyUserPermissions(name);
+                }
             }
 
             localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
