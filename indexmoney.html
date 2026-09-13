@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>斗六顧德補習班 - 專業繳費管理系統</title>
 
-    <!-- 🔒 身分驗證守衛：未登入立即阻擋並轉跳，不載入後續畫面 -->
+    <!-- 🔒 身分驗證守衛（支援同源分頁與授權傳遞） -->
     <script>
         (function() {
-            const authStatus = localStorage.getItem('good_auth_status');
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromEntrance = urlParams.get('auth') === 'good';
+
+            if (fromEntrance) {
+                // 從官方入口點擊進來，直接核准並寫入憑證
+                localStorage.setItem('good_auth_status', 'authenticated');
+                localStorage.setItem('good_auth_time', Date.now().toString());
+                // 自動清理網址上的參數，保持網址乾淨
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            const authStatus = localStorage.getItem('good_auth_status') || sessionStorage.getItem('good_auth_status');
             const authTime = localStorage.getItem('good_auth_time');
-            const maxSession = 24 * 60 * 60 * 1000; // 登入有效期限：24 小時
+            const maxSession = 24 * 60 * 60 * 1000; // 24小時有效
 
             const isExpired = !authTime || (Date.now() - parseInt(authTime, 10)) > maxSession;
 
@@ -1075,6 +1087,7 @@
         if (confirm('確定要登出並返回入口頁嗎？')) {
             localStorage.removeItem('good_auth_status');
             localStorage.removeItem('good_auth_time');
+            sessionStorage.removeItem('good_auth_status');
             window.location.href = 'https://aht760317.github.io/Share/gogogood.html';
         }
     };
