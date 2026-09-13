@@ -3,1373 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德文教機構 | 行政管理整合入口</title>
-    <!-- 引入專業無襯線字體 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome 6 圖示庫 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <title>斗六顧德補習班 - 雲端題庫管理中心 (Question Bank)</title>
     <style>
         :root {
-            --bg-page: #f8fafc;
-            --surface: #ffffff;
-            --surface-hover: #f1f5f9;
-            --border: #e2e8f0;
-            --border-hover: #cbd5e1;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --primary-navy: #1e293b;
-            --accent-blue: #2563eb;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+            --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; 
+            --danger: #e11d48; --success: #059669; --warning: #d97706; --purple: #7c3aed;
+            --bg: #f1f5f9; --border: #cbd5e1; --card: #ffffff;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { margin: 0; background: var(--bg); color: #334155; padding-bottom: 50px; }
+        header { 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 15px 25px; 
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
         }
-
-        body {
-            background-color: var(--bg-page);
-            color: var(--text-primary);
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            line-height: 1.5;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1080px;
-        }
-
-        header {
-            margin-bottom: 36px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
-        }
-
-        .header-title h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
-            margin-bottom: 4px;
-        }
-
-        .header-title p {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .header-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #059669;
-            background: #ecfdf5;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #a7f3d0;
-        }
-
-        .status-indicator {
-            width: 7px;
-            height: 7px;
-            background-color: #10b981;
-            border-radius: 50%;
-        }
-
-        .btn-action {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
-            cursor: pointer;
-        }
-
-        .quick-consult-btn {
-            color: #d97706;
-            background: #fffbeb;
-            border-color: #fde68a;
-        }
-        .quick-consult-btn:hover {
-            background: #fef3c7;
-            border-color: #f59e0b;
-        }
-
-        .header-sop-btn {
-            color: #0369a1;
-            background: #f0f9ff;
-            border-color: #bae6fd;
-        }
-        .header-sop-btn:hover {
-            background: #e0f2fe;
-            border-color: #7dd3fc;
-        }
-
-        .logout-btn {
-            color: #dc2626;
-            background: #fef2f2;
-            border-color: #fecaca;
-            display: none;
-        }
-        .logout-btn:hover {
-            background: #fee2e2;
-        }
-
-        .teacher-class-banner {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
-            padding: 10px 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            font-size: 0.9rem;
-            display: none;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .grid-menu {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 24px;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .card.locked {
-            opacity: 0.5;
-            pointer-events: none;
-            filter: grayscale(0.5);
-        }
-
-        .card:hover:not(.locked) {
-            transform: translateY(-2px);
-            border-color: var(--border-hover);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .icon-box {
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
-            background: #f1f5f9;
-            color: var(--primary-navy);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.15rem;
-            transition: all 0.2s ease;
-        }
-
-        .card:hover .icon-box {
-            background: var(--primary-navy);
-            color: #ffffff;
-        }
-
-        .card-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: #f8fafc;
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .card-body h2 {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-body p {
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--accent-blue);
-        }
-
-        .card.locked .card-footer {
-            color: var(--text-muted);
-        }
-
-        .card-footer i {
-            transition: transform 0.2s ease;
-        }
-
-        .card:hover .card-footer i {
-            transform: translateX(4px);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-
-        .modal-box {
-            background: var(--surface);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: var(--shadow-lg);
-            padding: 30px;
-            animation: modalIn 0.2s ease;
-        }
-
-        .modal-box.large {
-            max-width: 920px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-        .close-modal:hover {
-            color: var(--text-primary);
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            color: var(--text-primary);
-            background: #fff;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .btn-primary {
-            width: 100%;
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .error-msg {
-            color: #dc2626;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            display: none;
-            text-align: center;
-        }
-
-        .admin-tabs {
-            display: flex;
-            gap: 8px;
-            border-bottom: 2px solid var(--border);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .admin-tab-btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            background: #f1f5f9;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: 0.2s;
-        }
-
-        .admin-tab-btn.active {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-        }
-
-        .teacher-list-table, .log-list-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 0.85rem;
-        }
-
-        .teacher-list-table th, .teacher-list-table td,
-        .log-list-table th, .log-list-table td {
-            border: 1px solid var(--border);
-            padding: 10px;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        .teacher-list-table th, .log-list-table th {
-            background: #f8fafc;
-            font-weight: 600;
-        }
-
-        .badge-perm, .badge-class {
-            display: inline-block;
-            background: #e2e8f0;
-            color: #334155;
-            font-size: 0.72rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin: 2px;
-        }
-        .badge-class {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: #fff;
-        }
-        .btn-danger { color: #dc2626; border-color: #fecaca; }
-        .btn-danger:hover { background: #fef2f2; }
-
-        footer {
-            margin-top: 48px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
-        }
-
-        .footer-links-group {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .footer-admin-link {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.82rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s;
-            text-decoration: none;
-        }
-        .footer-admin-link:hover {
-            color: var(--accent-blue);
-        }
-
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .header-right {
-                width: 100%;
-                justify-content: space-between;
-            }
-            .grid-menu {
-                grid-template-columns: 1fr;
-            }
-            footer {
-                flex-direction: column;
-                gap: 12px;
-                text-align: center;
-            }
-            .footer-links-group {
-                flex-direction: column;
-                gap: 8px;
-            }
-        }
+        header h2 { margin: 0; font-size: 18px; }
+        .back-btn { background: rgba(255,255,255,0.15); color: #fff; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); transition: 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,0.25); }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid var(--border); }
+        h3 { margin-top: 0; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px; }
+        .btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-warning { background: var(--warning); }
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .btn-purple { background: var(--purple); color: #fff; }
+        .grid-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+        @media(max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+        .bank-list { list-style: none; padding: 0; margin: 0; }
+        .bank-list li { background: #f8fafc; border: 1px solid var(--border); padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-size:14px; }
+        .bank-list li:hover { border-color: var(--accent); background: #eff6ff; }
+        .bank-list li.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .question-item { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--accent); position: relative; }
+        .q-tag { display: inline-block; background: #e2e8f0; font-size: 12px; padding: 3px 8px; border-radius: 12px; margin-bottom: 8px; font-weight: bold; }
+        .q-text { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
+        .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; color: #475569; }
+        .q-ans { margin-top: 10px; font-size: 13px; color: var(--success); font-weight: bold; background: #dcfce7; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #475569; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+        .sys-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-    <!-- 登入驗證彈跳視窗 -->
-    <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-lock" style="color:var(--accent-blue)"></i> 斗六顧德文教機構 - 系統登入</h3>
-            </div>
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>帳號 (本人名字 或 系統帳號)</label>
-                    <input type="text" id="loginUser" class="form-control" placeholder="請輸入您的帳號或名字" required>
-                </div>
-                <div class="form-group">
-                    <label>密碼</label>
-                    <input type="password" id="loginPass" class="form-control" placeholder="請輸入密碼" required>
-                </div>
-                <button type="submit" id="loginSubmitBtn" class="btn-primary">登入系統</button>
-                <div id="loginError" class="error-msg">帳號或密碼錯誤，請重新輸入</div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 管理者密碼驗證視窗 (760317) -->
-    <div id="adminPassModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-shield-halved" style="color:#d97706"></i> 輸入管理者密碼</h3>
-                <button class="close-modal" onclick="closeAdminPassModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="verifyAdminPass(event)">
-                <div class="form-group">
-                    <label>管理密碼</label>
-                    <input type="password" id="adminSecretInput" class="form-control" placeholder="請輸入設定密碼" required autofocus>
-                </div>
-                <button type="submit" class="btn-primary" style="background:#059669;">確認進入</button>
-                <div id="adminPassError" class="error-msg">密碼錯誤</div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 老師資料、權限與管理後台 Modal -->
-    <div id="adminModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box large">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> 機構行政與權限管理後台 (雲端即時同步)</h3>
-                <button class="close-modal" onclick="closeAdminModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div class="admin-tabs">
-                <button class="admin-tab-btn active" onclick="switchAdminTab('teachers')">👨‍🏫 老師資料與權限設定</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('logs')">📜 使用者操作紀錄</button>
-                <button class="admin-tab-btn" onclick="backupSystemData()" style="background:#059669; color:white; border-color:#059669; margin-left:auto;">💾 備份全系統資料到電腦</button>
-            </div>
-
-            <!-- 1. 老師設定分頁 -->
-            <div id="adminTabTeachers">
-                <div style="margin-bottom: 20px; max-height: 55vh; overflow-y: auto; padding-right: 5px;">
-                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);" id="formTitleText">新增老師帳號與完整人事資料</h4>
-                    <form id="teacherForm" onsubmit="saveTeacher(event)">
-                        <input type="hidden" id="editIndex" value="-1">
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div class="form-group">
-                                <label>老師姓名 (作為登入帳號)</label>
-                                <input type="text" id="tName" class="form-control" placeholder="例如：王小明" required>
-                            </div>
-                            <div class="form-group">
-                                <label>登入密碼</label>
-                                <input type="text" id="tPass" class="form-control" placeholder="設定密碼" required>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div class="form-group">
-                                <label>出生年月日</label>
-                                <input type="date" id="tBirth" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label>正職日期 (到職日)</label>
-                                <input type="date" id="tHireDate" class="form-control">
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div class="form-group">
-                                <label>最高學歷</label>
-                                <input type="text" id="tEducation" class="form-control" placeholder="例如：國立台灣大學 碩士">
-                            </div>
-                            <div class="form-group">
-                                <label>畢業學校 / 科系</label>
-                                <input type="text" id="tSchool" class="form-control" placeholder="例如：外國語文學系">
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div class="form-group">
-                                <label>聯絡電話</label>
-                                <input type="text" id="tPhone" class="form-control" placeholder="例如：0912-345-678">
-                            </div>
-                            <div class="form-group">
-                                <label>專長 / 備註</label>
-                                <input type="text" id="tNote" class="form-control" placeholder="例如：英文文法、國中數學">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>開放使用功能權限：</label>
-                            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px;">
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="sop"> 全日行政管理系統</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="rollbook"> 線上點名</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="gotogood"> 招生與進班系統</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="ClassLog"> 教學日誌</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="good-school"> 官方網站</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="class"> 線上課表</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="indexmoney"> 繳費管理</label>
-                                <label style="font-weight: normal; font-size: 0.9rem;"><input type="checkbox" name="perm" value="joy-english"> 英文部管理系統</label>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <label style="color: var(--primary-navy); font-weight: 700; margin:0;"><i class="fa-solid fa-filter"></i> 依部門篩選並勾選老師可見班級：</label>
-                                <button type="button" class="btn-sm" onclick="syncClassesFromRollbook()" style="background:#2563eb; color:#fff; border:none; padding:4px 10px;">🔄 雲端同步最新班級</button>
-                            </div>
-                            <div style="margin-bottom: 12px;">
-                                <select id="departmentSelect" class="form-control" onchange="filterClassesByDepartment()">
-                                    <option value="ALL">全部部門 / 班別總覽</option>
-                                    <option value="care">課輔部</option>
-                                    <option value="elementary">國小部</option>
-                                    <option value="junior">國中部</option>
-                                </select>
-                            </div>
-                            <div id="departmentClassContainer" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;"></div>
-                        </div>
-
-                        <button type="submit" class="btn-primary" style="background: #059669;" id="submitBtnText">儲存並同步至雲端</button>
-                    </form>
-                </div>
-
-                <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-
-                <div>
-                    <h4 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-primary);">已註冊老師名冊（雲端與本機同步）</h4>
-                    <div style="overflow-x: auto;">
-                        <table class="teacher-list-table">
-                            <thead>
-                                <tr>
-                                    <th>名字/密碼</th>
-                                    <th>到職/生日</th>
-                                    <th>學歷與聯絡</th>
-                                    <th>負責專屬班級</th>
-                                    <th>可用權限</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="teacherTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. 使用者操作紀錄分頁 -->
-            <div id="adminTabLogs" style="display: none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h4 style="font-size: 1rem; color: var(--text-primary);">教師與管理者系統操作足跡 (Audit Trail)</h4>
-                    <button class="btn-sm btn-danger" onclick="clearSystemLogs()">清空紀錄</button>
-                </div>
-                <div style="max-height: 65vh; overflow-y: auto;">
-                    <table class="log-list-table">
-                        <thead>
-                            <tr>
-                                <th style="width:150px;">時間</th>
-                                <th style="width:110px;">操作者</th>
-                                <th style="width:140px;">動作類型</th>
-                                <th>詳細內容紀錄</th>
-                            </tr>
-                        </thead>
-                        <tbody id="auditLogTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-    </div>
+    <header>
+        <h2>⚙️ 顧德雲端題庫管理後台 (1~6年級全學期版)</h2>
+        <a href="index.html" class="back-btn">🔙 返回前端測驗中心</a>
+    </header>
 
     <div class="container">
-        <header>
-            <div class="header-title">
-                <h1>斗六顧德文教機構</h1>
-                <p id="welcomeText">內部行政與教學整合工作台</p>
+        <div class="sys-alert">
+            <div>
+                <strong>⚠️ 系統初始化準備</strong><br>
+                <span style="font-size:13px;">點擊右側按鈕，將國小 1~6 年級 (上下學期，共 12 卷，240 題) 完整題庫一鍵覆蓋寫入雲端。</span>
             </div>
-            <div class="header-right">
-                <a href="https://aht760317.github.io/Share/SOP.html" target="_blank" class="header-sop-btn btn-action">
-                    <i class="fa-solid fa-clipboard-list"></i> 全日行政管理
-                </a>
-                <a href="https://aht760317.github.io/Share/askclass.html#faq" target="_blank" class="quick-consult-btn btn-action">
-                    <i class="fa-solid fa-bolt"></i> 快速諮詢報名
-                </a>
-                <button onclick="handleLogout()" id="logoutBtn" class="logout-btn btn-action">
-                    <i class="fa-solid fa-right-from-bracket"></i> 登出
-                </button>
-                <div class="header-status">
-                    <span class="status-indicator"></span>
-                    <span id="statusText">正在同步雲端權限...</span>
-                </div>
-            </div>
-        </header>
-
-        <div id="teacherClassBanner" class="teacher-class-banner">
-            <i class="fa-solid fa-chalkboard-user"></i> <span>您的負責專屬班級：<strong id="assignedClassText">無</strong></span>
+            <button class="btn btn-warning" onclick="initializeCloudBanks()">🚀 寫入 1~6 年級全學期題庫</button>
         </div>
 
-        <div class="grid-menu">
-            <a href="https://aht760317.github.io/Share/rollbook.html" target="_blank" class="card" data-key="rollbook" onclick="logUserAction('點擊模組', '開啟 線上點名 系統')">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-user-check"></i></div>
-                        <span class="card-badge">Portal 01</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>線上點名</h2>
-                        <p>即時課堂出缺勤登記、學生請假追蹤與出席名冊報表產出。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>進行線上點名</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <a href="https://aht760317.github.io/Share/gotogood.html" target="_blank" class="card" data-key="gotogood" onclick="logUserAction('點擊模組', '開啟 招生與進班系統')">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-user-plus"></i></div>
-                        <span class="card-badge">Portal 02</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>招生與進班管理系統</h2>
-                        <p>新生諮詢追蹤、試聽安排、報名註冊與學員進班流程管理。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>進入招生進班系統</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <a href="https://aht760317.github.io/Share/ClassLog.html" target="_blank" class="card" data-key="ClassLog" onclick="logUserAction('點擊模組', '開啟 教學日誌')">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-book-open"></i></div>
-                        <span class="card-badge">Portal 03</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>教學日誌</h2>
-                        <p>教師雲端日誌填寫、課堂進度回報與教學歷程紀錄管理。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>填寫教學日誌</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <a href="https://aht760317.github.io/good-school/" target="_blank" class="card" data-key="good-school" onclick="logUserAction('點擊模組', '開啟 官方網站')">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-globe"></i></div>
-                        <span class="card-badge">Portal 04</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>官方網站</h2>
-                        <p>對外招生宣傳、班系介紹、師資說明與最新消息展示平台。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>進入官方網站</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <a href="https://aht760317.github.io/good-school/class.html" target="_blank" class="card" data-key="class" onclick="logUserAction('點擊模組', '開啟 線上課表')">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
-                        <span class="card-badge">Portal 05</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>線上課表</h2>
-                        <p>各年級班級排課總覽、教室空間配置與開課時程安排對照。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>檢視排課課表</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- 帶入 ?auth=good 安全傳遞通行證，徹底解決跨分頁阻擋問題 -->
-            <a href="https://aht760317.github.io/Share/indexmoney.html?auth=good" target="_blank" class="card" data-key="indexmoney" onclick="openIndexMoney(event)">
-                <div>
-                    <div class="card-header">
-                        <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                        <span class="card-badge">Portal 06</span>
-                    </div>
-                    <div class="card-body">
-                        <h2>繳費管理</h2>
-                        <p>學雜費收繳紀錄、未繳名單追蹤與財務對帳報表檢視。</p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>進入帳務管理</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-
-        <footer>
-            <div>&copy; 斗六顧德文教機構 · 內部專用行政整合系統</div>
-            <div class="footer-links-group">
-                <a href="https://aht760317.github.io/Share/joygo.html" target="_blank" class="footer-admin-link" data-key="joy-english" onclick="logUserAction('點擊模組', '開啟 英文部管理系統')">
-                    <i class="fa-solid fa-language"></i> 英文部管理系統
-                </a>
-                <button onclick="openAdminPassModal()" class="footer-admin-link">
-                    <i class="fa-solid fa-user-gear"></i> 權限與老師設定
-                </button>
+        <div class="grid-layout">
+            <div class="card" style="align-self: start;">
+                <h3>📂 雲端現有題庫卷</h3>
+                <ul class="bank-list" id="bank-list-container"><li style="color:#94a3b8; text-align:center;">載入中...</li></ul>
+                <button class="btn btn-success" style="width:100%; margin-top:15px;" onclick="alert('請先使用預設考卷編輯，未來將開放自訂考卷功能！')">➕ 新增空白考卷</button>
             </div>
-        </footer>
+
+            <div class="card" id="editor-section" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom:15px;">
+                    <h3 style="margin:0; border:none; padding:0; font-size: 20px;" id="current-bank-title">選擇題庫以進行編輯</h3>
+                    <button class="btn btn-purple" onclick="toggleAddForm()">📝 新增題目</button>
+                </div>
+
+                <div id="add-question-form" style="display:none; background:#f8fafc; padding:15px; border-radius:8px; border:1px dashed var(--accent); margin-bottom:20px;">
+                    <h4 style="margin-top:0; color:var(--accent);">新增實戰題目</h4>
+                    <div class="form-group"><label>單元標籤 (Tag)：</label><input type="text" id="new-tag" placeholder="例如：分數加減"></div>
+                    <div class="form-group"><label>題目內容：</label><input type="text" id="new-q" placeholder="請輸入題目"></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group"><label>選項 (A)：</label><input type="text" id="new-opt0"></div>
+                        <div class="form-group"><label>選項 (B)：</label><input type="text" id="new-opt1"></div>
+                        <div class="form-group"><label>選項 (C)：</label><input type="text" id="new-opt2"></div>
+                        <div class="form-group"><label>選項 (D)：</label><input type="text" id="new-opt3"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>正確解答：</label>
+                        <select id="new-ans"><option value="0">(A)</option><option value="1">(B)</option><option value="2">(C)</option><option value="3">(D)</option></select>
+                    </div>
+                    <div class="form-group"><label>主任專屬建議 (Advice)：</label><input type="text" id="new-advice" placeholder="答錯時的輔導提示"></div>
+                    <div style="text-align:right;">
+                        <button class="btn" style="background:#64748b;" onclick="toggleAddForm()">取消</button>
+                        <button class="btn btn-success" onclick="saveNewQuestion()">💾 儲存題目至雲端</button>
+                    </div>
+                </div>
+
+                <div id="questions-container"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Firebase 模組：同步老師名冊、班級與學籍總庫 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
             authDomain: "my-project-9999-479215.firebaseapp.com",
-            projectId: "my-project-9999-479215",
-            storageBucket: "my-project-9999-479215.firebasestorage.app",
-            messagingSenderId: "1020162825898",
-            appId: "1:1020162825898:web:681a7825a197f34e713ad3"
+            projectId: "my-project-9999-479215"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.cloudDepartmentsClasses = {
-            care: ["小四課後安親輔導班"],
-            elementary: ["小五數學培優班"],
-            junior: ["國二數學進階A班", "國三會考理化總複習"]
-        };
-
-        window.cloudBackupDataStore = { courses: null, students: [], attendance: null };
-
-        // 雲端同步全系統資料及老師名冊
-        window.fetchCloudAllData = async function() {
-            try {
-                // 1. 抓取雲端老師名冊
-                const teachersDoc = await getDoc(doc(db, "classLogSettings", "teachers"));
-                if (teachersDoc.exists() && teachersDoc.data().list) {
-                    const cloudTeachers = teachersDoc.data().list;
-                    localStorage.setItem('good_school_teachers', JSON.stringify(cloudTeachers));
-                } else {
-                    let localTeachers = getTeachers();
-                    await setDoc(doc(db, "classLogSettings", "teachers"), { list: localTeachers }, { merge: true });
+        // ==========================================
+        // 1~6 年級 (上下學期) 完整鑑測資料庫
+        // ==========================================
+        const PRESET_BANKS = {
+            "G1_UP": {
+                name: "小一上數學綜合鑑測卷", subject: "數學", grade: "小一",
+                questions: [
+                    {"tag": "10以內的數", "q": "桌上有 3 顆蘋果，媽媽又放了 4 顆，現在總共有幾顆？", "options": ["6", "7", "8", "9"], "ans": 1, "advice": "可利用手指或積木輔助，練習基礎數量合成。"},
+                    {"tag": "10以內的數", "q": "小華有 8 顆糖果，吃了 2 顆，還剩下幾顆？", "options": ["5", "6", "7", "8"], "ans": 1, "advice": "練習數量遞減的概念。"},
+                    {"tag": "10以內的數", "q": "數字 5 的下一個數字是多少？", "options": ["4", "5", "6", "7"], "ans": 2, "advice": "加強數字順序的記憶。"},
+                    {"tag": "10以內的數", "q": "盤子裡有 2 塊餅乾，妹妹又拿來 3 塊，現在有幾塊？", "options": ["3", "4", "5", "6"], "ans": 2, "advice": "練習 5 以內的基礎加法。"},
+                    {"tag": "分與合", "q": "把 7 顆彈珠分成兩堆，一堆有 3 顆，另一堆有幾顆？", "options": ["3", "4", "5", "6"], "ans": 1, "advice": "熟練數字的拆解與合成（如7可以分成3和4）。"},
+                    {"tag": "分與合", "q": "哪兩個數字合起來是 10？", "options": ["4和5", "3和6", "2和8", "1和7"], "ans": 2, "advice": "「湊10」是未來進位加法的核心，必須熟練。"},
+                    {"tag": "分與合", "q": "8 可以分成 4 和多少？", "options": ["3", "4", "5", "6"], "ans": 1, "advice": "加強偶數的平分概念。"},
+                    {"tag": "分與合", "q": "5 和 4 合起來是多少？", "options": ["8", "9", "10", "11"], "ans": 1, "advice": "加強數字合成直覺反應。"},
+                    {"tag": "10以內的加減", "q": "9 - 4 = ?", "options": ["4", "5", "6", "7"], "ans": 1, "advice": "反覆練習10以內的基礎減法。"},
+                    {"tag": "10以內的加減", "q": "3 + 6 = ?", "options": ["7", "8", "9", "10"], "ans": 2, "advice": "反覆練習10以內的基礎加法。"},
+                    {"tag": "10以內的加減", "q": "原本有 10 張貼紙，送給弟弟 5 張，還剩幾張？", "options": ["4", "5", "6", "7"], "ans": 1, "advice": "結合生活情境理解減法。"},
+                    {"tag": "10以內的加減", "q": "池塘裡有 4 隻青蛙，又跳進來 4 隻，共有幾隻？", "options": ["7", "8", "9", "10"], "ans": 1, "advice": "熟悉同數相加（4+4）。"},
+                    {"tag": "比較長短與輕重", "q": "鉛筆和橡皮擦，通常哪一個比較長？", "options": ["鉛筆", "橡皮擦", "一樣長", "無法比較"], "ans": 0, "advice": "引導孩子觀察生活物品的長度特徵。"},
+                    {"tag": "比較長短與輕重", "q": "西瓜和蘋果，通常哪一個比較重？", "options": ["蘋果", "西瓜", "一樣重", "無法比較"], "ans": 1, "advice": "建立物品重量與體積的基本直覺。"},
+                    {"tag": "比較長短與輕重", "q": "長頸鹿和小狗，誰比較高？", "options": ["小狗", "長頸鹿", "一樣高", "無法比較"], "ans": 1, "advice": "理解「高矮」的比較概念。"},
+                    {"tag": "比較長短與輕重", "q": "哪一種動物通常最輕？", "options": ["大象", "小貓", "螞蟻", "老虎"], "ans": 2, "advice": "熟悉生活事物的重量層級。"},
+                    {"tag": "認識形狀", "q": "皮球是什麼形狀？", "options": ["正方體", "長方體", "球體", "圓柱體"], "ans": 2, "advice": "加強立體形狀的辨識。"},
+                    {"tag": "認識形狀", "q": "黑板通常是什麼形狀？", "options": ["圓形", "長方形", "正方形", "三角形"], "ans": 1, "advice": "加強平面圖形的辨識。"},
+                    {"tag": "認識形狀", "q": "哪一個物品是圓柱體？", "options": ["易開罐", "籃球", "魔術方塊", "書本"], "ans": 0, "advice": "理解圓柱體上下有兩個圓面的特徵。"},
+                    {"tag": "認識形狀", "q": "三個邊、三個角的圖形叫做什麼？", "options": ["正方形", "長方形", "圓形", "三角形"], "ans": 3, "advice": "牢記平面圖形的基本定義。"}
+                ],
+                practicePool: {
+                    "10以內的數": [{"q": "盒子裡有 2 顆球，又放進 6 顆，共有幾顆？", "options": ["6", "7", "8", "9"], "exp": "2+6=8，答案是 8。"}]
                 }
-
-                // 2. 抓取課程與班級
-                const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
-                if (coursesDoc.exists()) {
-                    const data = coursesDoc.data().data || {};
-                    window.cloudBackupDataStore.courses = data;
-                    if (data.care) window.cloudDepartmentsClasses.care = data.care.map(c => typeof c === 'object' ? c.name : c);
-                    if (data.elementary) window.cloudDepartmentsClasses.elementary = data.elementary.map(c => typeof c === 'object' ? c.name : c);
-                    if (data.junior) window.cloudDepartmentsClasses.junior = data.junior.map(c => typeof c === 'object' ? c.name : c);
+            },
+            "G1_DOWN": {
+                name: "小一下數學綜合鑑測卷", subject: "數學", grade: "小一",
+                questions: [
+                    {"tag": "100以內的數", "q": "3 個十和 5 個一合起來是多少？", "options": ["35", "53", "8", "305"], "ans": 0, "advice": "釐清十位與個位的位值觀念。"},
+                    {"tag": "100以內的數", "q": "58 的下一個數字是多少？", "options": ["57", "59", "60", "68"], "ans": 1, "advice": "練習 100 以內的順數。"},
+                    {"tag": "100以內的數", "q": "比 80 小 1 的數是多少？", "options": ["81", "79", "70", "89"], "ans": 1, "advice": "練習跨十位數的倒數（80退1變79）。"},
+                    {"tag": "100以內的數", "q": "72 裡面的 '7' 代表多少？", "options": ["7", "70", "17", "27"], "ans": 1, "advice": "理解十位數代表的實際數值。"},
+                    {"tag": "二位數加減", "q": "20 + 15 = ?", "options": ["25", "30", "35", "40"], "ans": 2, "advice": "練習整十數與二位數的加法。"},
+                    {"tag": "二位數加減", "q": "48 - 6 = ?", "options": ["32", "42", "44", "40"], "ans": 1, "advice": "練習個位數不退位的減法。"},
+                    {"tag": "二位數加減", "q": "樹上有 25 隻鳥，飛走了 10 隻，還剩幾隻？", "options": ["10", "15", "20", "35"], "ans": 1, "advice": "情境題：練習二位數減整十數。"},
+                    {"tag": "二位數加減", "q": "哥哥有 32 元，弟弟有 14 元，兩人共有幾元？", "options": ["44", "45", "46", "47"], "ans": 2, "advice": "練習二位數不進位加法直式。"},
+                    {"tag": "認識錢幣", "q": "1 個 50 元可以換成幾個 10 元？", "options": ["3個", "4個", "5個", "10個"], "ans": 2, "advice": "熟悉錢幣等值兌換。"},
+                    {"tag": "認識錢幣", "q": "買一枝 15 元的筆，付了 2 個 10 元，要找回多少錢？", "options": ["1元", "5元", "10元", "不用找"], "ans": 1, "advice": "練習購物找零的減法情境。"},
+                    {"tag": "認識錢幣", "q": "小華有 3 個十元和 8 個一元，他總共有多少錢？", "options": ["38元", "83元", "11元", "308元"], "ans": 0, "advice": "將錢幣轉換為位值觀念計算。"},
+                    {"tag": "認識錢幣", "q": "哪一種硬幣的面額最大？", "options": ["1元", "5元", "10元", "50元"], "ans": 3, "advice": "認識台灣流通的硬幣大小與面額。"},
+                    {"tag": "認識時間", "q": "時鐘的短針指著 3，長針指著 12，是幾點？", "options": ["12點", "3點", "12點3分", "3點半"], "ans": 1, "advice": "認識整點的時針與分針位置。"},
+                    {"tag": "認識時間", "q": "時鐘的短針在 4 和 5 之間，長針指著 6，是幾點？", "options": ["4點", "5點", "4點半", "5點半"], "ans": 2, "advice": "認識半點的時針與分針位置。"},
+                    {"tag": "認識時間", "q": "一天之中，通常什麼時候吃午餐？", "options": ["早上7點", "中午12點", "下午3點", "晚上7點"], "ans": 1, "advice": "結合時間與生活作息。"},
+                    {"tag": "認識時間", "q": "長針走一圈是經過多久？", "options": ["1分鐘", "1小時", "1天", "半小時"], "ans": 1, "advice": "建立時鐘運作的基本概念。"},
+                    {"tag": "認識日期與月曆", "q": "一年有幾個月？", "options": ["7個", "10個", "12個", "30個"], "ans": 2, "advice": "背誦一年12個月的基本常識。"},
+                    {"tag": "認識日期與月曆", "q": "一個星期有幾天？", "options": ["5天", "6天", "7天", "10天"], "ans": 2, "advice": "熟記星期的循環。"},
+                    {"tag": "認識日期與月曆", "q": "今天是星期二，昨天是星期幾？", "options": ["星期一", "星期三", "星期四", "星期日"], "ans": 0, "advice": "理解昨天、今天、明天的時間次序。"},
+                    {"tag": "認識日期與月曆", "q": "兒童節是在哪一個月？", "options": ["1月", "4月", "8月", "12月"], "ans": 1, "advice": "結合生活節慶認識月曆。"}
+                ],
+                practicePool: {
+                    "100以內的數": [{"q": "6 個十和 2 個一合起來是多少？", "options": ["26", "62", "8", "602"], "exp": "十位是6，個位是2，合起來是62。"}]
                 }
-
-                // 3. 抓取學生學籍
-                const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
-                let studentsArr = [];
-                studentsSnapshot.forEach(d => studentsArr.push({ id: d.id, ...d.data() }));
-                window.cloudBackupDataStore.students = studentsArr;
-
-                // 4. 抓取雲端點名紀錄
-                const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
-                if (attendanceDoc.exists()) {
-                    window.cloudBackupDataStore.attendance = attendanceDoc.data().data || {};
+            },
+            "G2_UP": {
+                name: "小二上數學綜合鑑測卷", subject: "數學", grade: "小二",
+                questions: [
+                    {"tag": "200以內的數", "q": "156 裡面的 '5' 表示多少？", "options": ["5", "50", "500", "15"], "ans": 1, "advice": "加強百位、十位、個位的位值觀念。"},
+                    {"tag": "200以內的數", "q": "比 199 大 1 的數是多少？", "options": ["198", "190", "200", "201"], "ans": 2, "advice": "練習跨百位的進位順數。"},
+                    {"tag": "200以內的數", "q": "130、140、(  )、160，括號中應填入多少？", "options": ["145", "150", "155", "170"], "ans": 1, "advice": "練習 10 個一數的數列規律。"},
+                    {"tag": "200以內的數", "q": "1 個百、4 個十和 8 個一合起來是多少？", "options": ["148", "184", "418", "841"], "ans": 0, "advice": "熟悉三位數的位值合成。"},
+                    {"tag": "二位數直式加減", "q": "47 + 28 = ?", "options": ["65", "75", "85", "71"], "ans": 1, "advice": "直式加法：加強個位滿十要向十位進 1 的動作。"},
+                    {"tag": "二位數直式加減", "q": "82 - 35 = ?", "options": ["47", "57", "43", "53"], "ans": 0, "advice": "直式減法：加強個位不夠減，向十位借 1 變 10 的退位動作。"},
+                    {"tag": "二位數直式加減", "q": "一包糖果有 50 顆，分給同學 24 顆，還剩幾顆？", "options": ["24", "26", "34", "36"], "ans": 1, "advice": "練習整十數退位減法的直式計算。"},
+                    {"tag": "二位數直式加減", "q": "小明有 38 元，媽媽又給他 45 元，他現在有幾元？", "options": ["73", "83", "93", "81"], "ans": 1, "advice": "練習生活情境中的進位加法。"},
+                    {"tag": "九九乘法", "q": "4 × 7 = ?", "options": ["24", "28", "32", "35"], "ans": 1, "advice": "需反覆背誦並熟記九九乘法表。"},
+                    {"tag": "九九乘法", "q": "一輛汽車有 4 個輪子，6 輛汽車共有幾個輪子？", "options": ["10", "20", "24", "28"], "ans": 2, "advice": "理解乘法為同數累加的意義 (4的6倍)。"},
+                    {"tag": "九九乘法", "q": "8 × 9 = ?", "options": ["64", "72", "81", "56"], "ans": 1, "advice": "針對易混淆的高段乘法加強抽背。"},
+                    {"tag": "九九乘法", "q": "一盒雞蛋有 10 顆，買了 5 盒，共有幾顆？", "options": ["15", "40", "50", "100"], "ans": 2, "advice": "熟悉 10 的乘法規律。"},
+                    {"tag": "容量與重量初步", "q": "比較水壺和水杯，通常哪一個裝的水比較多？", "options": ["水杯", "水壺", "一樣多", "無法比較"], "ans": 1, "advice": "建立容量大小的直觀比較能力。"},
+                    {"tag": "容量與重量初步", "q": "爸爸和大西瓜，通常誰比較重？", "options": ["大西瓜", "爸爸", "一樣重", "無法比較"], "ans": 1, "advice": "利用生活經驗建立重量層級概念。"},
+                    {"tag": "容量與重量初步", "q": "把一杯水倒進大臉盆裡，水的量會變嗎？", "options": ["會變多", "會變少", "不會變", "不一定"], "ans": 2, "advice": "理解容量守恆的概念（容器改變，液體量不變）。"},
+                    {"tag": "容量與重量初步", "q": "下列哪一種容器適合用來裝一缸洗澡水？", "options": ["馬克杯", "湯鍋", "浴缸", "水壺"], "ans": 2, "advice": "結合生活情境判斷適合的容量載體。"},
+                    {"tag": "面的大小與測量", "q": "課本的封面和橡皮擦的面，哪一個比較大？", "options": ["橡皮擦的面", "課本的封面", "一樣大", "無法比較"], "ans": 1, "advice": "練習視覺判斷平面圖形的面積大小。"},
+                    {"tag": "面的大小與測量", "q": "如果用正方形積木排滿桌面，排得越多代表桌面越...？", "options": ["小", "大", "長", "短"], "ans": 1, "advice": "理解利用單位面積覆蓋來測量大小的概念。"},
+                    {"tag": "面的大小與測量", "q": "兩個完全一樣的正方形拼在一起，會變成什麼形狀？", "options": ["正方形", "長方形", "圓形", "三角形"], "ans": 1, "advice": "培養空間與平面圖形拼貼的邏輯。"},
+                    {"tag": "面的大小與測量", "q": "把一張色紙對摺一半，面積會變成原本的幾倍？", "options": ["一半", "兩倍", "不變", "三倍"], "ans": 0, "advice": "理解摺紙與面積分割的關係。"}
+                ],
+                practicePool: {
+                    "二位數直式加減": [{"q": "63 - 28 = ?", "options": ["35", "45", "33", "43"], "exp": "個位3不夠減8，向十位借10，13-8=5，5-2=3，答案是 35。"}]
                 }
-
-                document.getElementById('statusText').innerText = "系統雲端連線正常";
-            } catch (e) {
-                console.warn("雲端讀取離線，使用本機快取資料：", e);
-                document.getElementById('statusText').innerText = "離線工作模式 (本地資料)";
+            },
+            "G2_DOWN": {
+                name: "小二下數學綜合鑑測卷", subject: "數學", grade: "小二",
+                questions: [
+                    {"tag": "1000以內的數", "q": "5 個百、0 個十和 7 個一合起來是多少？", "options": ["57", "507", "570", "705"], "ans": 1, "advice": "注意中間缺位（十位為0）要補零的觀念。"},
+                    {"tag": "1000以內的數", "q": "比 999 大 1 的數是多少？", "options": ["100", "990", "1000", "1001"], "ans": 2, "advice": "熟練跨千位的進位。"},
+                    {"tag": "1000以內的數", "q": "三百零五的數字記法是？", "options": ["35", "305", "350", "3005"], "ans": 1, "advice": "練習國字與阿拉伯數字的轉換。"},
+                    {"tag": "1000以內的數", "q": "760 裡面的 '7' 代表多少？", "options": ["7", "70", "700", "76"], "ans": 2, "advice": "釐清百位數代表的實際數值。"},
+                    {"tag": "三位數加減", "q": "250 + 140 = ?", "options": ["390", "490", "350", "400"], "ans": 0, "advice": "練習三位數不進位加法直式。"},
+                    {"tag": "三位數加減", "q": "500 - 120 = ?", "options": ["380", "480", "420", "320"], "ans": 0, "advice": "加強整百數連續退位的減法計算。"},
+                    {"tag": "三位數加減", "q": "一本故事書有 320 頁，小明看了 150 頁，還有幾頁沒看？", "options": ["170", "270", "470", "150"], "ans": 0, "advice": "練習三位數退位減法的應用題。"},
+                    {"tag": "三位數加減", "q": "鞋子一雙 450 元，衣服一件 380 元，一起買共要多少元？", "options": ["730", "830", "930", "820"], "ans": 1, "advice": "練習三位數進位加法直式。"},
+                    {"tag": "乘法與應用", "q": "一包色紙有 12 張，買 3 包共有幾張？", "options": ["15", "36", "24", "48"], "ans": 1, "advice": "練習二位數乘一位數的不進位乘法。"},
+                    {"tag": "乘法與應用", "q": "15 × 4 = ?", "options": ["50", "60", "45", "75"], "ans": 1, "advice": "練習二位數乘一位數的進位乘法。"},
+                    {"tag": "乘法與應用", "q": "一條繩子長 25 公分，4 條一樣長的繩子接在一起共長幾公分？", "options": ["80", "90", "100", "120"], "ans": 2, "advice": "結合長度情境練習乘法進位。"},
+                    {"tag": "乘法與應用", "q": "任何數乘以 0 的結果是多少？", "options": ["原來的數", "1", "0", "無法計算"], "ans": 2, "advice": "牢記「乘以0皆為0」的鐵則。"},
+                    {"tag": "分裝與平分", "q": "有 12 顆草莓，每 4 顆裝一盤，可以裝成幾盤？", "options": ["2盤", "3盤", "4盤", "6盤"], "ans": 1, "advice": "利用乘法逆運算（4的幾倍是12）來理解分裝。"},
+                    {"tag": "分裝與平分", "q": "有 15 塊餅乾，平分給 3 個小朋友，每人可以分到幾塊？", "options": ["3塊", "4塊", "5塊", "6塊"], "ans": 2, "advice": "利用乘法逆運算（3的幾倍是15）來理解平分。"},
+                    {"tag": "分裝與平分", "q": "20 瓶果汁，每 5 瓶裝一盒，需要幾個盒子？", "options": ["3個", "4個", "5個", "10個"], "ans": 1, "advice": "加強「包含除」的情境理解。"},
+                    {"tag": "分裝與平分", "q": "18 顆彈珠平分成 2 堆，一堆有幾顆？", "options": ["8顆", "9顆", "10顆", "6顆"], "ans": 1, "advice": "加強「等分除」與平分概念。"},
+                    {"tag": "長度與年月日", "q": "1 公尺等於幾公分？", "options": ["10", "100", "1000", "50"], "ans": 1, "advice": "絕對要熟背的長度換算公式。"},
+                    {"tag": "長度與年月日", "q": "黑板的長度大約是 3 (  )？", "options": ["公分", "公尺", "公里", "毫米"], "ans": 1, "advice": "結合生活經驗判斷適合的長度單位。"},
+                    {"tag": "長度與年月日", "q": "一年之中，有 31 天的月份稱為？", "options": ["小月", "大月", "平月", "閏月"], "ans": 1, "advice": "認識大月和小月的定義。"},
+                    {"tag": "長度與年月日", "q": "今年的 2 月有 29 天，這一年稱為什麼年？", "options": ["平年", "大年", "小年", "閏年"], "ans": 3, "advice": "記住平年 2月 28天，閏年 2月 29天。"}
+                ],
+                practicePool: {
+                    "三位數加減": [{"q": "400 - 180 = ?", "options": ["220", "320", "280", "380"], "exp": "400減100是300，再減80是220。答案選 (A)。"}]
+                }
+            },
+            "G3_UP": {
+                name: "小三上數學綜合鑑測卷", subject: "數學", grade: "小三",
+                questions: [
+                    {"tag": "萬以內的數", "q": "「四千零五」的阿拉伯數字記法是？", "options": ["405", "4050", "4005", "4500"], "ans": 2, "advice": "中間缺少的百位與十位皆需補零。"},
+                    {"tag": "萬以內的數", "q": "5 個千、3 個百和 8 個一合起來是多少？", "options": ["538", "5308", "5038", "5380"], "ans": 1, "advice": "位值表對位：千位5、百位3、十位0、個位8。"},
+                    {"tag": "萬以內的數", "q": "9999 的下一個整數是多少？", "options": ["1000", "9990", "10000", "10001"], "ans": 2, "advice": "熟練跨萬位的連續進位。"},
+                    {"tag": "萬以內的數", "q": "比較大小：4052 (  ) 4025，括號應填入？", "options": ["大於", "小於", "等於", "無法比較"], "ans": 0, "advice": "從最高位往下比，百位相同看十位，5大於2。"},
+                    {"tag": "四位數加減", "q": "3200 + 1500 = ?", "options": ["4700", "5700", "4500", "3700"], "ans": 0, "advice": "練習整百數的直式加法對齊。"},
+                    {"tag": "四位數加減", "q": "5000 - 2400 = ?", "options": ["3600", "2600", "3400", "2400"], "ans": 1, "advice": "注意千位向百位借位的退位計算。"},
+                    {"tag": "四位數加減", "q": "機票 4500 元，住宿 3800 元，總共要花多少元？", "options": ["7300", "8300", "9300", "8200"], "ans": 1, "advice": "直式加法百位進位至千位的計算。"},
+                    {"tag": "四位數加減", "q": "哥哥有 6200 元，買腳踏車花了 2800 元，還剩多少元？", "options": ["3400", "4400", "3600", "4600"], "ans": 0, "advice": "直式減法千位退位的計算。"},
+                    {"tag": "多位數乘一位數", "q": "312 × 3 = ?", "options": ["936", "624", "963", "926"], "ans": 0, "advice": "三位數乘一位數的不進位乘法。"},
+                    {"tag": "多位數乘一位數", "q": "250 × 4 = ?", "options": ["1000", "800", "1200", "900"], "ans": 0, "advice": "末尾有零的乘法，可先算25×4再補零。"},
+                    {"tag": "多位數乘一位數", "q": "一件衣服 399 元，買 2 件大約要多少元？（估算）", "options": ["600", "800", "1000", "400"], "ans": 1, "advice": "練習將 399 估算為 400 再進行乘法。"},
+                    {"tag": "多位數乘一位數", "q": "108 × 5 = ?", "options": ["540", "5040", "500", "450"], "ans": 0, "advice": "中間有零的乘法進位處理。"},
+                    {"tag": "有餘數的除法", "q": "17 ÷ 3 的商和餘數是多少？", "options": ["商5餘2", "商4餘5", "商6餘1", "商5餘3"], "ans": 0, "advice": "餘數必須小於除數，3×5=15，17-15=2。"},
+                    {"tag": "有餘數的除法", "q": "25 顆糖，每 4 顆裝一包，最多可以裝幾包？還剩幾顆？", "options": ["裝5包剩5顆", "裝6包剩1顆", "裝7包剩3顆", "裝4包剩9顆"], "ans": 1, "advice": "情境題：利用除法求最大商數與餘數。"},
+                    {"tag": "有餘數的除法", "q": "除法算式中，餘數一定要比除數 (  )？", "options": ["大", "小", "相等", "都可以"], "ans": 1, "advice": "牢記除法的鐵律：餘數絕對小於除數。"},
+                    {"tag": "有餘數的除法", "q": "38 ÷ 6 = 6 ... (  )，括號中應填入多少？", "options": ["1", "2", "3", "4"], "ans": 1, "advice": "驗算機制：6×6=36，38-36=2。"},
+                    {"tag": "分數的初步認識", "q": "一個披薩平分成 4 份，妹妹吃了一份，是吃了幾個披薩？", "options": ["4分之1", "1分之4", "3分之1", "4個"], "ans": 0, "advice": "理解分母代表總平分份數，分子代表取走份數。"},
+                    {"tag": "分數的初步認識", "q": "分數「3/8」中，分母是多少？", "options": ["3", "8", "11", "5"], "ans": 1, "advice": "牢記分數的寫法：下面是分母，上面是分子。"},
+                    {"tag": "分數的初步認識", "q": "1 盒蘋果有 10 顆，3 顆是幾盒蘋果？", "options": ["10分之3", "3分之10", "13分之3", "3盒"], "ans": 0, "advice": "將離散量（顆）轉換為連續量（盒）的分數表示。"},
+                    {"tag": "分數的初步認識", "q": "比較大小：1/2 和 1/4，哪一個比較大？", "options": ["1/2", "1/4", "一樣大", "無法比較"], "ans": 0, "advice": "平分的份數越少(分母越小)，每一份就越大。"}
+                ],
+                practicePool: {
+                    "四位數加減": [{"q": "4100 - 1500 = ?", "options": ["3600", "2600", "3400", "2400"], "exp": "千位需退位，41-15=26，補上兩個0，答案是 2600。"}]
+                }
+            },
+            "G3_DOWN": {
+                name: "小三下數學綜合鑑測卷", subject: "數學", grade: "小三",
+                questions: [
+                    {"tag": "兩位數乘兩位數", "q": "12 × 10 = ?", "options": ["12", "120", "102", "1200"], "ans": 1, "advice": "乘以 10 只要在原數後面補一個 0。"},
+                    {"tag": "兩位數乘兩位數", "q": "15 × 12 = ?", "options": ["150", "180", "160", "200"], "ans": 1, "advice": "直式乘法：先乘個位再乘十位，最後相加。"},
+                    {"tag": "兩位數乘兩位數", "q": "一箱飲料有 24 瓶，買 20 箱共有幾瓶？", "options": ["240", "480", "48", "600"], "ans": 1, "advice": "利用 24×2=48，再補上 0。"},
+                    {"tag": "兩位數乘兩位數", "q": "25 × 25 = ?", "options": ["625", "500", "125", "425"], "ans": 0, "advice": "加強多位數相乘的進位準確度。"},
+                    {"tag": "三位數除以一位數", "q": "600 ÷ 3 = ?", "options": ["20", "200", "2", "300"], "ans": 1, "advice": "整百數除法：6÷3=2，補上兩個 0。"},
+                    {"tag": "三位數除以一位數", "q": "408 ÷ 4 = ?", "options": ["12", "102", "120", "100"], "ans": 1, "advice": "直式除法：中間位數不夠除要補 0。"},
+                    {"tag": "三位數除以一位數", "q": "有 315 顆糖，平分給 5 個班級，每班分到幾顆？", "options": ["63", "65", "61", "53"], "ans": 0, "advice": "直式除法第一位不夠除，看前兩位 (31÷5)。"},
+                    {"tag": "三位數除以一位數", "q": "824 ÷ 8 = ?", "options": ["13", "103", "130", "100"], "ans": 1, "advice": "當商的中間位產生 0 時，切勿漏寫。"},
+                    {"tag": "同分母分數加減", "q": "3/8 + 2/8 = ?", "options": ["5/16", "5/8", "1/8", "6/8"], "ans": 1, "advice": "同分母相加，分母不變，分子相加。"},
+                    {"tag": "同分母分數加減", "q": "7/10 - 4/10 = ?", "options": ["3/0", "3/10", "11/10", "3/20"], "ans": 1, "advice": "同分母相減，分母不變，分子相減。"},
+                    {"tag": "同分母分數加減", "q": "1 - 3/5 = ?", "options": ["2/5", "4/5", "3/5", "1/5"], "ans": 0, "advice": "遇到 1 時，將其轉換為與減數同分母的分數 (5/5) 再算。"},
+                    {"tag": "同分母分數加減", "q": "一包色紙，哥哥用了 4/9 包，弟弟用了 2/9 包，共用了幾包？", "options": ["6/18", "6/9", "2/9", "8/9"], "ans": 1, "advice": "分數應用題：釐清相加的情境。"},
+                    {"tag": "小數的初步認識", "q": "「3.5」讀作什麼？", "options": ["三五", "三點五", "三十五", "三分之五"], "ans": 1, "advice": "認識小數點與讀法。"},
+                    {"tag": "小數的初步認識", "q": "1 公分等於 10 毫米，5 毫米可以記作幾公分？", "options": ["0.5公分", "5公分", "50公分", "0.05公分"], "ans": 0, "advice": "長度單位與一位小數的轉換。"},
+                    {"tag": "小數的初步認識", "q": "10 個 0.1 合起來是多少？", "options": ["0.10", "1", "10", "0.01"], "ans": 1, "advice": "理解小數進位：滿十進一。"},
+                    {"tag": "小數的初步認識", "q": "比較大小：0.8 (  ) 1.2", "options": ["大於", "小於", "等於", "無法比較"], "ans": 1, "advice": "先比個位數，個位相同再比十分位。"},
+                    {"tag": "面積與重量換算", "q": "1 公斤等於幾公克？", "options": ["10", "100", "1000", "10000"], "ans": 2, "advice": "必須熟背的重量單位換算。"},
+                    {"tag": "面積與重量換算", "q": "正方形的邊長是 5 公分，面積是多少平方公分？", "options": ["10", "20", "25", "15"], "ans": 2, "advice": "熟記正方形面積公式：邊長 × 邊長。"},
+                    {"tag": "面積與重量換算", "q": "長方形長 6 公分、寬 4 公分，面積是多少？", "options": ["20", "10", "24", "26"], "ans": 2, "advice": "熟記長方形面積公式：長 × 寬。"},
+                    {"tag": "面積與重量換算", "q": "3 公斤 50 公克等於幾公克？", "options": ["350", "3050", "3500", "30050"], "ans": 1, "advice": "重量換算注意補零（3000 + 50）。"}
+                ],
+                practicePool: {
+                    "兩位數乘兩位數": [{"q": "21 × 30 = ?", "options": ["63", "630", "603", "6300"], "exp": "21×3=63，補上一個0，答案是 630。"}]
+                }
+            },
+            "G4_UP": {
+                name: "小四上數學綜合鑑測卷", subject: "數學", grade: "小四",
+                questions: [
+                    {"tag": "億以內數", "q": "一千萬減一百萬是？", "options": ["九十萬", "九百萬", "九千萬", "九十"], "ans": 1, "advice": "大數相減對齊。"},
+                    {"tag": "億以內數", "q": "1 億是幾個一千萬？", "options": ["10", "100", "1000", "1"], "ans": 0, "advice": "十進位。"},
+                    {"tag": "億以內數", "q": "三千零五萬 記作？", "options": ["30050000", "3050000", "30005000", "30500000"], "ans": 0, "advice": "缺位補零。"},
+                    {"tag": "億以內數", "q": "4500萬 ( ) 450萬", "options": ["大於", "小於", "等於", "無法比"], "ans": 0, "advice": "位數比對。"},
+                    {"tag": "角與測量", "q": "直角是幾度？", "options": ["45", "90", "180", "360"], "ans": 1, "advice": "定義。"},
+                    {"tag": "角與測量", "q": "比直角大、平角小是？", "options": ["銳角", "直角", "鈍角", "周角"], "ans": 2, "advice": "定義。"},
+                    {"tag": "角與測量", "q": "量角器中心要對準？", "options": ["邊上", "頂點", "開口", "隨便"], "ans": 1, "advice": "量角器用法。"},
+                    {"tag": "角與測量", "q": "兩個 45 度拼起來是？", "options": ["銳角", "直角", "鈍角", "平角"], "ans": 1, "advice": "45+45=90。"},
+                    {"tag": "乘除法", "q": "125 × 8 = ?", "options": ["800", "1000", "900", "1100"], "ans": 1, "advice": "必背乘積。"},
+                    {"tag": "乘除法", "q": "300 × 40 = ?", "options": ["1200", "12000", "120", "120000"], "ans": 1, "advice": "補3個0。"},
+                    {"tag": "乘除法", "q": "450 ÷ 90 = ?", "options": ["5", "50", "4", "40"], "ans": 0, "advice": "劃掉0。"},
+                    {"tag": "乘除法", "q": "315 ÷ 15 = ?", "options": ["20", "21", "25", "20餘15"], "ans": 1, "advice": "二位數除法。"},
+                    {"tag": "公里面積", "q": "1 公里是幾公尺？", "options": ["100", "1000", "10000", "10"], "ans": 1, "advice": "長度換算。"},
+                    {"tag": "公里面積", "q": "3公里50公尺是？", "options": ["350", "3050", "3500", "30050"], "ans": 1, "advice": "補零。"},
+                    {"tag": "公里面積", "q": "1 平方公尺是幾平方公分？", "options": ["100", "1000", "10000", "100000"], "ans": 2, "advice": "100×100。"},
+                    {"tag": "公里面積", "q": "邊長 20 公尺正方形面積？", "options": ["400m²", "80m²", "40m²", "400cm²"], "ans": 0, "advice": "注意單位。"},
+                    {"tag": "分數小數", "q": "1/2 等於幾分之幾？", "options": ["2/3", "2/4", "3/4", "1/4"], "ans": 1, "advice": "擴分。"},
+                    {"tag": "分數小數", "q": "1 又 1/3 + 2/3 = ?", "options": ["1 又 2/3", "2", "3", "1"], "ans": 1, "advice": "進位。"},
+                    {"tag": "分數小數", "q": "3.5 + 2.75 = ?", "options": ["5.25", "6.25", "5.8", "6.8"], "ans": 1, "advice": "小數點對齊。"},
+                    {"tag": "分數小數", "q": "5 - 1.25 = ?", "options": ["4.75", "3.75", "4.25", "3.25"], "ans": 1, "advice": "整數補零。"}
+                ],
+                practicePool: {}
+            },
+            "G4_DOWN": {
+                name: "小四下數學綜合鑑測卷", subject: "數學", grade: "小四",
+                questions: [
+                    {"tag": "四則運算", "q": "25 × 13 × 4 先算什麼好？", "options": ["13×4", "25×13", "25×4", "由左而右"], "ans": 2, "advice": "結合律找100。"},
+                    {"tag": "四則運算", "q": "100 - (20 + 30) = ?", "options": ["110", "50", "150", "70"], "ans": 1, "advice": "括號先算。"},
+                    {"tag": "四則運算", "q": "12 + 8 × 5 = ?", "options": ["100", "52", "60", "40"], "ans": 1, "advice": "先乘除後加減。"},
+                    {"tag": "四則運算", "q": "500元買3本120元的書剩？", "options": ["260", "140", "380", "120"], "ans": 1, "advice": "500 - 120×3。"},
+                    {"tag": "幾何四邊形", "q": "四邊等長且直角是？", "options": ["長方形", "菱形", "正方形", "梯形"], "ans": 2, "advice": "正方形定義。"},
+                    {"tag": "幾何四邊形", "q": "只有一組對邊平行？", "options": ["梯形", "平行四邊形", "菱形", "長方形"], "ans": 0, "advice": "梯形特徵。"},
+                    {"tag": "幾何四邊形", "q": "四邊等長但角不一定直角？", "options": ["正方形", "梯形", "平四", "菱形"], "ans": 3, "advice": "菱形特徵。"},
+                    {"tag": "幾何四邊形", "q": "兩線相交成直角稱為？", "options": ["平行", "垂直", "重合", "分開"], "ans": 1, "advice": "垂直。"},
+                    {"tag": "體積初步", "q": "12個1立方公分積木的體積？", "options": ["24", "12", "6", "不知"], "ans": 1, "advice": "數量即體積。"},
+                    {"tag": "體積初步", "q": "長3寬2高4是幾個積木？", "options": ["9", "24", "18", "12"], "ans": 1, "advice": "長×寬×高。"},
+                    {"tag": "體積初步", "q": "邊長2正方體體積？", "options": ["4", "6", "8", "12"], "ans": 2, "advice": "2×2×2。"},
+                    {"tag": "體積初步", "q": "積木打散重排，體積？", "options": ["變大", "變小", "不變", "不一定"], "ans": 2, "advice": "體積守恆。"},
+                    {"tag": "小數乘法", "q": "0.5 × 6 = ?", "options": ["30", "3", "0.3", "0.03"], "ans": 1, "advice": "點小數點。"},
+                    {"tag": "小數乘法", "q": "2.15 × 4 = ?", "options": ["8.6", "8.4", "8.06", "8.5"], "ans": 0, "advice": "對齊最右邊算完再點。"},
+                    {"tag": "小數乘法", "q": "0.08 × 9 = ?", "options": ["0.72", "7.2", "72", "0.072"], "ans": 0, "advice": "兩位小數。"},
+                    {"tag": "小數乘法", "q": "積的小數點怎麼點？", "options": ["對齊加法", "看被乘數有幾位", "隨便點", "不用點"], "ans": 1, "advice": "乘整數時小數位數相同。"},
+                    {"tag": "時間與圖表", "q": "2 分 15 秒是幾秒？", "options": ["135", "215", "120", "115"], "ans": 0, "advice": "120+15。"},
+                    {"tag": "時間與圖表", "q": "1時40分加50分？", "options": ["1時90分", "2時30分", "2時40分", "2時50分"], "ans": 1, "advice": "滿60進位。"},
+                    {"tag": "時間與圖表", "q": "氣溫連續變化適合？", "options": ["長條圖", "折線圖", "圓餅圖", "表"], "ans": 1, "advice": "折線圖看趨勢。"},
+                    {"tag": "時間與圖表", "q": "各班人數多寡適合？", "options": ["折線圖", "長條圖", "圓餅圖", "路線圖"], "ans": 1, "advice": "長條圖看數量。"}
+                ],
+                practicePool: {}
+            },
+            "G5_UP": {
+                name: "小五上數學綜合鑑測卷", subject: "數學", grade: "小五",
+                questions: [
+                    {"tag": "因倍數", "q": "12和18的最大公因數？", "options": ["2", "3", "6", "36"], "ans": 2, "advice": "短除法。"},
+                    {"tag": "因倍數", "q": "8和12的最小公倍數？", "options": ["24", "48", "4", "96"], "ans": 0, "advice": "求LCM。"},
+                    {"tag": "因倍數", "q": "判斷3的倍數最快法？", "options": ["看個位", "數字加總", "除以3", "看後兩位"], "ans": 1, "advice": "3的倍數判別法。"},
+                    {"tag": "因倍數", "q": "8的因數有幾個？", "options": ["2", "3", "4", "無限"], "ans": 2, "advice": "1,2,4,8。"},
+                    {"tag": "異分母加減", "q": "1/2 + 1/3 = ?", "options": ["2/5", "5/6", "1/5", "1/6"], "ans": 1, "advice": "通分。"},
+                    {"tag": "異分母加減", "q": "3/4 - 1/8 = ?", "options": ["2/4", "5/8", "2/8", "1/2"], "ans": 1, "advice": "通分後相減。"},
+                    {"tag": "異分母加減", "q": "1又1/2 + 3/4 = ?", "options": ["1又4/6", "2", "2又1/4", "1又3/4"], "ans": 2, "advice": "滿整數進位。"},
+                    {"tag": "異分母加減", "q": "2 - 1/3 = ?", "options": ["1", "1又1/3", "1又2/3", "2/3"], "ans": 2, "advice": "退位減法。"},
+                    {"tag": "多邊形面積", "q": "平行四邊形面積公式？", "options": ["長×寬", "底×高", "底×高÷2", "邊長×邊長"], "ans": 1, "advice": "公式。"},
+                    {"tag": "多邊形面積", "q": "三角形面積公式？", "options": ["底×高", "底×高÷2", "長×寬÷2", "上加下乘高÷2"], "ans": 1, "advice": "同底同高一半。"},
+                    {"tag": "多邊形面積", "q": "梯形面積公式？", "options": ["底×高÷2", "長×寬", "(上加下)×高÷2", "對角線乘÷2"], "ans": 2, "advice": "公式。"},
+                    {"tag": "多邊形面積", "q": "底10高6三角形面積？", "options": ["60", "30", "16", "20"], "ans": 1, "advice": "記得除2。"},
+                    {"tag": "小數乘法", "q": "1.5 × 4 = ?", "options": ["6.5", "6", "60", "0.6"], "ans": 1, "advice": "小數點左移。"},
+                    {"tag": "小數乘法", "q": "0.8 × 0.7 = ?", "options": ["5.6", "0.56", "56", "0.056"], "ans": 1, "advice": "兩位小數。"},
+                    {"tag": "小數乘法", "q": "3.5 × 1.2 = ?", "options": ["4.2", "4.02", "42", "4.7"], "ans": 0, "advice": "點兩位小數。"},
+                    {"tag": "小數乘法", "q": "積的小數位數等於？", "options": ["被乘數位數", "乘數位數", "兩者相加", "固定兩位"], "ans": 2, "advice": "總小數位數。"},
+                    {"tag": "對稱與代數", "q": "正方形對稱軸幾條？", "options": ["2", "3", "4", "無限"], "ans": 2, "advice": "4條。"},
+                    {"tag": "對稱與代數", "q": "圓形對稱軸幾條？", "options": ["1", "2", "4", "無限"], "ans": 3, "advice": "直徑皆是。"},
+                    {"tag": "對稱與代數", "q": "x + 15 = 40，x=?", "options": ["20", "25", "30", "55"], "ans": 1, "advice": "移項。"},
+                    {"tag": "對稱與代數", "q": "y × 4 = 36，y=?", "options": ["8", "9", "12", "144"], "ans": 1, "advice": "等量公理。"}
+                ],
+                practicePool: {}
+            },
+            "G5_DOWN": {
+                name: "小五下數學綜合鑑測卷", subject: "數學", grade: "小五",
+                questions: [
+                    {"tag": "分數乘法", "q": "3/4 × 2/5 = ?", "options": ["3/10", "6/20", "5/9", "A和B都對"], "ans": 3, "advice": "約分。"},
+                    {"tag": "分數乘法", "q": "2又1/3 × 1又1/2 = ?", "options": ["2又1/6", "3又1/2", "7/2", "C和D錯(答案B)"], "ans": 1, "advice": "化假分數。"},
+                    {"tag": "分數乘法", "q": "分數乘以 1 結果會？", "options": ["變大", "變小", "不變", "變成0"], "ans": 2, "advice": "不變。"},
+                    {"tag": "分數乘法", "q": "600的 3/4 是？", "options": ["800", "450", "300", "400"], "ans": 1, "advice": "的代表乘。"},
+                    {"tag": "小數除法", "q": "15 ÷ 0.5 = ?", "options": ["3", "30", "0.3", "7.5"], "ans": 1, "advice": "同乘10。"},
+                    {"tag": "小數除法", "q": "2.4 ÷ 0.6 = ?", "options": ["4", "0.4", "40", "0.04"], "ans": 0, "advice": "點右移。"},
+                    {"tag": "小數除法", "q": "除數小於1，商會比被除數？", "options": ["大", "小", "相等", "不一定"], "ans": 0, "advice": "變大。"},
+                    {"tag": "小數除法", "q": "3.14除以100小數點？", "options": ["右移兩位", "左移兩位", "右移一位", "左移一位"], "ans": 1, "advice": "變小左移。"},
+                    {"tag": "體積容積", "q": "長10寬5高2體積？", "options": ["50", "100", "20", "1000"], "ans": 1, "advice": "長乘寬乘高。"},
+                    {"tag": "體積容積", "q": "邊長4正方體體積？", "options": ["16", "64", "24", "96"], "ans": 1, "advice": "連乘3次。"},
+                    {"tag": "體積容積", "q": "1公升等於幾毫升？", "options": ["10", "100", "1000", "10000"], "ans": 2, "advice": "容量換算。"},
+                    {"tag": "體積容積", "q": "1毫升水體積約是？", "options": ["1cm³", "1m³", "10cm³", "100cm³"], "ans": 0, "advice": "1ml=1cm³。"},
+                    {"tag": "大單位與時間", "q": "1公噸等於幾公斤？", "options": ["10", "100", "1000", "10000"], "ans": 2, "advice": "重量大單位。"},
+                    {"tag": "大單位與時間", "q": "1公頃等於幾公畝？", "options": ["10", "100", "1000", "10000"], "ans": 1, "advice": "面積大單位。"},
+                    {"tag": "大單位與時間", "q": "1時20分 × 3 = ?", "options": ["3時60分", "4時", "4時20分", "3時20分"], "ans": 1, "advice": "進位。"},
+                    {"tag": "大單位與時間", "q": "150秒 ÷ 3 = ?", "options": ["30秒", "50秒", "1分", "2分"], "ans": 1, "advice": "直除。"},
+                    {"tag": "百分率圖表", "q": "25%化成分數？", "options": ["1/2", "1/4", "1/5", "1/25"], "ans": 1, "advice": "約分。"},
+                    {"tag": "百分率圖表", "q": "打八折意思是？", "options": ["少80%", "原價的80%", "少8元", "原價的20%"], "ans": 1, "advice": "80%。"},
+                    {"tag": "百分率圖表", "q": "圓餅圖適合表示？", "options": ["趨勢", "百分比", "總量", "正比"], "ans": 1, "advice": "看比例。"},
+                    {"tag": "百分率圖表", "q": "圓餅圖加起來圓心角是？", "options": ["90", "100", "180", "360"], "ans": 3, "advice": "360度。"}
+                ],
+                practicePool: {}
+            },
+            "G6_UP": {
+                name: "小六上數學綜合鑑測卷", subject: "數學", grade: "小六",
+                questions: [
+                    {"tag": "質因倍數", "q": "哪一個是質數？", "options": ["1", "2", "9", "15"], "ans": 1, "advice": "2是唯一偶數質數。"},
+                    {"tag": "質因倍數", "q": "12的質因數分解？", "options": ["2×6", "3×4", "2×2×3", "1×12"], "ans": 2, "advice": "必須全質數。"},
+                    {"tag": "質因倍數", "q": "互質兩數最大公因數是？", "options": ["0", "1", "相乘", "無"], "ans": 1, "advice": "定義。"},
+                    {"tag": "質因倍數", "q": "30和45最大公因數？", "options": ["5", "10", "15", "90"], "ans": 2, "advice": "短除法。"},
+                    {"tag": "分數除法", "q": "1/2 ÷ 1/3 = ?", "options": ["1/6", "3/2", "2/3", "6"], "ans": 1, "advice": "乘倒數。"},
+                    {"tag": "分數除法", "q": "5 ÷ 1/4 = ?", "options": ["5/4", "1.25", "20", "4/5"], "ans": 2, "advice": "5×4。"},
+                    {"tag": "分數除法", "q": "帶分數除法先化為？", "options": ["直接除", "通分", "假分數", "小數"], "ans": 2, "advice": "化假分數。"},
+                    {"tag": "分數除法", "q": "3/4是1/8的幾倍？", "options": ["6", "4", "8", "3/32"], "ans": 0, "advice": "除法。"},
+                    {"tag": "小數除法", "q": "2.5 ÷ 0.5 = ?", "options": ["5", "0.5", "50", "0.05"], "ans": 0, "advice": "同乘10。"},
+                    {"tag": "小數除法", "q": "3.6 ÷ 0.06 = ?", "options": ["6", "60", "0.6", "600"], "ans": 1, "advice": "同乘100。"},
+                    {"tag": "小數除法", "q": "餘數的小數點和誰對齊？", "options": ["除數", "原被除數", "新被除數", "商"], "ans": 1, "advice": "對齊規則。"},
+                    {"tag": "小數除法", "q": "0.15 ÷ 0.4 = ?", "options": ["3.75", "0.375", "37.5", "0.0375"], "ans": 1, "advice": "化為1.5÷4。"},
+                    {"tag": "比與比例", "q": "3:4的比值？", "options": ["1.33", "4/3", "3/4", "7"], "ans": 2, "advice": "前除後。"},
+                    {"tag": "比與比例", "q": "15:20最簡比？", "options": ["1.5:2", "3:4", "5:6", "30:40"], "ans": 1, "advice": "約分。"},
+                    {"tag": "比與比例", "q": "圖形放大3倍，面積變幾倍？", "options": ["3", "6", "9", "27"], "ans": 2, "advice": "平方倍。"},
+                    {"tag": "比與比例", "q": "地圖1公分代表1公里，比例尺？", "options": ["1:100", "1:1000", "1:1萬", "1:10萬"], "ans": 3, "advice": "換算公分。"},
+                    {"tag": "圓與扇形", "q": "圓周率大約是？", "options": ["3.14", "3.1416", "3.1", "3"], "ans": 0, "advice": "常數。"},
+                    {"tag": "圓與扇形", "q": "半徑10圓面積大約？", "options": ["31.4", "62.8", "314", "3140"], "ans": 2, "advice": "半徑平方乘3.14。"},
+                    {"tag": "圓與扇形", "q": "90度扇形是幾分之幾圓？", "options": ["1/2", "1/3", "1/4", "1/6"], "ans": 2, "advice": "90/360。"},
+                    {"tag": "圓與扇形", "q": "扇形周長包含弧長和？", "options": ["直徑", "兩個半徑", "面積", "圓周率"], "ans": 1, "advice": "加兩半徑。"}
+                ],
+                practicePool: {}
+            },
+            "G6_DOWN": {
+                name: "小六下數學綜合鑑測卷", subject: "數學", grade: "小六",
+                questions: [
+                    {"tag": "速率", "q": "距離除以時間等於？", "options": ["速率", "密度", "加速度", "體積"], "ans": 0, "advice": "基本公式。"},
+                    {"tag": "速率", "q": "秒速10公尺，分速幾公尺？", "options": ["100", "600", "3600", "60"], "ans": 1, "advice": "乘60。"},
+                    {"tag": "速率", "q": "時速60公里，1.5小時多遠？", "options": ["90", "75", "100", "120"], "ans": 0, "advice": "速率乘時間。"},
+                    {"tag": "速率", "q": "120公里開2小時，時速是？", "options": ["240", "60", "122", "118"], "ans": 1, "advice": "距離除時間。"},
+                    {"tag": "基準量", "q": "甲100乙50，以甲為基準，乙是？", "options": ["2", "1/2", "50", "150"], "ans": 1, "advice": "比較÷基準。"},
+                    {"tag": "基準量", "q": "打八折便宜了多少？", "options": ["80%", "20%", "不變", "8元"], "ans": 1, "advice": "便宜20%。"},
+                    {"tag": "基準量", "q": "弟是哥的0.8倍，誰重？", "options": ["弟弟", "哥哥", "一樣", "無法比"], "ans": 1, "advice": "比值<1。"},
+                    {"tag": "基準量", "q": "加成20%出售，售價是成本幾倍？", "options": ["0.2", "1.2", "0.8", "20"], "ans": 1, "advice": "1+0.2。"},
+                    {"tag": "柱體", "q": "柱體體積公式？", "options": ["底面積×高", "長×寬", "底×高÷2", "半徑平方"], "ans": 0, "advice": "通用公式。"},
+                    {"tag": "柱體", "q": "底面積20高5柱體積？", "options": ["25", "100", "4", "200"], "ans": 1, "advice": "相乘。"},
+                    {"tag": "柱體", "q": "圓柱展開側面積是？", "options": ["圓形", "長方形", "扇形", "三角形"], "ans": 1, "advice": "長方形。"},
+                    {"tag": "柱體", "q": "柱體總表面積等於？", "options": ["側面積", "底面×2+側", "底×高", "底+側"], "ans": 1, "advice": "上下底+側。"},
+                    {"tag": "代數", "q": "3x + 5 = 20，x=?", "options": ["3", "4", "5", "6"], "ans": 2, "advice": "移項。"},
+                    {"tag": "代數", "q": "甲比乙多5，乙是x，甲是？", "options": ["x-5", "5x", "x+5", "x/5"], "ans": 2, "advice": "代數列式。"},
+                    {"tag": "代數", "q": "同乘不為0的數，等式會？", "options": ["變大", "變小", "依然成立", "不成立"], "ans": 2, "advice": "等量公理。"},
+                    {"tag": "代數", "q": "5A = 3B，誰大？", "options": ["A大", "B大", "一樣", "無法比"], "ans": 1, "advice": "B大。"},
+                    {"tag": "綜合應用", "q": "10頭26腳，兔子幾隻？", "options": ["3", "4", "6", "7"], "ans": 0, "advice": "假設全雞。"},
+                    {"tag": "綜合應用", "q": "甲60乙80，落後100追多久？", "options": ["2分", "4分", "5分", "10分"], "ans": 2, "advice": "100÷(80-60)。"},
+                    {"tag": "綜合應用", "q": "100公尺每10種樹，兩端種共幾棵？", "options": ["9", "10", "11", "12"], "ans": 2, "advice": "100÷10+1。"},
+                    {"tag": "綜合應用", "q": "撲克牌52張，抽黑桃機率？", "options": ["1/2", "1/3", "1/4", "1/13"], "ans": 2, "advice": "4花色之一。"}
+                ],
+                practicePool: {}
             }
-            filterClassesByDepartment();
         };
 
-        // 將老師名冊即時回寫 Firebase 雲端
-        window.saveTeachersToCloud = async function(teachersArray) {
-            try {
-                await setDoc(doc(db, "classLogSettings", "teachers"), { list: teachersArray }, { merge: true });
-                return true;
-            } catch (error) {
-                console.error("雲端更新失敗：", error);
-                return false;
-            }
-        };
+        window.state = { cloudBanks: {}, currentSelectedBankId: null };
 
-        window.syncClassesFromRollbook = async function() {
-            alert("正在從雲端同步最新班級與老師清單...");
-            await window.fetchCloudAllData();
-            renderTeacherTable();
-            logUserAction('系統維護', '手動點擊雲端同步最新班級與老師清單');
-            alert("✅ 同步完成！已更新為最新雲端資料。");
-        };
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            await window.fetchCloudAllData();
-            checkLoginState();
-        });
-    </script>
-
-    <script>
-        const ADMIN_USER = "aht0317";
-        const ADMIN_PASS = "aa0618aa";
-        const CONFIG_PASS = "760317";
-
-        // 發放通行證
-        function grantMoneySystemAuth() {
-            localStorage.setItem('good_auth_status', 'authenticated');
-            localStorage.setItem('good_auth_time', Date.now().toString());
-        }
-
-        // 點擊「繳費管理」卡片時執行
-        window.openIndexMoney = function(e) {
-            logUserAction('點擊模組', '開啟 繳費管理');
-            grantMoneySystemAuth();
-        };
-
-        function logUserAction(actionType, details) {
-            let user = sessionStorage.getItem('good_current_user') || '訪客';
-            let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
+        window.initializeCloudBanks = async function() {
+            if(!confirm("⚠️ 確定要將 1~6 年級全學期預設題庫 (共 12 卷, 240 題) 完整寫入雲端嗎？（這會覆蓋原有同名資料）")) return;
             
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-
-            logs.unshift({ time: timeStr, user: user, action: actionType, details: details });
-            if (logs.length > 300) logs = logs.slice(0, 300);
-            localStorage.setItem('good_school_audit_logs', JSON.stringify(logs));
-        }
-
-        function getTeachers() {
-            let data = localStorage.getItem('good_school_teachers');
-            if (!data) {
-                let initial = [
-                    { 
-                        name: "雅鴻", 
-                        pass: "0000", 
-                        birth: "1987-03-17",
-                        hireDate: "2020-01-01",
-                        education: "大學", 
-                        school: "教育系", 
-                        phone: "0900-000-000", 
-                        note: "機構負責人", 
-                        perms: ["sop", "rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"],
-                        classes: ["小四課後安親輔導班", "國二數學進階A班"]
-                    }
-                ];
-                localStorage.setItem('good_school_teachers', JSON.stringify(initial));
-                return initial;
+            document.querySelector('.sys-alert div span').innerText = "寫入中，請不要關閉視窗...";
+            try {
+                for (const [key, data] of Object.entries(PRESET_BANKS)) {
+                    await setDoc(doc(db, "question_banks", key), data);
+                }
+                alert("✅ 系統已成功初始化！國小 1~6 年級全學期題庫已寫入 Firebase。");
+                document.querySelector('.sys-alert div span').innerText = "✅ 寫入完成！";
+                loadBanksFromCloud();
+            } catch (e) {
+                console.error(e);
+                alert("❌ 初始化失敗，請檢查網路狀態或 Firebase 權限設定。");
             }
-            return JSON.parse(data);
-        }
+        };
 
-        function checkLoginState() {
-            let currentUser = sessionStorage.getItem('good_current_user');
-            if (!currentUser) {
-                document.getElementById('loginModal').style.display = 'flex';
-            } else {
-                grantMoneySystemAuth();
-                applyUserPermissions(currentUser);
-            }
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            let uInput = document.getElementById('loginUser').value.trim();
-            let pInput = document.getElementById('loginPass').value.trim();
-            let errEl = document.getElementById('loginError');
-
-            if (uInput === ADMIN_USER && pInput === ADMIN_PASS) {
-                sessionStorage.setItem('good_current_user', '雅鴻 (管理者)');
-                grantMoneySystemAuth();
-                document.getElementById('loginModal').style.display = 'none';
-                logUserAction('系統登入', '管理者登入系統');
-                applyUserPermissions('雅鴻 (管理者)');
-                return;
-            }
-
-            if (window.fetchCloudAllData) {
-                await window.fetchCloudAllData();
-            }
-
-            let teachers = getTeachers();
-            let found = teachers.find(t => t.name === uInput && t.pass === pInput);
-
-            if (found) {
-                sessionStorage.setItem('good_current_user', found.name);
-                grantMoneySystemAuth();
-                document.getElementById('loginModal').style.display = 'none';
-                logUserAction('系統登入', `老師 ${found.name} 登入系統`);
-                applyUserPermissions(found.name);
-            } else {
-                errEl.style.display = 'block';
-            }
-        }
-
-        function handleLogout() {
-            logUserAction('系統登入', '使用者登出系統');
-            sessionStorage.removeItem('good_current_user');
-            localStorage.removeItem('good_auth_status');
-            localStorage.removeItem('good_auth_time');
-            location.reload();
-        }
-
-        function applyUserPermissions(user) {
-            let logoutBtn = document.getElementById('logoutBtn');
-            let welcomeText = document.getElementById('welcomeText');
-            let banner = document.getElementById('teacherClassBanner');
-            let classText = document.getElementById('assignedClassText');
-
-            logoutBtn.style.display = 'inline-flex';
-
-            let allowedPerms = [];
-            let assignedClasses = [];
-
-            if (user === '雅鴻 (管理者)') {
-                welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">雅鴻 (最高管理者)</span>`;
-                banner.style.display = 'none';
-                allowedPerms = ["sop", "rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"];
-            } else {
-                welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
+        async function loadBanksFromCloud() {
+            const listEl = document.getElementById('bank-list-container');
+            listEl.innerHTML = '<li style="color:#94a3b8; text-align:center;">同步讀取中...</li>';
+            try {
+                const snapshot = await getDocs(collection(db, "question_banks"));
+                window.state.cloudBanks = {};
+                listEl.innerHTML = '';
                 
-                let teachers = getTeachers();
-                let tData = teachers.find(t => t.name === user);
-                allowedPerms = tData ? (tData.perms || []) : [];
-                assignedClasses = tData ? (tData.classes || []) : [];
-
-                if (assignedClasses.length > 0) {
-                    classText.innerText = assignedClasses.join('、');
-                    banner.style.display = 'flex';
-                } else {
-                    classText.innerText = "目前未指派專屬班級";
-                    banner.style.display = 'flex';
-                }
-            }
-
-            // 卡片權限套用
-            let cards = document.querySelectorAll('.grid-menu .card');
-            cards.forEach(card => {
-                let key = card.getAttribute('data-key');
-                if (allowedPerms.includes(key)) {
-                    card.classList.remove('locked');
-                } else {
-                    card.classList.add('locked');
-                }
-            });
-
-            // 頁尾底部「英文部管理系統」連結權限套用
-            let joyLink = document.querySelector('a.footer-admin-link[data-key="joy-english"]');
-            if (joyLink) {
-                if (allowedPerms.includes("joy-english")) {
-                    joyLink.style.opacity = "1";
-                    joyLink.style.pointerEvents = "auto";
-                    joyLink.title = "";
-                } else {
-                    joyLink.style.opacity = "0.4";
-                    joyLink.style.pointerEvents = "none";
-                    joyLink.title = "您目前無此權限";
-                }
-            }
-        }
-
-        function openAdminPassModal() {
-            document.getElementById('adminSecretInput').value = '';
-            document.getElementById('adminPassError').style.display = 'none';
-            document.getElementById('adminPassModal').style.display = 'flex';
-        }
-
-        function closeAdminPassModal() {
-            document.getElementById('adminPassModal').style.display = 'none';
-        }
-
-        function verifyAdminPass(e) {
-            e.preventDefault();
-            let val = document.getElementById('adminSecretInput').value.trim();
-            if (val === CONFIG_PASS) {
-                document.getElementById('adminPassModal').style.display = 'none';
-                logUserAction('安全驗證', '成功通過密碼驗證進入設定後台');
-                openAdminModal();
-            } else {
-                document.getElementById('adminPassError').style.display = 'block';
-            }
-        }
-
-        function openAdminModal() {
-            switchAdminTab('teachers');
-            renderTeacherTable();
-            renderDepartmentClasses();
-            document.getElementById('adminModal').style.display = 'flex';
-        }
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').style.display = 'none';
-            document.getElementById('teacherForm').reset();
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
-            document.getElementById('submitBtnText').innerText = "儲存並同步至雲端";
-        }
-
-        window.switchAdminTab = function(tabName) {
-            const tabTeachers = document.getElementById('adminTabTeachers');
-            const tabLogs = document.getElementById('adminTabLogs');
-            const buttons = document.querySelectorAll('.admin-tab-btn');
-
-            buttons.forEach((btn, idx) => {
-                if (idx < 2) btn.classList.remove('active');
-            });
-
-            if (tabName === 'teachers') {
-                tabTeachers.style.display = 'block';
-                tabLogs.style.display = 'none';
-                buttons[0].classList.add('active');
-            } else if (tabName === 'logs') {
-                tabTeachers.style.display = 'none';
-                tabLogs.style.display = 'block';
-                buttons[1].classList.add('active');
-                renderAuditLogsTable();
-            }
-        };
-
-        function renderAuditLogsTable() {
-            let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
-            let tbody = document.getElementById('auditLogTableBody');
-            tbody.innerHTML = '';
-
-            if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">目前尚無任何操作足跡紀錄</td></tr>`;
-                return;
-            }
-
-            logs.forEach(log => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-size:0.78rem; color:var(--text-secondary);">${log.time}</td>
-                    <td><strong style="color:var(--accent-blue);">${log.user}</strong></td>
-                    <td><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold;">${log.action}</span></td>
-                    <td>${log.details}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.clearSystemLogs = function() {
-            if (confirm('確定要清空所有操作紀錄嗎？')) {
-                localStorage.removeItem('good_school_audit_logs');
-                renderAuditLogsTable();
-                alert('操作紀錄已清空！');
-            }
-        };
-
-        window.backupSystemData = function() {
-            const backupPackage = {
-                exportDate: new Date().toISOString(),
-                cloudDatabase: window.cloudBackupDataStore || {},
-                teachers: JSON.parse(localStorage.getItem('good_school_teachers') || '[]'),
-                auditLogs: JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]')
-            };
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPackage, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `斗六顧德全系統完整備份_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-
-            logUserAction('系統備份', '下載全系統完整備份 JSON 檔案');
-            alert('✅ 全系統資料已完整打包下載至您的電腦！');
-        };
-
-        window.filterClassesByDepartment = function() {
-            let dept = document.getElementById('departmentSelect').value;
-            let container = document.getElementById('departmentClassContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            let checkedClasses = Array.from(document.querySelectorAll('input[name="assignedClass"]:checked')).map(cb => cb.value);
-            let classesToShow = [];
-            const dbClasses = window.cloudDepartmentsClasses || { care: [], elementary: [], junior: [] };
-
-            if (dept === 'ALL') {
-                classesToShow = [...(dbClasses.care || []), ...(dbClasses.elementary || []), ...(dbClasses.junior || [])];
-            } else {
-                classesToShow = dbClasses[dept] || [];
-            }
-
-            if (classesToShow.length === 0) {
-                container.innerHTML = `<span style="font-size:12.5px; color:#888;">此部門目前尚無建立班級。</span>`;
-                return;
-            }
-
-            classesToShow.forEach(cls => {
-                let isChecked = checkedClasses.includes(cls) ? 'checked' : '';
-                let label = document.createElement('label');
-                label.style.cssText = "font-weight: normal; font-size: 0.9rem; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border);";
-                label.innerHTML = `<input type="checkbox" name="assignedClass" value="${cls}" ${isChecked}> ${cls}`;
-                container.appendChild(label);
-            });
-        };
-
-        function renderDepartmentClasses() {
-            let deptSelect = document.getElementById('departmentSelect');
-            if (deptSelect) deptSelect.value = 'ALL';
-            filterClassesByDepartment();
-        }
-
-        function renderTeacherTable() {
-            let teachers = getTeachers();
-            let tbody = document.getElementById('teacherTableBody');
-            tbody.innerHTML = '';
-
-            if (teachers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">尚未新增任何老師帳號</td></tr>`;
-                return;
-            }
-
-            const permNames = {
-                "sop": "全日行政管理系統",
-                "rollbook": "線上點名",
-                "gotogood": "招生系統",
-                "ClassLog": "教學日誌",
-                "good-school": "官方網站",
-                "class": "線上課表",
-                "indexmoney": "繳費管理",
-                "joy-english": "英文部管理系統"
-            };
-
-            teachers.forEach((t, index) => {
-                let permBadges = (t.perms || []).map(p => `<span class="badge-perm">${permNames[p] || p}</span>`).join('');
-                let classBadges = (t.classes || []).map(c => `<span class="badge-class">${c}</span>`).join('') || '<span style="color:var(--text-muted); font-size:0.8rem;">未指派</span>';
-                
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${t.name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">密碼: ${t.pass}</span></td>
-                    <td style="font-size:0.82rem;">正職: ${t.hireDate || '-'}<br>生日: ${t.birth || '-'}</td>
-                    <td>${t.education || '-'}<br><span style="font-size:0.78rem; color:var(--text-secondary);">${t.phone || ''}</span></td>
-                    <td>${classBadges}</td>
-                    <td>${permBadges}</td>
-                    <td>
-                        <button class="btn-sm" onclick="editTeacher(${index})">編輯</button>
-                        <button class="btn-sm btn-danger" onclick="deleteTeacher(${index})">刪除</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.saveTeacher = async function(e) {
-            e.preventDefault();
-            let name = document.getElementById('tName').value.trim();
-            let pass = document.getElementById('tPass').value.trim();
-            let birth = document.getElementById('tBirth').value;
-            let hireDate = document.getElementById('tHireDate').value;
-            let education = document.getElementById('tEducation').value.trim();
-            let school = document.getElementById('tSchool').value.trim();
-            let phone = document.getElementById('tPhone').value.trim();
-            let note = document.getElementById('tNote').value.trim();
-            let editIndex = parseInt(document.getElementById('editIndex').value);
-
-            let permCheckboxes = document.querySelectorAll('input[name="perm"]:checked');
-            let perms = Array.from(permCheckboxes).map(cb => cb.value);
-
-            let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]:checked');
-            let classes = Array.from(classCheckboxes).map(cb => cb.value);
-
-            let teachers = getTeachers();
-
-            if (editIndex === -1) {
-                if (teachers.some(t => t.name === name)) {
-                    alert('此老師名字已經存在，請直接編輯或使用其他名字！');
+                if(snapshot.empty) {
+                    listEl.innerHTML = '<li style="color:#e11d48; text-align:center;">雲端目前無資料<br>請點擊上方黃色按鈕初始化</li>';
                     return;
                 }
-                teachers.push({ name, pass, birth, hireDate, education, school, phone, note, perms, classes });
-                logUserAction('人事管理', `新增老師帳號與權限：${name}`);
-            } else {
-                teachers[editIndex] = { name, pass, birth, hireDate, education, school, phone, note, perms, classes };
-                logUserAction('人事管理', `修改老師資料與權限：${name}`);
+
+                const sortedDocs = [];
+                snapshot.forEach(docSnap => sortedDocs.push({ id: docSnap.id, data: docSnap.data() }));
+                sortedDocs.sort((a,b) => a.id.localeCompare(b.id));
+
+                sortedDocs.forEach(docObj => {
+                    const data = docObj.data;
+                    window.state.cloudBanks[docObj.id] = data;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${data.name}</span> <span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:12px;">${data.questions?.length || 0}題</span>`;
+                    li.onclick = () => selectBank(docObj.id, li);
+                    listEl.appendChild(li);
+                });
+            } catch(e) {
+                console.error(e);
+                listEl.innerHTML = '<li style="color:#e11d48; text-align:center;">讀取失敗，請確認 Firebase 設定</li>';
+            }
+        }
+
+        function selectBank(bankId, liElement) {
+            document.querySelectorAll('.bank-list li').forEach(el => el.classList.remove('active'));
+            liElement.classList.add('active');
+            
+            window.state.currentSelectedBankId = bankId;
+            const bankData = window.state.cloudBanks[bankId];
+            
+            document.getElementById('editor-section').style.display = 'block';
+            document.getElementById('current-bank-title').innerText = `✏️ 編輯：${bankData.name}`;
+            renderQuestions(bankData.questions || []);
+        }
+
+        function renderQuestions(questions) {
+            const container = document.getElementById('questions-container');
+            if (questions.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:30px;">本題庫目前沒有題目。</div>';
+                return;
             }
 
-            localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
-            if (window.saveTeachersToCloud) {
-                await window.saveTeachersToCloud(teachers);
-            }
+            const alpha = ["(A)", "(B)", "(C)", "(D)"];
+            container.innerHTML = questions.map((q, idx) => `
+                <div class="question-item">
+                    <button class="btn btn-danger" style="position:absolute; right:15px; top:15px; padding:5px 10px; font-size:12px;" onclick="deleteQuestion(${idx})">刪除</button>
+                    <div class="q-tag">📌 ${q.tag}</div>
+                    <div class="q-text">${idx + 1}. ${q.q}</div>
+                    <div class="q-options">
+                        ${q.options.map((opt, i) => `<div style="${i === q.ans ? 'font-weight:bold; color:var(--primary);' : ''}">${alpha[i]} ${opt}</div>`).join('')}
+                    </div>
+                    <div class="q-ans">✅ 正確答案：${alpha[q.ans]} ｜ 💡 建議：${q.advice || '無'}</div>
+                </div>
+            `).join('');
+        }
 
-            document.getElementById('teacherForm').reset();
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('formTitleText').innerText = "新增老師帳號與完整人事資料";
-            document.getElementById('submitBtnText').innerText = "儲存並同步至雲端";
-            renderDepartmentClasses();
-            renderTeacherTable();
-            alert('✅ 老師帳號、密碼與權限已成功同步更新至雲端！所有裝置均可即時登入。');
+        window.toggleAddForm = function() {
+            const form = document.getElementById('add-question-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
         };
 
-        window.editTeacher = function(index) {
-            let teachers = getTeachers();
-            let t = teachers[index];
+        window.saveNewQuestion = async function() {
+            const bankId = window.state.currentSelectedBankId;
+            if(!bankId) { alert("請先選擇左側的題庫！"); return; }
 
-            document.getElementById('tName').value = t.name || '';
-            document.getElementById('tPass').value = t.pass || '';
-            document.getElementById('tBirth').value = t.birth || '';
-            document.getElementById('tHireDate').value = t.hireDate || '';
-            document.getElementById('tEducation').value = t.education || '';
-            document.getElementById('tSchool').value = t.school || '';
-            document.getElementById('tPhone').value = t.phone || '';
-            document.getElementById('tNote').value = t.note || '';
-            document.getElementById('editIndex').value = index;
+            const tag = document.getElementById('new-tag').value.trim() || "綜合觀念";
+            const q = document.getElementById('new-q').value.trim();
+            const opt0 = document.getElementById('new-opt0').value.trim();
+            const opt1 = document.getElementById('new-opt1').value.trim();
+            const opt2 = document.getElementById('new-opt2').value.trim();
+            const opt3 = document.getElementById('new-opt3').value.trim();
+            const ans = Number(document.getElementById('new-ans').value);
+            const advice = document.getElementById('new-advice').value.trim() || "請加強此單元觀念";
 
-            document.getElementById('formTitleText').innerText = `編輯老師資料與班級：${t.name}`;
-            document.getElementById('submitBtnText').innerText = "確認修改並同步雲端";
+            if(!q || !opt0 || !opt1 || !opt2 || !opt3) { alert("請完整填寫題目與四個選項！"); return; }
 
-            let permCheckboxes = document.querySelectorAll('input[name="perm"]');
-            permCheckboxes.forEach(cb => {
-                cb.checked = (t.perms || []).includes(cb.value);
-            });
-
-            let classCheckboxes = document.querySelectorAll('input[name="assignedClass"]');
-            classCheckboxes.forEach(cb => {
-                cb.checked = (t.classes || []).includes(cb.value);
-            });
+            const newQ = { tag, q, options: [opt0, opt1, opt2, opt3], ans, advice };
+            window.state.cloudBanks[bankId].questions.push(newQ);
+            
+            try {
+                await updateDoc(doc(db, "question_banks", bankId), { questions: window.state.cloudBanks[bankId].questions });
+                alert("✅ 題目新增成功並同步至雲端！");
+                
+                ['new-tag','new-q','new-opt0','new-opt1','new-opt2','new-opt3','new-advice'].forEach(id => document.getElementById(id).value = '');
+                toggleAddForm();
+                renderQuestions(window.state.cloudBanks[bankId].questions);
+            } catch(e) { alert("❌ 新增失敗，請檢查連線。"); }
         };
 
-        window.deleteTeacher = async function(index) {
-            let teachers = getTeachers();
-            let targetName = teachers[index] ? teachers[index].name : '未知';
-            if (confirm(`確定要刪除老師【${targetName}】的帳號與權限設定嗎？`)) {
-                teachers.splice(index, 1);
-                localStorage.setItem('good_school_teachers', JSON.stringify(teachers));
-                if (window.saveTeachersToCloud) {
-                    await window.saveTeachersToCloud(teachers);
-                }
-                logUserAction('人事管理', `刪除老師帳號：${targetName}`);
-                renderTeacherTable();
-                alert(`已刪除老師【${targetName}】並同步更新至雲端。`);
-            }
+        window.deleteQuestion = async function(idx) {
+            if(!confirm("確定要刪除這題嗎？刪除後前端將不會再出現此題。")) return;
+            const bankId = window.state.currentSelectedBankId;
+            window.state.cloudBanks[bankId].questions.splice(idx, 1);
+            
+            try {
+                await updateDoc(doc(db, "question_banks", bankId), { questions: window.state.cloudBanks[bankId].questions });
+                renderQuestions(window.state.cloudBanks[bankId].questions);
+            } catch(e) { alert("❌ 刪除失敗。"); }
         };
+
+        window.onload = loadBanksFromCloud;
     </script>
 </body>
 </html>
