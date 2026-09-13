@@ -137,16 +137,6 @@
             border-color: #7dd3fc;
         }
 
-        .logout-btn {
-            color: #dc2626;
-            background: #fef2f2;
-            border-color: #fecaca;
-            display: none;
-        }
-        .logout-btn:hover {
-            background: #fee2e2;
-        }
-
         .teacher-class-banner {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -181,13 +171,7 @@
             position: relative;
         }
 
-        .card.locked {
-            opacity: 0.5;
-            pointer-events: none;
-            filter: grayscale(0.5);
-        }
-
-        .card:hover:not(.locked) {
+        .card:hover {
             transform: translateY(-2px);
             border-color: var(--border-hover);
             box-shadow: var(--shadow-lg);
@@ -256,10 +240,6 @@
             font-size: 0.85rem;
             font-weight: 600;
             color: var(--accent-blue);
-        }
-
-        .card.locked .card-footer {
-            color: var(--text-muted);
         }
 
         .card-footer i {
@@ -515,27 +495,6 @@
 </head>
 <body>
 
-    <!-- 登入驗證彈跳視窗 (Firebase 驗證) -->
-    <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-lock" style="color:var(--accent-blue)"></i> 系統登入</h3>
-            </div>
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>登入帳號 (Email)</label>
-                    <input type="email" id="loginUser" class="form-control" placeholder="請輸入登入 Email" value="aht760317@gmail.com" required>
-                </div>
-                <div class="form-group">
-                    <label>登入密碼</label>
-                    <input type="password" id="loginPass" class="form-control" placeholder="請輸入密碼" value="asd0618" required>
-                </div>
-                <button type="submit" id="loginSubmitBtn" class="btn-primary">安全登入</button>
-                <div id="loginError" class="error-msg">帳號或密碼錯誤，請重新輸入</div>
-            </form>
-        </div>
-    </div>
-
     <!-- 管理者密碼驗證視窗 (760317) -->
     <div id="adminPassModal" class="modal-overlay" style="display: none;">
         <div class="modal-box">
@@ -713,12 +672,9 @@
                 <a href="askclass.html#faq" target="_blank" class="quick-consult-btn btn-action">
                     <i class="fa-solid fa-bolt"></i> 快速諮詢報名
                 </a>
-                <button onclick="handleLogout()" id="logoutBtn" class="logout-btn btn-action">
-                    <i class="fa-solid fa-right-from-bracket"></i> 登出
-                </button>
                 <div class="header-status">
                     <span class="status-indicator"></span>
-                    <span id="statusText">正在同步雲端權限...</span>
+                    <span id="statusText">系統雲端連線正常</span>
                 </div>
             </div>
         </header>
@@ -850,11 +806,10 @@
         </footer>
     </div>
 
-    <!-- Firebase 模組：Firestore 同步與 Auth 驗證 -->
+    <!-- Firebase 模組：Firestore 同步 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -867,7 +822,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
 
         window.cloudDepartmentsClasses = {
             care: ["小四課後安親輔導班"],
@@ -934,58 +888,14 @@
             alert("✅ 同步完成！已更新為最新雲端資料。");
         };
 
-        // Firebase Auth 狀態監聽
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('loginModal').style.display = 'none';
-                sessionStorage.setItem('good_current_user', user.email);
-                grantMoneySystemAuth();
-                if(typeof applyUserPermissions === 'function') {
-                    applyUserPermissions('雅鴻 (管理者)'); 
-                }
-            } else {
-                document.getElementById('loginModal').style.display = 'flex';
-            }
-        });
-
-        // 登入處理
-        window.handleLogin = function(e) {
-            e.preventDefault();
-            let email = document.getElementById('loginUser').value.trim();
-            let pass = document.getElementById('loginPass').value.trim();
-            let errEl = document.getElementById('loginError');
-
-            signInWithEmailAndPassword(auth, email, pass)
-                .then(() => {
-                    errEl.style.display = 'none';
-                    if(typeof logUserAction === 'function') logUserAction('系統登入', `帳號 ${email} 成功登入`);
-                })
-                .catch((error) => {
-                    errEl.style.display = 'block';
-                    errEl.innerText = "帳號或密碼錯誤，請重新確認。";
-                });
-        };
-
-        // 登出處理
-        window.handleLogout = function() {
-            signOut(auth).then(() => {
-                if(typeof logUserAction === 'function') logUserAction('系統登出', '使用者登出');
-                sessionStorage.removeItem('good_current_user');
-                localStorage.removeItem('good_auth_status');
-                localStorage.removeItem('good_auth_time');
-            }).catch((error) => {
-                alert("登出失敗：" + error.message);
-            });
-        };
-
         window.addEventListener('DOMContentLoaded', async () => {
+            sessionStorage.setItem('good_current_user', '系統管理者');
+            grantMoneySystemAuth();
             await window.fetchCloudAllData();
         });
     </script>
 
     <script>
-        const ADMIN_USER = "aht0317";
-        const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
 
         function grantMoneySystemAuth() {
@@ -1031,63 +941,6 @@
                 return initial;
             }
             return JSON.parse(data);
-        }
-
-        function applyUserPermissions(user) {
-            let logoutBtn = document.getElementById('logoutBtn');
-            let welcomeText = document.getElementById('welcomeText');
-            let banner = document.getElementById('teacherClassBanner');
-            let classText = document.getElementById('assignedClassText');
-
-            logoutBtn.style.display = 'inline-flex';
-
-            let allowedPerms = [];
-            let assignedClasses = [];
-
-            if (user === '雅鴻 (管理者)') {
-                let currentEmail = sessionStorage.getItem('good_current_user') || '';
-                welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${currentEmail}</span>`;
-                banner.style.display = 'none';
-                allowedPerms = ["sop", "rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"];
-            } else {
-                welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
-                
-                let teachers = getTeachers();
-                let tData = teachers.find(t => t.name === user);
-                allowedPerms = tData ? (tData.perms || []) : [];
-                assignedClasses = tData ? (tData.classes || []) : [];
-
-                if (assignedClasses.length > 0) {
-                    classText.innerText = assignedClasses.join('、');
-                    banner.style.display = 'flex';
-                } else {
-                    classText.innerText = "目前未指派專屬班級";
-                    banner.style.display = 'flex';
-                }
-            }
-
-            let cards = document.querySelectorAll('.grid-menu .card');
-            cards.forEach(card => {
-                let key = card.getAttribute('data-key');
-                if (allowedPerms.includes(key)) {
-                    card.classList.remove('locked');
-                } else {
-                    card.classList.add('locked');
-                }
-            });
-
-            let joyLink = document.querySelector('a.footer-admin-link[data-key="joy-english"]');
-            if (joyLink) {
-                if (allowedPerms.includes("joy-english")) {
-                    joyLink.style.opacity = "1";
-                    joyLink.style.pointerEvents = "auto";
-                    joyLink.title = "";
-                } else {
-                    joyLink.style.opacity = "0.4";
-                    joyLink.style.pointerEvents = "none";
-                    joyLink.title = "您目前無此權限";
-                }
-            }
         }
 
         function openAdminPassModal() {
