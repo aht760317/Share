@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>斗六顧德補習班 - 專業繳費管理系統</title>
+
+    <!-- 🔒 身分驗證守衛：未登入立即阻擋並轉跳，不載入後續畫面 -->
+    <script>
+        (function() {
+            const authStatus = localStorage.getItem('good_auth_status');
+            const authTime = localStorage.getItem('good_auth_time');
+            const maxSession = 24 * 60 * 60 * 1000; // 登入有效期限：24 小時
+
+            const isExpired = !authTime || (Date.now() - parseInt(authTime, 10)) > maxSession;
+
+            if (authStatus !== 'authenticated' || isExpired) {
+                localStorage.removeItem('good_auth_status');
+                localStorage.removeItem('good_auth_time');
+                alert('⚠️ 尚未登入或登入已逾期，請先由入口輸入帳號密碼！');
+                window.location.replace('https://aht760317.github.io/Share/gogogood.html');
+            }
+        })();
+    </script>
+
     <!-- 引入 SortableJS 支援拖曳排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -66,6 +85,19 @@
             background: #1D4ED8;
             transform: translateY(-1px);
         }
+
+        .btn-logout {
+            background: #EF4444;
+            border: 1px solid #DC2626;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-logout:hover { background: #DC2626; }
 
         /* 電腦版頂部導覽列 */
         .tabs { display: flex; background: #1E293B; }
@@ -343,7 +375,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; }
         .modal-box { background: white; padding: 18px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
 
-        /* 列印及收據滿版配置 (修正排版：改為區塊靠上對齊，固定高度確保不跑位) */
+        /* 列印及收據滿版配置 */
         .receipt-container-page {
             display: block; 
             width: 100%;
@@ -366,7 +398,6 @@
             justify-content: space-between;
         }
         
-        /* 嚴格固定高度，確保A4剛好塞滿三張通知單或兩張收據 */
         .receipt-box.notice-mode { height: 9.2cm; }
         .receipt-box.receipt-mode { height: 13.5cm; }
 
@@ -401,6 +432,7 @@
             .header { padding: 10px 12px; }
             .header h1 { font-size: 16px; }
             .btn-header-link { font-size: 12px; padding: 4px 8px; }
+            .btn-logout { font-size: 12px; padding: 4px 8px; }
             
             .finance-bar { padding: 8px; margin-bottom: 8px; }
             .filter-bar { padding: 8px; margin-bottom: 8px; }
@@ -537,10 +569,13 @@
     <!-- 頂部標題列 -->
     <div class="header">
         <h1>顧德繳費管理系統</h1>
-        <a href="https://aht760317.github.io/Share/jbookkeep.html" target="_blank" class="btn-header-link">
-            <span>💰</span>
-            <span>財務系統</span>
-        </a>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <a href="https://aht760317.github.io/Share/jbookkeep.html" target="_blank" class="btn-header-link">
+                <span>💰</span>
+                <span>財務系統</span>
+            </a>
+            <button class="btn-logout" onclick="logoutSystem()">🔒 登出</button>
+        </div>
     </div>
     
     <!-- 桌面版上方導覽列 -->
@@ -665,7 +700,6 @@
         <h3 class="section-title" style="margin-top:0;">🔴 全校未繳費名單總整理</h3>
         <p style="color: #64748B; font-size: 13px; margin-bottom: 12px;">💡 點擊「印繳費單」或「印收據」可直接預覽完整單據後進行列印。</p>
         
-        <!-- 未繳費查詢分頁頂部的批次勾選列印按鈕 -->
         <div style="background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 6px;">
                 <span style="font-weight: bold; color: #1E40AF; font-size: 13px;">☑️ 批次選取：</span>
@@ -674,11 +708,8 @@
             </div>
             
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <!-- 這裡把被我移除的舊版同步按鈕全數加回來！ -->
                 <button class="btn-warning action-btn" style="padding: 6px 14px; font-size: 13px; background: #FDE68A; color: #92400E;" onclick="mergeCheckedUnpaidBills()">🔗 合併勾選(改資料庫)</button>
                 <button class="btn-gray action-btn" style="padding: 6px 14px; font-size: 13px;" onclick="unmergeCheckedUnpaidBills()">✂️ 分開科目</button>
-                
-                <!-- 以及這是我最新幫你加的強大功能 -->
                 <button class="btn-green action-btn" style="padding: 6px 14px; font-size: 13px; background: #10B981; color: white; border: none; font-weight: bold; border-radius: 6px;" onclick="batchPayCheckedUnpaid()">💰 勾選合併收款(不跑位)</button>
                 <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印合併通知單</button>
             </div>
@@ -1038,6 +1069,15 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // 登出功能
+    window.logoutSystem = function() {
+        if (confirm('確定要登出並返回入口頁嗎？')) {
+            localStorage.removeItem('good_auth_status');
+            localStorage.removeItem('good_auth_time');
+            window.location.href = 'https://aht760317.github.io/Share/gogogood.html';
+        }
+    };
 
     window.config = { classes: {}, classOrder: [], handler: "" };
     window.quickItems = [];
@@ -2203,7 +2243,6 @@
         document.querySelectorAll('.unpaid-row-checkbox').forEach(cb => cb.checked = selectAll);
     };
 
-    // 【新增功能】前端視覺合併列印 + 批次直接銷帳 (不破壞後台班級資料庫結構)
     window.batchPayCheckedUnpaid = async function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
         if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要合併收款的單據！'); return; }
@@ -2287,7 +2326,6 @@
         window.print();
     };
 
-    // 把舊版的合併勾選功能補回來！
     window.mergeCheckedUnpaidBills = async function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
         if (checkedBoxes.length < 2) { alert('⚠️ 請至少勾選兩筆單據進行合併！'); return; }
@@ -2352,7 +2390,6 @@
         }
     };
 
-    // 把舊版的分開科目功能補回來！
     window.unmergeCheckedUnpaidBills = async function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
         if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的合併單據！'); return; }
@@ -2424,7 +2461,6 @@
             alert("❌ 拆分失敗請稍後再試！");
         }
     };
-
 
     window.printCheckedUnpaidNotices = function() {
         const checkedBoxesArray = Array.from(document.querySelectorAll('input[class^="row-checkbox-"]:checked, .unpaid-row-checkbox:checked'));
