@@ -982,7 +982,7 @@
             grantMoneySystemAuth();
         };
 
-        // 登入處理 (徹底即時動態比對雲端帳號)
+        // 登入處理 (徹底即時動態比對雲端帳號，並將老師姓名帶入模組連結)
         window.handleLogin = function(e) {
             e.preventDefault();
             let u = document.getElementById('loginUser').value.trim();
@@ -1069,6 +1069,35 @@
             return data ? JSON.parse(data) : [];
         }
 
+        // 動態將當前登入者身分綁定到子系統連結 (核心修正)
+        function updateSubsystemLinks(teacherName) {
+            const queryParam = teacherName ? `?teacher=${encodeURIComponent(teacherName)}` : '';
+            
+            // 1. 線上點名
+            const rollbookCard = document.querySelector('.card[data-key="rollbook"]');
+            if (rollbookCard) {
+                rollbookCard.href = `rollbook.html${queryParam}`;
+            }
+
+            // 2. 招生與進班
+            const gotogoodCard = document.querySelector('.card[data-key="gotogood"]');
+            if (gotogoodCard) {
+                gotogoodCard.href = `gotogood.html${queryParam}`;
+            }
+
+            // 3. 教學日誌
+            const classLogCard = document.querySelector('.card[data-key="ClassLog"]');
+            if (classLogCard) {
+                classLogCard.href = `ClassLog.html${queryParam}`;
+            }
+
+            // 4. SOP 全日行政管理
+            const sopBtn = document.querySelector('.header-sop-btn');
+            if (sopBtn) {
+                sopBtn.href = `SOP.html${queryParam}`;
+            }
+        }
+
         function applyUserPermissions(user) {
             let logoutBtn = document.getElementById('logoutBtn');
             let welcomeText = document.getElementById('welcomeText');
@@ -1088,6 +1117,7 @@
                 
                 localStorage.setItem('current_active_teacher', '最高管理者');
                 localStorage.removeItem('current_teacher_classes');
+                updateSubsystemLinks('雅鴻');
             } else {
                 if (welcomeText) welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
                 
@@ -1107,6 +1137,9 @@
                     if (classText) classText.innerText = "目前未獲指派專屬班級";
                     if (banner) banner.style.display = 'flex';
                 }
+
+                // 將該老師姓名綁入 rollbook.html?teacher=何
+                updateSubsystemLinks(user);
             }
 
             // 控制卡片鎖定狀態
