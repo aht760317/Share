@@ -34,12 +34,12 @@
         .nav-link:hover { background: rgba(255,255,255,0.35); }
 
         .user-auth-badge {
-            background: #f8fafc; border: 1.5px solid #94a3b8; color: #1e293b; padding: 5px 12px; border-radius: 20px; font-size: 12.5px; font-weight: bold;
+            background: #ffffff; border: 1.5px solid #cbd5e1; color: #1e293b; padding: 5px 12px; border-radius: 20px; font-size: 12.5px; font-weight: bold;
             display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .auth-classes-banner {
-            background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 8px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+            background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
         }
 
         .container { max-width: 1420px; margin: 15px auto; padding: 0 12px; }
@@ -241,7 +241,7 @@
     <div class="sync-controls no-print">
         <span id="userAuthBadge" class="user-auth-badge">
             <span style="font-size:14px;">👨‍🏫</span>
-            <span id="currentUserName">認證中...</span>
+            <span id="currentUserName">讀取中...</span>
         </span>
         <span id="syncStatusIndicator" style="font-size:12px; background:rgba(46,204,113,0.2); color:#2ecc71; padding:4px 10px; border-radius:12px; font-weight:bold; transition:all 0.3s;">☁️ 雲端同步就緒</span>
         <a href="https://share-dgood2.vercel.app/gogogood.html" class="nav-link">🔙 返回行政系統</a>
@@ -257,7 +257,7 @@
             🔒 <b>您的負責專屬班級：</b><span id="bannerAllowedClasses" style="font-weight:bold; color:#0f766e;">讀取中...</span>
         </div>
         <div style="font-size:12px; color:#64748b;">
-            系統已自動鎖定，您僅能查閱與點名被勾選之負責班級
+            系統已依行政後台勾選設定自動鎖定，僅顯示您的負責班級
         </div>
     </div>
 
@@ -365,7 +365,7 @@
         <div class="card" style="border-top: 4px solid var(--danger);">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <div>
-                    <h3 style="color:var(--primary); font-size:18px;">🚨 專用監控：今日尚未到班學員與未點名班級清單</h3>
+                    <h3 style="color:var(--primary); font-size:18px;">🚨 專屬提醒：今日尚未到班學員與未點名班級清單</h3>
                     <p style="color:#666; font-size:13px; margin-top:3px;">即時掌握您負責班級尚未簽到或請假之學員狀況。</p>
                 </div>
                 <div>
@@ -457,7 +457,7 @@
     <!-- 5. 學生檔案總覽 -->
     <div id="tab-students-master" style="display:none;">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:gap; gap:10px; margin-bottom:12px;">
                 <h3 style="color:var(--primary); margin-bottom:2px; font-size:17px;">👥 學生總覽 (已依負責班級過濾)</h3>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;" id="masterActionButtons">
                     <button class="btn btn-primary" onclick="openAddClassModal()" style="padding:7px 12px; font-size:13px;">➕ 新增班級</button>
@@ -912,35 +912,42 @@
     let searchDebounceTimer = null;
     let cloudSyncTimer = null;
 
-    // --- 🔐 跨系統連動核心：自動解析從主系統登入的帳號與權限 ---
-    function resolveLoggedTeacherIdentity() {
+    // --- 🔐 動態抓取主系統當前登入者，絕不固定寫死 ---
+    function detectCurrentLoggedUser() {
         const urlParams = new URLSearchParams(window.location.search);
         let teacherName = urlParams.get('teacher') || urlParams.get('user') || urlParams.get('name') || urlParams.get('teacherName');
         
-        if (!teacherName) {
-            // 嘗試讀取主系統寫入 localStorage 的常見登入 Session Key
-            const sessionKeys = ['gude_logged_user', 'gude_current_user', 'currentUser', 'currentTeacher', 'loggedTeacher', 'gude_active_teacher'];
-            for (const k of sessionKeys) {
-                const val = localStorage.getItem(k);
-                if (val) {
-                    try {
-                        const parsed = JSON.parse(val);
-                        if (typeof parsed === 'object' && (parsed.name || parsed.username || parsed.teacherName)) {
-                            teacherName = parsed.name || parsed.username || parsed.teacherName;
-                            break;
+        if (teacherName && teacherName.trim() !== '') {
+            return teacherName.trim();
+        }
+
+        // 掃描主系統儲存在瀏覽器中的登入狀態 Key
+        const candidateKeys = [
+            'gude_logged_user', 'gude_current_user', 'currentUser', 
+            'currentTeacher', 'loggedTeacher', 'gude_active_teacher', 
+            'loginUser', 'userData', 'auth_user'
+        ];
+
+        for (const k of candidateKeys) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        const val = parsed.name || parsed.teacherName || parsed.username || parsed.account;
+                        if (val && typeof val === 'string' && val.trim() !== '') {
+                            return val.trim();
                         }
-                    } catch (e) {
-                        if (typeof val === 'string' && val.trim() !== '') {
-                            teacherName = val.trim();
-                            break;
-                        }
+                    }
+                } catch (e) {
+                    if (typeof raw === 'string' && raw.trim() !== '' && !raw.startsWith('{') && !raw.startsWith('[')) {
+                        return raw.trim();
                     }
                 }
             }
         }
 
-        if (!teacherName) teacherName = "雅鴻"; // 預設管理員帳號
-        return teacherName.trim();
+        return null; // 未登入狀態
     }
 
     window.state = {
@@ -959,29 +966,24 @@
         configFilterOrder: JSON.parse(localStorage.getItem('gude_config_filter_order_v1')) || DEFAULT_CONFIG_FILTER_ORDER,
         quickRollContext: { courseName: '', dateStr: '' },
         currentFilteredStudents: [],
-        // 老師帳號與專屬權限陣列
-        currentTeacher: resolveLoggedTeacherIdentity(),
+        // 老師帳號與授權班級
+        currentTeacher: detectCurrentLoggedUser(),
         teacherData: null,
-        allowedClasses: [] // 勾選允許的專屬班級
+        allowedClasses: []
     };
 
-    // 檢查是否為最高管理者
     function isSuperAdmin() {
         const name = window.state.currentTeacher;
         return name === '雅鴻' || name === '全校管理員' || name === '管理員' || name === 'Admin' || name === 'admin';
     }
 
-    // 判斷班級是否在該老師的授權名單中
+    // 檢查班級是否在該帳號的允許名單內
     function isClassAuthorized(className) {
+        if (!className) return false;
         if (isSuperAdmin()) return true;
-        if (!window.state.allowedClasses || window.state.allowedClasses.length === 0) {
-            // 若雲端尚未設定，預設只依授課老師名字過濾
-            return false;
-        }
         return window.state.allowedClasses.includes(className);
     }
 
-    // 取得所有經過授權過濾的課程
     function getAllCoursesList() {
         const raw = getAllCoursesListRaw();
         if (isSuperAdmin()) return raw;
@@ -1068,15 +1070,15 @@
         return courseObj.day.includes(dayName) || courseObj.day.includes(dayName.replace('星期', '週'));
     }
 
-    // --- 載入雲端資料與老師專屬權限 ---
+    // --- 載入雲端資料與動態對接行政後台權限 ---
     async function initCloudData() {
         try {
-            updateSyncIndicator('syncing', '🔄 正在同步雲端資料與教師權限...');
-            
-            // 1. 抓取主系統的老師名冊與權限設定
-            await loadTeacherPermissions();
+            updateSyncIndicator('syncing', '🔄 正在同步雲端教師權限與班級...');
 
-            // 2. 抓取班級課程資料
+            // 1. 同步當前登入者權限
+            await syncTeacherPermissionsFromCloud();
+
+            // 2. 班級資料庫
             const coursesDoc = await getDoc(doc(db, "classLogSettings", "courses"));
             if (coursesDoc.exists()) {
                 const data = coursesDoc.data().data || {};
@@ -1087,7 +1089,7 @@
                 };
             }
 
-            // 3. 抓取學生學籍
+            // 3. 學生資料庫
             const studentsSnapshot = await getDocs(collection(db, "classLogStudents"));
             window.state.students = [];
             studentsSnapshot.forEach(d => {
@@ -1103,13 +1105,13 @@
                 });
             });
 
-            // 4. 點名紀錄與假單
+            // 4. 點名出缺席資料
             const attendanceDoc = await getDoc(doc(db, "classLogSettings", "attendance"));
             let cloudAttendance = attendanceDoc.exists() ? (attendanceDoc.data().data || {}) : {};
             let localAttendance = JSON.parse(localStorage.getItem('gude_attendance_records') || '{}');
             window.state.attendanceData = { ...cloudAttendance, ...localAttendance };
 
-            // 5. 放假紀錄
+            // 5. 放假日
             const holidaysDoc = await getDoc(doc(db, "classLogSettings", "holidays"));
             if (holidaysDoc.exists()) {
                 window.state.holidays = holidaysDoc.data().data || [];
@@ -1123,66 +1125,90 @@
         }
     }
 
-    // 核心函數：從主系統教師資料庫對接權限
-    async function loadTeacherPermissions() {
-        const curName = window.state.currentTeacher;
-        document.getElementById('currentUserName').innerText = `${curName} 老師`;
-        document.getElementById('bannerTeacherName').innerText = `${curName} 老師`;
-
-        if (isSuperAdmin()) {
-            document.getElementById('bannerAllowedClasses').innerHTML = `<span style="color:#16a34a;">全校所有班級 (最高主管全開)</span>`;
-            document.getElementById('userAuthBadge').style.background = "#dcfce7";
-            document.getElementById('userAuthBadge').style.borderColor = "#86efac";
-            window.state.allowedClasses = []; // 管理員不需要限制
+    // 核心連動：從 Firebase 讀取後台勾選的最新班級
+    async function syncTeacherPermissionsFromCloud() {
+        // 若未登入，提示並跳回入口
+        if (!window.state.currentTeacher) {
+            alert("⚠️ 尚未偵測到行政系統登入狀態，將引導您返回入口頁面登入！");
+            window.location.href = "https://share-dgood2.vercel.app/gogogood.html";
             return;
         }
 
-        // 嘗試從 Firebase 多個可能的集合載入老師設定
-        let foundTeacher = null;
+        const teacherName = window.state.currentTeacher;
+        document.getElementById('currentUserName').innerText = `${teacherName} 老師`;
+        document.getElementById('bannerTeacherName').innerText = `${teacherName} 老師`;
+
+        if (isSuperAdmin()) {
+            document.getElementById('bannerAllowedClasses').innerHTML = `<span style="color:#16a34a;">全校所有班級 (系統主管全權限)</span>`;
+            document.getElementById('userAuthBadge').style.background = "#dcfce7";
+            document.getElementById('userAuthBadge').style.borderColor = "#86efac";
+            window.state.allowedClasses = [];
+            return;
+        }
+
+        // 搜尋 Firebase 中行政系統所儲存的老師資料列表
+        let teacherRecord = null;
+
         try {
-            // 嘗試路徑 A: classLogSettings -> teachers
+            // 嘗試 A：classLogSettings / teachers
             const tDoc = await getDoc(doc(db, "classLogSettings", "teachers"));
             if (tDoc.exists()) {
                 const list = tDoc.data().teachers || tDoc.data().data || [];
-                foundTeacher = list.find(t => (t.name || t.teacherName) === curName);
+                teacherRecord = list.find(t => (t.name || t.teacherName) === teacherName);
             }
 
-            // 嘗試路徑 B: 獨立 collection "teachers"
-            if (!foundTeacher) {
+            // 嘗試 B：獨立 teachers collection
+            if (!teacherRecord) {
                 const snap = await getDocs(collection(db, "teachers"));
                 snap.forEach(d => {
                     const data = d.data();
-                    if ((data.name || data.teacherName) === curName) {
-                        foundTeacher = data;
+                    if ((data.name || data.teacherName) === teacherName) {
+                        teacherRecord = data;
                     }
                 });
             }
+
+            // 嘗試 C：systemSettings / teachers
+            if (!teacherRecord) {
+                const sysDoc = await getDoc(doc(db, "systemSettings", "teachers"));
+                if (sysDoc.exists()) {
+                    const list = sysDoc.data().teachers || sysDoc.data().data || [];
+                    teacherRecord = list.find(t => (t.name || t.teacherName) === teacherName);
+                }
+            }
         } catch (err) {
-            console.warn("無法取得老師權限表，改用本機快取：", err);
+            console.warn("讀取雲端教師資料表異常：", err);
         }
 
-        // 解析專屬負責班級陣列
-        let classes = [];
-        if (foundTeacher) {
-            window.state.teacherData = foundTeacher;
-            // 支援多種主系統可能儲存的鍵名 (classes, allowedClasses, assignedClasses, courses)
-            classes = foundTeacher.allowedClasses || foundTeacher.classes || foundTeacher.assignedClasses || foundTeacher.courses || [];
-            if (typeof classes === 'string') classes = classes.split(/[,，、]/).map(s => s.trim());
-        }
+        let assignedClasses = [];
 
-        // 若雲端尚未有資料，但主系統畫面有顯示，建立快照對照
-        if (!classes || classes.length === 0) {
-            if (curName.includes("蔡恆國文")) {
-                classes = ['國一國文班', '國二國文班', '國三國文班'];
+        if (teacherRecord) {
+            window.state.teacherData = teacherRecord;
+            
+            // 檢查「線上點名」功能權限
+            const perms = teacherRecord.permissions || teacherRecord.auths || teacherRecord.features || [];
+            const hasRollcallAuth = perms.length === 0 || perms.includes("線上點名") || perms.includes("點名系統");
+            if (!hasRollcallAuth) {
+                alert(`⚠️ 帳號【${teacherName}】尚未被主管開通「線上點名」功能權限！`);
+                window.location.href = "https://share-dgood2.vercel.app/gogogood.html";
+                return;
+            }
+
+            // 提取勾選的專屬班級
+            const rawClasses = teacherRecord.allowedClasses || teacherRecord.classes || teacherRecord.assignedClasses || teacherRecord.courses || [];
+            if (Array.isArray(rawClasses)) {
+                assignedClasses = rawClasses;
+            } else if (typeof rawClasses === 'string') {
+                assignedClasses = rawClasses.split(/[,，、]/).map(s => s.trim()).filter(s => s);
             }
         }
 
-        window.state.allowedClasses = classes;
+        window.state.allowedClasses = assignedClasses;
 
-        if (classes.length > 0) {
-            document.getElementById('bannerAllowedClasses').innerText = classes.join('、');
+        if (assignedClasses.length > 0) {
+            document.getElementById('bannerAllowedClasses').innerText = assignedClasses.join('、');
         } else {
-            document.getElementById('bannerAllowedClasses').innerHTML = `<span style="color:#ef4444;">未勾選任何專屬班級（請由主管於行政系統進行授權）</span>`;
+            document.getElementById('bannerAllowedClasses').innerHTML = `<span style="color:#ef4444;">⚠️ 尚未勾選任何負責班級（請於行政後台「👨‍🏫 老師資料與權限設定」勾選可見班級並儲存）</span>`;
         }
     }
 
@@ -1387,7 +1413,7 @@
         });
 
         if (totalCards === 0) {
-            grid.innerHTML = `<p style="color:#888; text-align:center; grid-column:1/-1; padding:15px;">目前無符合您權限授權的班級課程。</p>`;
+            grid.innerHTML = `<p style="color:#888; text-align:center; grid-column:1/-1; padding:15px;">目前無符合您負責權限的班級課程。</p>`;
         }
     }
 
@@ -1710,7 +1736,7 @@
 
         let titleDesc = '目前學生名冊';
         if (deptKey === 'graduated') titleDesc = '🎓 畢業/離班學員清單';
-        else if (deptKey === 'all') titleDesc = isSuperAdmin() ? '🌟 全校所有學生總覽' : `🌟 【${window.state.currentTeacher}】專屬班級學生`;
+        else if (deptKey === 'all') titleDesc = isSuperAdmin() ? '🌟 全校所有學生總覽' : `🌟 【${window.state.currentTeacher}】負責班級學生`;
         else titleDesc = `目前學生名冊 (${filterClass || (deptKey==='care'?'課輔部':(deptKey==='elementary'?'國小部':'國中部'))})`;
 
         document.getElementById('studentListTitle').innerText = `${titleDesc} - 共 ${filtered.length} 人`;
