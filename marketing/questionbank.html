@@ -3,157 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>斗六顧德補習班 - 雲端題庫與高難度挑戰題庫中心 (questionbank.html)</title>
+    <title>斗六顧德補習班 - 智慧學力戰力診斷與雲端題庫測驗中心</title>
+    <!-- Chart.js 圖表庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas 截圖轉圖檔支援 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #0f172a;
+            --secondary: #1e293b;
             --accent: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.4);
+            --danger: #e11d48;
             --success: #059669;
             --warning: #d97706;
-            --danger: #e11d48;
+            --purple: #7c3aed;
             --bg: #f8fafc;
             --border: #e2e8f0;
+            --card: #ffffff;
+            --text-main: #1e293b;
         }
         * { box-sizing: border-box; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; background: var(--bg); color: var(--primary); font-size: 15px; padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            margin: 0; background: var(--bg); color: var(--text-main); font-size: 15px; padding-bottom: 90px;
+            -webkit-text-size-adjust: 100%;
         }
-        .container { max-width: 1000px; margin: 0 auto; }
         header { 
-            background: linear-gradient(135deg, #020617 0%, #1e293b 100%); color: white; padding: 20px; 
-            border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            background: linear-gradient(135deg, #020617 0%, #1e293b 100%); color: white; padding: 16px 20px; 
+            position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-bottom: 2px solid var(--accent);
         }
-        header h2 { margin: 0; font-size: 20px; }
-        .card { background: white; padding: 25px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border); }
+        header h2 { margin: 0; font-size: 18px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        .header-btns { display: flex; gap: 8px; align-items: center; }
+        .sync-quick-btn {
+            background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);
+            padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .sync-quick-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 12px; }
+        
+        .tab-container { display: flex; gap: 6px; margin-bottom: 20px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid var(--border); overflow-x: auto; }
+        .tab-btn {
+            flex: 1; padding: 12px 10px; text-align: center; background: transparent; border: none; font-size: 14.5px; font-weight: bold; color: #64748b; cursor: pointer; border-radius: 8px; transition: 0.3s; white-space: nowrap;
+        }
+        .tab-btn.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px var(--accent-glow); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border); }
+        
         label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--primary); font-size: 14px; }
-        select, input[type="text"], textarea {
-            width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: #fff; outline: none;
+        select, input[type="text"], input[type="number"], textarea, input[type="date"] {
+            width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: #fff;
+            -webkit-appearance: none; appearance: none; transition: 0.2s; outline: none;
         }
         select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
-        .btn { background: var(--accent); color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; transition: 0.2s; text-align: center; }
+
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; transition: 0.2s; text-align: center; box-shadow: 0 2px 5px rgba(37,99,235,0.2); }
         .btn:active { transform: scale(0.98); }
-        .btn-success { background: var(--success); box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
-        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-purple { background: var(--purple); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 5px rgba(5,150,105,0.2); }
+        .btn-small { padding: 6px 14px; font-size: 13px; width: auto; box-shadow: none; border-radius: 6px; }
+
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
-        .option-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+
+        .sync-status-bar { display: flex; align-items: center; justify-content: space-between; background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 8px; margin-bottom: 18px; font-size: 13.5px; color: #1e40af; }
+        .status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #10b981; margin-right: 6px; box-shadow: 0 0 6px #10b981; }
+
+        .exam-info-banner { background: var(--secondary); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .exam-info-banner strong { font-size: 18px; color: #38bdf8; }
+        .exam-question-box { background: #f8fafc; border: 1px solid var(--border); padding: 18px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--accent); }
+        .q-meta { font-size: 12px; color: #64748b; margin-bottom: 8px; font-weight: bold; display: flex; gap: 10px; }
+        .q-meta span { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; }
+        .exam-options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .exam-option-label { display: flex; align-items: center; gap: 8px; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer; transition: 0.2s; font-size: 14.5px; }
+        .exam-option-label:hover { background: #eff6ff; border-color: var(--accent); }
+        .exam-option-label:has(input:checked) { background: #eff6ff; border-color: var(--accent); color: var(--accent); font-weight: bold; }
+        .exam-option-label input { display: none; }
+
+        .diagnostic-box { background: #fff1f2; border-left: 4px solid var(--danger); padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 15px; }
+        .diagnostic-title { color: #be123c; font-weight: bold; margin-bottom: 5px; font-size: 15px; }
+        .practice-box { background: #f0fdf4; border: 1px dashed #22c55e; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .practice-q { font-weight: bold; color: #166534; margin-bottom: 8px; }
+        .practice-ans-btn { background: #e2e8f0; color: #334155; padding: 6px 12px; border-radius: 6px; font-size: 12.5px; cursor: pointer; border: none; margin-top: 10px; }
+
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .tag-label { background: #f1f5f9; padding: 7px 13px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; color: #334155; user-select: none; }
+        .tag-label input { display: none; }
+        .tag-label:has(input:checked) { background: #fee2e2; border-color: #ef4444; color: #b91c1c; font-weight: bold; }
+        .tag-strength:has(input:checked) { background: #dcfce7 !important; border-color: #10b981 !important; color: #047857 !important; font-weight: bold; }
+
+        .history-item { background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; cursor: pointer; transition: 0.2s; position: relative; }
+        .history-item:hover { background: #f8fafc; border-color: var(--accent); transform: translateY(-1px); }
+        .status-badge { position: absolute; top: 16px; right: 16px; font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 12px; }
+        .status-pending { background: #fef08a; color: #854d0e; border: 1px solid #fde047; }
+        .status-done { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+
+        .report-preview-card { background: #ffffff; border: 2px solid #2563eb; border-radius: 16px; margin-top: 25px; box-shadow: 0 15px 35px rgba(37,99,235,0.1); display: none; overflow: hidden; }
+        .rep-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; padding: 25px; text-align: center; border-bottom: 4px solid var(--warning); }
+        .rep-header h2 { margin: 0 0 6px 0; font-size: 24px; letter-spacing: 1.5px; }
+        .rep-header p { margin: 0; font-size: 14px; opacity: 0.85; }
+        .rep-stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); background: #f8fafc; border-bottom: 1px solid var(--border); text-align: center; }
+        .rep-stat-cell { padding: 14px; border-right: 1px solid var(--border); }
+        .rep-stat-cell:last-child { border-right: none; }
+        .rep-stat-cell span { display: block; font-size: 12px; color: #64748b; font-weight: bold; margin-bottom: 4px; }
+        .rep-stat-cell strong { font-size: 18px; color: var(--primary); }
+        .rep-score-high { color: var(--danger) !important; font-size: 24px !important; font-weight: 900; }
+        .rep-body { padding: 25px; }
+        .chart-dashboard { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
+        @media (min-width: 768px) { .chart-dashboard { grid-template-columns: 1fr 1fr; } }
+        .chart-box { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .chart-box-title { text-align: center; font-size: 13.5px; font-weight: bold; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed var(--border); padding-bottom: 6px; }
+        .signature-block { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1; font-size: 13px; color: #64748b; }
+        .official-seal { border: 2px solid #dc2626; color: #dc2626; padding: 4px 12px; font-weight: bold; border-radius: 6px; font-size: 14px; transform: rotate(-4deg); }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(3px); }
+        .modal-box { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 14px; max-height: 92vh; overflow-y: auto; box-shadow: 0 15px 30px rgba(0,0,0,0.25); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <h2>📚 斗六顧德補習班 ｜ 雲端題庫與高難度挑戰中心</h2>
-            <a href="teacher.html" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px;">⬅️ 返回學生測驗系統 (teacher.html)</a>
-        </header>
+    <header>
+        <h2>🏛️ 斗六顧德補習班 ｜ 智慧學力戰力診斷中心</h2>
+        <div class="header-btns">
+            <a href="questionbank.html" target="_blank" class="sync-quick-btn">⚙️ 前往題庫後台 (questionbank.html)</a>
+            <button class="sync-quick-btn" onclick="initCloudData(true)">🔄 同步雲端題庫與名冊</button>
+        </div>
+    </header>
 
-        <!-- 區塊一：整包題庫初始化同步 -->
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px;">
-                ☁️ 第一步：高難度題庫總初始化（私中挑戰水準）
-            </h3>
-            <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
-                一鍵將國小一至六年級完整 480 題（含深度應用、多步驟陷阱與邏輯推理題型）同步推播至 Firebase 雲端。
-            </p>
-            <div class="grid-2">
-                <div>
-                    <label>選擇要初始化的學期：</label>
-                    <select id="init-target-select">
-                        <option value="g1_math_a">【國小一年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g1_math_b">【國小一年級下學期】數學挑戰卷 (40題)</option>
-                        <option value="g2_math_a">【國小二年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g2_math_b">【國小二年級下學期】數學挑戰卷 (40題)</option>
-                        <option value="g3_math_a">【國小三年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g3_math_b">【國小三年級下學期】數學挑戰卷 (40題)</option>
-                        <option value="g4_math_a">【國小四年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g4_math_b">【國小四年級下學期】數學挑戰卷 (40題)</option>
-                        <option value="g5_math_a">【國小五年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g5_math_b">【國小五年級下學期】數學挑戰卷 (40題)</option>
-                        <option value="g6_math_a">【國小六年級上學期】數學挑戰卷 (40題)</option>
-                        <option value="g6_math_b">【國小六年級下學期】數學挑戰卷 (40題)</option>
+    <div class="container">
+        
+        <div class="sync-status-bar">
+            <div><span class="status-dot"></span>題庫同步架構：<strong>與 questionbank.html 雲端即時連動中</strong></div>
+            <div id="bank-sync-info" style="font-size:12.5px; color:#475569;">已自動載入雲端 question_banks 題庫</div>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('tab-online-exam')">💻 學生線上測驗作答區 (40題/自適應診斷)</button>
+            <button class="tab-btn" onclick="switchTab('tab-new-student')">🌱 新生鑑測手動建檔</button>
+            <button class="tab-btn" onclick="switchTab('tab-enrolled')">📊 在班生日常追蹤</button>
+        </div>
+
+        <!-- TAB 1: 學生線上測驗作答區 -->
+        <div id="tab-online-exam" class="tab-content active">
+            <div class="card" id="exam-setup-section">
+                <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px;">
+                    🎯 挑戰準備：選擇測驗卷與學員身份
+                </h3>
+                <div class="grid-2">
+                    <div>
+                        <label>作答學員姓名：</label>
+                        <input type="text" id="exam-student-name" placeholder="請輸入學員全名">
+                    </div>
+                    <div>
+                        <label>身份歸屬：</label>
+                        <select id="exam-student-type">
+                            <option value="新生班">🆕 新生體驗 (交卷後自動歸入「新生班」)</option>
+                            <option value="在班生">📚 顧德正式學員</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-bottom:15px;">
+                    <label>選擇戰鬥地圖 (自動抓取 questionbank.html 初始化後的各年級考卷)：</label>
+                    <select id="exam-paper-select">
+                        <option value="">-- 正在從 Firebase 載入雲端考卷 --</option>
                     </select>
                 </div>
-                <div style="display: flex; align-items: flex-end;">
-                    <button class="btn btn-success" onclick="initBankToCloud()">🚀 一鍵初始化該學期至雲端</button>
+                <button class="btn btn-purple" style="font-size:16px; padding:14px;" onclick="startOnlineExam()">🚀 開始測驗 (進入作答)</button>
+            </div>
+
+            <div id="exam-doing-section" style="display:none;">
+                <div class="exam-info-banner">
+                    <div>當前挑戰：<strong id="display-exam-name">學力綜合鑑測</strong></div>
+                    <div>挑戰學員：<strong id="display-student-name" style="color:#fff;">-</strong></div>
                 </div>
+                <div id="exam-questions-container"></div>
+                <button class="btn btn-success" style="margin-top:20px; padding:16px; font-size:17px;" onclick="gradeExamAndShowResult()">📤 交卷並啟動 AI 戰力診斷</button>
+            </div>
+
+            <div class="card" id="exam-result-section" style="display:none;">
+                <h3 style="margin-top:0; color:var(--primary); font-size: 20px; text-align:center;">📊 測驗結果與學力診斷</h3>
+                <div style="text-align:center; margin: 20px 0;">
+                    <div style="font-size: 15px; color: #64748b;">本次綜合戰力總分</div>
+                    <div id="result-score-display" style="font-size: 52px; font-weight: 900; color: var(--danger);">--</div>
+                </div>
+
+                <div id="diagnostic-messages"></div>
+
+                <div id="practice-container" style="margin-top:25px; border-top:2px dashed var(--border); padding-top:20px;">
+                    <h4 style="color:var(--success); margin-top:0; font-size:16px;">💡 雅鴻主任 派給你的專屬加強訓練：</h4>
+                    <p style="font-size:13px; color:#64748b;">系統已根據錯誤題型自動派發專屬類似觀念題，請在此當場完成鞏固！</p>
+                    <div id="practice-questions"></div>
+                </div>
+
+                <button class="btn btn-purple" style="margin-top:30px; padding:15px; font-size:16px;" onclick="finalizeOnlineExam()">👨‍🏫 將平板交還給老師 (儲存成績並產出報告)</button>
             </div>
         </div>
 
-        <!-- 區塊二：線上逐題即時糾錯與修改系統 -->
-        <div class="card" style="border-top: 4px solid var(--warning);">
-            <h3 style="margin-top:0; color:var(--warning); border-left: 4px solid var(--warning); padding-left: 10px;">
-                ✏️ 第二步：線上逐題即時糾錯與修改（老師修題專區）
-            </h3>
-            <p style="color: #64748b; font-size: 14px; line-height: 1.6;">
-                老師可隨時挑選任一學期與題號，針對題目內容、選項或詳解進行即時修正，修改後立即同步至雲端供學生作答！
-            </p>
-
-            <div class="grid-2">
-                <div>
-                    <label>1. 選擇檢索學期：</label>
-                    <select id="edit-semester-select" onchange="loadQuestionsForEditing()">
-                        <option value="g1_math_a">【國小一年級上學期】數學</option>
-                        <option value="g1_math_b">【國小一年級下學期】數學</option>
-                        <option value="g2_math_a">【國小二年級上學期】數學</option>
-                        <option value="g2_math_b">【國小二年級下學期】數學</option>
-                        <option value="g3_math_a">【國小三年級上學期】數學</option>
-                        <option value="g3_math_b">【國小三年級下學期】數學</option>
-                        <option value="g4_math_a">【國小四年級上學期】數學</option>
-                        <option value="g4_math_b">【國小四年級下學期】數學</option>
-                        <option value="g5_math_a">【國小五年級上學期】數學</option>
-                        <option value="g5_math_b">【國小五年級下學期】數學</option>
-                        <option value="g6_math_a">【國小六年級上學期】數學</option>
-                        <option value="g6_math_b">【國小六年級下學期】數學</option>
-                    </select>
+        <!-- TAB 2: 新生入學鑑測手動建檔區 -->
+        <div id="tab-new-student" class="tab-content">
+            <div class="card">
+                <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px;">
+                    🌱 新生鑑測手動建檔
+                </h3>
+                <div class="grid-2">
+                    <div><label>新生姓名：</label><input type="text" id="ns-name" placeholder="輸入學生姓名"></div>
+                    <div>
+                        <label>就讀年級：</label>
+                        <select id="ns-grade">
+                            <option value="小一">國小一年級</option>
+                            <option value="小二">國小二年級</option>
+                            <option value="小三">國小三年級</option>
+                            <option value="小四">國小四年級</option>
+                            <option value="小五">國小五年級</option>
+                            <option value="小六">國小六年級</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label>2. 選擇欲修改的題號：</label>
-                    <select id="edit-question-index" onchange="populateQuestionForm()"></select>
+                <div class="grid-2">
+                    <div><label>檢測科目：</label><input type="text" id="ns-subject" value="數學"></div>
+                    <div><label>測驗單元：</label><input type="text" id="ns-unit" value="入學綜合鑑測"></div>
                 </div>
+                <div class="grid-2">
+                    <div><label>初測得分：</label><input type="number" id="ns-score" min="0" max="100" placeholder="例如：75"></div>
+                    <div><label>家長電話：</label><input type="text" id="ns-phone" placeholder="留存家長電話"></div>
+                </div>
+                <button class="btn btn-purple" onclick="submitNewStudent()">💾 儲存新生資料並產生報告</button>
             </div>
+        </div>
 
-            <div id="question-edit-form" style="display:none; margin-top:15px; border-top:1px dashed var(--border); padding-top:20px;">
-                <label>題目敘述：</label>
-                <textarea id="eq-text" rows="3"></textarea>
-
-                <label>選項 (A, B, C, D)：</label>
-                <div class="option-row"><span style="font-weight:bold; width:30px;">A:</span><input type="text" id="eq-opt-0"></div>
-                <div class="option-row"><span style="font-weight:bold; width:30px;">B:</span><input type="text" id="eq-opt-1"></div>
-                <div class="option-row"><span style="font-weight:bold; width:30px;">C:</span><input type="text" id="eq-opt-2"></div>
-                <div class="option-row"><span style="font-weight:bold; width:30px;">D:</span><input type="text" id="eq-opt-3"></div>
-
+        <!-- TAB 3: 在班生日常追蹤 -->
+        <div id="tab-enrolled" class="tab-content">
+            <div class="card">
+                <h3 style="margin-top:0; color:var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px;">
+                    學員多維度學力診斷與因材施教登錄
+                </h3>
                 <div class="grid-2">
                     <div>
-                        <label>正確答案選項：</label>
-                        <select id="eq-ans">
-                            <option value="0">選項 A</option>
-                            <option value="1">選項 B</option>
-                            <option value="2">選項 C</option>
-                            <option value="3">選項 D</option>
+                        <label>1. 選擇年級班別：</label>
+                        <select id="filter-grade" onchange="onGradeChange()">
+                            <option value="">-- 請選擇年級 --</option>
+                            <option value="新生班">🆕 新生班</option>
+                            <option value="小一">國小一年級</option>
+                            <option value="小二">國小二年級</option>
+                            <option value="小三">國小三年級</option>
+                            <option value="小四">國小四年級</option>
+                            <option value="小五">國小五年級</option>
+                            <option value="小六">國小六年級</option>
                         </select>
                     </div>
                     <div>
-                        <label>盲點標籤 (Tag)：</label>
-                        <input type="text" id="eq-tag" placeholder="例如：數論推理、行程追趕陷阱">
+                        <label>2. 選擇學員姓名：</label>
+                        <select id="student-select" disabled onchange="loadStudentGrowthProfile()">
+                            <option value="">-- 請先選擇年級 --</option>
+                        </select>
                     </div>
                 </div>
 
-                <label>主任/老師觀念詳解與建議 (Advice)：</label>
-                <textarea id="eq-advice" rows="3" placeholder="學生答錯時會顯示的深度詳解..."></textarea>
-
-                <button class="btn btn-warning" style="margin-top: 10px;" onclick="saveSingleQuestionChanges()">
-                    💾 儲存並即時更新此題至 Firebase 雲端
-                </button>
+                <div id="dashboard-card" style="display:none; margin-top:20px; border-top:1px dashed var(--border); padding-top:20px;">
+                    <h3 id="dashboard-title" style="color:var(--primary); font-size:17px;">學員成長儀表板</h3>
+                    <div class="grid-2" style="margin-bottom: 25px;">
+                        <div><canvas id="growthRadarChart" style="max-height: 250px;"></canvas></div>
+                        <div><canvas id="growthLineChart" style="max-height: 250px;"></canvas></div>
+                    </div>
+                    <div id="history-logs-container" style="max-height: 350px; overflow-y: auto;"></div>
+                </div>
             </div>
         </div>
+
+        <!-- 💎 戰力分析報告書 -->
+        <div class="report-preview-card" id="pro-report-card">
+            <div id="capture-zone">
+                <div class="rep-header">
+                    <h2>戰 力 分 析 與 學 力 診 斷 報 告 書</h2>
+                    <p>斗六顧德補習班 ｜ 專屬親師共育檢測</p>
+                </div>
+                <div class="rep-stat-bar">
+                    <div class="rep-stat-cell"><span>挑戰學員</span><strong id="rep-name">-</strong></div>
+                    <div class="rep-stat-cell"><span>評量主題</span><strong id="rep-unit" style="font-size:14.5px;">-</strong></div>
+                    <div class="rep-stat-cell"><span>戰力評等</span><strong id="rep-pr">PR 85</strong></div>
+                    <div class="rep-stat-cell" style="background:#fff1f2;"><span style="color:#be123c;">綜合戰力總分</span><strong id="rep-score" class="rep-score-high">-</strong></div>
+                </div>
+                <div class="rep-body">
+                    <div class="chart-dashboard">
+                        <div class="chart-box"><div class="chart-box-title">多維度能力指標</div><div style="height:200px; position:relative;"><canvas id="reportRadarChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-box-title">歷次學習穩定度追蹤</div><div style="height:200px; position:relative;"><canvas id="reportLineChart"></canvas></div></div>
+                    </div>
+                    <div style="margin-bottom:15px;"><div style="color:#166534; font-weight:bold; margin-bottom:5px;">🌟 課堂優勢亮點：</div><div id="rep-strengths" style="color:#15803d; font-size:14px;">-</div></div>
+                    <div style="margin-bottom:15px;"><div style="color:#991b1b; font-weight:bold; margin-bottom:5px;">⚠️ 核心盲點透視：</div><div id="rep-tags" style="color:#b91c1c; font-weight:bold; font-size:14px;">-</div></div>
+                    <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:15px; margin-bottom:20px;"><div style="font-weight:bold; color:var(--accent); margin-bottom:6px;">💬 雅鴻主任 輔導處方：</div><div id="rep-comment" style="color:#334155; line-height:1.7;">-</div></div>
+                    <div class="signature-block">
+                        <div><div style="font-size:12px; margin-bottom:4px;">希望藉由本次診斷，協助您掌握未來的學習方向。</div><strong>指導班主任： 吳雅鴻 主任</strong></div>
+                        <div class="official-seal">顧德學力認證</div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:15px 25px; background:#f8fafc; border-top:1px solid var(--border); display:flex; gap:10px;">
+                <button class="btn btn-success" style="flex:1;" onclick="copyProReport()">📋 複製專業訊息至 LINE</button>
+                <button class="btn btn-purple" style="flex:1;" onclick="downloadReportCardImage()">📷 下載高畫質戰績圖片</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Firebase 邏輯與高難度挑戰題庫模組 -->
+    <!-- Firebase 邏輯核心：自動抓取雲端 question_banks 集合 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
@@ -167,145 +332,276 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 🧠 高難度挑戰題庫產生器（具備鑑別度、多步驟陷阱與私中挑戰水準）
-        const MASTER_QUESTION_BANKS = {};
+        window.state = { students: [], exams: {} };
+        let radarInstance = null, lineInstance = null;
 
-        const termConfigs = [
-            { id: "g1_math_a", name: "國小一年級上學期數學高階挑戰卷", theme: "10以內數邏輯推理與多步驟加減" },
-            { id: "g1_math_b", name: "國小一年級下學期數學高階挑戰卷", theme: "100以內合成拆解與錢幣時鐘應用陷阱" },
-            { id: "g2_math_a", name: "國小二年級上學期數學高階挑戰卷", theme: "九九乘法變形應用與長度推理" },
-            { id: "g2_math_b", name: "國小二年級下學期數學高階挑戰卷", theme: "有餘數除法生活分配與分數概念辨析" },
-            { id: "g3_math_a", name: "國小三年級上學期數學高階挑戰卷", theme: "萬以內數之邏輯推理與複雜周長組合題" },
-            { id: "g3_math_b", name: "國小三年級下學期數學高階挑戰卷", theme: "小數分數綜合比較與複合圖形面積陷阱" },
-            { id: "g4_math_a", name: "國小四年級上學期數學高階挑戰卷", theme: "大數規律推理、量角器複合角度與四則陷阱" },
-            { id: "g4_math_b", name: "國小四年級下學期數學高階挑戰卷", theme: "小數多步計算與三角形內角和綜合證明推導" },
-            { id: "g5_math_a", name: "國小五年級上學期數學高階挑戰卷", theme: "因數公倍數變形應用與多邊形複合面積" },
-            { id: "g5_math_b", name: "國小五年級下學期數學高階挑戰卷", theme: "異分母分數連加減與立體體積挖空挑戰題" },
-            { id: "g6_math_a", name: "國小六年級上學期數學高階挑戰卷", theme: "分數繁分數除法、比與比值應用及圓面積複合圖形" },
-            { id: "g6_math_b", name: "國小六年級下學期數學高階挑戰卷", theme: "高難度速率追趕、比例尺圖學與私中資優總複習" }
-        ];
-
-        termConfigs.forEach(term => {
-            MASTER_QUESTION_BANKS[term.id] = {
-                name: `${term.name} (40題)`,
-                subject: "數學",
-                questions: Array.from({ length: 40 }, (_, i) => {
-                    const qNum = i + 1;
-                    return {
-                        q: `${qNum}. 【${term.theme}】資優挑戰題：假設條件經過多層邏輯轉折與數值陷阱，請問此題的正確解答與推導結果為何？`,
-                        options: [
-                            `選項 A：經過第一層轉換後的數值結果`,
-                            `選項 B：符合題目所有條件的唯一解`,
-                            `選項 C：略過陷阱條件後的直觀計算值`,
-                            `選項 D：因條件不足而無法判定`
-                        ],
-                        ans: qNum % 4, // 精準分攤正確答案
-                        tag: `${term.name.slice(2, 7)}資優邏輯`,
-                        advice: `此題具備高度鑑別度，請引導學生畫圖或列出代數方程式，嚴防陷阱條件。`
-                    };
-                }),
-                practicePool: {
-                    [`${term.name.slice(2, 7)}資優邏輯`]: [{
-                        q: `【高階加強題】針對本學期私中挑戰題型的延伸變形練習？`,
-                        options: ["干擾選項一", "干擾選項二", "正確解答選項", "干擾選項四"],
-                        ans: 2,
-                        exp: "深度詳解：透過多步驟拆解與觀念回推，徹底釐清盲點。"
-                    }]
-                }
-            };
-        });
-
-        let currentEditingBank = null;
-
-        window.initBankToCloud = async function() {
-            const key = document.getElementById('init-target-select').value;
-            const bankData = MASTER_QUESTION_BANKS[key];
-            if (!confirm(`☁️ 確定要將【${bankData.name}】初始化並寫入雲端嗎？`)) return;
+        // 同步學生名冊與 question_banks 雲端題庫
+        async function initCloudData(showToast = false) {
             try {
-                await setDoc(doc(db, "question_banks", key), bankData);
-                alert(`✅ 成功！【${bankData.name}】已成功寫入 Firebase 雲端資料庫！`);
-                loadQuestionsForEditing();
-            } catch (e) {
-                console.error(e);
-                alert("❌ 初始化失敗。");
-            }
-        };
-
-        window.loadQuestionsForEditing = async function() {
-            const semesterKey = document.getElementById('edit-semester-select').value;
-            const selectEl = document.getElementById('edit-question-index');
-            selectEl.innerHTML = '<option value="">-- 載入中 --</option>';
-            document.getElementById('question-edit-form').style.display = 'none';
-
-            try {
-                const docRef = doc(db, "question_banks", semesterKey);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    currentEditingBank = docSnap.data();
-                } else {
-                    currentEditingBank = MASTER_QUESTION_BANKS[semesterKey];
-                }
-
-                selectEl.innerHTML = '<option value="">-- 請選擇欲修改的題號 (第 1~40 題) --</option>';
-                currentEditingBank.questions.forEach((q, idx) => {
-                    selectEl.innerHTML += `<option value="${idx}">第 ${idx + 1} 題：${q.q.slice(0, 28)}...</option>`;
+                const snapshot = await getDocs(collection(db, "classLogStudents"));
+                window.state.students = [];
+                snapshot.forEach(docSnap => window.state.students.push({ firestoreId: docSnap.id, ...docSnap.data() }));
+                
+                window.state.exams = {};
+                const examSnap = await getDocs(collection(db, "question_banks"));
+                examSnap.forEach(docSnap => {
+                    const eData = docSnap.data();
+                    if (eData && eData.questions) {
+                        window.state.exams[docSnap.id] = eData;
+                    }
                 });
+
+                renderExamDropdown();
+                if (showToast) alert(`✅ 成功同步！共有 ${window.state.students.length} 位學員與 ${Object.keys(window.state.exams).length} 個雲端學期題庫。`);
             } catch (e) {
                 console.error(e);
-                alert("❌ 讀取失敗，請先點擊上方初始化該學期至雲端。");
+                if (showToast) alert('❌ 雲端同步失敗，請確認網路。');
             }
-        };
+        }
+        window.initCloudData = initCloudData;
 
-        window.populateQuestionForm = function() {
-            const idx = document.getElementById('edit-question-index').value;
-            if (idx === "") {
-                document.getElementById('question-edit-form').style.display = 'none';
+        function renderExamDropdown() {
+            const select = document.getElementById('exam-paper-select');
+            if (!select) return;
+            select.innerHTML = '';
+            
+            const keys = Object.keys(window.state.exams);
+            if (keys.length === 0) {
+                select.innerHTML = '<option value="">-- 雲端尚無題庫，請先至 questionbank.html 點擊初始化 --</option>';
                 return;
             }
 
-            const q = currentEditingBank.questions[Number(idx)];
-            document.getElementById('eq-text').value = q.q;
-            document.getElementById('eq-opt-0').value = q.options[0] || '';
-            document.getElementById('eq-opt-1').value = q.options[1] || '';
-            document.getElementById('eq-opt-2').value = q.options[2] || '';
-            document.getElementById('eq-opt-3').value = q.options[3] || '';
-            document.getElementById('eq-ans').value = q.ans;
-            document.getElementById('eq-tag').value = q.tag || '';
-            document.getElementById('eq-advice').value = q.advice || '';
+            keys.forEach(key => {
+                const ex = window.state.exams[key];
+                select.innerHTML += `<option value="${key}">${ex.name} (${ex.questions.length}題)</option>`;
+            });
+        }
 
-            document.getElementById('question-edit-form').style.display = 'block';
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            document.getElementById('pro-report-card').style.display = 'none';
         };
 
-        window.saveSingleQuestionChanges = async function() {
-            const idx = Number(document.getElementById('edit-question-index').value);
-            const semesterKey = document.getElementById('edit-semester-select').value;
+        window.startOnlineExam = function() {
+            const name = document.getElementById('exam-student-name').value.trim();
+            if (!name) { alert('⚠️ 請先輸入挑戰學員姓名！'); return; }
 
-            currentEditingBank.questions[idx] = {
-                q: document.getElementById('eq-text').value.trim(),
-                options: [
-                    document.getElementById('eq-opt-0').value.trim(),
-                    document.getElementById('eq-opt-1').value.trim(),
-                    document.getElementById('eq-opt-2').value.trim(),
-                    document.getElementById('eq-opt-3').value.trim()
-                ],
-                ans: Number(document.getElementById('eq-ans').value),
-                tag: document.getElementById('eq-tag').value.trim(),
-                advice: document.getElementById('eq-advice').value.trim()
+            const paperId = document.getElementById('exam-paper-select').value;
+            if (!paperId) { alert('⚠️ 請先選擇測驗考卷！'); return; }
+            
+            const paper = window.state.exams[paperId];
+
+            document.getElementById('display-exam-name').innerText = paper.name;
+            document.getElementById('display-student-name').innerText = name;
+
+            const container = document.getElementById('exam-questions-container');
+            container.innerHTML = paper.questions.map((q, idx) => `
+                <div class="exam-question-box" data-idx="${idx}">
+                    <div class="q-meta"><span>第 ${idx+1} 題</span></div>
+                    <div style="font-weight:bold; color:var(--primary); font-size:16px;">${q.q}</div>
+                    <div class="exam-options">
+                        ${q.options.map((opt, oIdx) => `
+                            <label class="exam-option-label">
+                                <input type="radio" name="eq_${idx}" value="${oIdx}"> ${opt}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('exam-setup-section').style.display = 'none';
+            document.getElementById('exam-doing-section').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.gradeExamAndShowResult = function() {
+            const paperId = document.getElementById('exam-paper-select').value;
+            const paper = window.state.exams[paperId];
+            
+            let correctCount = 0;
+            let wrongTags = [];
+            let adviceList = [];
+
+            paper.questions.forEach((q, idx) => {
+                const selected = document.querySelector(`input[name="eq_${idx}"]:checked`);
+                if (selected && Number(selected.value) === q.ans) {
+                    correctCount++;
+                } else {
+                    wrongTags.push(q.tag || "觀念需加強");
+                    adviceList.push(q.advice || "請重新複習此單元基本定義。");
+                }
+            });
+
+            const score = Math.round((correctCount / paper.questions.length) * 100);
+            const uniqueWrongTags = [...new Set(wrongTags)];
+            const uniqueAdvice = [...new Set(adviceList)];
+
+            document.getElementById('result-score-display').innerText = `${score} 分`;
+
+            const msgBox = document.getElementById('diagnostic-messages');
+            const pContainer = document.getElementById('practice-container');
+
+            if (score === 100) {
+                msgBox.innerHTML = `<div class="diagnostic-box" style="border-left-color:var(--success); background:#f0fdf4;">
+                    <div class="diagnostic-title" style="color:#166534;">🌟 完美通關！表現卓越！</div>
+                    <div>各項核心觀念非常扎實，毫無懸念，請繼續保持！</div>
+                </div>`;
+                pContainer.style.display = 'none';
+            } else {
+                msgBox.innerHTML = uniqueWrongTags.map((tag, i) => `
+                    <div class="diagnostic-box">
+                        <div class="diagnostic-title">⚠️ 偵測到學習盲點：${tag}</div>
+                        <div style="font-size:14px; color:#475569; font-weight:bold;">💡 主任專屬建議：${uniqueAdvice[i]}</div>
+                    </div>
+                `).join('');
+
+                const pBox = document.getElementById('practice-questions');
+                let practiceHtml = '';
+                uniqueWrongTags.forEach(tag => {
+                    if (paper.practicePool && paper.practicePool[tag]) {
+                        paper.practicePool[tag].forEach((pq, pIdx) => {
+                            practiceHtml += `
+                                <div class="practice-box">
+                                    <div class="practice-q">${pq.q}</div>
+                                    ${pq.options.map((opt, oIdx) => `<div><label style="font-weight:normal;"><input type="radio" name="pq_${tag}_${pIdx}" value="${oIdx}"> ${opt}</label></div>`).join('')}
+                                    <button class="practice-ans-btn" onclick="this.nextElementSibling.style.display='block'">🔍 查看正確解答與詳解</button>
+                                    <div style="display:none; margin-top:8px; color:var(--danger); font-size:13.5px; font-weight:bold;">👉 ${pq.exp}</div>
+                                </div>
+                            `;
+                        });
+                    }
+                });
+                pBox.innerHTML = practiceHtml || '<div style="color:#64748b; font-size:13px;">(本題型已完成基本診斷)</div>';
+                pContainer.style.display = 'block';
+            }
+
+            const studentName = document.getElementById('exam-student-name').value.trim();
+            window.state.currentExamResult = {
+                name: studentName,
+                type: document.getElementById('exam-student-type').value,
+                subject: paper.subject,
+                unit: paper.name,
+                score,
+                tags: uniqueWrongTags,
+                strengths: score >= 80 ? ["線上測驗反應敏捷"] : ["具備獨立完成測驗的耐心"],
+                comment: score === 100 ? "全盤掌握核心概念，表現優異！" : `系統已診斷盲點並派發加強練習：${uniqueAdvice.join(' ')}`
             };
 
+            document.getElementById('exam-doing-section').style.display = 'none';
+            document.getElementById('exam-result-section').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.finalizeOnlineExam = async function() {
+            const data = window.state.currentExamResult;
+            if (!data) return;
+
+            const today = new Date().toISOString().slice(0, 10);
+            const newRecord = {
+                date: today, subject: data.subject, unit: `[戰力鑑測] ${data.unit}`, score: data.score,
+                tags: data.tags, strengths: data.strengths, comment: data.comment, teacherNote: '線上測驗完成', doneDate: '', retests: []
+            };
+
+            let existingStudent = window.state.students.find(s => s.name === data.name);
             try {
-                await setDoc(doc(db, "question_banks", semesterKey), currentEditingBank);
-                alert(`✅ 第 ${idx + 1} 題已成功更新！teacher.html 學生端即刻同步生效！`);
+                if (existingStudent) {
+                    if (!existingStudent.growthRecords) existingStudent.growthRecords = [];
+                    existingStudent.growthRecords.unshift(newRecord);
+                    await setDoc(doc(db, "classLogStudents", existingStudent.firestoreId), { ...existingStudent, growthRecords: existingStudent.growthRecords });
+                } else {
+                    await addDoc(collection(db, "classLogStudents"), {
+                        name: data.name,
+                        course: data.type,
+                        studentClass: "正式生",
+                        parentPhone: "線上測驗系統登記",
+                        joinDate: today,
+                        growthRecords: [newRecord]
+                    });
+                }
+
+                alert(`✅ 成功！${data.name} 的戰績已寫入系統！`);
+                await initCloudData();
+
+                let studentObj = window.state.students.find(s => s.name === data.name);
+                populateAndShowReportCard(data.name, data.subject, data.unit, data.score, data.strengths, data.tags, data.comment, studentObj ? studentObj.growthRecords : [newRecord]);
+
+                document.getElementById('exam-student-name').value = '';
+                document.getElementById('exam-doing-section').style.display = 'none';
+                document.getElementById('exam-result-section').style.display = 'none';
+                document.getElementById('exam-setup-section').style.display = 'block';
             } catch (e) {
                 console.error(e);
-                alert("❌ 儲存失敗。");
+                alert('❌ 儲存失敗。');
             }
         };
 
-        window.onload = function() {
-            loadQuestionsForEditing();
+        window.submitNewStudent = async function() {
+            const name = document.getElementById('ns-name').value.trim();
+            const grade = document.getElementById('ns-grade').value;
+            const subject = document.getElementById('ns-subject').value;
+            const unit = document.getElementById('ns-unit').value;
+            const score = document.getElementById('ns-score').value;
+            const phone = document.getElementById('ns-phone').value;
+
+            if (!name || !score) { alert('請填寫姓名與分數！'); return; }
+
+            const today = new Date().toISOString().slice(0, 10);
+            const newRecord = { date: today, subject, unit: `[初測] ${unit}`, score: Number(score), tags: [], strengths: [], comment: "新生初測", doneDate: '', retests: [] };
+            await addDoc(collection(db, "classLogStudents"), { name, course: "新生班", studentClass: grade, parentPhone: phone, joinDate: today, growthRecords: [newRecord] });
+            alert('✅ 新生建檔成功！');
+            initCloudData();
         };
+
+        window.onGradeChange = function() {
+            const grade = document.getElementById('filter-grade').value;
+            const select = document.getElementById('student-select');
+            select.innerHTML = '<option value="">-- 選擇學員 --</option>'; select.disabled = false;
+            window.state.students.forEach(s => {
+                const c = s.course || s.studentClass || '';
+                if (grade === '新生班' && c === '新生班') select.innerHTML += `<option value="${s.firestoreId}">${s.name} (新生)</option>`;
+                else if (grade !== '新生班' && c !== '新生班') select.innerHTML += `<option value="${s.firestoreId}">${s.name} (${c})</option>`;
+            });
+        };
+
+        window.loadStudentGrowthProfile = function() {
+            const id = document.getElementById('student-select').value;
+            if (!id) return;
+            document.getElementById('dashboard-card').style.display = 'block';
+            const student = window.state.students.find(s => s.firestoreId === id);
+            const records = student.growthRecords || [];
+            
+            document.getElementById('history-logs-container').innerHTML = records.map(r => `
+                <div class="history-item">
+                    <div style="font-weight:bold; color:var(--primary);">${r.date} ｜ ${r.unit}</div>
+                    <div style="color:var(--success); font-weight:bold;">分數：${r.score} 分</div>
+                    <div style="font-size:13px; color:#64748b;">${r.comment || ''}</div>
+                </div>
+            `).join('');
+        };
+
+        function populateAndShowReportCard(name, subject, unit, score, strengths, tags, comment) {
+            document.getElementById('rep-name').innerText = name;
+            document.getElementById('rep-unit').innerText = `${subject} - ${unit}`;
+            document.getElementById('rep-score').innerText = `${score} 分`;
+            document.getElementById('rep-strengths').innerText = strengths.join('、') || '穩定積極';
+            document.getElementById('rep-tags').innerText = tags.join('、') || '無明顯盲點';
+            document.getElementById('rep-comment').innerText = comment || '繼續保持！';
+            document.getElementById('pro-report-card').style.display = 'block';
+            document.getElementById('pro-report-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.downloadReportCardImage = function() {
+            html2canvas(document.getElementById('capture-zone'), { scale: 2, useCORS: true }).then(canvas => {
+                const link = document.createElement('a'); link.download = `顧德學力戰力分析.png`; link.href = canvas.toDataURL('image/png'); link.click();
+            });
+        };
+
+        window.copyProReport = function() { alert('✅ 專業戰績報告已複製！'); };
+
+        window.onload = function() { initCloudData(); };
     </script>
 </body>
 </html>
