@@ -137,6 +137,16 @@
             border-color: #7dd3fc;
         }
 
+        .logout-btn {
+            color: #dc2626;
+            background: #fef2f2;
+            border-color: #fecaca;
+            display: none;
+        }
+        .logout-btn:hover {
+            background: #fee2e2;
+        }
+
         .teacher-class-banner {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -495,6 +505,27 @@
 </head>
 <body>
 
+    <!-- 系統登入彈跳視窗 -->
+    <div id="loginModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-lock" style="color:var(--accent-blue)"></i> 系統最高權限登入</h3>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>登入帳號</label>
+                    <input type="text" id="loginUser" class="form-control" placeholder="請輸入帳號" value="aht0317" required>
+                </div>
+                <div class="form-group">
+                    <label>登入密碼</label>
+                    <input type="password" id="loginPass" class="form-control" placeholder="請輸入密碼" value="aa0618aa" required>
+                </div>
+                <button type="submit" id="loginSubmitBtn" class="btn-primary">安全登入</button>
+                <div id="loginError" class="error-msg">帳號或密碼錯誤，請重新輸入</div>
+            </form>
+        </div>
+    </div>
+
     <!-- 管理者密碼驗證視窗 (760317) -->
     <div id="adminPassModal" class="modal-overlay" style="display: none;">
         <div class="modal-box">
@@ -672,9 +703,12 @@
                 <a href="askclass.html#faq" target="_blank" class="quick-consult-btn btn-action">
                     <i class="fa-solid fa-bolt"></i> 快速諮詢報名
                 </a>
+                <button onclick="handleLogout()" id="logoutBtn" class="logout-btn btn-action">
+                    <i class="fa-solid fa-right-from-bracket"></i> 登出
+                </button>
                 <div class="header-status">
                     <span class="status-indicator"></span>
-                    <span id="statusText">系統雲端連線正常</span>
+                    <span id="statusText">正在同步雲端權限...</span>
                 </div>
             </div>
         </header>
@@ -806,7 +840,7 @@
         </footer>
     </div>
 
-    <!-- Firebase 模組：Firestore 同步 -->
+    <!-- Firebase 模組：Firestore 同步與登入驗證 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -889,13 +923,19 @@
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
-            sessionStorage.setItem('good_current_user', '系統管理者');
-            grantMoneySystemAuth();
+            let savedUser = sessionStorage.getItem('good_current_user');
+            if (!savedUser) {
+                document.getElementById('loginModal').style.display = 'flex';
+            } else {
+                applyUserPermissions(savedUser);
+            }
             await window.fetchCloudAllData();
         });
     </script>
 
     <script>
+        const ADMIN_USER = "aht0317";
+        const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
 
         function grantMoneySystemAuth() {
@@ -906,6 +946,37 @@
         window.openIndexMoney = function(e) {
             logUserAction('點擊模組', '開啟 繳費管理');
             grantMoneySystemAuth();
+        };
+
+        // 登入處理
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            let u = document.getElementById('loginUser').value.trim();
+            let p = document.getElementById('loginPass').value.trim();
+            let errEl = document.getElementById('loginError');
+
+            if (u === ADMIN_USER && p === ADMIN_PASS) {
+                errEl.style.display = 'none';
+                sessionStorage.setItem('good_current_user', ADMIN_USER);
+                document.getElementById('loginModal').style.display = 'none';
+                grantMoneySystemAuth();
+                applyUserPermissions('雅鴻 (管理者)');
+                if(typeof logUserAction === 'function') logUserAction('系統登入', `最高管理者 ${ADMIN_USER} 成功登入`);
+            } else {
+                errEl.style.display = 'block';
+                errEl.innerText = "帳號或密碼錯誤，請重新確認。";
+            }
+        };
+
+        // 登出處理
+        window.handleLogout = function() {
+            sessionStorage.removeItem('good_current_user');
+            localStorage.removeItem('good_auth_status');
+            localStorage.removeItem('good_auth_time');
+            document.getElementById('loginUser').value = ADMIN_USER;
+            document.getElementById('loginPass').value = ADMIN_PASS;
+            document.getElementById('loginModal').style.display = 'flex';
+            if(typeof logUserAction === 'function') logUserAction('系統登出', '管理者登出');
         };
 
         function logUserAction(actionType, details) {
@@ -941,6 +1012,63 @@
                 return initial;
             }
             return JSON.parse(data);
+        }
+
+        function applyUserPermissions(user) {
+            let logoutBtn = document.getElementById('logoutBtn');
+            let welcomeText = document.getElementById('welcomeText');
+            let banner = document.getElementById('teacherClassBanner');
+            let classText = document.getElementById('assignedClassText');
+
+            if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+
+            let allowedPerms = [];
+            let assignedClasses = [];
+
+            if (user === '雅鴻 (管理者)') {
+                let currentAcc = sessionStorage.getItem('good_current_user') || ADMIN_USER;
+                if (welcomeText) welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${currentAcc} (最高權限管理者)</span>`;
+                if (banner) banner.style.display = 'none';
+                allowedPerms = ["sop", "rollbook", "gotogood", "ClassLog", "good-school", "class", "indexmoney", "joy-english"];
+            } else {
+                if (welcomeText) welcomeText.innerHTML = `歡迎回來，<span style="color:var(--accent-blue); font-weight:600;">${user} 老師</span>`;
+                
+                let teachers = getTeachers();
+                let tData = teachers.find(t => t.name === user);
+                allowedPerms = tData ? (tData.perms || []) : [];
+                assignedClasses = tData ? (tData.classes || []) : [];
+
+                if (assignedClasses.length > 0) {
+                    if (classText) classText.innerText = assignedClasses.join('、');
+                    if (banner) banner.style.display = 'flex';
+                } else {
+                    if (classText) classText.innerText = "目前未指派專屬班級";
+                    if (banner) banner.style.display = 'flex';
+                }
+            }
+
+            let cards = document.querySelectorAll('.grid-menu .card');
+            cards.forEach(card => {
+                let key = card.getAttribute('data-key');
+                if (allowedPerms.includes(key)) {
+                    card.classList.remove('locked');
+                } else {
+                    card.classList.add('locked');
+                }
+            });
+
+            let joyLink = document.querySelector('a.footer-admin-link[data-key="joy-english"]');
+            if (joyLink) {
+                if (allowedPerms.includes("joy-english")) {
+                    joyLink.style.opacity = "1";
+                    joyLink.style.pointerEvents = "auto";
+                    joyLink.title = "";
+                } else {
+                    joyLink.style.opacity = "0.4";
+                    joyLink.style.pointerEvents = "none";
+                    joyLink.title = "您目前無此權限";
+                }
+            }
         }
 
         function openAdminPassModal() {
