@@ -811,7 +811,7 @@
                 </div>
             </a>
 
-            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card" data-key="indexmoney" onclick="logUserAction('點擊模組', '開啟 繳費管理')">
+            <a href="https://aht760317.github.io/Share/indexmoney.html" target="_blank" class="card" data-key="indexmoney" onclick="openIndexMoney(event)">
                 <div>
                     <div class="card-header">
                         <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
@@ -940,6 +940,18 @@
         const ADMIN_PASS = "aa0618aa";
         const CONFIG_PASS = "760317";
 
+        // 發放繳費系統專用通行證
+        function grantMoneySystemAuth() {
+            localStorage.setItem('good_auth_status', 'authenticated');
+            localStorage.setItem('good_auth_time', Date.now().toString());
+        }
+
+        // 點擊「繳費管理」卡片時觸發
+        window.openIndexMoney = function(e) {
+            logUserAction('點擊模組', '開啟 繳費管理');
+            grantMoneySystemAuth();
+        };
+
         function logUserAction(actionType, details) {
             let user = sessionStorage.getItem('good_current_user') || '訪客';
             let logs = JSON.parse(localStorage.getItem('good_school_audit_logs') || '[]');
@@ -980,6 +992,7 @@
             if (!currentUser) {
                 document.getElementById('loginModal').style.display = 'flex';
             } else {
+                grantMoneySystemAuth(); // 已登入狀態，同步確保通行證有效
                 applyUserPermissions(currentUser);
             }
         }
@@ -992,6 +1005,7 @@
 
             if (uInput === ADMIN_USER && pInput === ADMIN_PASS) {
                 sessionStorage.setItem('good_current_user', '雅鴻 (管理者)');
+                grantMoneySystemAuth(); // 🔑 發放收費系統通行證
                 document.getElementById('loginModal').style.display = 'none';
                 logUserAction('系統登入', '管理者登入系統');
                 applyUserPermissions('雅鴻 (管理者)');
@@ -1007,6 +1021,7 @@
 
             if (found) {
                 sessionStorage.setItem('good_current_user', found.name);
+                grantMoneySystemAuth(); // 🔑 發放收費系統通行證
                 document.getElementById('loginModal').style.display = 'none';
                 logUserAction('系統登入', `老師 ${found.name} 登入系統`);
                 applyUserPermissions(found.name);
@@ -1018,6 +1033,9 @@
         function handleLogout() {
             logUserAction('系統登入', '使用者登出系統');
             sessionStorage.removeItem('good_current_user');
+            // 🔒 登出時一併收回繳費系統通行證
+            localStorage.removeItem('good_auth_status');
+            localStorage.removeItem('good_auth_time');
             location.reload();
         }
 
