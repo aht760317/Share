@@ -2407,26 +2407,28 @@
 
     window.unmergeCheckedUnpaidBills = async function() {
         const checkedBoxes = document.querySelectorAll('.unpaid-row-checkbox:checked');
-        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的合併單據！'); return; }
+        if (checkedBoxes.length === 0) { alert('⚠️ 請先勾選要分開的單據！'); return; }
 
         const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.value));
-        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)));
 
         let hasMerged = false;
         for (let bill of targetBills) {
-            if (bill.className.includes('+') || bill.className.includes('多科綜合班')) { hasMerged = true; break; }
+            if (bill.className.includes('+') || bill.className.includes('多科綜合班') || (bill.items && bill.items.some(i => i.name.startsWith('[')))) { 
+                hasMerged = true; 
+                break; 
+            }
         }
 
-        if (!hasMerged) { alert('⚠️ 勾選的單據中似乎沒有合併單據喔！'); return; }
-        if (!confirm('確定要將勾選的合併單據拆分成原本的獨立科目嗎？')) return;
+        if (!hasMerged) { alert('⚠️ 勾選的單據中似乎沒有包含多科合併的項目喔！'); return; }
+        if (!confirm('確定要將勾選的單據拆分成原本各班級獨立的科目與單據嗎？')) return;
 
         try {
             for (let bill of targetBills) {
-                if (!(bill.className.includes('+') || bill.className.includes('多科綜合班'))) continue;
-
                 const classGroups = {};
                 let defaultClass = bill.className.split('+')[0].trim(); 
 
+                let hasValidSplit = false;
                 bill.items.forEach(item => {
                     let clsName = defaultClass;
                     let itemName = item.name;
@@ -2434,6 +2436,7 @@
                     if (match) {
                         clsName = match[1].trim();
                         itemName = match[2].trim();
+                        hasValidSplit = true;
                     }
                     if (!clsName.startsWith('斗六顧德') && !clsName.startsWith('顧德')) {
                         clsName = '斗六顧德 ' + clsName;
@@ -2443,18 +2446,20 @@
                     classGroups[clsName].total += item.amount;
                 });
 
+                if (!hasValidSplit && !bill.className.includes('+')) continue;
+
                 for (const [clsName, data] of Object.entries(classGroups)) {
                     const newBill = {
                         id: Date.now() + Math.floor(Math.random() * 1000),
-                        date: getCurrentDateStr(),
+                        date: bill.date || getCurrentDateStr(),
                         yearMonth: bill.yearMonth,
                         periodStr: bill.periodStr, 
                         className: clsName,
                         studentName: bill.studentName,
                         items: data.items,
                         total: data.total,
-                        isPaid: false,
-                        paidDate: null,
+                        isPaid: bill.isPaid,
+                        paidDate: bill.paidDate,
                         billNote: bill.billNote || '',
                         noAutoRenew: bill.noAutoRenew || false
                     };
@@ -2470,7 +2475,7 @@
 
             window.renderBillingStudentsTable();
             window.renderRecords();
-            alert('✅ 單據已成功拆分為獨立科目！');
+            alert('✅ 單據已成功還原拆分為各班獨立科目！');
         } catch (e) {
             console.error("拆分失敗：", e);
             alert("❌ 拆分失敗請稍後再試！");
