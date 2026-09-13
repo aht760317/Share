@@ -1,371 +1,206 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斗六顧德補習班 - 雲端題庫管理中心 (Question Bank)</title>
-    <style>
-        :root {
-            --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; 
-            --danger: #e11d48; --success: #059669; --warning: #d97706; --purple: #7c3aed;
-            --bg: #f1f5f9; --border: #cbd5e1; --card: #ffffff;
-        }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { margin: 0; background: var(--bg); color: #334155; padding-bottom: 50px; }
-        
-        header { 
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 15px 25px; 
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: sticky; top: 0; z-index: 100;
-        }
-        header h2 { margin: 0; font-size: 18px; }
-        .back-btn { background: rgba(255,255,255,0.15); color: #fff; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); transition: 0.2s; }
-        .back-btn:hover { background: rgba(255,255,255,0.25); }
-
-        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid var(--border); }
-        
-        h3 { margin-top: 0; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; font-size: 17px; }
-        
-        .btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
-        .btn:hover { opacity: 0.9; }
-        .btn-warning { background: var(--warning); }
-        .btn-danger { background: var(--danger); }
-        .btn-success { background: var(--success); }
-        
-        .grid-layout { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        @media(max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
-        
-        .bank-list { list-style: none; padding: 0; margin: 0; }
-        .bank-list li { background: #f8fafc; border: 1px solid var(--border); padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .bank-list li:hover { border-color: var(--accent); background: #eff6ff; }
-        .bank-list li.active { background: var(--accent); color: white; border-color: var(--accent); }
-        
-        .question-item { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--accent); position: relative; }
-        .q-tag { display: inline-block; background: #e2e8f0; font-size: 12px; padding: 3px 8px; border-radius: 12px; margin-bottom: 8px; font-weight: bold; }
-        .q-text { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
-        .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; color: #475569; }
-        .q-ans { margin-top: 10px; font-size: 13px; color: var(--success); font-weight: bold; background: #dcfce7; padding: 5px 10px; border-radius: 4px; display: inline-block; }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #475569; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
-        
-        .sys-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h2>⚙️ 顧德雲端題庫管理後台</h2>
-        <a href="index.html" class="back-btn">🔙 返回前端測驗中心</a>
-    </header>
-
-    <div class="container">
-        
-        <div class="sys-alert">
-            <div>
-                <strong>⚠️ 系統初始化準備</strong><br>
-                <span style="font-size:13px;">若 Firebase 雲端尚無資料，請點擊右側按鈕，將國小 1~6 年級的「標準鑑測卷與加強題庫」一鍵寫入資料庫。</span>
-            </div>
-            <button class="btn btn-warning" onclick="initializeCloudBanks()">🚀 一鍵寫入/覆蓋 1~6 年級預設題庫</button>
-        </div>
-
-        <div class="grid-layout">
-            <!-- 左側：題庫列表 -->
-            <div class="card" style="align-self: start;">
-                <h3>📂 已建立的題庫卷</h3>
-                <ul class="bank-list" id="bank-list-container">
-                    <li style="color:#94a3b8; text-align:center; display:block;">載入中...</li>
-                </ul>
-                <button class="btn btn-success" style="width:100%; margin-top:15px;" onclick="alert('新增自訂考卷功能即將開放！請先使用預設年級卷進行編輯。')">➕ 新增空白考卷</button>
-            </div>
-
-            <!-- 右側：題目編輯區 -->
-            <div class="card" id="editor-section" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom:15px;">
-                    <h3 style="margin:0; border:none; padding:0; font-size: 20px;" id="current-bank-title">選擇題庫以進行編輯</h3>
-                    <button class="btn btn-purple" onclick="toggleAddForm()">📝 新增題目</button>
-                </div>
-
-                <!-- 新增題目的表單 (隱藏) -->
-                <div id="add-question-form" style="display:none; background:#f8fafc; padding:15px; border-radius:8px; border:1px dashed var(--accent); margin-bottom:20px;">
-                    <h4 style="margin-top:0; color:var(--accent);">新增實戰題目</h4>
-                    <div class="form-group"><label>指標/單元標籤 (Tag)：</label><input type="text" id="new-tag" placeholder="例如：100以內的加減法"></div>
-                    <div class="form-group"><label>題目內容：</label><input type="text" id="new-q" placeholder="請輸入題目"></div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><label>選項 (A)：</label><input type="text" id="new-opt0"></div>
-                        <div class="form-group"><label>選項 (B)：</label><input type="text" id="new-opt1"></div>
-                        <div class="form-group"><label>選項 (C)：</label><input type="text" id="new-opt2"></div>
-                        <div class="form-group"><label>選項 (D)：</label><input type="text" id="new-opt3"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>正確解答：</label>
-                        <select id="new-ans">
-                            <option value="0">(A)</option><option value="1">(B)</option><option value="2">(C)</option><option value="3">(D)</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>主任專屬建議 (Advice)：</label><input type="text" id="new-advice" placeholder="若學生答錯，系統要提示什麼？"></div>
-                    <div style="text-align:right;">
-                        <button class="btn" style="background:#64748b;" onclick="toggleAddForm()">取消</button>
-                        <button class="btn btn-success" onclick="saveNewQuestion()">💾 儲存題目至雲端</button>
-                    </div>
-                </div>
-
-                <div id="questions-container">
-                    <!-- 題目列表渲染區 -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase 邏輯 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9RSb0rQzuo0nELR6CvLE06jyktS8YI2s",
-            authDomain: "my-project-9999-479215.firebaseapp.com",
-            projectId: "my-project-9999-479215"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // 這是你剛剛確認過的 1~6 年級實戰資料庫結構
-        const PRESET_BANKS = {
-            "grade_1": {
-                name: "小一數學全單元綜合鑑測卷", subject: "數學", grade: "小一",
-                questions: [
-                    { tag: "10以內的數與加減法", q: "桌上有 5 顆蘋果，媽媽又買了 3 顆，一共有幾顆？", options: ["7", "8", "9", "10"], ans: 1, advice: "需透過實物操作，加強數字的合成與分解。" },
-                    { tag: "比長短、高矮與輕重", q: "鉛筆比橡皮擦長，尺比鉛筆長，誰最長？", options: ["鉛筆", "橡皮擦", "尺", "一樣長"], ans: 2, advice: "加強三物比較的邏輯推理訓練。" },
-                    { tag: "順序、多少與分與合", q: "排隊時小明排第 4 個，小華在小明後面 2 個，小華排第幾個？", options: ["第5", "第6", "第7", "第8"], ans: 1, advice: "釐清「基數」與「序數」的概念差異。" },
-                    { tag: "認識基本形狀", q: "下列哪一個物品的形狀最像圓柱體？", options: ["籃球", "鉛筆盒", "易開罐飲料", "課本"], ans: 2, advice: "多觀察生活周遭物品，建立立體圖形的直覺。" },
-                    { tag: "20以內的數與加減法", q: "15 減去 7 等於多少？", options: ["6", "7", "8", "9"], ans: 2, advice: "加強退位減法計算，可利用「借10」的方法練習。" }
-                ],
-                practicePool: {
-                    "10以內的數與加減法": [{ q: "水缸裡有 6 條魚，再放進 4 條，現在有幾條？", options: ["8", "9", "10", "11"], exp: "6+4=10，答案選 (C) 10。" }],
-                    "20以內的數與加減法": [{ q: "13 減去 5 等於多少？", options: ["7", "8", "9", "6"], exp: "13-5=8，可想成10-5=5，5+3=8。答案選 (B) 8。" }]
-                }
-            },
-            "grade_2": {
-                name: "小二數學全單元綜合鑑測卷", subject: "數學", grade: "小二",
-                questions: [
-                    { tag: "100以內的數與直式加減法", q: "45 + 28 = ?", options: ["63", "73", "83", "62"], ans: 1, advice: "注意直式計算時的「進位」動作。" },
-                    { tag: "長度單位與量測", q: "1 公尺等於幾公分？", options: ["10", "100", "1000", "50"], ans: 1, advice: "背誦公尺與公分的換算口訣。" },
-                    { tag: "乘法意義與九九乘法表", q: "一盒餅乾有 8 塊，買 7 盒共有幾塊餅乾？", options: ["15", "56", "49", "64"], ans: 1, advice: "需熟練九九乘法表，建立乘法為連加的概念。" },
-                    { tag: "分類與統計圖表", q: "紅筆有 5 枝，藍筆有 7 枝，總共有幾枝筆？", options: ["10", "12", "14", "2"], ans: 1, advice: "加強讀題與統計數據統整能力。" },
-                    { tag: "認識錢幣與時間", q: "小美有 3 個十元和 5 個一元，買了 22 元的原子筆，還剩多少錢？", options: ["13元", "15元", "17元", "18元"], ans: 0, advice: "加強錢幣換算與兩步驟減法應用題。" }
-                ],
-                practicePool: {
-                    "100以內的數與直式加減法": [{ q: "52 - 17 = ?", options: ["35", "45", "34", "44"], exp: "直式退位減法，2不夠減7，向十位借位，12-7=5，4-1=3。答案是 35。" }],
-                    "乘法意義與九九乘法表": [{ q: "一包糖果有 9 顆，買 6 包共有幾顆？", options: ["45", "54", "63", "36"], exp: "9×6=54。答案選 (B) 54。" }]
-                }
-            },
-            "grade_3": {
-                name: "小三數學全單元綜合鑑測卷", subject: "數學", grade: "小三",
-                questions: [
-                    { tag: "萬以內的數與加減計算", q: "3050 + 1200 = ?", options: ["4050", "4250", "4150", "4350"], ans: 1, advice: "留意千位與百位的對齊計算。" },
-                    { tag: "乘除直式與餘數", q: "45 ÷ 6 的商和餘數分別是多少？", options: ["商7餘3", "商6餘9", "商7餘2", "商8餘1"], ans: 0, advice: "釐清除法直式中「餘數必須小於除數」的規則。" },
-                    { tag: "分數的初步認識", q: "一個披薩平分成 8 份，吃了 3 份，還剩下幾分之幾？", options: ["3/8", "5/8", "1/8", "4/8"], ans: 1, advice: "加強部分與全體的概念，分子分母的意義。" },
-                    { tag: "重量與容量", q: "2 公斤 50 公克等於多少公克？", options: ["250", "2050", "2500", "20050"], ans: 1, advice: "注意公斤換公克要補零（1公斤=1000公克）。" },
-                    { tag: "周長面積與平面的形體", q: "邊長 5 公分的正方形，周長是多少？", options: ["10公分", "15公分", "20公分", "25公分"], ans: 2, advice: "釐清「周長」與「面積」公式的差異。" }
-                ],
-                practicePool: {
-                    "乘除直式與餘數": [{ q: "38 ÷ 5 的商和餘數？", options: ["商6餘8", "商7餘3", "商7餘4", "商8餘2"], exp: "38 ÷ 5 = 7...3。答案選 (B)。" }]
-                }
-            },
-            "grade_4": {
-                name: "小四數學全單元綜合鑑測卷", subject: "數學", grade: "小四",
-                questions: [
-                    { tag: "一億以內的數與大數加減", q: "一千萬減去一百萬等於多少？", options: ["九十萬", "九百萬", "九千萬", "九十"], ans: 1, advice: "熟練位值表，注意大數相減時的位數對齊。" },
-                    { tag: "整數乘除與四則運算", q: "25 × 4 ÷ 2 + 10 = ?", options: ["60", "50", "40", "30"], ans: 0, advice: "遵守「先乘除後加減、由左至右」的運算規則。" },
-                    { tag: "小數的認識與加減法", q: "3.5 + 2.75 = ?", options: ["5.25", "6.25", "5.8", "6.8"], ans: 1, advice: "小數加減務必「小數點對齊」。" },
-                    { tag: "三角形與四邊形分類", q: "三角形三個內角分別為 90度、45度、45度，這是什麼三角形？", options: ["銳角三角形", "鈍角三角形", "等腰直角三角形", "正三角形"], ans: 2, advice: "背誦並理解三角形內角和與邊角關係。" },
-                    { tag: "面積計算", q: "長方形長 12 公分，寬 8 公分，面積是多少平方公分？", options: ["40", "20", "96", "84"], ans: 2, advice: "熟記矩形面積公式 (長×寬)。" }
-                ],
-                practicePool: {
-                    "整數乘除與四則運算": [{ q: "100 - 20 × 3 = ?", options: ["240", "40", "60", "80"], exp: "先乘除後加減，100-60=40。答案選 (B)。" }]
-                }
-            },
-            "grade_5": {
-                name: "小五數學全單元綜合鑑測卷", subject: "數學", grade: "小五",
-                questions: [
-                    { tag: "因數與倍數", q: "12 和 18 的最大公因數是多少？", options: ["2", "3", "6", "36"], ans: 2, advice: "加強短除法找最大公因數的技巧。" },
-                    { tag: "分數的乘法與除法", q: "3/4 × 2/3 = ?", options: ["1/2", "5/12", "9/8", "1/4"], ans: 0, advice: "練習分數乘法時「先約分再計算」的習慣。" },
-                    { tag: "小數的乘法與除法", q: "1.2 × 0.5 = ?", options: ["6", "0.6", "0.06", "60"], ans: 1, advice: "小數乘法要數對小數點後面的總位數。" },
-                    { tag: "多邊形面積與圓面積", q: "半徑 10 公分的圓，面積大約是多少平方公分？（圓周率3.14）", options: ["31.4", "62.8", "314", "3140"], ans: 2, advice: "牢記圓面積公式：半徑 × 半徑 × 3.14。" },
-                    { tag: "立體形體與平均數", q: "五次考試分數分別為 80, 85, 90, 95, 100，平均分數是多少？", options: ["88", "90", "92", "95"], ans: 1, advice: "理解平均數定義：總和 ÷ 個數。" }
-                ],
-                practicePool: {
-                    "因數與倍數": [{ q: "8 和 12 的最小公倍數是多少？", options: ["4", "16", "24", "48"], exp: "8的倍數: 8, 16, 24...; 12的倍數: 12, 24...。最小公倍數為 24。" }]
-                }
-            },
-            "grade_6": {
-                name: "小六數學全單元綜合鑑測卷", subject: "數學", grade: "小六",
-                questions: [
-                    { tag: "質因數分解與公倍數", q: "下列哪一個數字是質數？", options: ["1", "2", "9", "15"], ans: 1, advice: "釐清質數定義，特別注意 1 不是質數。" },
-                    { tag: "分數與小數的除法運算", q: "2.5 ÷ (1/2) = ?", options: ["1.25", "5", "12.5", "0.5"], ans: 1, advice: "練習小數轉分數，或理解除以二分之一等於乘以 2。" },
-                    { tag: "比、比值與比例問題", q: "爸爸和哥哥身高比為 6:5，爸爸身高 180 公分，哥哥幾公分？", options: ["150", "160", "170", "175"], ans: 0, advice: "利用比例式求值 (6份=180, 1份=30, 5份=150)。" },
-                    { tag: "圓周長與圓面積綜合", q: "圓的直徑變成原來的 2 倍，面積會變成原來的幾倍？", options: ["2倍", "4倍", "8倍", "不變"], ans: 1, advice: "面積比等於邊長(半徑)比的平方。" },
-                    { tag: "扇形面積與代數基礎", q: "解方程式 3x + 5 = 20，x 等於多少？", options: ["3", "4", "5", "6"], ans: 2, advice: "熟練等量公理與移項法則。" }
-                ],
-                practicePool: {
-                    "比、比值與比例問題": [{ q: "甲乙兩數比為 3:4，甲數是 15，乙數是多少？", options: ["12", "16", "20", "24"], exp: "3等份是15，1等份是5，4等份是20。答案選 (C)。" }]
-                }
-            }
-        };
-
-        window.state = { cloudBanks: {}, currentSelectedBankId: null };
-
-        // 一鍵將預設考卷推播至 Firebase
-        window.initializeCloudBanks = async function() {
-            if(!confirm("⚠️ 確定要將 1~6 年級預設題庫完整寫入雲端嗎？（這會覆蓋原有同名資料）")) return;
-            
-            try {
-                for (const [key, data] of Object.entries(PRESET_BANKS)) {
-                    await setDoc(doc(db, "question_banks", key), data);
-                }
-                alert("✅ 系統已成功初始化！國小 1~6 年級實戰題庫已寫入 Firebase。");
-                loadBanksFromCloud();
-            } catch (e) {
-                console.error(e);
-                alert("❌ 初始化失敗，請檢查網路狀態或 Firebase 權限設定。");
-            }
-        };
-
-        // 從 Firebase 讀取現有考卷列表
-        async function loadBanksFromCloud() {
-            const listEl = document.getElementById('bank-list-container');
-            listEl.innerHTML = '<li style="color:#94a3b8; text-align:center; display:block;">同步讀取中...</li>';
-            
-            try {
-                const snapshot = await getDocs(collection(db, "question_banks"));
-                window.state.cloudBanks = {};
-                listEl.innerHTML = '';
-                
-                if(snapshot.empty) {
-                    listEl.innerHTML = '<li style="color:#e11d48; text-align:center; display:block;">雲端目前無資料<br>請點擊上方黃色按鈕初始化</li>';
-                    return;
-                }
-
-                snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    window.state.cloudBanks[docSnap.id] = data;
-                    
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span>${data.name}</span> <span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:12px;">${data.questions?.length || 0}題</span>`;
-                    li.onclick = () => selectBank(docSnap.id, li);
-                    listEl.appendChild(li);
-                });
-            } catch(e) {
-                console.error(e);
-                listEl.innerHTML = '<li style="color:#e11d48; text-align:center; display:block;">讀取失敗，請確認 Firebase 設定</li>';
-            }
-        }
-
-        function selectBank(bankId, liElement) {
-            document.querySelectorAll('.bank-list li').forEach(el => el.classList.remove('active'));
-            liElement.classList.add('active');
-            
-            window.state.currentSelectedBankId = bankId;
-            const bankData = window.state.cloudBanks[bankId];
-            
-            document.getElementById('editor-section').style.display = 'block';
-            document.getElementById('current-bank-title').innerText = `✏️ 編輯：${bankData.name}`;
-            
-            renderQuestions(bankData.questions || []);
-        }
-
-        function renderQuestions(questions) {
-            const container = document.getElementById('questions-container');
-            if (questions.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:30px;">本題庫目前沒有題目。</div>';
-                return;
-            }
-
-            const alpha = ["(A)", "(B)", "(C)", "(D)"];
-            container.innerHTML = questions.map((q, idx) => `
-                <div class="question-item">
-                    <button class="btn btn-danger" style="position:absolute; right:15px; top:15px; padding:5px 10px; font-size:12px;" onclick="deleteQuestion(${idx})">刪除</button>
-                    <div class="q-tag">📌 ${q.tag}</div>
-                    <div class="q-text">${idx + 1}. ${q.q}</div>
-                    <div class="q-options">
-                        ${q.options.map((opt, i) => `<div style="${i === q.ans ? 'font-weight:bold; color:var(--primary);' : ''}">${alpha[i]} ${opt}</div>`).join('')}
-                    </div>
-                    <div class="q-ans">✅ 正確答案：${alpha[q.ans]} ｜ 💡 建議：${q.advice || '無'}</div>
-                </div>
-            `).join('');
-        }
-
-        window.toggleAddForm = function() {
-            const form = document.getElementById('add-question-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        };
-
-        window.saveNewQuestion = async function() {
-            const bankId = window.state.currentSelectedBankId;
-            if(!bankId) { alert("請先選擇左側的題庫！"); return; }
-
-            const tag = document.getElementById('new-tag').value.trim();
-            const q = document.getElementById('new-q').value.trim();
-            const opt0 = document.getElementById('new-opt0').value.trim();
-            const opt1 = document.getElementById('new-opt1').value.trim();
-            const opt2 = document.getElementById('new-opt2').value.trim();
-            const opt3 = document.getElementById('new-opt3').value.trim();
-            const ans = Number(document.getElementById('new-ans').value);
-            const advice = document.getElementById('new-advice').value.trim();
-
-            if(!q || !opt0 || !opt1 || !opt2 || !opt3) { alert("請完整填寫題目與四個選項！"); return; }
-
-            const newQ = { tag: tag || "綜合觀念", q, options: [opt0, opt1, opt2, opt3], ans, advice: advice || "請加強此單元觀念" };
-            
-            // 更新本地 State
-            window.state.cloudBanks[bankId].questions.push(newQ);
-            
-            // 更新 Firebase
-            try {
-                await updateDoc(doc(db, "question_banks", bankId), {
-                    questions: window.state.cloudBanks[bankId].questions
-                });
-                alert("✅ 題目新增成功並同步至雲端！");
-                
-                // 清空表單
-                document.getElementById('new-tag').value = '';
-                document.getElementById('new-q').value = '';
-                document.getElementById('new-opt0').value = '';
-                document.getElementById('new-opt1').value = '';
-                document.getElementById('new-opt2').value = '';
-                document.getElementById('new-opt3').value = '';
-                document.getElementById('new-advice').value = '';
-                
-                toggleAddForm();
-                renderQuestions(window.state.cloudBanks[bankId].questions);
-            } catch(e) {
-                console.error(e);
-                alert("❌ 新增失敗，請檢查連線。");
-            }
-        };
-
-        window.deleteQuestion = async function(idx) {
-            if(!confirm("確定要刪除這題嗎？刪除後前端將不會再出現此題。")) return;
-            
-            const bankId = window.state.currentSelectedBankId;
-            window.state.cloudBanks[bankId].questions.splice(idx, 1);
-            
-            try {
-                await updateDoc(doc(db, "question_banks", bankId), {
-                    questions: window.state.cloudBanks[bankId].questions
-                });
-                renderQuestions(window.state.cloudBanks[bankId].questions);
-            } catch(e) {
-                console.error(e);
-                alert("❌ 刪除失敗。");
-            }
-        };
-
-        // 啟動時自動載入 Firebase 資料
-        window.onload = loadBanksFromCloud;
-    </script>
-</body>
-</html>
+{
+  "grade_1_up": {
+    "name": "小一上數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小一上",
+    "questions": [
+      {"tag": "10以內的數", "q": "桌上有 3 顆蘋果，媽媽又放了 4 顆，現在總共有幾顆？", "options": ["6", "7", "8", "9"], "ans": 1, "advice": "可利用手指或積木輔助，練習基礎數量合成。"},
+      {"tag": "10以內的數", "q": "小華有 8 顆糖果，吃了 2 顆，還剩下幾顆？", "options": ["5", "6", "7", "8"], "ans": 1, "advice": "練習數量遞減的概念。"},
+      {"tag": "10以內的數", "q": "數字 5 的下一個數字是多少？", "options": ["4", "5", "6", "7"], "ans": 2, "advice": "加強數字順序的記憶。"},
+      {"tag": "10以內的數", "q": "盤子裡有 2 塊餅乾，妹妹又拿來 3 塊，現在有幾塊？", "options": ["3", "4", "5", "6"], "ans": 2, "advice": "練習 5 以內的基礎加法。"},
+      {"tag": "分與合", "q": "把 7 顆彈珠分成兩堆，一堆有 3 顆，另一堆有幾顆？", "options": ["3", "4", "5", "6"], "ans": 1, "advice": "熟練數字的拆解與合成（如7可以分成3和4）。"},
+      {"tag": "分與合", "q": "哪兩個數字合起來是 10？", "options": ["4和5", "3和6", "2和8", "1和7"], "ans": 2, "advice": "「湊10」是未來進位加法的核心，必須熟練。"},
+      {"tag": "分與合", "q": "8 可以分成 4 和多少？", "options": ["3", "4", "5", "6"], "ans": 1, "advice": "加強偶數的平分概念。"},
+      {"tag": "分與合", "q": "5 和 4 合起來是多少？", "options": ["8", "9", "10", "11"], "ans": 1, "advice": "加強數字合成直覺反應。"},
+      {"tag": "10以內的加減", "q": "9 - 4 = ?", "options": ["4", "5", "6", "7"], "ans": 1, "advice": "反覆練習10以內的基礎減法。"},
+      {"tag": "10以內的加減", "q": "3 + 6 = ?", "options": ["7", "8", "9", "10"], "ans": 2, "advice": "反覆練習10以內的基礎加法。"},
+      {"tag": "10以內的加減", "q": "原本有 10 張貼紙，送給弟弟 5 張，還剩幾張？", "options": ["4", "5", "6", "7"], "ans": 1, "advice": "結合生活情境理解減法。"},
+      {"tag": "10以內的加減", "q": "池塘裡有 4 隻青蛙，又跳進來 4 隻，共有幾隻？", "options": ["7", "8", "9", "10"], "ans": 1, "advice": "熟悉同數相加（4+4）。"},
+      {"tag": "比較長短與輕重", "q": "鉛筆和橡皮擦，通常哪一個比較長？", "options": ["鉛筆", "橡皮擦", "一樣長", "無法比較"], "ans": 0, "advice": "引導孩子觀察生活物品的長度特徵。"},
+      {"tag": "比較長短與輕重", "q": "西瓜和蘋果，通常哪一個比較重？", "options": ["蘋果", "西瓜", "一樣重", "無法比較"], "ans": 1, "advice": "建立物品重量與體積的基本直覺。"},
+      {"tag": "比較長短與輕重", "q": "長頸鹿和小狗，誰比較高？", "options": ["小狗", "長頸鹿", "一樣高", "無法比較"], "ans": 1, "advice": "理解「高矮」的比較概念。"},
+      {"tag": "比較長短與輕重", "q": "哪一種動物通常最輕？", "options": ["大象", "小貓", "螞蟻", "老虎"], "ans": 2, "advice": "熟悉生活事物的重量層級。"},
+      {"tag": "認識形狀", "q": "皮球是什麼形狀？", "options": ["正方體", "長方體", "球體", "圓柱體"], "ans": 2, "advice": "加強立體形狀的辨識。"},
+      {"tag": "認識形狀", "q": "黑板通常是什麼形狀？", "options": ["圓形", "長方形", "正方形", "三角形"], "ans": 1, "advice": "加強平面圖形的辨識。"},
+      {"tag": "認識形狀", "q": "哪一個物品是圓柱體？", "options": ["易開罐", "籃球", "魔術方塊", "書本"], "ans": 0, "advice": "理解圓柱體上下有兩個圓面的特徵。"},
+      {"tag": "認識形狀", "q": "三個邊、三個角的圖形叫做什麼？", "options": ["正方形", "長方形", "圓形", "三角形"], "ans": 3, "advice": "牢記平面圖形的基本定義。"}
+    ],
+    "practicePool": {
+      "10以內的數": [{"q": "盒子裡有 2 顆球，又放進 6 顆，共有幾顆？", "options": ["6", "7", "8", "9"], "exp": "2+6=8，答案是 8。"}],
+      "分與合": [{"q": "9 可以分成 2 和多少？", "options": ["5", "6", "7", "8"], "exp": "9-2=7，可以分成 2 和 7。"}],
+      "10以內的加減": [{"q": "10 - 7 = ?", "options": ["2", "3", "4", "5"], "exp": "10減7等於3。"}],
+      "比較長短與輕重": [{"q": "火車和汽車，哪一個比較長？", "options": ["汽車", "火車", "一樣長", "無法比較"], "exp": "火車通常比汽車長很多。"}],
+      "認識形狀": [{"q": "魔術方塊是什麼形狀？", "options": ["長方體", "圓柱體", "正方體", "球體"], "exp": "魔術方塊每個面都是正方形，所以是正方體。"}]
+    }
+  },
+  "grade_1_down": {
+    "name": "小一下數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小一下",
+    "questions": [
+      {"tag": "100以內的數", "q": "3 個十和 5 個一合起來是多少？", "options": ["35", "53", "8", "305"], "ans": 0, "advice": "釐清十位與個位的位值觀念。"},
+      {"tag": "100以內的數", "q": "58 的下一個數字是多少？", "options": ["57", "59", "60", "68"], "ans": 1, "advice": "練習 100 以內的順數。"},
+      {"tag": "100以內的數", "q": "比 80 小 1 的數是多少？", "options": ["81", "79", "70", "89"], "ans": 1, "advice": "練習跨十位數的倒數（80退1變79）。"},
+      {"tag": "100以內的數", "q": "72 裡面的 '7' 代表多少？", "options": ["7", "70", "17", "27"], "ans": 1, "advice": "理解十位數代表的實際數值。"},
+      {"tag": "二位數加減", "q": "20 + 15 = ?", "options": ["25", "30", "35", "40"], "ans": 2, "advice": "練習整十數與二位數的加法。"},
+      {"tag": "二位數加減", "q": "48 - 6 = ?", "options": ["32", "42", "44", "40"], "ans": 1, "advice": "練習個位數不退位的減法。"},
+      {"tag": "二位數加減", "q": "樹上有 25 隻鳥，飛走了 10 隻，還剩幾隻？", "options": ["10", "15", "20", "35"], "ans": 1, "advice": "情境題：練習二位數減整十數。"},
+      {"tag": "二位數加減", "q": "哥哥有 32 元，弟弟有 14 元，兩人共有幾元？", "options": ["44", "45", "46", "47"], "ans": 2, "advice": "練習二位數不進位加法直式。"},
+      {"tag": "認識錢幣", "q": "1 個 50 元可以換成幾個 10 元？", "options": ["3個", "4個", "5個", "10個"], "ans": 2, "advice": "熟悉錢幣等值兌換。"},
+      {"tag": "認識錢幣", "q": "買一枝 15 元的筆，付了 2 個 10 元，要找回多少錢？", "options": ["1元", "5元", "10元", "不用找"], "ans": 1, "advice": "練習購物找零的減法情境。"},
+      {"tag": "認識錢幣", "q": "小華有 3 個十元和 8 個一元，他總共有多少錢？", "options": ["38元", "83元", "11元", "308元"], "ans": 0, "advice": "將錢幣轉換為位值觀念計算。"},
+      {"tag": "認識錢幣", "q": "哪一種硬幣的面額最大？", "options": ["1元", "5元", "10元", "50元"], "ans": 3, "advice": "認識台灣流通的硬幣大小與面額。"},
+      {"tag": "認識時間", "q": "時鐘的短針指著 3，長針指著 12，是幾點？", "options": ["12點", "3點", "12點3分", "3點半"], "ans": 1, "advice": "認識整點的時針與分針位置。"},
+      {"tag": "認識時間", "q": "時鐘的短針在 4 和 5 之間，長針指著 6，是幾點？", "options": ["4點", "5點", "4點半", "5點半"], "ans": 2, "advice": "認識半點的時針與分針位置。"},
+      {"tag": "認識時間", "q": "一天之中，通常什麼時候吃午餐？", "options": ["早上7點", "中午12點", "下午3點", "晚上7點"], "ans": 1, "advice": "結合時間與生活作息。"},
+      {"tag": "認識時間", "q": "長針走一圈是經過多久？", "options": ["1分鐘", "1小時", "1天", "半小時"], "ans": 1, "advice": "建立時鐘運作的基本概念。"},
+      {"tag": "認識日期與月曆", "q": "一年有幾個月？", "options": ["7個", "10個", "12個", "30個"], "ans": 2, "advice": "背誦一年12個月的基本常識。"},
+      {"tag": "認識日期與月曆", "q": "一個星期有幾天？", "options": ["5天", "6天", "7天", "10天"], "ans": 2, "advice": "熟記星期的循環。"},
+      {"tag": "認識日期與月曆", "q": "今天是星期二，昨天是星期幾？", "options": ["星期一", "星期三", "星期四", "星期日"], "ans": 0, "advice": "理解昨天、今天、明天的時間次序。"},
+      {"tag": "認識日期與月曆", "q": "兒童節是在哪一個月？", "options": ["1月", "4月", "8月", "12月"], "ans": 1, "advice": "結合生活節慶認識月曆。"}
+    ],
+    "practicePool": {
+      "100以內的數": [{"q": "6 個十和 2 個一合起來是多少？", "options": ["26", "62", "8", "602"], "exp": "十位是6，個位是2，合起來是62。"}],
+      "二位數加減": [{"q": "35 - 12 = ?", "options": ["13", "23", "25", "33"], "exp": "十位3-1=2，個位5-2=3，答案是 23。"}],
+      "認識錢幣": [{"q": "4 個 10 元和 5 個 1 元合起來是多少元？", "options": ["45元", "54元", "9元", "405元"], "exp": "4個10是40，加5等於45。"}],
+      "認識時間": [{"q": "長針指著 6，短針在 8 和 9 之間，是幾點？", "options": ["8點", "9點", "8點半", "9點半"], "exp": "短針過8不到9，長針指6，是8點半。"}],
+      "認識日期與月曆": [{"q": "今天是星期五，明天是星期幾？", "options": ["星期四", "星期六", "星期日", "星期一"], "exp": "五的下一天是六，所以是星期六。"}]
+    }
+  },
+  "grade_2_up": {
+    "name": "小二上數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小二上",
+    "questions": [
+      {"tag": "200以內的數", "q": "156 裡面的 '5' 表示多少？", "options": ["5", "50", "500", "15"], "ans": 1, "advice": "加強百位、十位、個位的位值觀念。"},
+      {"tag": "200以內的數", "q": "比 199 大 1 的數是多少？", "options": ["198", "190", "200", "201"], "ans": 2, "advice": "練習跨百位的進位順數。"},
+      {"tag": "200以內的數", "q": "130、140、(  )、160，括號中應填入多少？", "options": ["145", "150", "155", "170"], "ans": 1, "advice": "練習 10 個一數的數列規律。"},
+      {"tag": "200以內的數", "q": "1 個百、4 個十和 8 個一合起來是多少？", "options": ["148", "184", "418", "841"], "ans": 0, "advice": "熟悉三位數的位值合成。"},
+      {"tag": "二位數直式加減", "q": "47 + 28 = ?", "options": ["65", "75", "85", "71"], "ans": 1, "advice": "直式加法：加強個位滿十要向十位進 1 的動作。"},
+      {"tag": "二位數直式加減", "q": "82 - 35 = ?", "options": ["47", "57", "43", "53"], "ans": 0, "advice": "直式減法：加強個位不夠減，向十位借 1 變 10 的退位動作。"},
+      {"tag": "二位數直式加減", "q": "一包糖果有 50 顆，分給同學 24 顆，還剩幾顆？", "options": ["24", "26", "34", "36"], "ans": 1, "advice": "練習整十數退位減法的直式計算。"},
+      {"tag": "二位數直式加減", "q": "小明有 38 元，媽媽又給他 45 元，他現在有幾元？", "options": ["73", "83", "93", "81"], "ans": 1, "advice": "練習生活情境中的進位加法。"},
+      {"tag": "九九乘法", "q": "4 × 7 = ?", "options": ["24", "28", "32", "35"], "ans": 1, "advice": "需反覆背誦並熟記九九乘法表。"},
+      {"tag": "九九乘法", "q": "一輛汽車有 4 個輪子，6 輛汽車共有幾個輪子？", "options": ["10", "20", "24", "28"], "ans": 2, "advice": "理解乘法為同數累加的意義 (4的6倍)。"},
+      {"tag": "九九乘法", "q": "8 × 9 = ?", "options": ["64", "72", "81", "56"], "ans": 1, "advice": "針對易混淆的高段乘法加強抽背。"},
+      {"tag": "九九乘法", "q": "一盒雞蛋有 10 顆，買了 5 盒，共有幾顆？", "options": ["15", "40", "50", "100"], "ans": 2, "advice": "熟悉 10 的乘法規律。"},
+      {"tag": "容量與重量初步", "q": "比較水壺和水杯，通常哪一個裝的水比較多？", "options": ["水杯", "水壺", "一樣多", "無法比較"], "ans": 1, "advice": "建立容量大小的直觀比較能力。"},
+      {"tag": "容量與重量初步", "q": "爸爸和大西瓜，通常誰比較重？", "options": ["大西瓜", "爸爸", "一樣重", "無法比較"], "ans": 1, "advice": "利用生活經驗建立重量層級概念。"},
+      {"tag": "容量與重量初步", "q": "把一杯水倒進大臉盆裡，水的量會變嗎？", "options": ["會變多", "會變少", "不會變", "不一定"], "ans": 2, "advice": "理解容量守恆的概念（容器改變，液體量不變）。"},
+      {"tag": "容量與重量初步", "q": "下列哪一種容器適合用來裝一缸洗澡水？", "options": ["馬克杯", "湯鍋", "浴缸", "水壺"], "ans": 2, "advice": "結合生活情境判斷適合的容量載體。"},
+      {"tag": "面的大小與測量", "q": "課本的封面和橡皮擦的面，哪一個比較大？", "options": ["橡皮擦的面", "課本的封面", "一樣大", "無法比較"], "ans": 1, "advice": "練習視覺判斷平面圖形的面積大小。"},
+      {"tag": "面的大小與測量", "q": "如果用正方形積木排滿桌面，排得越多代表桌面越...？", "options": ["小", "大", "長", "短"], "ans": 1, "advice": "理解利用單位面積覆蓋來測量大小的概念。"},
+      {"tag": "面的大小與測量", "q": "兩個完全一樣的正方形拼在一起，會變成什麼形狀？", "options": ["正方形", "長方形", "圓形", "三角形"], "ans": 1, "advice": "培養空間與平面圖形拼貼的邏輯。"},
+      {"tag": "面的大小與測量", "q": "把一張色紙對摺一半，面積會變成原本的幾倍？", "options": ["一半", "兩倍", "不變", "三倍"], "ans": 0, "advice": "理解摺紙與面積分割的關係。"}
+    ],
+    "practicePool": {
+      "200以內的數": [{"q": "比 150 少 10 的數是多少？", "options": ["140", "160", "151", "149"], "exp": "150 倒數 10 是 140。"}],
+      "二位數直式加減": [{"q": "63 - 28 = ?", "options": ["35", "45", "33", "43"], "exp": "個位3不夠減8，向十位借10，13-8=5，5-2=3，答案是 35。"}],
+      "九九乘法": [{"q": "7 × 6 = ?", "options": ["42", "49", "36", "48"], "exp": "七六四十二，答案選 (A)。"}],
+      "容量與重量初步": [{"q": "一瓶寶特瓶飲料和一桶飲水機桶裝水，誰比較重？", "options": ["寶特瓶", "桶裝水", "一樣重", "無法比較"], "exp": "桶裝水體積較大裝水較多，重量明顯較重。"}],
+      "面的大小與測量": [{"q": "報紙和明信片，哪一個面比較大？", "options": ["明信片", "報紙", "一樣大", "無法比較"], "exp": "報紙攤開的面積遠大於明信片。"}]
+    }
+  },
+  "grade_2_down": {
+    "name": "小二下數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小二下",
+    "questions": [
+      {"tag": "1000以內的數", "q": "5 個百、0 個十和 7 個一合起來是多少？", "options": ["57", "507", "570", "705"], "ans": 1, "advice": "注意中間缺位（十位為0）要補零的觀念。"},
+      {"tag": "1000以內的數", "q": "比 999 大 1 的數是多少？", "options": ["100", "990", "1000", "1001"], "ans": 2, "advice": "熟練跨千位的進位。"},
+      {"tag": "1000以內的數", "q": "三百零五的數字記法是？", "options": ["35", "305", "350", "3005"], "ans": 1, "advice": "練習國字與阿拉伯數字的轉換。"},
+      {"tag": "1000以內的數", "q": "760 裡面的 '7' 代表多少？", "options": ["7", "70", "700", "76"], "ans": 2, "advice": "釐清百位數代表的實際數值。"},
+      {"tag": "三位數加減", "q": "250 + 140 = ?", "options": ["390", "490", "350", "400"], "ans": 0, "advice": "練習三位數不進位加法直式。"},
+      {"tag": "三位數加減", "q": "500 - 120 = ?", "options": ["380", "480", "420", "320"], "ans": 0, "advice": "加強整百數連續退位的減法計算。"},
+      {"tag": "三位數加減", "q": "一本故事書有 320 頁，小明看了 150 頁，還有幾頁沒看？", "options": ["170", "270", "470", "150"], "ans": 0, "advice": "練習三位數退位減法的應用題。"},
+      {"tag": "三位數加減", "q": "鞋子一雙 450 元，衣服一件 380 元，一起買共要多少元？", "options": ["730", "830", "930", "820"], "ans": 1, "advice": "練習三位數進位加法直式。"},
+      {"tag": "乘法與應用", "q": "一包色紙有 12 張，買 3 包共有幾張？", "options": ["15", "36", "24", "48"], "ans": 1, "advice": "練習二位數乘一位數的不進位乘法。"},
+      {"tag": "乘法與應用", "q": "15 × 4 = ?", "options": ["50", "60", "45", "75"], "ans": 1, "advice": "練習二位數乘一位數的進位乘法。"},
+      {"tag": "乘法與應用", "q": "一條繩子長 25 公分，4 條一樣長的繩子接在一起共長幾公分？", "options": ["80", "90", "100", "120"], "ans": 2, "advice": "結合長度情境練習乘法進位。"},
+      {"tag": "乘法與應用", "q": "任何數乘以 0 的結果是多少？", "options": ["原來的數", "1", "0", "無法計算"], "ans": 2, "advice": "牢記「乘以0皆為0」的鐵則。"},
+      {"tag": "分裝與平分(除法前置)", "q": "有 12 顆草莓，每 4 顆裝一盤，可以裝成幾盤？", "options": ["2盤", "3盤", "4盤", "6盤"], "ans": 1, "advice": "利用乘法逆運算（4的幾倍是12）來理解分裝。"},
+      {"tag": "分裝與平分(除法前置)", "q": "有 15 塊餅乾，平分給 3 個小朋友，每人可以分到幾塊？", "options": ["3塊", "4塊", "5塊", "6塊"], "ans": 2, "advice": "利用乘法逆運算（3的幾倍是15）來理解平分。"},
+      {"tag": "分裝與平分(除法前置)", "q": "20 瓶果汁，每 5 瓶裝一盒，需要幾個盒子？", "options": ["3個", "4個", "5個", "10個"], "ans": 1, "advice": "加強「包含除」的情境理解。"},
+      {"tag": "分裝與平分(除法前置)", "q": "18 顆彈珠平分成 2 堆，一堆有幾顆？", "options": ["8顆", "9顆", "10顆", "6顆"], "ans": 1, "advice": "加強「等分除」與平分概念。"},
+      {"tag": "長度與年月日", "q": "1 公尺等於幾公分？", "options": ["10", "100", "1000", "50"], "ans": 1, "advice": "絕對要熟背的長度換算公式。"},
+      {"tag": "長度與年月日", "q": "黑板的長度大約是 3 (  )？", "options": ["公分", "公尺", "公里", "毫米"], "ans": 1, "advice": "結合生活經驗判斷適合的長度單位。"},
+      {"tag": "長度與年月日", "q": "一年之中，有 31 天的月份稱為？", "options": ["小月", "大月", "平月", "閏月"], "ans": 1, "advice": "認識大月和小月的定義。"},
+      {"tag": "長度與年月日", "q": "今年的 2 月有 29 天，這一年稱為什麼年？", "options": ["平年", "大年", "小年", "閏年"], "ans": 3, "advice": "記住平年 2月 28天，閏年 2月 29天。"}
+    ],
+    "practicePool": {
+      "1000以內的數": [{"q": "八百零二 的數字寫法是？", "options": ["82", "802", "820", "8002"], "exp": "百位是8，十位補0，個位是2，答案為 802。"}],
+      "三位數加減": [{"q": "400 - 180 = ?", "options": ["220", "320", "280", "380"], "exp": "400減100是300，再減80是220。答案選 (A)。"}],
+      "乘法與應用": [{"q": "14 × 2 = ?", "options": ["26", "28", "30", "42"], "exp": "14的2倍，2乘4得8，2乘1得2，答案是 28。"}],
+      "分裝與平分(除法前置)": [{"q": "24 顆糖果，每 6 顆包成一袋，可以包幾袋？", "options": ["3袋", "4袋", "5袋", "6袋"], "exp": "想6的乘法：6 × 4 = 24，可以裝 4 袋。"}],
+      "長度與年月日": [{"q": "2 公尺 50 公分等於幾公分？", "options": ["250", "2050", "25", "205"], "exp": "1公尺=100公分，2公尺=200公分，加50為250公分。"}]
+    }
+  },
+  "grade_3_up": {
+    "name": "小三上數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小三上",
+    "questions": [
+      {"tag": "10000以內的數", "q": "「四千零五」的阿拉伯數字記法是？", "options": ["405", "4050", "4005", "4500"], "ans": 2, "advice": "中間缺少的百位與十位皆需補零。"},
+      {"tag": "10000以內的數", "q": "5 個千、3 個百和 8 個一合起來是多少？", "options": ["538", "5308", "5038", "5380"], "ans": 1, "advice": "位值表對位：千位5、百位3、十位0、個位8。"},
+      {"tag": "10000以內的數", "q": "9999 的下一個整數是多少？", "options": ["1000", "9990", "10000", "10001"], "ans": 2, "advice": "熟練跨萬位的連續進位。"},
+      {"tag": "10000以內的數", "q": "比較大小：4052 (  ) 4025，括號應填入？", "options": ["大於", "小於", "等於", "無法比較"], "ans": 0, "advice": "從最高位往下比，百位相同看十位，5大於2。"},
+      {"tag": "四位數加減", "q": "3200 + 1500 = ?", "options": ["4700", "5700", "4500", "3700"], "ans": 0, "advice": "練習整百數的直式加法對齊。"},
+      {"tag": "四位數加減", "q": "5000 - 2400 = ?", "options": ["3600", "2600", "3400", "2400"], "ans": 1, "advice": "注意千位向百位借位的退位計算。"},
+      {"tag": "四位數加減", "q": "機票 4500 元，住宿 3800 元，總共要花多少元？", "options": ["7300", "8300", "9300", "8200"], "ans": 1, "advice": "直式加法百位進位至千位的計算。"},
+      {"tag": "四位數加減", "q": "哥哥有 6200 元，買腳踏車花了 2800 元，還剩多少元？", "options": ["3400", "4400", "3600", "4600"], "ans": 0, "advice": "直式減法千位退位的計算。"},
+      {"tag": "多位數乘一位數", "q": "312 × 3 = ?", "options": ["936", "624", "963", "926"], "ans": 0, "advice": "三位數乘一位數的不進位乘法。"},
+      {"tag": "多位數乘一位數", "q": "250 × 4 = ?", "options": ["1000", "800", "1200", "900"], "ans": 0, "advice": "末尾有零的乘法，可先算25×4再補零。"},
+      {"tag": "多位數乘一位數", "q": "一件衣服 399 元，買 2 件大約要多少元？（估算）", "options": ["600", "800", "1000", "400"], "ans": 1, "advice": "練習將 399 估算為 400 再進行乘法。"},
+      {"tag": "多位數乘一位數", "q": "108 × 5 = ?", "options": ["540", "5040", "500", "450"], "ans": 0, "advice": "中間有零的乘法進位處理。"},
+      {"tag": "有餘數的除法", "q": "17 ÷ 3 的商和餘數是多少？", "options": ["商5餘2", "商4餘5", "商6餘1", "商5餘3"], "ans": 0, "advice": "餘數必須小於除數，3×5=15，17-15=2。"},
+      {"tag": "有餘數的除法", "q": "25 顆糖，每 4 顆裝一包，最多可以裝幾包？還剩幾顆？", "options": ["裝5包剩5顆", "裝6包剩1顆", "裝7包剩3顆", "裝4包剩9顆"], "ans": 1, "advice": "情境題：利用除法求最大商數與餘數。"},
+      {"tag": "有餘數的除法", "q": "除法算式中，餘數一定要比除數 (  )？", "options": ["大", "小", "相等", "都可以"], "ans": 1, "advice": "牢記除法的鐵律：餘數絕對小於除數。"},
+      {"tag": "有餘數的除法", "q": "38 ÷ 6 = 6 ... (  )，括號中應填入多少？", "options": ["1", "2", "3", "4"], "ans": 1, "advice": "驗算機制：6×6=36，38-36=2。"},
+      {"tag": "分數的初步認識", "q": "一個披薩平分成 4 份，妹妹吃了一份，是吃了幾個披薩？", "options": ["4分之1", "1分之4", "3分之1", "4個"], "ans": 0, "advice": "理解分母代表總平分份數，分子代表取走份數。"},
+      {"tag": "分數的初步認識", "q": "分數「3/8」中，分母是多少？", "options": ["3", "8", "11", "5"], "ans": 1, "advice": "牢記分數的寫法：下面是分母，上面是分子。"},
+      {"tag": "分數的初步認識", "q": "1 盒蘋果有 10 顆，3 顆是幾盒蘋果？", "options": ["10分之3", "3分之10", "13分之3", "3盒"], "ans": 0, "advice": "將離散量（顆）轉換為連續量（盒）的分數表示。"},
+      {"tag": "分數的初步認識", "q": "比較大小：1/2 和 1/4，哪一個比較大？", "options": ["1/2", "1/4", "一樣大", "無法比較"], "ans": 0, "advice": "平分的份數越少(分母越小)，每一份就越大。"}
+    ],
+    "practicePool": {
+      "10000以內的數": [{"q": "七千零一十二 的阿拉伯數字是？", "options": ["712", "7012", "7120", "70012"], "exp": "千位7，百位補0，十位1，個位2，答案是 7012。"}],
+      "四位數加減": [{"q": "4100 - 1500 = ?", "options": ["3600", "2600", "3400", "2400"], "exp": "千位需退位，41-15=26，補上兩個0，答案是 2600。"}],
+      "多位數乘一位數": [{"q": "205 × 4 = ?", "options": ["820", "8020", "800", "1020"], "exp": "5×4=20，200×4=800，合起來 820。"}],
+      "有餘數的除法": [{"q": "20 ÷ 6 的商和餘數？", "options": ["商3餘2", "商2餘8", "商4餘2", "商3餘1"], "exp": "6×3=18，20-18=2，商3餘2。"}],
+      "分數的初步認識": [{"q": "一條緞帶平分成 6 段，其中的 5 段是幾條緞帶？", "options": ["6分之5", "5分之6", "1分之5", "6條"], "exp": "平分成6段，取5段，記作6分之5。"}]
+    }
+  },
+  "grade_3_down": {
+    "name": "小三下數學綜合鑑測卷",
+    "subject": "數學",
+    "grade": "小三下",
+    "questions": [
+      {"tag": "兩位數乘兩位數", "q": "12 × 10 = ?", "options": ["12", "120", "102", "1200"], "ans": 1, "advice": "乘以 10 只要在原數後面補一個 0。"},
+      {"tag": "兩位數乘兩位數", "q": "15 × 12 = ?", "options": ["150", "180", "160", "200"], "ans": 1, "advice": "直式乘法：先乘個位再乘十位，最後相加。"},
+      {"tag": "兩位數乘兩位數", "q": "一箱飲料有 24 瓶，買 20 箱共有幾瓶？", "options": ["240", "480", "48", "600"], "ans": 1, "advice": "利用 24×2=48，再補上 0。"},
+      {"tag": "兩位數乘兩位數", "q": "25 × 25 = ?", "options": ["625", "500", "125", "425"], "ans": 0, "advice": "加強多位數相乘的進位準確度。"},
+      {"tag": "三位數除以一位數", "q": "600 ÷ 3 = ?", "options": ["20", "200", "2", "300"], "ans": 1, "advice": "整百數除法：6÷3=2，補上兩個 0。"},
+      {"tag": "三位數除以一位數", "q": "408 ÷ 4 = ?", "options": ["12", "102", "120", "100"], "ans": 1, "advice": "直式除法：中間位數不夠除要補 0。"},
+      {"tag": "三位數除以一位數", "q": "有 315 顆糖，平分給 5 個班級，每班分到幾顆？", "options": ["63", "65", "61", "53"], "ans": 0, "advice": "直式除法第一位不夠除，看前兩位 (31÷5)。"},
+      {"tag": "三位數除以一位數", "q": "824 ÷ 8 = ?", "options": ["13", "103", "130", "100"], "ans": 1, "advice": "當商的中間位產生 0 時，切勿漏寫。"},
+      {"tag": "同分母分數加減", "q": "3/8 + 2/8 = ?", "options": ["5/16", "5/8", "1/8", "6/8"], "ans": 1, "advice": "同分母相加，分母不變，分子相加。"},
+      {"tag": "同分母分數加減", "q": "7/10 - 4/10 = ?", "options": ["3/0", "3/10", "11/10", "3/20"], "ans": 1, "advice": "同分母相減，分母不變，分子相減。"},
+      {"tag": "同分母分數加減", "q": "1 - 3/5 = ?", "options": ["2/5", "4/5", "3/5", "1/5"], "ans": 0, "advice": "遇到 1 時，將其轉換為與減數同分母的分數 (5/5) 再算。"},
+      {"tag": "同分母分數加減", "q": "一包色紙，哥哥用了 4/9 包，弟弟用了 2/9 包，共用了幾包？", "options": ["6/18", "6/9", "2/9", "8/9"], "ans": 1, "advice": "分數應用題：釐清相加的情境。"},
+      {"tag": "小數的初步認識", "q": "「3.5」讀作什麼？", "options": ["三五", "三點五", "三十五", "三分之五"], "ans": 1, "advice": "認識小數點與讀法。"},
+      {"tag": "小數的初步認識", "q": "1 公分等於 10 毫米，5 毫米可以記作幾公分？", "options": ["0.5公分", "5公分", "50公分", "0.05公分"], "ans": 0, "advice": "長度單位與一位小數的轉換。"},
+      {"tag": "小數的初步認識", "q": "10 個 0.1 合起來是多少？", "options": ["0.10", "1", "10", "0.01"], "ans": 1, "advice": "理解小數進位：滿十進一。"},
+      {"tag": "小數的初步認識", "q": "比較大小：0.8 (  ) 1.2", "options": ["大於", "小於", "等於", "無法比較"], "ans": 1, "advice": "先比個位數，個位相同再比十分位。"},
+      {"tag": "面積與重量換算", "q": "1 公斤等於幾公克？", "options": ["10", "100", "1000", "10000"], "ans": 2, "advice": "必須熟背的重量單位換算。"},
+      {"tag": "面積與重量換算", "q": "正方形的邊長是 5 公分，面積是多少平方公分？", "options": ["10", "20", "25", "15"], "ans": 2, "advice": "熟記正方形面積公式：邊長 × 邊長。"},
+      {"tag": "面積與重量換算", "q": "長方形長 6 公分、寬 4 公分，面積是多少？", "options": ["20", "10", "24", "26"], "ans": 2, "advice": "熟記長方形面積公式：長 × 寬。"},
+      {"tag": "面積與重量換算", "q": "3 公斤 50 公克等於幾公克？", "options": ["350", "3050", "3500", "30050"], "ans": 1, "advice": "重量換算注意補零（3000 + 50）。"}
+    ],
+    "practicePool": {
+      "兩位數乘兩位數": [{"q": "21 × 30 = ?", "options": ["63", "630", "603", "6300"], "exp": "21×3=63，補上一個0，答案是 630。"}],
+      "三位數除以一位數": [{"q": "505 ÷ 5 = ?", "options": ["11", "101", "110", "100"], "exp": "百位5÷5=1，十位0補0，個位5÷5=1，答案是 101。"}],
+      "同分母分數加減": [{"q": "5/7 + 1/7 = ?", "options": ["6/14", "6/7", "4/7", "7/7"], "exp": "分母不變，分子5+1=6，答案是 6/7。"}],
+      "小數的初步認識": [{"q": "8 個 0.1 和 2 個 1 合起來是多少？", "options": ["8.2", "2.8", "10", "28"], "exp": "2個1是2，8個0.1是0.8，合起來是 2.8。"}],
+      "面積與重量換算": [{"q": "邊長 4 公分的正方形，面積是多少平方公分？", "options": ["16", "8", "12", "20"], "exp": "面積=邊長×邊長，4×4=16。"}]
+    }
+  }
+}
