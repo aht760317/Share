@@ -679,8 +679,8 @@
                             <th style="width:100px;">單據年月</th>
                             <th style="width:180px;">班級 / 姓名</th>
                             <th style="width:80px; text-align:right;">總金額</th>
-                            <th style="width:100px; text-align:center;">狀態/繳費日</th>
                             <th style="width:90px; text-align:center;">發單日</th>
+                            <th style="width:100px; text-align:center;">狀態/繳費日</th>
                             <th style="width:230px;">操作</th>
                         </tr>
                     </thead>
@@ -698,8 +698,8 @@
                             <th style="width:160px;">單據區間</th>
                             <th style="width:180px;">班級 / 姓名</th>
                             <th style="width:90px; text-align:right;">總金額</th>
-                            <th style="width:110px; text-align:center;">狀態/繳費日</th>
                             <th style="width:80px; text-align:center;">發單日</th>
+                            <th style="width:110px; text-align:center;">狀態/繳費日</th>
                             <th style="width:230px;">操作</th>
                         </tr>
                     </thead>
@@ -783,8 +783,8 @@
                             <th style="width: 150px;">班級 / 姓名</th>
                             <th>應繳費用項目明細</th>
                             <th style="width: 90px; text-align: right;">總金額</th>
-                            <th style="width: 100px; text-align: center;">狀態/繳費日</th>
                             <th style="width: 90px; text-align: center;">發單日</th>
+                            <th style="width: 100px; text-align: center;">狀態/繳費日</th>
                             <th style="width: 140px; text-align: center;">操作</th>
                         </tr>
                     </thead>
@@ -1575,7 +1575,9 @@
                 }
 
                 if (bill.noticePrintedDate) {
-                    printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px;">${bill.noticePrintedDate.substring(5)}</span>`;
+                    printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${bill.firestoreId}', '${bill.id}', '${bill.noticePrintedDate}')" title="點擊修改發單日">${bill.noticePrintedDate.substring(5)}</span>`;
+                } else {
+                    printedDateHtml = `<span style="color:#CBD5E1; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${bill.firestoreId}', '${bill.id}', '')" title="點擊設定發單日">-</span>`;
                 }
             } else {
                 const [y, m] = selectedMonth.split('-').map(Number);
@@ -1589,8 +1591,8 @@
                     <td>${genderIcon}<strong>${stu}</strong></td>
                     <td style="white-space:normal; max-width:320px;">${itemsHtml}</td>
                     <td style="text-align:right;">${totalAmountHtml}</td>
-                    <td style="text-align:center;">${statusBadge}</td>
                     <td style="text-align:center;">${printedDateHtml}</td>
+                    <td style="text-align:center;">${statusBadge}</td>
                     <td style="text-align:center;">
                         <button class="action-btn btn-purple" onclick="openAddFeeItemModal('${cls}', '${stu}')">✏️ 增加/修改學費</button>
                     </td>
@@ -2179,6 +2181,49 @@
         }, 500);
     };
 
+    // ===== 點擊修改或取消發單日期 =====
+    window.editPrintedDate = function(firestoreId, idStr, currentVal) {
+        window.verifyAndDelete('修改發單日期', async () => {
+            const id = Number(idStr);
+            const bill = window.bills.find(b => b.id === id);
+            if (!bill) return;
+
+            const input = prompt(`請輸入新的發單日期 (YYYY-MM-DD)：\n若要「取消發單狀態」，請輸入「取消」或直接留空。`, currentVal || getCurrentDateStr());
+            
+            if (input === null) return; // 按下取消鍵
+            
+            let newVal = input.trim();
+            if (newVal === '取消' || newVal === '') {
+                newVal = null;
+            }
+
+            try {
+                bill.noticePrintedDate = newVal;
+                await setDoc(doc(db, "bills", firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: bill.isPaid,
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew,
+                    noticePrintedDate: newVal
+                });
+                window.renderBillingStudentsTable();
+                window.renderRecords();
+                window.renderUnpaidTabLists();
+            } catch(e) {
+                console.error("更新發單日期失敗：", e);
+                alert("❌ 更新失敗請稍後再試！");
+            }
+        });
+    };
+
     window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const classFilterEl = document.getElementById('filterClassSelect');
@@ -2199,7 +2244,7 @@
 
         filteredBills.forEach(bill => {
             let statusBadge = '';
-            let printedDateHtml = '<span style="color:#CBD5E1;">-</span>';
+            let printedDateHtml = '';
 
             if (bill.isPaid) {
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
@@ -2208,15 +2253,18 @@
                 statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
             }
 
+            const bid = String(bill.id);
+            const fid = String(bill.firestoreId);
+
             if (bill.noticePrintedDate) {
-                printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px;">${bill.noticePrintedDate.substring(5)}</span>`;
+                printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${fid}', '${bid}', '${bill.noticePrintedDate}')" title="點擊修改發單日">${bill.noticePrintedDate.substring(5)}</span>`;
+            } else {
+                printedDateHtml = `<span style="color:#CBD5E1; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${fid}', '${bid}', '')" title="點擊設定發單日">-</span>`;
             }
 
             const displayMonth = formatDisplayPeriod(bill);
             const isJr = isJuniorHigh(bill.className);
             const deptKey = isJr ? 'junior' : 'primary';
-            const bid = String(bill.id);
-            const fid = String(bill.firestoreId);
 
             let checkboxHtml = `<input type="checkbox" class="row-checkbox-${deptKey}" value="${bid}" style="width:18px; height:18px; margin:0;">`;
 
@@ -2237,8 +2285,8 @@
                     <td style="white-space:nowrap;">${displayMonth}</td>
                     <td>${bill.className} - <strong>${bill.studentName}</strong></td>
                     <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
-                    <td style="text-align:center;">${statusBadge}</td>
                     <td style="text-align:center;">${printedDateHtml}</td>
+                    <td style="text-align:center;">${statusBadge}</td>
                     <td><div class="action-cell">${actionHtml}</div></td>
                 </tr>`;
                 
