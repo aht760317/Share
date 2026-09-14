@@ -153,7 +153,7 @@
           </div>
         </div>
 
-        <!-- 第二行：項目查詢篩選 + 列印/匯出按鈕 -->
+        <!-- 第二行：項目查詢篩選 + 尋找格子 + 列印/匯出按鈕 -->
         <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
           <div class="flex items-center space-x-1.5 flex-wrap gap-y-1.5 flex-1 min-w-0">
             <div class="flex items-center space-x-1 shrink-0">
@@ -171,8 +171,15 @@
               <option value="all">所有項目</option>
             </select>
 
+            <!-- 這裡保留原本的選單選項，同時在下方完整保留了自訂尋找關鍵字輸入框 -->
             <div id="custom-item-search-wrapper" class="hidden items-center">
               <input type="text" id="custom-item-keyword" oninput="renderDashboard()" placeholder="關鍵字..." class="border border-amber-300 bg-amber-50/40 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-800 w-28 sm:w-36">
+            </div>
+
+            <!-- 🟢 新增的尋找格子：可自由打字尋找所有項目、說明、備註 -->
+            <div class="relative flex items-center">
+              <span class="absolute left-2 text-slate-400 text-xs"><i class="fa-solid fa-search"></i></span>
+              <input type="text" id="global-search-keyword" oninput="renderDashboard()" placeholder="尋找項目、說明、備註..." class="border border-indigo-300 bg-indigo-50/30 rounded-lg pl-7 pr-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 w-36 sm:w-48">
             </div>
 
             <button onclick="resetItemFilter()" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition shrink-0">
@@ -661,7 +668,6 @@
       initFirebaseSync();
     });
 
-    // 當月與區間均需密碼 0618
     window.handleFilterModeSelect = function(selectEl) {
       const targetMode = selectEl.value;
       if (targetMode === 'monthly' || targetMode === 'range') {
@@ -736,6 +742,7 @@
       populateItemFilterDropdown();
       document.getElementById('item-filter-category').value = 'all';
       document.getElementById('custom-item-keyword').value = '';
+      document.getElementById('global-search-keyword').value = '';
       document.getElementById('custom-item-search-wrapper').classList.add('hidden');
       document.getElementById('custom-item-search-wrapper').classList.remove('flex');
       renderDashboard();
@@ -788,7 +795,6 @@
     };
 
     function initFirebaseSync() {
-      // 1. 監聽文理繳費系統 (bills)
       onSnapshot(collection(db, "bills"), (snapshot) => {
         const rawMap = {};
         snapshot.forEach((docSnap) => {
@@ -836,7 +842,6 @@
         renderDashboard();
       });
 
-      // 2. 監聽英文繳費系統 (joyEnglishBills)
       onSnapshot(collection(db, "joyEnglishBills"), (snapshot) => {
         const rawMap = {};
         snapshot.forEach((docSnap) => {
@@ -884,7 +889,6 @@
         renderDashboard();
       });
 
-      // 3. 監聽文理支出
       onSnapshot(collection(db, "expenses_wenli"), (snapshot) => {
         const expList = [];
         snapshot.forEach((docSnap) => {
@@ -897,7 +901,6 @@
         renderDashboard();
       });
 
-      // 4. 監聽英文支出
       onSnapshot(collection(db, "expenses_english"), (snapshot) => {
         const expList = [];
         snapshot.forEach((docSnap) => {
@@ -998,25 +1001,40 @@
       const itemFilterType = document.getElementById('item-filter-type').value;
       const itemFilterCategory = document.getElementById('item-filter-category').value;
       const customKeyword = (document.getElementById('custom-item-keyword').value || '').trim().toLowerCase();
+      const globalKeyword = (document.getElementById('global-search-keyword').value || '').trim().toLowerCase();
 
       let finalFiltered = dateFiltered.filter(r => {
         if (itemFilterType !== 'all' && r.type !== itemFilterType) return false;
+        
         if (itemFilterCategory === '__custom__') {
-          if (!customKeyword) return true;
-          return (r.summary || '').toLowerCase().includes(customKeyword) || (r.desc || '').toLowerCase().includes(customKeyword) || (r.note || '').toLowerCase().includes(customKeyword);
+          if (customKeyword) {
+            const matchSummary = (r.summary || '').toLowerCase().includes(customKeyword);
+            const matchDesc = (r.desc || '').toLowerCase().includes(customKeyword);
+            const matchNote = (r.note || '').toLowerCase().includes(customKeyword);
+            if (!matchSummary && !matchDesc && !matchNote) return false;
+          }
         } else if (itemFilterCategory !== 'all') {
-          return r.summary === itemFilterCategory;
+          if (r.summary !== itemFilterCategory) return false;
         }
+
+        // 🟢 自由尋找格子過濾邏輯（同時支援尋找項目、說明、備註）
+        if (globalKeyword) {
+          const matchSummary = (r.summary || '').toLowerCase().includes(globalKeyword);
+          const matchDesc = (r.desc || '').toLowerCase().includes(globalKeyword);
+          const matchNote = (r.note || '').toLowerCase().includes(globalKeyword);
+          if (!matchSummary && !matchDesc && !matchNote) return false;
+        }
+
         return true;
       });
 
       const queryCard = document.getElementById('item-query-summary-card');
-      if (itemFilterCategory !== 'all' || itemFilterType !== 'all') {
+      if (itemFilterCategory !== 'all' || itemFilterType !== 'all' || globalKeyword) {
         queryCard.classList.remove('hidden');
         queryCard.classList.add('flex');
         let targetSum = 0, count = 0;
         finalFiltered.forEach(r => { targetSum += Number(r.amount); count++; });
-        document.getElementById('item-query-label').innerText = itemFilterCategory !== 'all' && itemFilterCategory !== '__custom__' ? `【${itemFilterCategory}】：` : "累計：";
+        document.getElementById('item-query-label').innerText = globalKeyword ? `🔍 "${globalKeyword}" 累計：` : (itemFilterCategory !== 'all' && itemFilterCategory !== '__custom__' ? `【${itemFilterCategory}】：` : "累計：");
         document.getElementById('item-query-amount').innerText = `NT$ ${targetSum.toLocaleString()}`;
         document.getElementById('item-query-count').innerText = `(${count}筆)`;
       } else {
@@ -1045,8 +1063,8 @@
       incMobileList.innerHTML = '';
 
       if (incomeList.length === 0) {
-        incTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無收入明細</td></tr>`;
-        incMobileList.innerHTML = `<div class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無收入明細</div>`;
+        incTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無符合的收入明細</td></tr>`;
+        incMobileList.innerHTML = `<div class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無符合的收入明細</div>`;
       } else {
         incomeList.forEach((t, index) => {
           totalInc += Number(t.amount);
@@ -1104,8 +1122,8 @@
       expMobileList.innerHTML = '';
 
       if (expenseList.length === 0) {
-        expTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無支出明細</td></tr>`;
-        expMobileList.innerHTML = `<div class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無支出明細</div>`;
+        expTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無符合的支出明細</td></tr>`;
+        expMobileList.innerHTML = `<div class="py-6 text-center text-slate-400 font-medium text-xs">此範圍內尚無符合的支出明細</div>`;
       } else {
         expenseList.forEach((t, index) => {
           totalExp += Number(t.amount);
