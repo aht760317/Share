@@ -1566,7 +1566,11 @@
                     const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
                     statusBadge = `<span class="status-badge status-paid">✅ 已繳 ${pDate}</span>`;
                 } else {
-                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+                    if (bill.noticePrintedDate) {
+                        statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span><br><span style="font-size:11px; color:#2563EB; font-weight:bold; display:inline-block; margin-top:2px;">🖨️ 已發單: ${bill.noticePrintedDate.substring(5)}</span>`;
+                    } else {
+                        statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+                    }
                 }
             } else {
                 const [y, m] = selectedMonth.split('-').map(Number);
@@ -1759,7 +1763,8 @@
                     isPaid: existingBill.isPaid,
                     paidDate: existingBill.paidDate,
                     billNote: existingBill.billNote,
-                    noAutoRenew: existingBill.noAutoRenew
+                    noAutoRenew: existingBill.noAutoRenew,
+                    noticePrintedDate: existingBill.noticePrintedDate || null
                 });
                 alert(`✅ 已成功更新【${stu}】(${displayPeriod}) 的繳費單！`);
             } else {
@@ -1775,7 +1780,8 @@
                     isPaid: false,
                     paidDate: null,
                     billNote: billNote,
-                    noAutoRenew: noAutoRenew
+                    noAutoRenew: noAutoRenew,
+                    noticePrintedDate: null
                 };
                 const docRef = await addDoc(collection(db, "bills"), newBill);
                 newBill.firestoreId = docRef.id;
@@ -1848,7 +1854,8 @@
                     isPaid: false,
                     paidDate: null,
                     billNote: currentBill.billNote || '',
-                    noAutoRenew: false
+                    noAutoRenew: false,
+                    noticePrintedDate: null
                 };
                 const docRef = await addDoc(collection(db, "bills"), autoBill);
                 autoBill.firestoreId = docRef.id;
@@ -2131,6 +2138,41 @@
         checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
     };
 
+    // ===== 標記單據為「已發單」的功能 =====
+    window.markNoticesAsPrinted = async function(billsArray) {
+        // 使用 setTimeout 以免被視窗列印的同步鎖卡住
+        setTimeout(async () => {
+            if (!confirm('🖨️ 列印對話框已關閉！\n是否要將這些單據標記為「已發通知」並記錄今天的日期？')) return;
+            
+            const today = getCurrentDateStr();
+            try {
+                for (let bill of billsArray) {
+                    bill.noticePrintedDate = today;
+                    await setDoc(doc(db, "bills", bill.firestoreId), {
+                        id: bill.id,
+                        date: bill.date,
+                        yearMonth: bill.yearMonth,
+                        periodStr: bill.periodStr,
+                        className: bill.className,
+                        studentName: bill.studentName,
+                        items: bill.items,
+                        total: bill.total,
+                        isPaid: bill.isPaid,
+                        paidDate: bill.paidDate,
+                        billNote: bill.billNote || '',
+                        noAutoRenew: !!bill.noAutoRenew,
+                        noticePrintedDate: today
+                    });
+                }
+                window.renderBillingStudentsTable();
+                window.renderRecords();
+            } catch(e) {
+                console.error(e);
+                alert('❌ 標記發單日期失敗');
+            }
+        }, 500);
+    };
+
     window.renderRecords = function() {
         const filterMonth = document.getElementById('filterMonth').value;
         const classFilterEl = document.getElementById('filterClassSelect');
@@ -2155,7 +2197,11 @@
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
                 statusBadge = `<span class="status-badge status-paid">✅ 已繳 ${pDate}</span>`;
             } else {
-                statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+                if (bill.noticePrintedDate) {
+                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span><br><span style="font-size:11px; color:#2563EB; font-weight:bold; display:inline-block; margin-top:2px;">🖨️ 已發單: ${bill.noticePrintedDate.substring(5)}</span>`;
+                } else {
+                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+                }
             }
 
             const displayMonth = formatDisplayPeriod(bill);
@@ -2229,6 +2275,8 @@
             return list.map(bill => {
                 const periodText = formatDisplayPeriod(bill);
                 const noteBadge = bill.billNote ? `<span style="font-size:11.5px; color:#B45309; background:#FEF3C7; padding:1px 5px; border-radius:3px; margin-left:6px; border:1px solid #FCD34D;">📝 ${bill.billNote}</span>` : '';
+                const noticeBadge = bill.noticePrintedDate ? `<span style="font-size:11.5px; color:#1E40AF; background:#DBEAFE; padding:1px 5px; border-radius:3px; margin-left:6px; border:1px solid #BFDBFE;">🖨️ 已發: ${bill.noticePrintedDate.substring(5)}</span>` : '';
+                
                 const bid = String(bill.id);
                 const fid = String(bill.firestoreId);
                 return `
@@ -2236,7 +2284,7 @@
                         <div class="unpaid-card-info">
                             <input type="checkbox" class="unpaid-row-checkbox" value="${bid}" style="width:18px; height:18px; margin-right:4px;">
                             <span style="font-size: 13px; color: #64748B; font-weight: 600;">${periodText}</span>
-                            <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong> ${noteBadge}</span>
+                            <span class="unpaid-student-title">${bill.className} - <strong>${bill.studentName}</strong> ${noteBadge}${noticeBadge}</span>
                             <span class="unpaid-amount-tag">$${bill.total.toLocaleString()}</span>
                         </div>
                         <div class="unpaid-card-actions">
@@ -2338,11 +2386,14 @@
                     '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
                     window.getCombinedReceiptHtml(targetBills, true, '補習班存根聯') +
                     '</div>';
+                document.getElementById('printArea').innerHTML = allHtml;
+                window.print();
             } else {
                 allHtml = window.getCombinedReceiptHtml(targetBills, false, '', true);
+                document.getElementById('printArea').innerHTML = allHtml;
+                window.print();
+                window.markNoticesAsPrinted(targetBills);
             }
-            document.getElementById('printArea').innerHTML = allHtml;
-            window.print();
         } else {
             window.printDocument(idStr, type);
         }
@@ -2395,6 +2446,7 @@
         }
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
+        window.markNoticesAsPrinted(targetBills);
     };
 
     window.printSelectedCheckedNotices = function() {
@@ -2432,6 +2484,45 @@
         }
         document.getElementById('printArea').innerHTML = allHtml;
         window.print();
+        window.markNoticesAsPrinted(targetBills);
+    };
+
+    window.printCheckedUnpaidNotices = function() {
+        const checkedBoxesArray = Array.from(document.querySelectorAll('.unpaid-row-checkbox:checked'));
+        if (checkedBoxesArray.length === 0) { alert('⚠️ 請先勾選至少一筆單據！'); return; }
+
+        const selectedIds = checkedBoxesArray.map(cb => String(cb.value));
+        const targetBills = window.bills.filter(b => selectedIds.includes(String(b.id)) && !b.isPaid);
+
+        if (targetBills.length === 0) { alert('⚠️ 找不到所選的未繳費單據！'); return; }
+
+        const grouped = {};
+        targetBills.forEach(b => {
+            if(!grouped[b.studentName]) grouped[b.studentName] = [];
+            grouped[b.studentName].push(b);
+        });
+
+        const noticeHtmls = [];
+        for (const student in grouped) {
+            const bills = grouped[student];
+            if (bills.length === 1) noticeHtmls.push(window.getSingleReceiptHtml(bills[0], false, '', true));
+            else noticeHtmls.push(window.getCombinedReceiptHtml(bills, false, '', true));
+        }
+
+        let allHtml = '';
+        for (let i = 0; i < noticeHtmls.length; i++) {
+            if (i % 3 === 0) allHtml += '<div class="receipt-container-page">';
+            allHtml += noticeHtmls[i];
+            if ((i + 1) % 3 === 0 || i === noticeHtmls.length - 1) {
+                allHtml += '</div>';
+                if (i !== noticeHtmls.length - 1) allHtml += '<div class="page-break"></div>';
+            } else {
+                allHtml += '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>';
+            }
+        }
+        document.getElementById('printArea').innerHTML = allHtml;
+        window.print();
+        window.markNoticesAsPrinted(targetBills);
     };
 
     window.printCombinedSelectedReceipts = function() {
@@ -2546,7 +2637,8 @@
                     isPaid: bill.isPaid,
                     paidDate: bill.paidDate,
                     billNote: bill.billNote,
-                    noAutoRenew: !!bill.noAutoRenew
+                    noAutoRenew: !!bill.noAutoRenew,
+                    noticePrintedDate: bill.noticePrintedDate || null
                 });
 
                 window.closeModal('editBillModal');
@@ -2576,7 +2668,8 @@
                     isPaid: true,
                     paidDate: bill.paidDate,
                     billNote: bill.billNote || '',
-                    noAutoRenew: !!bill.noAutoRenew
+                    noAutoRenew: !!bill.noAutoRenew,
+                    noticePrintedDate: bill.noticePrintedDate || null
                 });
 
                 await autoCreateNextPeriodBill(bill);
@@ -2610,7 +2703,8 @@
                         isPaid: false,
                         paidDate: null,
                         billNote: bill.billNote || '',
-                        noAutoRenew: !!bill.noAutoRenew
+                        noAutoRenew: !!bill.noAutoRenew,
+                        noticePrintedDate: bill.noticePrintedDate || null
                     });
                     window.renderBillingStudentsTable();
                     window.renderRecords();
@@ -3004,12 +3098,14 @@
                 '<div class="cut-line">✂️------------------------ 請沿虛線剪開 ------------------------✂️</div>' +
                 getSingleReceiptHtml(bill, true, '補習班存根聯') +
                 '</div>';
+            document.getElementById('printArea').innerHTML = allHtml;
+            window.print();
         } else {
             allHtml = '<div class="receipt-container-page">' + getSingleReceiptHtml(bill, false, '', true) + '</div>';
+            document.getElementById('printArea').innerHTML = allHtml;
+            window.print();
+            window.markNoticesAsPrinted([bill]);
         }
-
-        document.getElementById('printArea').innerHTML = allHtml;
-        window.print();
     };
 
     initCloudData();
