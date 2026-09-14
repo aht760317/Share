@@ -677,9 +677,10 @@
                         <tr>
                             <th style="width:36px; text-align:center;"><input type="checkbox" id="selectAllPrimary" onclick="toggleSelectAll('primary', this)"></th>
                             <th style="width:100px;">單據年月</th>
-                            <th style="width:200px;">班級 / 姓名</th>
-                            <th style="width:90px; text-align:right;">總金額</th>
-                            <th style="width:110px; text-align:center;">狀態/繳費日</th>
+                            <th style="width:180px;">班級 / 姓名</th>
+                            <th style="width:80px; text-align:right;">總金額</th>
+                            <th style="width:100px; text-align:center;">狀態/繳費日</th>
+                            <th style="width:90px; text-align:center;">發單日</th>
                             <th style="width:230px;">操作</th>
                         </tr>
                     </thead>
@@ -694,10 +695,11 @@
                     <thead>
                         <tr>
                             <th style="width:36px; text-align:center;"><input type="checkbox" id="selectAllJunior" onclick="toggleSelectAll('junior', this)"></th>
-                            <th style="width:170px;">單據區間</th>
-                            <th style="width:200px;">班級 / 姓名</th>
+                            <th style="width:160px;">單據區間</th>
+                            <th style="width:180px;">班級 / 姓名</th>
                             <th style="width:90px; text-align:right;">總金額</th>
                             <th style="width:110px; text-align:center;">狀態/繳費日</th>
+                            <th style="width:80px; text-align:center;">發單日</th>
                             <th style="width:230px;">操作</th>
                         </tr>
                     </thead>
@@ -777,11 +779,12 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width: 170px;">單據年月/期間</th>
-                            <th style="width: 180px;">班級 / 姓名</th>
+                            <th style="width: 130px;">單據年月/期間</th>
+                            <th style="width: 150px;">班級 / 姓名</th>
                             <th>應繳費用項目明細</th>
-                            <th style="width: 100px; text-align: right;">總金額</th>
-                            <th style="width: 110px; text-align: center;">狀態/繳費日</th>
+                            <th style="width: 90px; text-align: right;">總金額</th>
+                            <th style="width: 100px; text-align: center;">狀態/繳費日</th>
+                            <th style="width: 90px; text-align: center;">發單日</th>
                             <th style="width: 140px; text-align: center;">操作</th>
                         </tr>
                     </thead>
@@ -1535,7 +1538,7 @@
         students.sort((a, b) => a.localeCompare(b, 'zh-Hant', { sensitivity: 'base' }));
 
         if (students.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; padding:15px;">本班尚無學生名單。</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94A3B8; padding:15px;">本班尚無學生名單。</td></tr>`;
             return;
         }
 
@@ -1552,6 +1555,7 @@
             let itemsHtml = '<span style="color:#94A3B8; font-size:12px;">尚未設定費用</span>';
             let totalAmountHtml = '<span style="color:#94A3B8;">-</span>';
             let statusBadge = '<span class="status-badge" style="background:#F1F5F9; color:#64748B;">尚未開單</span>';
+            let printedDateHtml = '<span style="color:#CBD5E1;">-</span>';
 
             if (bill) {
                 displayPeriod = formatDisplayPeriod(bill);
@@ -1562,15 +1566,16 @@
                     itemsHtml += `<div style="margin-top:4px; font-size:12px; color:#B45309; background:#FEF3C7; padding:2px 6px; border-radius:4px; border:1px dashed #FCD34D; display:inline-block;">📝 備註：${bill.billNote}</div>`;
                 }
                 totalAmountHtml = `<strong style="color:var(--danger); font-size:15px;">$ ${bill.total.toLocaleString()}</strong>`;
+                
                 if (bill.isPaid) {
                     const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
                     statusBadge = `<span class="status-badge status-paid">✅ 已繳 ${pDate}</span>`;
                 } else {
-                    if (bill.noticePrintedDate) {
-                        statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span><br><span style="font-size:11px; color:#2563EB; font-weight:bold; display:inline-block; margin-top:2px;">🖨️ 已發單: ${bill.noticePrintedDate.substring(5)}</span>`;
-                    } else {
-                        statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
-                    }
+                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+                }
+
+                if (bill.noticePrintedDate) {
+                    printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px;">${bill.noticePrintedDate.substring(5)}</span>`;
                 }
             } else {
                 const [y, m] = selectedMonth.split('-').map(Number);
@@ -1585,6 +1590,7 @@
                     <td style="white-space:normal; max-width:320px;">${itemsHtml}</td>
                     <td style="text-align:right;">${totalAmountHtml}</td>
                     <td style="text-align:center;">${statusBadge}</td>
+                    <td style="text-align:center;">${printedDateHtml}</td>
                     <td style="text-align:center;">
                         <button class="action-btn btn-purple" onclick="openAddFeeItemModal('${cls}', '${stu}')">✏️ 增加/修改學費</button>
                     </td>
@@ -2193,15 +2199,17 @@
 
         filteredBills.forEach(bill => {
             let statusBadge = '';
+            let printedDateHtml = '<span style="color:#CBD5E1;">-</span>';
+
             if (bill.isPaid) {
                 const pDate = bill.paidDate || parseLegacyDateToIso(bill.date) || '';
                 statusBadge = `<span class="status-badge status-paid">✅ 已繳 ${pDate}</span>`;
             } else {
-                if (bill.noticePrintedDate) {
-                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span><br><span style="font-size:11px; color:#2563EB; font-weight:bold; display:inline-block; margin-top:2px;">🖨️ 已發單: ${bill.noticePrintedDate.substring(5)}</span>`;
-                } else {
-                    statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
-                }
+                statusBadge = `<span class="status-badge status-unpaid">⏳ 未繳</span>`;
+            }
+
+            if (bill.noticePrintedDate) {
+                printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px;">${bill.noticePrintedDate.substring(5)}</span>`;
             }
 
             const displayMonth = formatDisplayPeriod(bill);
@@ -2230,6 +2238,7 @@
                     <td>${bill.className} - <strong>${bill.studentName}</strong></td>
                     <td style="text-align:right; font-weight:bold;">$ ${bill.total.toLocaleString()}</td>
                     <td style="text-align:center;">${statusBadge}</td>
+                    <td style="text-align:center;">${printedDateHtml}</td>
                     <td><div class="action-cell">${actionHtml}</div></td>
                 </tr>`;
                 
@@ -2237,8 +2246,8 @@
             else { primaryTbody.innerHTML += trHtml; primaryCount++; }
         });
 
-        if (primaryCount === 0) primaryTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國小部繳費紀錄。</td></tr>`;
-        if (juniorCount === 0) juniorTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國中部繳費紀錄。</td></tr>`;
+        if (primaryCount === 0) primaryTbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國小部繳費紀錄。</td></tr>`;
+        if (juniorCount === 0) juniorTbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94A3B8; font-size:14px; padding: 15px;">目前沒有符合條件的國中部繳費紀錄。</td></tr>`;
         
         window.renderUnpaidTabLists();
     };
