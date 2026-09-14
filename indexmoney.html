@@ -666,7 +666,6 @@
                 <span style="color: #1E40AF; font-weight: bold; font-size: 12px; white-space: nowrap;">🖨️ 批次：</span>
                 <button class="btn-blue action-btn" onclick="batchPrintNotices()">印該班未繳</button>
                 <button class="btn-green action-btn" onclick="printSelectedCheckedNotices()">印勾選未繳</button>
-                <button class="btn-purple action-btn" style="background: #059669;" onclick="printCombinedSelectedReceipts()">合併列印勾選收據</button>
             </div>
         </div>
 
@@ -722,7 +721,7 @@
             </div>
             
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印合併通知單</button>
+                <button class="btn-blue action-btn" style="padding: 6px 14px; font-size: 13px; border: none; font-weight: bold; border-radius: 6px;" onclick="printCheckedUnpaidNotices()">🖨️ 印勾選通知單</button>
             </div>
         </div>
 
@@ -1526,6 +1525,58 @@
         window.renderBillingStudentsTable();
     };
 
+    // ===== 點擊修改或取消發單日期 =====
+    window.editPrintedDate = function(firestoreId, idStr, currentVal) {
+        window.verifyAndDelete(currentVal ? '修改/刪除發單日期' : '設定發單日期', async () => {
+            const id = Number(idStr);
+            const bill = window.bills.find(b => b.id === id);
+            if (!bill) return;
+
+            const input = prompt(
+                `請輸入新的發單日期 (格式如: 2026-09-15)：\n\n💡【提示】若要「刪除」發單紀錄，請直接將下方文字清空，然後按「確定」即可。`, 
+                currentVal || getCurrentDateStr()
+            );
+            
+            if (input === null) return; // 按下取消鍵
+            
+            let newVal = input.trim();
+            if (newVal === '取消' || newVal === '刪除' || newVal === '') {
+                newVal = null;
+            }
+
+            try {
+                bill.noticePrintedDate = newVal;
+                await setDoc(doc(db, "bills", firestoreId), {
+                    id: bill.id,
+                    date: bill.date,
+                    yearMonth: bill.yearMonth,
+                    periodStr: bill.periodStr,
+                    className: bill.className,
+                    studentName: bill.studentName,
+                    items: bill.items,
+                    total: bill.total,
+                    isPaid: bill.isPaid,
+                    paidDate: bill.paidDate,
+                    billNote: bill.billNote || '',
+                    noAutoRenew: !!bill.noAutoRenew,
+                    noticePrintedDate: newVal
+                });
+                window.renderBillingStudentsTable();
+                window.renderRecords();
+                window.renderUnpaidTabLists();
+                
+                if (newVal) {
+                    alert('✅ 發單日期已更新！');
+                } else {
+                    alert('🗑️ 發單日期已成功刪除，恢復為未發單狀態！');
+                }
+            } catch(e) {
+                console.error("更新發單日期失敗：", e);
+                alert("❌ 更新失敗請稍後再試！");
+            }
+        });
+    };
+
     window.renderBillingStudentsTable = function() {
         const cls = window.currentClass;
         if (!cls) return;
@@ -1575,7 +1626,7 @@
                 }
 
                 if (bill.noticePrintedDate) {
-                    printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${bill.firestoreId}', '${bill.id}', '${bill.noticePrintedDate}')" title="點擊修改發單日">${bill.noticePrintedDate.substring(5)}</span>`;
+                    printedDateHtml = `<span style="color:#2563EB; font-weight:bold; font-size:12.5px; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${bill.firestoreId}', '${bill.id}', '${bill.noticePrintedDate}')" title="點擊修改/刪除發單日">${bill.noticePrintedDate.substring(5)}</span>`;
                 } else {
                     printedDateHtml = `<span style="color:#CBD5E1; cursor:pointer; text-decoration:underline;" onclick="editPrintedDate('${bill.firestoreId}', '${bill.id}', '')" title="點擊設定發單日">-</span>`;
                 }
@@ -2183,17 +2234,20 @@
 
     // ===== 點擊修改或取消發單日期 =====
     window.editPrintedDate = function(firestoreId, idStr, currentVal) {
-        window.verifyAndDelete('修改發單日期', async () => {
+        window.verifyAndDelete(currentVal ? '修改/刪除發單日期' : '設定發單日期', async () => {
             const id = Number(idStr);
             const bill = window.bills.find(b => b.id === id);
             if (!bill) return;
 
-            const input = prompt(`請輸入新的發單日期 (YYYY-MM-DD)：\n若要「取消發單狀態」，請輸入「取消」或直接留空。`, currentVal || getCurrentDateStr());
+            const input = prompt(
+                `請輸入新的發單日期 (格式如: 2026-09-15)：\n\n💡【提示】若要「刪除」發單紀錄，請直接將下方文字清空，然後按「確定」即可。`, 
+                currentVal || getCurrentDateStr()
+            );
             
             if (input === null) return; // 按下取消鍵
             
             let newVal = input.trim();
-            if (newVal === '取消' || newVal === '') {
+            if (newVal === '取消' || newVal === '刪除' || newVal === '') {
                 newVal = null;
             }
 
@@ -2217,6 +2271,12 @@
                 window.renderBillingStudentsTable();
                 window.renderRecords();
                 window.renderUnpaidTabLists();
+                
+                if (newVal) {
+                    alert('✅ 發單日期已更新！');
+                } else {
+                    alert('🗑️ 發單日期已成功刪除，恢復為未發單狀態！');
+                }
             } catch(e) {
                 console.error("更新發單日期失敗：", e);
                 alert("❌ 更新失敗請稍後再試！");
